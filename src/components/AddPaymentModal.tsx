@@ -1,0 +1,286 @@
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import { Banknote, Building2, CheckCircle2, CreditCard, FileText, Hash, Smartphone, CalendarDays } from "lucide-react";
+import { GlassModal } from "./GlassModal";
+import { MagneticButton } from "./MagneticButton";
+import { rooms, type PaymentStatus } from "@/lib/mockData";
+import { useCurrency } from "@/lib/currency";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+
+type Method = "Bank" | "UPI" | "Cash";
+
+const methods: { key: Method; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  { key: "Bank", label: "Bank",  icon: CreditCard },
+  { key: "UPI",  label: "UPI",   icon: Smartphone },
+  { key: "Cash", label: "Cash",  icon: Banknote },
+];
+
+const statuses: { key: PaymentStatus; label: string; tint: string }[] = [
+  { key: "paid",    label: "Paid",    tint: "data-[active=true]:bg-status-paid/15 data-[active=true]:text-status-paid" },
+  { key: "pending", label: "Pending", tint: "data-[active=true]:bg-status-pending/15 data-[active=true]:text-status-pending" },
+  { key: "late",    label: "Late",    tint: "data-[active=true]:bg-status-late/15 data-[active=true]:text-status-late" },
+];
+
+interface Props {
+  open: boolean;
+  onClose: () => void;
+  defaultRoomId?: string;
+}
+
+export function AddPaymentModal({ open, onClose, defaultRoomId }: Props) {
+  const { currency } = useCurrency();
+  const [roomsList, setRoomsList] = useState<any[]>([]);
+  const [loadingRooms, setLoadingRooms] = useState(false);
+  const [roomId, setRoomId]   = useState(defaultRoomId || "");
+  const [amount, setAmount]   = useState("");
+  const [method, setMethod]   = useState<Method>("Bank");
+  const [status, setStatus]   = useState<PaymentStatus>("paid");
+  const [date, setDate]       = useState<string>(() => new Date().toISOString().slice(0, 10));
+  const [note, setNote]       = useState("");
+  const [reference, setReference] = useState("");
+  const [includesElectricity, setIncludesElectricity] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  const fetchRooms = async () => {
+    try {
+      setLoadingRooms(true);
+      const api = (window as any).estateApi;
+      if (!api) return;
+      const data = await api.getRooms();
+      setRoomsList(data);
+      if (!roomId && data.length > 0) setRoomId(data[0].id);
+    } catch (err) {
+      console.error("Failed to fetch rooms:", err);
+    } finally {
+      setLoadingRooms(false);
+    }
+  };
+
+  useEffect(() => {
+    if (open) {
+      setSuccess(false);
+      setError(null);
+      fetchRooms();
+      if (defaultRoomId) setRoomId(defaultRoomId);
+    }
+  }, [open, defaultRoomId]);
+
+  const room = roomsList.find(r => r.id === roomId) || { rent: 0, currReading: 0, prevReading: 0, ratePerUnit: 0, number: "?", buildingName: "" };
+  const electricity = Math.max(0, room.currReading - room.prevReading) * room.ratePerUnit;
+  const defaultAmountConverted = (room.rent + (includesElectricity ? electricity : 0)) * currency.rate;
+  const amountValue = Number(amount) || defaultAmountConverted;
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    if (amount && (Number.isNaN(Number(amount)) || Number(amount) <= 0)) {
+      setError("Amount must be a positive number");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      const api = (window as any).estateApi;
+      if (!api) throw new Error("API not loaded");
+
+      await api.addPayment({
+        room_id: roomId,
+        tenant_id: room.tenant?.id || null,
+        amount: amountValue,
+        method,
+        status,
+        date,
+        note: note || reference || ""
+      });
+
+      setSuccess(true);
+      setTimeout(() => {
+        onClose();
+        setAmount(""); setNote(""); setReference(""); setIncludesElectricity(false);
+        toast.success("Payment recorded", {
+          description: `${currency.symbol}${amountValue.toLocaleString(undefined, { maximumFractionDigits: 2 })} · ${room.tenant?.name ?? "Room " + room.number} · ${status}`,
+        });
+      }, 700);
+    } catch (err: any) {
+      setError(err.message || "Failed to save payment");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <GlassModal open={open} onClose={onClose} title="Add payment" description="Record a new transaction in seconds">
+      {success ? (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }}
+          className="flex flex-col items-center gap-3 py-8"
+        >
+          <motion.div
+            initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 260, damping: 18 }}
+            className="flex h-14 w-14 items-center justify-center rounded-full bg-status-paid/15 text-status-paid"
+          >
+            <CheckCircle2 className="h-7 w-7" />
+          </motion.div>
+          <div className="text-base font-semibold">Recorded</div>
+          <div className="text-xs text-muted-foreground">Closing…</div>
+        </motion.div>
+      ) : (
+        <form onSubmit={submit} className="space-y-4">
+          {/* Tenant / Room */}
+          <Field label="Room">
+            <div className="relative">
+              <Building2 className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <select
+                value={roomId} onChange={e => setRoomId(e.target.value)}
+                disabled={loadingRooms}
+                className="h-11 w-full appearance-none rounded-xl border border-border bg-card/70 pl-9 pr-3 text-sm outline-none focus:border-brand focus:shadow-[0_0_0_4px_hsl(var(--ring)/0.12)]"
+              >
+                {loadingRooms ? (
+                  <option>Loading rooms...</option>
+                ) : (
+                  roomsList.map(r => (
+                    <option key={r.id} value={r.id}>
+                      Room {r.number} · {r.buildingName}{r.tenant ? ` · ${r.tenant.name}` : ""}
+                    </option>
+                  ))
+                )}
+              </select>
+            </div>
+          </Field>
+
+          {/* Amount with live currency symbol */}
+          <Field label="Amount" hint={`Default: ${currency.symbol}${defaultAmountConverted.toLocaleString(undefined, { maximumFractionDigits: 0 })}`} error={error ?? undefined}>
+            <div className="relative">
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-medium text-muted-foreground tnum">{currency.symbol}</span>
+              <input
+                value={amount} onChange={e => setAmount(e.target.value)}
+                inputMode="decimal" placeholder={defaultAmountConverted.toFixed(0)}
+                className="h-11 w-full rounded-xl border border-border bg-card/70 pl-8 pr-16 text-base font-semibold tnum outline-none focus:border-brand focus:shadow-[0_0_0_4px_hsl(var(--ring)/0.12)]"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md bg-secondary px-2 py-0.5 font-mono text-[10px] text-muted-foreground">
+                {currency.code}
+              </span>
+            </div>
+            <label className="mt-2 flex items-center gap-2 text-[11px] text-muted-foreground">
+              <input type="checkbox" checked={includesElectricity}
+                onChange={(e) => setIncludesElectricity(e.target.checked)}
+                className="h-3.5 w-3.5 accent-foreground" />
+              Include electricity ({currency.symbol}{(electricity * currency.rate).toLocaleString(undefined, { maximumFractionDigits: 2 })})
+            </label>
+          </Field>
+
+          {/* Date + Method (segmented) */}
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Date">
+              <div className="relative">
+                <CalendarDays className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <input
+                  type="date" value={date} onChange={e => setDate(e.target.value)}
+                  className="h-11 w-full rounded-xl border border-border bg-card/70 pl-9 pr-3 text-sm outline-none focus:border-brand focus:shadow-[0_0_0_4px_hsl(var(--ring)/0.12)]"
+                />
+              </div>
+            </Field>
+            <Field label="Method">
+              <div className="flex h-11 items-center gap-1 rounded-xl border border-border bg-secondary/40 p-1">
+                {methods.map(m => (
+                  <button
+                    type="button" key={m.key} onClick={() => setMethod(m.key)}
+                    className={cn(
+                      "inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors",
+                      method === m.key ? "bg-card shadow-soft text-foreground" : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    <m.icon className="h-3.5 w-3.5" /> {m.label}
+                  </button>
+                ))}
+              </div>
+            </Field>
+          </div>
+
+          {/* Status */}
+          <Field label="Status">
+            <div className="flex h-11 items-center gap-1 rounded-xl border border-border bg-secondary/40 p-1">
+              {statuses.map((s) => (
+                <button
+                  type="button" key={s.key} onClick={() => setStatus(s.key)}
+                  data-active={status === s.key}
+                  className={cn(
+                    "inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors text-muted-foreground hover:text-foreground",
+                    s.tint,
+                    status === s.key && "shadow-soft",
+                  )}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          </Field>
+
+          {/* Reference + note */}
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Reference" optional>
+              <div className="relative">
+                <Hash className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <input
+                  value={reference} onChange={(e) => setReference(e.target.value)}
+                  placeholder="TXN-2025-0421"
+                  className="h-11 w-full rounded-xl border border-border bg-card/70 pl-9 pr-3 text-sm outline-none focus:border-brand focus:shadow-[0_0_0_4px_hsl(var(--ring)/0.12)]"
+                />
+              </div>
+            </Field>
+            <Field label="Note" optional>
+              <div className="relative">
+                <FileText className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <input
+                  value={note} onChange={e => setNote(e.target.value)}
+                  placeholder="e.g. partial payment"
+                  className="h-11 w-full rounded-xl border border-border bg-card/70 pl-9 pr-3 text-sm outline-none focus:border-brand focus:shadow-[0_0_0_4px_hsl(var(--ring)/0.12)]"
+                />
+              </div>
+            </Field>
+          </div>
+
+          {/* Summary line */}
+          <div className="flex items-center justify-between rounded-xl bg-secondary/50 px-3.5 py-2.5">
+            <span className="text-xs text-muted-foreground">Total</span>
+            <span className="text-lg font-semibold tnum">
+              {currency.symbol}{amountValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+            </span>
+          </div>
+
+          <div className="flex gap-2 pt-1">
+            <button
+              type="button" onClick={onClose}
+              disabled={submitting}
+              className="h-11 flex-1 rounded-xl border border-border bg-card/60 text-sm font-medium transition-colors hover:bg-card disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <MagneticButton type="submit" className="flex-1" disabled={submitting}>
+              {submitting ? "Recording..." : "Record payment"}
+            </MagneticButton>
+          </div>
+        </form>
+      )}
+    </GlassModal>
+  );
+}
+
+function Field({ label, hint, optional, error, children }: { label: string; hint?: string; optional?: boolean; error?: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <div className="mb-1.5 flex items-center justify-between">
+        <span className="text-xs font-medium text-muted-foreground">
+          {label}
+          {optional && <span className="ml-1 text-[10px] text-muted-foreground/70">(optional)</span>}
+        </span>
+        {!error && hint && <span className="text-[10px] text-muted-foreground tnum">{hint}</span>}
+        {error && <span className="text-[10px] font-medium text-destructive">{error}</span>}
+      </div>
+      {children}
+    </label>
+  );
+}

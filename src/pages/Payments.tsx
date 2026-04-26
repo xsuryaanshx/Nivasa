@@ -1,0 +1,122 @@
+import { useEffect, useMemo, useState } from "react";
+import { Plus, Search } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
+import { MagneticButton } from "@/components/MagneticButton";
+import { PaymentTimeline } from "@/components/PaymentTimeline";
+import { AddPaymentModal } from "@/components/AddPaymentModal";
+import { Money } from "@/components/Money";
+import { type PaymentStatus } from "@/lib/mockData";
+import { cn } from "@/lib/utils";
+
+const filters: ({ key: PaymentStatus | "all"; label: string })[] = [
+  { key: "all",     label: "All" },
+  { key: "paid",    label: "Paid" },
+  { key: "pending", label: "Pending" },
+  { key: "late",    label: "Late" },
+];
+
+export default function Payments() {
+  const [q, setQ] = useState("");
+  const [status, setStatus] = useState<PaymentStatus | "all">("all");
+  const [open, setOpen] = useState(false);
+  const [paymentsList, setPaymentsList] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchPayments = async () => {
+    try {
+      setLoading(true);
+      const api = (window as any).estateApi;
+      if (!api) return;
+      const data = await api.getRecentPayments(100); // Fetch more for the payments page
+      setPaymentsList(data);
+    } catch (error) {
+      console.error("Error fetching payments:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPayments();
+
+    const h = () => setOpen(true);
+    window.addEventListener("estate:add-payment", h);
+    return () => window.removeEventListener("estate:add-payment", h);
+  }, []);
+
+  const filtered = useMemo(() => {
+    return [...paymentsList]
+      .filter(p => status === "all" || p.status === status)
+      .filter(p => !q || `${p.tenantName} ${p.method}`.toLowerCase().includes(q.toLowerCase()))
+      .sort((a, b) => b.date.localeCompare(a.date));
+  }, [q, status, paymentsList]);
+
+  const total = filtered.reduce((s, p) => s + p.amount, 0);
+  const outstanding = paymentsList.filter(p => p.status !== "paid").reduce((s, p) => s + p.amount, 0);
+
+  return (
+    <div>
+      <PageHeader
+        title="Payments"
+        subtitle="A calm timeline of every transaction across your portfolio."
+        action={
+          <MagneticButton onClick={() => setOpen(true)}>
+            <Plus className="h-4 w-4" /> Add payment
+          </MagneticButton>
+        }
+      />
+
+      <div className="mb-5 grid gap-3 md:grid-cols-3">
+        <Stat label="Filtered total" value={<Money value={total} />} />
+        <Stat label="Records"        value={loading ? "..." : filtered.length.toString()} />
+        <Stat label="Outstanding"    value={<Money value={outstanding} />} accent />
+      </div>
+
+      <div className="mb-5 flex flex-wrap items-center gap-3">
+        <div className="relative flex h-10 flex-1 min-w-[240px] max-w-md items-center gap-2 rounded-xl border border-border bg-card px-3.5">
+          <Search className="h-4 w-4 text-muted-foreground" />
+          <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search tenant or method…"
+            className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground" />
+        </div>
+        <div className="flex items-center gap-1 rounded-xl border border-border bg-card p-1">
+          {filters.map(f => (
+            <button key={f.key} onClick={() => setStatus(f.key)}
+              className={cn(
+                "rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
+                status === f.key ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground",
+              )}
+            >{f.label}</button>
+          ))}
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-border bg-card p-5 shadow-soft">
+        {loading ? (
+          <div className="h-64 flex items-center justify-center text-muted-foreground italic">Loading timeline...</div>
+        ) : (
+          <PaymentTimeline payments={filtered} />
+        )}
+      </div>
+
+      <AddPaymentModal 
+        open={open} 
+        onClose={() => {
+          setOpen(false);
+          fetchPayments();
+        }} 
+      />
+    </div>
+  );
+}
+
+function Stat({ label, value, accent }: { label: string; value: React.ReactNode; accent?: boolean }) {
+  return (
+    <div className={cn(
+      "rounded-2xl border p-4 shadow-soft",
+      accent ? "border-transparent bg-gradient-brand text-white" : "border-border bg-card",
+    )}>
+      <div className={cn("text-[11px] font-medium", accent ? "text-white/70" : "text-muted-foreground")}>{label}</div>
+      <div className="mt-1 text-xl font-semibold tnum tracking-tight">{value}</div>
+    </div>
+  );
+}
