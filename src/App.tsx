@@ -11,6 +11,7 @@ import Buildings from "./pages/Buildings.tsx";
 import Rooms from "./pages/Rooms.tsx";
 import RoomDetails from "./pages/RoomDetails.tsx";
 import Payments from "./pages/Payments.tsx";
+import Register from "./pages/Register.tsx";
 import { AppLayout } from "./components/AppLayout.tsx";
 import { ThemeProvider } from "./components/ThemeProvider.tsx";
 
@@ -26,6 +27,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
             <Route path="/app" element={<AppLayout />}>
               <Route index element={<Dashboard />} />
               <Route path="buildings" element={<Buildings />} />

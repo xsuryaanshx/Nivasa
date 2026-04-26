@@ -3,11 +3,12 @@ import { ArrowRight, Eye, EyeOff, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { MagneticButton } from "@/components/MagneticButton";
+import { toast } from "sonner";
 
-export default function Login() {
+export default function Register() {
   const navigate = useNavigate();
   const [show, setShow] = useState(false);
-  const [user, setUser] = useState("");
+  const [email, setEmail] = useState("");
   const [pwd, setPwd] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -15,19 +16,23 @@ export default function Login() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (!user || !pwd) { setError("Please fill in both fields."); return; }
+    if (!email || !pwd) { setError("Please fill in both fields."); return; }
+    if (pwd.length < 6) { setError("Password must be at least 6 characters."); return; }
     
     setLoading(true);
     try {
       const api = (window as any).estateApi;
       if (!api) throw new Error("API not loaded");
       
-      const { data, error } = await api.auth.signIn(user, pwd);
+      const { data, error } = await api.auth.signUp(email, pwd);
       if (error) throw error;
       
-      navigate("/app");
+      toast.success("Account created!", {
+        description: "Please check your email for a confirmation link.",
+      });
+      navigate("/login");
     } catch (err: any) {
-      setError(err.message || "Invalid email or password");
+      setError(err.message || "Failed to create account");
     } finally {
       setLoading(false);
     }
@@ -50,19 +55,19 @@ export default function Login() {
           </div>
           <div>
             <div className="text-base font-semibold tracking-tight">Estate</div>
-            <div className="text-xs text-muted-foreground">Welcome back</div>
+            <div className="text-xs text-muted-foreground">Join the workspace</div>
           </div>
         </div>
 
-        <h1 className="text-2xl font-semibold tracking-tight">Sign in to your workspace</h1>
-        <p className="mt-1.5 text-sm text-muted-foreground">Manage buildings, rooms, and tenants in one calm place.</p>
+        <h1 className="text-2xl font-semibold tracking-tight">Create your account</h1>
+        <p className="mt-1.5 text-sm text-muted-foreground">Start managing your properties with calm clarity.</p>
 
         <form onSubmit={submit} className="mt-7 space-y-4">
           <Field label="Email">
             <input
               type="email"
-              value={user}
-              onChange={e => setUser(e.target.value)}
+              value={email}
+              onChange={e => setEmail(e.target.value)}
               placeholder="jordan@example.com"
               className="h-11 w-full rounded-xl border border-border bg-card/70 px-3.5 text-sm outline-none transition-all focus:border-brand focus:shadow-[0_0_0_4px_hsl(var(--ring)/0.12)]"
             />
@@ -93,27 +98,13 @@ export default function Login() {
           )}
 
           <MagneticButton type="submit" className="mt-2 w-full" disabled={loading}>
-            {loading ? "Signing in…" : <>Sign in <ArrowRight className="h-4 w-4" /></>}
+            {loading ? "Creating account…" : <>Sign up <ArrowRight className="h-4 w-4" /></>}
           </MagneticButton>
 
-          <div className="relative my-2 flex items-center gap-3">
-            <div className="hairline flex-1" />
-            <span className="text-[11px] uppercase tracking-wider text-muted-foreground">or</span>
-            <div className="hairline flex-1" />
-          </div>
-
-          <button
-            type="button"
-            onClick={() => navigate("/app")}
-            className="h-11 w-full rounded-xl border border-border bg-card/60 text-sm font-medium transition-colors hover:bg-card"
-          >
-            Continue as demo
-          </button>
-
           <div className="mt-6 text-center text-xs text-muted-foreground">
-            Don't have an account?{" "}
-            <Link to="/register" className="font-medium text-foreground hover:underline">
-              Sign up
+            Already have an account?{" "}
+            <Link to="/login" className="font-medium text-foreground hover:underline">
+              Sign in
             </Link>
           </div>
         </form>

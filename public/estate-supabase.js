@@ -12,9 +12,9 @@
     // --- CONFIGURATION ---
     // Replace these with your project's details from Supabase Dashboard -> Settings -> API
     const SUPABASE_URL = "https://ehmwvkxxoczoubbsjxvv.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVobXd2a3h4b2N6b3ViYnNqeHZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMzc5NjIsImV4cCI6MjA5MjcxMzk2Mn0._1thy8Nq3dsGBvEA8b_FPFbTbCyDk1fbwqxgUULDPG4 ";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVobXd2a3h4b2N6b3ViYnNqeHZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMzc5NjIsImV4cCI6MjA5MjcxMzk2Mn0._1thy8Nq3dsGBvEA8b_FPFbTbCyDk1fbwqxgUULDPG4";
 
-    if (SUPABASE_URL === "https://ehmwvkxxoczoubbsjxvv.supabase.co") {
+    if (SUPABASE_URL === "YOUR_SUPABASE_URL") {
         console.warn("Estate: Please set your SUPABASE_URL and SUPABASE_ANON_KEY in estate-supabase.js");
     }
 
@@ -38,14 +38,18 @@
         getBuildings: async () => {
             const { data, error } = await supabase
                 .from('buildings')
-                .select('*, rooms(count)');
-            if (error) throw error;
+                .select('*, rooms(*)');
+            
+            if (error) {
+                console.error("Estate Error [getBuildings]:", error);
+                throw error;
+            }
+            
             return data.map(b => ({
                 ...b,
-                rooms: b.rooms[0].count,
-                // Add mock fields for UI if missing
-                occupied: 0, // Calculated later
-                monthlyRevenue: 0 // Calculated later
+                rooms: b.rooms ? b.rooms.length : 0,
+                occupied: b.rooms ? b.rooms.filter(r => r.status === 'paid').length : 0,
+                monthlyRevenue: b.rooms ? b.rooms.reduce((acc, r) => acc + (r.status === 'paid' ? r.rent : 0), 0) : 0
             }));
         },
 
@@ -55,7 +59,10 @@
             if (buildingId) query = query.eq('building_id', buildingId);
 
             const { data, error } = await query;
-            if (error) throw error;
+            if (error) {
+                console.error("Estate Error [getRooms]:", error);
+                throw error;
+            }
 
             return data.map(r => ({
                 id: r.id,
