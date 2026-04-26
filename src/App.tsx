@@ -17,6 +17,8 @@ import { ThemeProvider } from "./components/ThemeProvider.tsx";
 
 const queryClient = new QueryClient();
 
+import BuildingDetails from "./pages/BuildingDetails.tsx";
+
 const App = () => (
   <ThemeProvider>
     <QueryClientProvider client={queryClient}>
@@ -31,6 +33,7 @@ const App = () => (
             <Route path="/app" element={<AppLayout />}>
               <Route index element={<Dashboard />} />
               <Route path="buildings" element={<Buildings />} />
+              <Route path="buildings/:id" element={<BuildingDetails />} />
               <Route path="rooms" element={<Rooms />} />
               <Route path="rooms/:id" element={<RoomDetails />} />
               <Route path="payments" element={<Payments />} />

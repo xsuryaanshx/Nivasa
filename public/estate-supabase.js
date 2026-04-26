@@ -72,6 +72,24 @@
             };
         },
 
+        updateBuilding: async (id, data) => {
+            const { error } = await supabase
+                .from('buildings')
+                .update(data)
+                .eq('id', id);
+            if (error) throw error;
+            return true;
+        },
+
+        deleteBuilding: async (id) => {
+            const { error } = await supabase
+                .from('buildings')
+                .delete()
+                .eq('id', id);
+            if (error) throw error;
+            return true;
+        },
+
         // --- UNITS (ROOMS) ---
         getUnits: async (buildingId = null) => {
             let query = supabase.from('units').select('*, buildings(name), tenants(*)');
@@ -229,6 +247,52 @@
             const { data, error: iError } = await supabase.from('payments').insert(invoices).select();
             if (iError) throw iError;
             return data;
+        },
+        // --- COMPATIBILITY ALIASES (For existing React components) ---
+        getDashboardStats: async () => {
+            const [buildings, units, payments] = await Promise.all([
+                supabase.from('buildings').select('*', { count: 'exact', head: true }),
+                supabase.from('units').select('*', { count: 'exact' }),
+                supabase.from('payments').select('amount, status, due_date')
+            ]);
+
+            const totalBuildings = buildings.count || 0;
+            const totalRooms = units.count || 0;
+            const occupied = units.data ? units.data.filter(u => u.status === 'occupied').length : 0;
+            
+            const pending = payments.data ? payments.data.filter(p => p.status === 'pending').length : 0;
+            const monthlyRevenue = payments.data 
+                ? payments.data.filter(p => p.status === 'paid').reduce((sum, p) => sum + p.amount, 0)
+                : 0;
+
+            return {
+                totalBuildings,
+                totalRooms,
+                occupied,
+                pending,
+                monthlyRevenue
+            };
+        },
+
+        getRecentPayments: async (limit = 10) => {
+            const { data, error } = await supabase
+                .from('payments')
+                .select('*, units(name, buildings(name)), tenants(name)')
+                .order('created_at', { ascending: false })
+                .limit(limit);
+            if (error) return [];
+            return data.map(p => ({
+                id: p.id,
+                tenantName: p.tenants ? p.tenants.name : 'Unknown',
+                amount: p.amount,
+                date: p.paid_date || p.due_date,
+                status: p.status,
+                note: p.note
+            }));
+        },
+
+        getRooms: async (buildingId = null) => {
+            return window.estateApi.getUnits(buildingId);
         }
     };
 

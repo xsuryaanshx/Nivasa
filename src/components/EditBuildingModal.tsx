@@ -1,0 +1,125 @@
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { Building2, CheckCircle2, MapPin, Save } from "lucide-react";
+import { GlassModal } from "./GlassModal";
+import { MagneticButton } from "./MagneticButton";
+import { toast } from "sonner";
+
+interface Props {
+  open: boolean;
+  onClose: () => void;
+  onSuccess?: () => void;
+  buildingData: { id: string, name: string, address: string };
+}
+
+export function EditBuildingModal({ open, onClose, onSuccess, buildingData }: Props) {
+  const [name, setName] = useState(buildingData.name);
+  const [address, setAddress] = useState(buildingData.address);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setName(buildingData.name);
+    setAddress(buildingData.address);
+  }, [buildingData]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim() || !address.trim()) {
+      setError("Please fill in all fields");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      setError(null);
+      const api = (window as any).estateApi;
+      if (!api) throw new Error("API not loaded");
+
+      await api.supabase
+        .from('buildings')
+        .update({
+          name: name.trim(),
+          address: address.trim(),
+        })
+        .eq('id', buildingData.id);
+
+      toast.success("Building updated");
+      onClose();
+      onSuccess?.();
+    } catch (err: any) {
+      console.error("Error updating building:", err);
+      setError(err.message || "Failed to update building");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <GlassModal
+      open={open}
+      onClose={onClose}
+      title="Edit Building"
+      description="Update property details"
+    >
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <label htmlFor="edit-building-name" className="text-xs font-medium text-muted-foreground">
+              Building Name
+            </label>
+            <div className="relative">
+              <Building2 className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <input
+                id="edit-building-name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="h-11 w-full rounded-xl border border-border bg-secondary/30 pl-10 pr-4 text-sm outline-none transition-all focus:border-brand focus:ring-4 focus:ring-brand/10"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label htmlFor="edit-building-address" className="text-xs font-medium text-muted-foreground">
+              Address
+            </label>
+            <div className="relative">
+              <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <input
+                id="edit-building-address"
+                type="text"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                className="h-11 w-full rounded-xl border border-border bg-secondary/30 pl-10 pr-4 text-sm outline-none transition-all focus:border-brand focus:ring-4 focus:ring-brand/10"
+              />
+            </div>
+          </div>
+        </div>
+
+        {error && (
+          <div className="rounded-lg bg-destructive/10 px-3 py-2 text-xs font-medium text-destructive">
+            {error}
+          </div>
+        )}
+
+        <div className="flex gap-3 pt-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="h-11 flex-1 rounded-xl border border-border bg-card text-sm font-medium transition-colors hover:bg-secondary/50"
+          >
+            Cancel
+          </button>
+          <MagneticButton type="submit" disabled={submitting} className="flex-1">
+            {submitting ? "Saving..." : (
+              <span className="flex items-center justify-center gap-2">
+                <Save className="h-4 w-4" /> Save Changes
+              </span>
+            )}
+          </MagneticButton>
+        </div>
+      </form>
+    </GlassModal>
+  );
+}
