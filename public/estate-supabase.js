@@ -14,7 +14,7 @@
     const SUPABASE_URL = "https://ehmwvkxxoczoubbsjxvv.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVobXd2a3h4b2N6b3ViYnNqeHZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMzc5NjIsImV4cCI6MjA5MjcxMzk2Mn0._1thy8Nq3dsGBvEA8b_FPFbTbCyDk1fbwqxgUULDPG4";
 
-    if (SUPABASE_URL === "YOUR_SUPABASE_URL") {
+    if (SUPABASE_URL === "https://ehmwvkxxoczoubbsjxvv.supabase.co") {
         console.warn("Estate: Please set your SUPABASE_URL and SUPABASE_ANON_KEY in estate-supabase.js");
     }
 
@@ -39,14 +39,14 @@
             const { data, error } = await supabase
                 .from('buildings')
                 .select('*, rooms(*)');
-            
+
             if (error) {
                 console.warn("Estate: Join query failed, falling back to simple query:", error.message);
                 const { data: bData, error: bError } = await supabase.from('buildings').select('*');
                 if (bError) throw bError;
                 return bData.map(b => ({ ...b, rooms: 0, occupied: 0, monthlyRevenue: 0 }));
             }
-            
+
             return data.map(b => ({
                 ...b,
                 rooms: b.rooms ? b.rooms.length : 0,
@@ -66,17 +66,40 @@
 
         // --- ROOMS ---
         getRooms: async (buildingId = null) => {
+            let query = supabase.from('rooms').select('*, buildings(name), tenants(*)');
+            if (buildingId) query = query.eq('building_id', buildingId);
+
             const { data, error } = await query;
             if (error) {
+                console.warn("Estate: Join query failed, falling back to simple query:", error.message);
+                let fallbackQuery = supabase.from('rooms').select('*');
+                if (buildingId) fallbackQuery = fallbackQuery.eq('building_id', buildingId);
+                const { data: rData, error: rError } = await fallbackQuery;
+                if (rError) throw rError;
+                return rData.map(r => ({
+                    id: r.id,
+                    number: r.number,
+                    buildingId: r.building_id,
+                    buildingName: 'Unknown Building',
+                    rent: r.rent,
+                    status: r.status,
+                    tenant: null,
+                    prevReading: r.prev_reading,
+                    currReading: r.curr_reading,
+                    ratePerUnit: r.rate_per_unit,
+                    history: [],
+                    pastTenants: []
+                }));
+            }
 
             return data.map(r => ({
                 id: r.id,
                 number: r.number,
                 buildingId: r.building_id,
-                buildingName: r.buildings.name,
+                buildingName: r.buildings ? r.buildings.name : 'Unknown Building',
                 rent: r.rent,
                 status: r.status,
-                tenant: r.tenants[0] || null,
+                tenant: r.tenants ? r.tenants[0] || null : null,
                 prevReading: r.prev_reading,
                 currReading: r.curr_reading,
                 ratePerUnit: r.rate_per_unit,
