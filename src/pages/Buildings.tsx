@@ -5,10 +5,12 @@ import { PageHeader } from "@/components/PageHeader";
 import { MagneticButton } from "@/components/MagneticButton";
 import { Money } from "@/components/Money";
 import { toast } from "sonner";
+import { AddBuildingModal } from "@/components/AddBuildingModal";
 
 export default function Buildings() {
   const [buildingsList, setBuildingsList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   const fetchBuildings = async () => {
     try {
@@ -34,10 +36,16 @@ export default function Buildings() {
         title="Buildings"
         subtitle="A clear view of every property in your portfolio."
         action={
-          <MagneticButton onClick={() => toast.success("New building", { description: "Form would open here." })}>
+          <MagneticButton onClick={() => setIsAddModalOpen(true)}>
             <Plus className="h-4 w-4" /> Add building
           </MagneticButton>
         }
+      />
+
+      <AddBuildingModal 
+        open={isAddModalOpen} 
+        onClose={() => setIsAddModalOpen(false)} 
+        onSuccess={fetchBuildings}
       />
 
       {loading ? (

@@ -18,15 +18,15 @@ export default function Register() {
     setError(null);
     if (!email || !pwd) { setError("Please fill in both fields."); return; }
     if (pwd.length < 6) { setError("Password must be at least 6 characters."); return; }
-    
+
     setLoading(true);
     try {
       const api = (window as any).estateApi;
       if (!api) throw new Error("API not loaded");
-      
+
       const { data, error } = await api.auth.signUp(email, pwd);
       if (error) throw error;
-      
+
       toast.success("Account created!", {
         description: "Please check your email for a confirmation link.",
       });
