@@ -38,17 +38,13 @@
         getBuildings: async () => {
             const { data, error } = await supabase
                 .from('buildings')
-                .select('*, rooms!building_id(*)');
+                .select('*, rooms(*)');
             
             if (error) {
-                if (error.code === 'PGRST200') {
-                    console.warn("Estate: Relationship between buildings and rooms missing. Falling back to simple query.");
-                    const { data: bData, error: bError } = await supabase.from('buildings').select('*');
-                    if (bError) throw bError;
-                    return bData.map(b => ({ ...b, rooms: 0, occupied: 0, monthlyRevenue: 0 }));
-                }
-                console.error("Estate Error [getBuildings]:", error);
-                throw error;
+                console.warn("Estate: Join query failed, falling back to simple query:", error.message);
+                const { data: bData, error: bError } = await supabase.from('buildings').select('*');
+                if (bError) throw bError;
+                return bData.map(b => ({ ...b, rooms: 0, occupied: 0, monthlyRevenue: 0 }));
             }
             
             return data.map(b => ({
@@ -70,35 +66,8 @@
 
         // --- ROOMS ---
         getRooms: async (buildingId = null) => {
-            let query = supabase.from('rooms').select('*, buildings!building_id(name), tenants!room_id(*)');
-            if (buildingId) query = query.eq('building_id', buildingId);
-
             const { data, error } = await query;
             if (error) {
-                if (error.code === 'PGRST200') {
-                    console.warn("Estate: Relationship between rooms and buildings/tenants missing. Falling back to simple query.");
-                    let fallbackQuery = supabase.from('rooms').select('*');
-                    if (buildingId) fallbackQuery = fallbackQuery.eq('building_id', buildingId);
-                    const { data: rData, error: rError } = await fallbackQuery;
-                    if (rError) throw rError;
-                    return rData.map(r => ({
-                        id: r.id,
-                        number: r.number,
-                        buildingId: r.building_id,
-                        buildingName: 'Unknown Building',
-                        rent: r.rent,
-                        status: r.status,
-                        tenant: null,
-                        prevReading: r.prev_reading,
-                        currReading: r.curr_reading,
-                        ratePerUnit: r.rate_per_unit,
-                        history: [],
-                        pastTenants: []
-                    }));
-                }
-                console.error("Estate Error [getRooms]:", error);
-                throw error;
-            }
 
             return data.map(r => ({
                 id: r.id,
@@ -121,32 +90,28 @@
             try {
                 const { data, error } = await supabase
                     .from('payments')
-                    .select('*, rooms!room_id(number, buildings!building_id(name)), tenants!tenant_id(name)')
+                    .select('*, rooms(number, buildings(name)), tenants(name)')
                     .order('date', { ascending: false })
                     .limit(limit);
 
                 if (error) {
-                    // Fallback to simple query if joins fail due to missing relationships
-                    if (error.code === 'PGRST200') {
-                        console.warn("Estate: Relationship between payments, rooms, or tenants missing. Falling back to simple query.");
-                        const { data: simpleData, error: simpleError } = await supabase
-                            .from('payments')
-                            .select('*')
-                            .order('date', { ascending: false })
-                            .limit(limit);
-                        if (simpleError) throw simpleError;
-                        return simpleData.map(p => ({
-                            id: p.id,
-                            roomId: p.room_id,
-                            tenantName: 'Unknown',
-                            amount: p.amount,
-                            date: p.date,
-                            status: p.status,
-                            method: p.method,
-                            note: p.note
-                        }));
-                    }
-                    throw error;
+                    console.warn("Estate: Join query failed, falling back to simple query:", error.message);
+                    const { data: simpleData, error: simpleError } = await supabase
+                        .from('payments')
+                        .select('*')
+                        .order('date', { ascending: false })
+                        .limit(limit);
+                    if (simpleError) throw simpleError;
+                    return simpleData.map(p => ({
+                        id: p.id,
+                        roomId: p.room_id,
+                        tenantName: 'Unknown',
+                        amount: p.amount,
+                        date: p.date,
+                        status: p.status,
+                        method: p.method,
+                        note: p.note
+                    }));
                 }
 
                 return data.map(p => ({
