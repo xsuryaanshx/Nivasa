@@ -38,7 +38,7 @@
         getBuildings: async () => {
             const { data, error } = await supabase
                 .from('buildings')
-                .select('*, rooms(*)');
+                .select('*, rooms!building_id(*)');
             
             if (error) {
                 if (error.code === 'PGRST200') {
@@ -70,7 +70,7 @@
 
         // --- ROOMS ---
         getRooms: async (buildingId = null) => {
-            let query = supabase.from('rooms').select('*, buildings(name), tenants(*)');
+            let query = supabase.from('rooms').select('*, buildings!building_id(name), tenants!room_id(*)');
             if (buildingId) query = query.eq('building_id', buildingId);
 
             const { data, error } = await query;
@@ -121,7 +121,7 @@
             try {
                 const { data, error } = await supabase
                     .from('payments')
-                    .select('*, rooms(number, buildings(name)), tenants(name)')
+                    .select('*, rooms!room_id(number, buildings!building_id(name)), tenants!tenant_id(name)')
                     .order('date', { ascending: false })
                     .limit(limit);
 
