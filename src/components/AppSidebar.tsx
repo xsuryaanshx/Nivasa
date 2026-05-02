@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { Building2, Home, LayoutDashboard, Receipt, Sparkles } from "lucide-react";
+import { Building2, Home, LayoutDashboard, Receipt, Sparkles, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const items = [
@@ -51,6 +51,20 @@ export function AppSidebar({ collapsed }: Props) {
           </NavLink>
         ))}
       </nav>
+
+      {/* Electricity billing quick-launch */}
+      <div className="mt-2 px-3">
+        <button
+          onClick={() => window.dispatchEvent(new CustomEvent("estate:add-electricity"))}
+          className={cn(
+            "group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors",
+            "text-muted-foreground hover:bg-yellow-500/10 hover:text-yellow-600 dark:hover:text-yellow-400",
+          )}
+        >
+          <Zap className="h-4 w-4 shrink-0" />
+          {!collapsed && <span className="truncate">Electricity</span>}
+        </button>
+      </div>
 
       <div className={cn("mt-auto m-3 rounded-xl border border-border bg-card p-4", collapsed && "hidden")}>
         <div className="text-xs font-medium">Pro tip</div>

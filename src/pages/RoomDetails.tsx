@@ -1,6 +1,6 @@
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
-  ArrowLeft, BellRing, CheckCircle2, IdCard, MessageCircle, Phone, Plus, Send, UserPlus, Zap,
+  ArrowLeft, BellRing, CheckCircle2, IdCard, MessageCircle, Phone, Plus, Save, Send, UserPlus, Zap,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
@@ -11,6 +11,7 @@ import { PaymentTimeline } from "@/components/PaymentTimeline";
 import { MagneticButton } from "@/components/MagneticButton";
 import { AddPaymentModal } from "@/components/AddPaymentModal";
 import { AddTenantModal } from "@/components/AddTenantModal";
+import { ElectricityBillingModal } from "@/components/ElectricityBillingModal";
 import { Money } from "@/components/Money";
 import { payments, rooms, type Room } from "@/lib/mockData";
 import { subscribeTenants } from "@/lib/tenantStore";
@@ -36,6 +37,8 @@ export default function RoomDetails() {
   const room = rooms.find(r => r.id === id) as Room | undefined;
   const [addOpen, setAddOpen] = useState(false);
   const [tenantOpen, setTenantOpen] = useState(false);
+  const [electricityOpen, setElectricityOpen] = useState(false);
+  const [savingElectricity, setSavingElectricity] = useState(false);
   const { currency } = useCurrency();
 
   // Re-render when tenant store updates.
@@ -59,6 +62,30 @@ export default function RoomDetails() {
     setEndReading(room.currReading);
     setPricePerUnit(room.ratePerUnit);
   }, [room]);
+
+  const saveElectricityReading = async () => {
+    try {
+      setSavingElectricity(true);
+      const api = (window as any).estateApi;
+      if (!api) throw new Error("API not loaded");
+      const now = new Date();
+      const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+      await api.saveElectricityReading({
+        room_id: room!.id,
+        month,
+        prev_reading: startReading,
+        curr_reading: endReading,
+        rate_per_unit: pricePerUnit,
+      });
+      toast.success("Meter reading saved", {
+        description: `${used} units · ${formatMoney(cost, currency, { decimals: 2 })}`,
+      });
+    } catch (err: any) {
+      toast.error("Failed to save reading", { description: err.message });
+    } finally {
+      setSavingElectricity(false);
+    }
+  };
 
   const roomPayments = useMemo(
     () => (room ? payments.filter(p => p.roomId === room.id) : []),
@@ -135,6 +162,9 @@ export default function RoomDetails() {
             </MagneticButton>
             <MagneticButton variant="ghost" onClick={() => toast.success("Marked as paid")}>
               <CheckCircle2 className="h-4 w-4" /> Mark paid
+            </MagneticButton>
+            <MagneticButton variant="ghost" onClick={() => setElectricityOpen(true)}>
+              <Zap className="h-4 w-4" /> Enter Reading
             </MagneticButton>
             <MagneticButton onClick={() => setAddOpen(true)}>
               <Plus className="h-4 w-4" /> Add payment
@@ -274,25 +304,36 @@ export default function RoomDetails() {
               <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Total due</span>
               <span className="text-base font-semibold tnum">{formatMoney(totalDue, currency, { decimals: 2 })}</span>
             </div>
-            <button
-              type="button"
-              onClick={sendInvoice}
-              disabled={!room.tenant}
-              className={cn(
-                "inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition-all",
-                "bg-[#25D366] text-white shadow-soft hover:opacity-90",
-                !room.tenant && "cursor-not-allowed opacity-50",
-              )}
-              title={room.tenant ? `WhatsApp ${room.tenant.whatsapp ?? room.tenant.phone}` : "No tenant assigned"}
-            >
-              <Send className="h-3.5 w-3.5" />
-              Send invoice via WhatsApp
-              {room.tenant && (
-                <span className="ml-1 hidden rounded-md bg-white/20 px-1.5 py-0.5 font-mono text-[10px] sm:inline">
-                  {room.tenant.whatsapp ?? room.tenant.phone}
-                </span>
-              )}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={saveElectricityReading}
+                disabled={savingElectricity}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-medium text-foreground/80 transition-all hover:bg-secondary disabled:opacity-50"
+              >
+                <Save className="h-3.5 w-3.5" />
+                {savingElectricity ? "Saving…" : "Save Reading"}
+              </button>
+              <button
+                type="button"
+                onClick={sendInvoice}
+                disabled={!room.tenant}
+                className={cn(
+                  "inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition-all",
+                  "bg-[#25D366] text-white shadow-soft hover:opacity-90",
+                  !room.tenant && "cursor-not-allowed opacity-50",
+                )}
+                title={room.tenant ? `WhatsApp ${room.tenant.whatsapp ?? room.tenant.phone}` : "No tenant assigned"}
+              >
+                <Send className="h-3.5 w-3.5" />
+                Send invoice via WhatsApp
+                {room.tenant && (
+                  <span className="ml-1 hidden rounded-md bg-white/20 px-1.5 py-0.5 font-mono text-[10px] sm:inline">
+                    {room.tenant.whatsapp ?? room.tenant.phone}
+                  </span>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -356,6 +397,12 @@ export default function RoomDetails() {
 
       <AddPaymentModal open={addOpen} onClose={() => setAddOpen(false)} defaultRoomId={room.id} />
       <AddTenantModal open={tenantOpen} onClose={() => setTenantOpen(false)} defaultRoomId={room.id} />
+      <ElectricityBillingModal
+        open={electricityOpen}
+        onClose={() => setElectricityOpen(false)}
+        defaultRoomId={room.id}
+        onSaved={() => force(v => v + 1)}
+      />
     </div>
   );
 }

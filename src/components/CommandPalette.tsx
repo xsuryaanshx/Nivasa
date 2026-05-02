@@ -1,7 +1,7 @@
 import { Command } from "cmdk";
 import {
   ArrowRight, Building2, CheckCircle2, Coins, CornerDownLeft, Focus, Home, Keyboard,
-  LayoutDashboard, Moon, Plus, Receipt, Search, Sun, User, UserPlus,
+  LayoutDashboard, Moon, Plus, Receipt, Search, Sun, User, UserPlus, Zap,
 } from "lucide-react";
 import { forwardRef, useEffect, useMemo, useState, type ComponentPropsWithoutRef, type ElementRef, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
@@ -89,6 +89,9 @@ export function CommandPalette({ open, onOpenChange, onToggleFocus, onShowHelp }
                   </Item>
                   <Item value="add tenant new" onSelect={() => { close(); window.dispatchEvent(new CustomEvent("estate:add-tenant")); }} icon={<UserPlus className="h-4 w-4" />}>
                     Add new tenant
+                  </Item>
+                  <Item value="electricity meter reading" onSelect={() => { close(); window.dispatchEvent(new CustomEvent("estate:add-electricity")); }} icon={<Zap className="h-4 w-4" />}>
+                    Enter electricity reading
                   </Item>
                   <Item value="mark all paid" onSelect={() => { close(); toast.success("Marked latest pending as paid"); }} icon={<CheckCircle2 className="h-4 w-4" />}>
                     Mark latest as paid

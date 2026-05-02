@@ -2,6 +2,7 @@ import { Bell, Focus, PanelLeftClose, PanelLeftOpen, Search } from "lucide-react
 import { ThemeToggle } from "./ThemeToggle";
 import { CurrencySwitcher } from "./CurrencySwitcher";
 import { useFocusMode } from "./FocusModeProvider";
+import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -12,6 +13,8 @@ interface Props {
 
 export function Topbar({ collapsed, onToggle, onOpenPalette }: Props) {
   const { focus, toggle } = useFocusMode();
+  const { user } = useAuth();
+
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-background/70 backdrop-blur-xl">
       <div className="flex h-16 items-center gap-3 px-5 lg:px-8">
@@ -32,6 +35,7 @@ export function Topbar({ collapsed, onToggle, onOpenPalette }: Props) {
           <kbd className="rounded bg-background px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">⌘K</kbd>
         </button>
 
+        {/* Right section — note: no overflow-hidden here so CurrencySwitcher dropdown can escape */}
         <div className="ml-auto flex items-center gap-2">
           <button
             onClick={toggle}
@@ -51,15 +55,23 @@ export function Topbar({ collapsed, onToggle, onOpenPalette }: Props) {
               focus ? "bg-background/20 text-background/80" : "bg-secondary text-muted-foreground",
             )}>F</kbd>
           </button>
+
+          {/* CurrencySwitcher: parent has no overflow-hidden so dropdown is visible */}
           <CurrencySwitcher />
+
           <button className="relative inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground">
             <Bell className="h-4 w-4" />
             <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-status-info" />
           </button>
+
           <ThemeToggle />
+
+          {/* Dynamic user avatar — no hardcoded name */}
           <div className="ml-1 hidden h-9 items-center gap-2.5 rounded-full border border-border bg-card pl-1 pr-3.5 md:inline-flex">
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-foreground text-[10px] font-semibold text-background">JD</div>
-            <span className="text-sm font-medium">Jordan</span>
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-foreground text-[10px] font-semibold text-background">
+              {user?.initials || "U"}
+            </div>
+            <span className="text-sm font-medium">{user?.firstName || "User"}</span>
           </div>
         </div>
       </div>

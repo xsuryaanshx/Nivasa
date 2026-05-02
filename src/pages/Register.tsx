@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ArrowRight, Eye, EyeOff, Sparkles } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, Sparkles, User } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { MagneticButton } from "@/components/MagneticButton";
@@ -8,6 +8,7 @@ import { toast } from "sonner";
 export default function Register() {
   const navigate = useNavigate();
   const [show, setShow] = useState(false);
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [pwd, setPwd] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -16,7 +17,8 @@ export default function Register() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (!email || !pwd) { setError("Please fill in both fields."); return; }
+    if (!fullName.trim()) { setError("Full name is required."); return; }
+    if (!email || !pwd) { setError("Please fill in all fields."); return; }
     if (pwd.length < 6) { setError("Password must be at least 6 characters."); return; }
 
     setLoading(true);
@@ -24,11 +26,14 @@ export default function Register() {
       const api = (window as any).estateApi;
       if (!api) throw new Error("API not loaded");
 
-      const { data, error } = await api.auth.signUp(email, pwd);
+      const { data, error } = await api.auth.signUp(email, pwd, fullName.trim());
       if (error) throw error;
 
+      // Persist the name for the session
+      localStorage.setItem("estate_user_name", fullName.trim());
+
       toast.success("Account created!", {
-        description: "Please check your email for a confirmation link.",
+        description: `Welcome, ${fullName.split(" ")[0]}! Please check your email for a confirmation link.`,
       });
       navigate("/login");
     } catch (err: any) {
@@ -63,12 +68,27 @@ export default function Register() {
         <p className="mt-1.5 text-sm text-muted-foreground">Start managing your properties with calm clarity.</p>
 
         <form onSubmit={submit} className="mt-7 space-y-4">
+          <Field label="Full Name">
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+              <input
+                type="text"
+                value={fullName}
+                onChange={e => setFullName(e.target.value)}
+                placeholder="Jordan Singh"
+                autoComplete="name"
+                className="h-11 w-full rounded-xl border border-border bg-card/70 pl-9 pr-3.5 text-sm outline-none transition-all focus:border-brand focus:shadow-[0_0_0_4px_hsl(var(--ring)/0.12)]"
+              />
+            </div>
+          </Field>
+
           <Field label="Email">
             <input
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              placeholder="jordan@example.com"
+              placeholder="you@example.com"
+              autoComplete="email"
               className="h-11 w-full rounded-xl border border-border bg-card/70 px-3.5 text-sm outline-none transition-all focus:border-brand focus:shadow-[0_0_0_4px_hsl(var(--ring)/0.12)]"
             />
           </Field>
@@ -80,6 +100,7 @@ export default function Register() {
                 value={pwd}
                 onChange={e => setPwd(e.target.value)}
                 placeholder="••••••••"
+                autoComplete="new-password"
                 className="h-11 w-full rounded-xl border border-border bg-card/70 px-3.5 pr-10 text-sm outline-none transition-all focus:border-brand focus:shadow-[0_0_0_4px_hsl(var(--ring)/0.12)]"
               />
               <button type="button" onClick={() => setShow(s => !s)}

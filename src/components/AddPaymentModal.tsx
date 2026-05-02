@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Banknote, Building2, CheckCircle2, CreditCard, FileText, Hash, Smartphone, CalendarDays } from "lucide-react";
+import {
+  Banknote, Building2, CheckCircle2, CreditCard, FileText,
+  Hash, Smartphone, CalendarDays, DoorOpen,
+} from "lucide-react";
 import { GlassModal } from "./GlassModal";
 import { MagneticButton } from "./MagneticButton";
-import { rooms, type PaymentStatus } from "@/lib/mockData";
+import { type PaymentStatus } from "@/lib/mockData";
 import { useCurrency } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -30,32 +33,63 @@ interface Props {
 
 export function AddPaymentModal({ open, onClose, defaultRoomId }: Props) {
   const { currency } = useCurrency();
-  const [roomsList, setRoomsList] = useState<any[]>([]);
-  const [loadingRooms, setLoadingRooms] = useState(false);
-  const [roomId, setRoomId]   = useState(defaultRoomId || "");
-  const [amount, setAmount]   = useState("");
-  const [method, setMethod]   = useState<Method>("Bank");
-  const [status, setStatus]   = useState<PaymentStatus>("paid");
-  const [date, setDate]       = useState<string>(() => new Date().toISOString().slice(0, 10));
-  const [note, setNote]       = useState("");
-  const [reference, setReference] = useState("");
-  const [includesElectricity, setIncludesElectricity] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [success, setSuccess] = useState(false);
 
-  const fetchRooms = async () => {
+  // Building + Room cascade
+  const [buildingsList, setBuildingsList] = useState<any[]>([]);
+  const [roomsList, setRoomsList] = useState<any[]>([]);
+  const [allRooms, setAllRooms] = useState<any[]>([]);
+  const [loadingData, setLoadingData] = useState(false);
+
+  const [buildingId, setBuildingId] = useState<string>("");
+  const [roomId, setRoomId]         = useState(defaultRoomId || "");
+
+  // Payment fields
+  const [amount, setAmount]         = useState("");
+  const [method, setMethod]         = useState<Method>("Bank");
+  const [status, setStatus]         = useState<PaymentStatus>("paid");
+  const [date, setDate]             = useState<string>(() => new Date().toISOString().slice(0, 10));
+  const [note, setNote]             = useState("");
+  const [reference, setReference]   = useState("");
+
+  const [error, setError]           = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess]       = useState(false);
+
+  // ── Fetch buildings + rooms on open ────────────────────────────────────────
+  const fetchData = async () => {
     try {
-      setLoadingRooms(true);
+      setLoadingData(true);
       const api = (window as any).estateApi;
       if (!api) return;
-      const data = await api.getRooms();
-      setRoomsList(data);
-      if (!roomId && data.length > 0) setRoomId(data[0].id);
+      const [buildings, rooms] = await Promise.all([
+        api.getBuildings(),
+        api.getRooms(),
+      ]);
+      setBuildingsList(buildings);
+      setAllRooms(rooms);
+
+      // Pre-select from defaultRoomId
+      if (defaultRoomId) {
+        const defRoom = rooms.find((r: any) => r.id === defaultRoomId);
+        if (defRoom) {
+          setBuildingId(defRoom.buildingId);
+          setRoomsList(rooms.filter((r: any) => r.buildingId === defRoom.buildingId));
+          setRoomId(defaultRoomId);
+          return;
+        }
+      }
+      // Default: first building
+      if (buildings.length > 0) {
+        const firstBId = buildings[0].id;
+        setBuildingId(firstBId);
+        const filtered = rooms.filter((r: any) => r.buildingId === firstBId);
+        setRoomsList(filtered);
+        if (filtered.length > 0) setRoomId(filtered[0].id);
+      }
     } catch (err) {
-      console.error("Failed to fetch rooms:", err);
+      console.error("Failed to fetch data:", err);
     } finally {
-      setLoadingRooms(false);
+      setLoadingData(false);
     }
   };
 
@@ -63,19 +97,38 @@ export function AddPaymentModal({ open, onClose, defaultRoomId }: Props) {
     if (open) {
       setSuccess(false);
       setError(null);
-      fetchRooms();
-      if (defaultRoomId) setRoomId(defaultRoomId);
+      setAmount(""); setNote(""); setReference("");
+      setMethod("Bank"); setStatus("paid");
+      setDate(new Date().toISOString().slice(0, 10));
+      fetchData();
     }
-  }, [open, defaultRoomId]);
+  }, [open]);
 
-  const room = roomsList.find(r => r.id === roomId) || { rent: 0, currReading: 0, prevReading: 0, ratePerUnit: 0, number: "?", buildingName: "" };
-  const electricity = Math.max(0, room.currReading - room.prevReading) * room.ratePerUnit;
-  const defaultAmountConverted = (room.rent + (includesElectricity ? electricity : 0)) * currency.rate;
-  const amountValue = Number(amount) || defaultAmountConverted;
+  // Cascade rooms when building changes
+  const handleBuildingChange = (bId: string) => {
+    setBuildingId(bId);
+    const filtered = allRooms.filter((r: any) => r.buildingId === bId);
+    setRoomsList(filtered);
+    setRoomId(filtered.length > 0 ? filtered[0].id : "");
+  };
 
+  const selectedRoom = allRooms.find(r => r.id === roomId);
+  const defaultAmount = selectedRoom ? selectedRoom.rent * currency.rate : 0;
+  const amountValue = Number(amount) || defaultAmount;
+
+  // ── Submit ─────────────────────────────────────────────────────────────────
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (!roomId) {
+      setError("Please select a room");
+      return;
+    }
+    if (!date) {
+      setError("Please select a date");
+      return;
+    }
     if (amount && (Number.isNaN(Number(amount)) || Number(amount) <= 0)) {
       setError("Amount must be a positive number");
       return;
@@ -88,20 +141,20 @@ export function AddPaymentModal({ open, onClose, defaultRoomId }: Props) {
 
       await api.addPayment({
         room_id: roomId,
-        tenant_id: room.tenant?.id || null,
+        tenant_id: selectedRoom?.tenant?.id || null,
         amount: amountValue,
         method,
         status,
         date,
-        note: note || reference || ""
+        note: [note, reference].filter(Boolean).join(" · ") || undefined,
+        reference: reference || undefined,
       });
 
       setSuccess(true);
       setTimeout(() => {
         onClose();
-        setAmount(""); setNote(""); setReference(""); setIncludesElectricity(false);
         toast.success("Payment recorded", {
-          description: `${currency.symbol}${amountValue.toLocaleString(undefined, { maximumFractionDigits: 2 })} · ${room.tenant?.name ?? "Room " + room.number} · ${status}`,
+          description: `${currency.symbol}${amountValue.toLocaleString(undefined, { maximumFractionDigits: 2 })} · Room ${selectedRoom?.number ?? "?"} · ${status}`,
         });
       }, 700);
     } catch (err: any) {
@@ -129,21 +182,48 @@ export function AddPaymentModal({ open, onClose, defaultRoomId }: Props) {
         </motion.div>
       ) : (
         <form onSubmit={submit} className="space-y-4">
-          {/* Tenant / Room */}
-          <Field label="Room">
+
+          {/* Building selector */}
+          <Field label="Building">
             <div className="relative">
               <Building2 className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
               <select
-                value={roomId} onChange={e => setRoomId(e.target.value)}
-                disabled={loadingRooms}
+                value={buildingId}
+                onChange={e => handleBuildingChange(e.target.value)}
+                disabled={loadingData}
                 className="h-11 w-full appearance-none rounded-xl border border-border bg-card/70 pl-9 pr-3 text-sm outline-none focus:border-brand focus:shadow-[0_0_0_4px_hsl(var(--ring)/0.12)]"
               >
-                {loadingRooms ? (
-                  <option>Loading rooms...</option>
+                {loadingData ? (
+                  <option>Loading…</option>
+                ) : buildingsList.length === 0 ? (
+                  <option value="">No buildings found</option>
+                ) : (
+                  buildingsList.map(b => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))
+                )}
+              </select>
+            </div>
+          </Field>
+
+          {/* Room selector — dynamically filtered */}
+          <Field label="Room">
+            <div className="relative">
+              <DoorOpen className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <select
+                value={roomId}
+                onChange={e => setRoomId(e.target.value)}
+                disabled={loadingData || roomsList.length === 0}
+                className="h-11 w-full appearance-none rounded-xl border border-border bg-card/70 pl-9 pr-3 text-sm outline-none focus:border-brand focus:shadow-[0_0_0_4px_hsl(var(--ring)/0.12)]"
+              >
+                {loadingData ? (
+                  <option>Loading rooms…</option>
+                ) : roomsList.length === 0 ? (
+                  <option value="">No rooms in this building</option>
                 ) : (
                   roomsList.map(r => (
                     <option key={r.id} value={r.id}>
-                      Room {r.number} · {r.buildingName}{r.tenant ? ` · ${r.tenant.name}` : ""}
+                      Room {r.number}{r.tenant ? ` · ${r.tenant.name}` : " · vacant"}
                     </option>
                   ))
                 )}
@@ -151,54 +231,58 @@ export function AddPaymentModal({ open, onClose, defaultRoomId }: Props) {
             </div>
           </Field>
 
-          {/* Amount with live currency symbol */}
-          <Field label="Amount" hint={`Default: ${currency.symbol}${defaultAmountConverted.toLocaleString(undefined, { maximumFractionDigits: 0 })}`} error={error ?? undefined}>
+          {/* Amount */}
+          <Field
+            label="Amount"
+            hint={defaultAmount > 0 ? `Default rent: ${currency.symbol}${defaultAmount.toLocaleString(undefined, { maximumFractionDigits: 0 })}` : undefined}
+            error={error ?? undefined}
+          >
             <div className="relative">
-              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-medium text-muted-foreground tnum">{currency.symbol}</span>
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-medium text-muted-foreground tnum">
+                {currency.symbol}
+              </span>
               <input
-                value={amount} onChange={e => setAmount(e.target.value)}
-                inputMode="decimal" placeholder={defaultAmountConverted.toFixed(0)}
+                value={amount}
+                onChange={e => setAmount(e.target.value)}
+                inputMode="decimal"
+                placeholder={defaultAmount.toFixed(0)}
                 className="h-11 w-full rounded-xl border border-border bg-card/70 pl-8 pr-16 text-base font-semibold tnum outline-none focus:border-brand focus:shadow-[0_0_0_4px_hsl(var(--ring)/0.12)]"
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md bg-secondary px-2 py-0.5 font-mono text-[10px] text-muted-foreground">
                 {currency.code}
               </span>
             </div>
-            <label className="mt-2 flex items-center gap-2 text-[11px] text-muted-foreground">
-              <input type="checkbox" checked={includesElectricity}
-                onChange={(e) => setIncludesElectricity(e.target.checked)}
-                className="h-3.5 w-3.5 accent-foreground" />
-              Include electricity ({currency.symbol}{(electricity * currency.rate).toLocaleString(undefined, { maximumFractionDigits: 2 })})
-            </label>
           </Field>
 
-          {/* Date + Method (segmented) */}
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Date">
-              <div className="relative">
-                <CalendarDays className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                <input
-                  type="date" value={date} onChange={e => setDate(e.target.value)}
-                  className="h-11 w-full rounded-xl border border-border bg-card/70 pl-9 pr-3 text-sm outline-none focus:border-brand focus:shadow-[0_0_0_4px_hsl(var(--ring)/0.12)]"
-                />
-              </div>
-            </Field>
-            <Field label="Method">
-              <div className="flex h-11 items-center gap-1 rounded-xl border border-border bg-secondary/40 p-1">
-                {methods.map(m => (
-                  <button
-                    type="button" key={m.key} onClick={() => setMethod(m.key)}
-                    className={cn(
-                      "inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors",
-                      method === m.key ? "bg-card shadow-soft text-foreground" : "text-muted-foreground hover:text-foreground",
-                    )}
-                  >
-                    <m.icon className="h-3.5 w-3.5" /> {m.label}
-                  </button>
-                ))}
-              </div>
-            </Field>
-          </div>
+          {/* Start date */}
+          <Field label="Start Date">
+            <div className="relative">
+              <CalendarDays className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <input
+                type="date"
+                value={date}
+                onChange={e => setDate(e.target.value)}
+                className="h-11 w-full rounded-xl border border-border bg-card/70 pl-9 pr-3 text-sm outline-none focus:border-brand focus:shadow-[0_0_0_4px_hsl(var(--ring)/0.12)]"
+              />
+            </div>
+          </Field>
+
+          {/* Payment Method */}
+          <Field label="Payment Method">
+            <div className="flex h-11 items-center gap-1 rounded-xl border border-border bg-secondary/40 p-1">
+              {methods.map(m => (
+                <button
+                  type="button" key={m.key} onClick={() => setMethod(m.key)}
+                  className={cn(
+                    "inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors",
+                    method === m.key ? "bg-card shadow-soft text-foreground" : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  <m.icon className="h-3.5 w-3.5" /> {m.label}
+                </button>
+              ))}
+            </div>
+          </Field>
 
           {/* Status */}
           <Field label="Status">
@@ -219,23 +303,25 @@ export function AddPaymentModal({ open, onClose, defaultRoomId }: Props) {
             </div>
           </Field>
 
-          {/* Reference + note */}
+          {/* Reference + Note */}
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Reference" optional>
+            <Field label="Reference Number" optional>
               <div className="relative">
                 <Hash className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                 <input
-                  value={reference} onChange={(e) => setReference(e.target.value)}
+                  value={reference}
+                  onChange={(e) => setReference(e.target.value)}
                   placeholder="TXN-2025-0421"
                   className="h-11 w-full rounded-xl border border-border bg-card/70 pl-9 pr-3 text-sm outline-none focus:border-brand focus:shadow-[0_0_0_4px_hsl(var(--ring)/0.12)]"
                 />
               </div>
             </Field>
-            <Field label="Note" optional>
+            <Field label="Notes" optional>
               <div className="relative">
                 <FileText className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                 <input
-                  value={note} onChange={e => setNote(e.target.value)}
+                  value={note}
+                  onChange={e => setNote(e.target.value)}
                   placeholder="e.g. partial payment"
                   className="h-11 w-full rounded-xl border border-border bg-card/70 pl-9 pr-3 text-sm outline-none focus:border-brand focus:shadow-[0_0_0_4px_hsl(var(--ring)/0.12)]"
                 />
@@ -243,7 +329,7 @@ export function AddPaymentModal({ open, onClose, defaultRoomId }: Props) {
             </Field>
           </div>
 
-          {/* Summary line */}
+          {/* Summary */}
           <div className="flex items-center justify-between rounded-xl bg-secondary/50 px-3.5 py-2.5">
             <span className="text-xs text-muted-foreground">Total</span>
             <span className="text-lg font-semibold tnum">
@@ -251,15 +337,15 @@ export function AddPaymentModal({ open, onClose, defaultRoomId }: Props) {
             </span>
           </div>
 
+          {/* Buttons */}
           <div className="flex gap-2 pt-1">
             <button
-              type="button" onClick={onClose}
-              disabled={submitting}
+              type="button" onClick={onClose} disabled={submitting}
               className="h-11 flex-1 rounded-xl border border-border bg-card/60 text-sm font-medium transition-colors hover:bg-card disabled:opacity-50"
             >
               Cancel
             </button>
-            <MagneticButton type="submit" className="flex-1" disabled={submitting}>
+            <MagneticButton type="submit" className="flex-1" disabled={submitting || !roomId}>
               {submitting ? "Recording..." : "Record payment"}
             </MagneticButton>
           </div>
@@ -269,7 +355,11 @@ export function AddPaymentModal({ open, onClose, defaultRoomId }: Props) {
   );
 }
 
-function Field({ label, hint, optional, error, children }: { label: string; hint?: string; optional?: boolean; error?: string; children: React.ReactNode }) {
+function Field({
+  label, hint, optional, error, children,
+}: {
+  label: string; hint?: string; optional?: boolean; error?: string; children: React.ReactNode;
+}) {
   return (
     <label className="block">
       <div className="mb-1.5 flex items-center justify-between">

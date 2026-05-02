@@ -7,8 +7,17 @@ import { RevenueChart } from "@/components/RevenueChart";
 import { PaymentTimeline } from "@/components/PaymentTimeline";
 import { MagneticButton } from "@/components/MagneticButton";
 import { AddPaymentModal } from "@/components/AddPaymentModal";
+import { useAuth } from "@/hooks/useAuth";
+
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
+}
 
 export default function Dashboard() {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState({
     stats: { totalBuildings: 0, totalRooms: 0, occupied: 0, pending: 0, monthlyRevenue: 0 },
@@ -49,7 +58,7 @@ export default function Dashboard() {
   return (
     <div>
       <PageHeader
-        title="Good morning, Jordan"
+        title={`${getGreeting()}, ${user?.firstName || "there"}`}
         subtitle="Here's what's happening across your properties today."
         action={
           <MagneticButton onClick={() => setAddOpen(true)}>
@@ -87,12 +96,12 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <AddPaymentModal 
-        open={addOpen} 
+      <AddPaymentModal
+        open={addOpen}
         onClose={() => {
           setAddOpen(false);
-          fetchData(); // Refresh data after adding payment
-        }} 
+          fetchData();
+        }}
       />
     </div>
   );

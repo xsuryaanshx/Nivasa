@@ -9,12 +9,15 @@ import { CurrencyProvider } from "./CurrencyProvider";
 import { FocusModeProvider, useFocusMode } from "./FocusModeProvider";
 import { AddTenantModal } from "./AddTenantModal";
 import { ShortcutsHelp } from "./ShortcutsHelp";
+import { MobileNav } from "./MobileNav";
+import { ElectricityBillingModal } from "./ElectricityBillingModal";
 
 function AppShell() {
   const [collapsed, setCollapsed] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [tenantOpen, setTenantOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [electricityOpen, setElectricityOpen] = useState(false);
   const location = useLocation();
   const { focus, toggle } = useFocusMode();
 
@@ -23,6 +26,12 @@ function AppShell() {
     const h = () => setTenantOpen(true);
     window.addEventListener("estate:add-tenant", h);
     return () => window.removeEventListener("estate:add-tenant", h);
+  }, []);
+
+  useEffect(() => {
+    const h = () => setElectricityOpen(true);
+    window.addEventListener("estate:add-electricity", h);
+    return () => window.removeEventListener("estate:add-electricity", h);
   }, []);
 
   // "?" opens shortcuts help.
@@ -67,7 +76,7 @@ function AppShell() {
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.32, ease: [0.2, 0.7, 0.2, 1] }}
-              className="overflow-hidden"
+              style={{ overflow: "visible" }}
             >
               <Topbar
                 collapsed={collapsed}
@@ -78,7 +87,7 @@ function AppShell() {
           )}
         </AnimatePresence>
 
-        <main className="relative flex-1 px-5 py-8 lg:px-10">
+        <main className="relative flex-1 px-5 py-8 pb-24 lg:px-10 lg:pb-8">
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}
@@ -102,6 +111,7 @@ function AppShell() {
       />
 
       <AddTenantModal open={tenantOpen} onClose={() => setTenantOpen(false)} />
+      <ElectricityBillingModal open={electricityOpen} onClose={() => setElectricityOpen(false)} />
       <ShortcutsHelp open={helpOpen} onClose={() => setHelpOpen(false)} />
 
       {/* Floating help button — bottom right */}
@@ -132,6 +142,8 @@ function AppShell() {
           </motion.button>
         )}
       </AnimatePresence>
+
+      <MobileNav />
     </div>
   );
 }

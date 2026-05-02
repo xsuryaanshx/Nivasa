@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { Building2, MoreHorizontal, Plus, Eye, Edit, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
@@ -16,6 +16,7 @@ export default function Buildings() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingBuilding, setEditingBuilding] = useState<any>(null);
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+  const activeMenuRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
 
   const fetchBuildings = async () => {
@@ -35,10 +36,15 @@ export default function Buildings() {
   useEffect(() => {
     fetchBuildings();
 
-    const handleClickOutside = () => setActiveMenuId(null);
-    window.addEventListener('click', handleClickOutside);
-    return () => window.removeEventListener('click', handleClickOutside);
-  }, []);
+    const handleClickOutside = (e: MouseEvent) => {
+      if (activeMenuRef.current && !activeMenuRef.current.contains(e.target as Node)) {
+        setActiveMenuId(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [activeMenuId]);
 
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this building? All associated units will be removed.")) return;
@@ -104,13 +110,17 @@ export default function Buildings() {
                   <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-brand text-white shadow-glow">
                     <Building2 className="h-5 w-5" />
                   </div>
-                  <div className="relative">
+                  <div 
+                    className="relative"
+                    ref={activeMenuId === b.id ? activeMenuRef : null}
+                  >
                     <button 
                       onClick={(e) => {
                         e.stopPropagation();
                         setActiveMenuId(activeMenuId === b.id ? null : b.id);
                       }}
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:bg-secondary"
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-all hover:bg-secondary"
+                      aria-label="Toggle menu"
                     >
                       <MoreHorizontal className="h-4 w-4" />
                     </button>
@@ -122,7 +132,6 @@ export default function Buildings() {
                           animate={{ opacity: 1, scale: 1, y: 0 }}
                           exit={{ opacity: 0, scale: 0.95, y: 10 }}
                           className="absolute right-0 top-10 z-50 w-48 overflow-hidden rounded-xl border border-border bg-card p-1 shadow-xl"
-                          onClick={(e) => e.stopPropagation()}
                         >
                           <button
                             onClick={() => navigate(`/app/buildings/${b.id}`)}
@@ -161,7 +170,7 @@ export default function Buildings() {
                 </div>
 
                 <div className="mt-5 grid grid-cols-3 gap-3">
-                  <Metric label="Units"    value={b.rooms.toString()} />
+                  <Metric label="Rooms"    value={b.rooms.toString()} />
                   <Metric label="Occupied" value={`${b.occupied}/${b.rooms}`} />
                   <Metric label="Revenue"  value={<Money value={b.monthlyRevenue} compact />} />
                 </div>

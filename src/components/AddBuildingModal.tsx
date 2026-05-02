@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Building2, CheckCircle2, MapPin, Plus } from "lucide-react";
+import { Building2, CheckCircle2, DoorOpen, MapPin, Plus } from "lucide-react";
 import { GlassModal } from "./GlassModal";
 import { MagneticButton } from "./MagneticButton";
 import { toast } from "sonner";
@@ -15,14 +15,25 @@ interface Props {
 export function AddBuildingModal({ open, onClose, onSuccess }: Props) {
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
+  const [totalRooms, setTotalRooms] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const handleClose = () => {
+    onClose();
+    setName(""); setAddress(""); setTotalRooms(""); setSuccess(false); setError(null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !address.trim()) {
-      setError("Please fill in all fields");
+      setError("Building name and address are required");
+      return;
+    }
+    const rooms = parseInt(totalRooms, 10);
+    if (totalRooms !== "" && (isNaN(rooms) || rooms < 0)) {
+      setError("Total rooms must be a positive integer");
       return;
     }
 
@@ -35,6 +46,7 @@ export function AddBuildingModal({ open, onClose, onSuccess }: Props) {
       await api.addBuilding({
         name: name.trim(),
         address: address.trim(),
+        total_rooms: totalRooms !== "" ? rooms : undefined,
       });
 
       setSuccess(true);
@@ -43,10 +55,7 @@ export function AddBuildingModal({ open, onClose, onSuccess }: Props) {
       });
 
       setTimeout(() => {
-        onClose();
-        setName("");
-        setAddress("");
-        setSuccess(false);
+        handleClose();
         onSuccess?.();
       }, 1500);
     } catch (err: any) {
@@ -60,7 +69,7 @@ export function AddBuildingModal({ open, onClose, onSuccess }: Props) {
   return (
     <GlassModal
       open={open}
-      onClose={onClose}
+      onClose={handleClose}
       title="Add new building"
       description="Expand your portfolio with a new property"
     >
@@ -81,9 +90,10 @@ export function AddBuildingModal({ open, onClose, onSuccess }: Props) {
       ) : (
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-4">
+            {/* Building Name */}
             <div className="space-y-1.5">
               <label htmlFor="building-name" className="text-xs font-medium text-muted-foreground">
-                Building Name
+                Building Name <span className="text-destructive">*</span>
               </label>
               <div className="relative">
                 <Building2 className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -98,9 +108,10 @@ export function AddBuildingModal({ open, onClose, onSuccess }: Props) {
               </div>
             </div>
 
+            {/* Address */}
             <div className="space-y-1.5">
               <label htmlFor="building-address" className="text-xs font-medium text-muted-foreground">
-                Address
+                Address <span className="text-destructive">*</span>
               </label>
               <div className="relative">
                 <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -110,6 +121,28 @@ export function AddBuildingModal({ open, onClose, onSuccess }: Props) {
                   placeholder="e.g. 12 Linden Ave, North Quarter"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
+                  className="h-11 w-full rounded-xl border border-border bg-secondary/30 pl-10 pr-4 text-sm outline-none transition-all focus:border-brand focus:ring-4 focus:ring-brand/10"
+                />
+              </div>
+            </div>
+
+            {/* Total Rooms */}
+            <div className="space-y-1.5">
+              <label htmlFor="building-total-rooms" className="text-xs font-medium text-muted-foreground">
+                Total Rooms{" "}
+                <span className="text-muted-foreground/60 text-[10px]">(optional)</span>
+              </label>
+              <div className="relative">
+                <DoorOpen className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  id="building-total-rooms"
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  step={1}
+                  placeholder="e.g. 24"
+                  value={totalRooms}
+                  onChange={(e) => setTotalRooms(e.target.value)}
                   className="h-11 w-full rounded-xl border border-border bg-secondary/30 pl-10 pr-4 text-sm outline-none transition-all focus:border-brand focus:ring-4 focus:ring-brand/10"
                 />
               </div>
@@ -125,7 +158,7 @@ export function AddBuildingModal({ open, onClose, onSuccess }: Props) {
           <div className="flex gap-3 pt-2">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="h-11 flex-1 rounded-xl border border-border bg-card text-sm font-medium transition-colors hover:bg-secondary/50"
             >
               Cancel

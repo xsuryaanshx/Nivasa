@@ -24,6 +24,11 @@ export default function Login() {
       
       const { data, error } = await api.auth.signIn(user, pwd);
       if (error) throw error;
+
+      // Persist session user name so Topbar reads it dynamically
+      if (data?.user?.fullName) {
+        localStorage.setItem("estate_user_name", data.user.fullName);
+      }
       
       navigate("/app");
     } catch (err: any) {
