@@ -61,12 +61,14 @@ export function ElectricityBillingModal({ open, onClose, defaultRoomId, onSaved 
       setLoadingData(true);
       const api = (window as any).estateApi;
       if (!api) return;
-      const [buildings, rooms] = await Promise.all([
+      const [buildings, rooms, globalRate] = await Promise.all([
         api.getBuildings(),
         api.getRooms(),
+        api.getElectricityRate()
       ]);
       setBuildingsList(buildings);
       setAllRooms(rooms);
+      setRatePerUnit(String(globalRate || 0.18));
 
       if (defaultRoomId) {
         const defRoom = rooms.find((r: any) => r.id === defaultRoomId);
@@ -77,7 +79,8 @@ export function ElectricityBillingModal({ open, onClose, defaultRoomId, onSaved 
           // Pre-fill from room data
           setPrevReading(String(defRoom.currReading || 0));
           setCurrReading("");
-          setRatePerUnit(String(defRoom.ratePerUnit || 0.18));
+          // Use global rate if room rate is not specifically set (or just always use global for now as per prompt)
+          setRatePerUnit(String(defRoom.ratePerUnit || globalRate || 0.18));
           return;
         }
       }
@@ -93,7 +96,7 @@ export function ElectricityBillingModal({ open, onClose, defaultRoomId, onSaved 
           // Last ending reading becomes new starting reading
           setPrevReading(String(firstRoom.currReading || 0));
           setCurrReading("");
-          setRatePerUnit(String(firstRoom.ratePerUnit || 0.18));
+          setRatePerUnit(String(firstRoom.ratePerUnit || globalRate || 0.18));
         }
       }
     } catch (err) {

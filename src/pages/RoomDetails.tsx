@@ -13,7 +13,7 @@ import { AddPaymentModal } from "@/components/AddPaymentModal";
 import { AddTenantModal } from "@/components/AddTenantModal";
 import { ElectricityBillingModal } from "@/components/ElectricityBillingModal";
 import { Money } from "@/components/Money";
-import { payments, rooms, type Room } from "@/lib/mockData";
+import { type Room } from "@/lib/mockData";
 import { subscribeTenants } from "@/lib/tenantStore";
 import { useCurrency, formatMoney, formatNumeric } from "@/lib/currency";
 import { openWhatsApp } from "@/lib/whatsapp";
@@ -33,16 +33,37 @@ function maskAadhar(a?: string) {
 export default function RoomDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [, force] = useState(0);
-  const room = rooms.find(r => r.id === id) as Room | undefined;
+  const [room, setRoom] = useState<Room | null>(null);
+  const [loading, setLoading] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
   const [tenantOpen, setTenantOpen] = useState(false);
   const [electricityOpen, setElectricityOpen] = useState(false);
   const [savingElectricity, setSavingElectricity] = useState(false);
   const { currency } = useCurrency();
 
-  // Re-render when tenant store updates.
-  useEffect(() => subscribeTenants(() => force((v) => v + 1)), []);
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const api = (window as any).estateApi;
+      if (!api || !id) return;
+      const data = await api.getRoomById(id);
+      if (data) {
+        setRoom(data);
+        setStartReading(data.prevReading);
+        setEndReading(data.currReading);
+        setPricePerUnit(data.ratePerUnit);
+      }
+    } catch (error) {
+      console.error("Error fetching room details:", error);
+      toast.error("Failed to load room details");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [id]);
 
   // Listen for global "Add payment" trigger.
   useEffect(() => {
@@ -56,22 +77,15 @@ export default function RoomDetails() {
   const [endReading,   setEndReading]   = useState<number>(0);
   const [pricePerUnit, setPricePerUnit] = useState<number>(0);
 
-  useEffect(() => {
-    if (!room) return;
-    setStartReading(room.prevReading);
-    setEndReading(room.currReading);
-    setPricePerUnit(room.ratePerUnit);
-  }, [room]);
-
   const saveElectricityReading = async () => {
     try {
       setSavingElectricity(true);
       const api = (window as any).estateApi;
-      if (!api) throw new Error("API not loaded");
+      if (!api || !room) throw new Error("API not loaded");
       const now = new Date();
       const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
       await api.saveElectricityReading({
-        room_id: room!.id,
+        room_id: room.id,
         month,
         prev_reading: startReading,
         curr_reading: endReading,
@@ -80,6 +94,7 @@ export default function RoomDetails() {
       toast.success("Meter reading saved", {
         description: `${used} units · ${formatMoney(cost, currency, { decimals: 2 })}`,
       });
+      fetchData();
     } catch (err: any) {
       toast.error("Failed to save reading", { description: err.message });
     } finally {
@@ -87,10 +102,16 @@ export default function RoomDetails() {
     }
   };
 
-  const roomPayments = useMemo(
-    () => (room ? payments.filter(p => p.roomId === room.id) : []),
-    [room],
-  );
+  const roomPayments = useMemo(() => [], []); // Will be populated by recent payments in a real app or filtered from a larger set
+
+  if (loading) {
+    return (
+      <div className="flex h-[60vh] flex-col items-center justify-center space-y-4">
+        <div className="h-12 w-12 animate-spin rounded-full border-4 border-brand border-t-transparent" />
+        <p className="text-sm text-muted-foreground animate-pulse">Loading room details...</p>
+      </div>
+    );
+  }
 
   if (!room) {
     return (

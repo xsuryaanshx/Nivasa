@@ -13,10 +13,10 @@ export interface CurrencyMeta {
 
 export const CURRENCIES: Record<CurrencyCode, CurrencyMeta> = {
   USD: { code: "USD", symbol: "$",  label: "US Dollar",        rate: 1.00,  locale: "en-US" },
-  EUR: { code: "EUR", symbol: "€",  label: "Euro",             rate: 0.92,  locale: "de-DE" },
-  GBP: { code: "GBP", symbol: "£",  label: "British Pound",    rate: 0.79,  locale: "en-GB" },
-  INR: { code: "INR", symbol: "₹",  label: "Indian Rupee",     rate: 83.2,  locale: "en-IN" },
-  AED: { code: "AED", symbol: "د.إ", label: "UAE Dirham",      rate: 3.67,  locale: "en-AE" },
+  EUR: { code: "EUR", symbol: "€",  label: "Euro",             rate: 1.00,  locale: "de-DE" },
+  GBP: { code: "GBP", symbol: "£",  label: "British Pound",    rate: 1.00,  locale: "en-GB" },
+  INR: { code: "INR", symbol: "₹",  label: "Indian Rupee",     rate: 1.00,  locale: "en-IN" },
+  AED: { code: "AED", symbol: "د.إ", label: "UAE Dirham",      rate: 1.00,  locale: "en-AE" },
 };
 
 export interface CurrencyContextValue {
@@ -32,8 +32,8 @@ export function useCurrency() {
   return ctx;
 }
 
-export function formatMoney(amountUsd: number, currency: CurrencyMeta, opts: { compact?: boolean; decimals?: number } = {}) {
-  const value = amountUsd * currency.rate;
+export function formatMoney(amount: number, currency: CurrencyMeta, opts: { compact?: boolean; decimals?: number } = {}) {
+  const value = amount; // Use clean number directly
   const decimals = opts.decimals ?? (value >= 1000 ? 0 : 2);
   if (opts.compact && Math.abs(value) >= 1000) {
     const k = value / 1000;
@@ -46,8 +46,8 @@ export function formatMoney(amountUsd: number, currency: CurrencyMeta, opts: { c
 }
 
 /** Plain numeric (no symbol) — useful for invoice text bodies. */
-export function formatNumeric(amountUsd: number, currency: CurrencyMeta, decimals = 2) {
-  const value = amountUsd * currency.rate;
+export function formatNumeric(amount: number, currency: CurrencyMeta, decimals = 2) {
+  const value = amount;
   return new Intl.NumberFormat(currency.locale, {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,

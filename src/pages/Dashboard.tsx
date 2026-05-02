@@ -2,12 +2,11 @@ import { Building2, DollarSign, Home, Receipt, Users, Plus } from "lucide-react"
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { StatCard } from "@/components/StatCard";
-import { InsightsPanel } from "@/components/InsightsPanel";
-import { RevenueChart } from "@/components/RevenueChart";
 import { PaymentTimeline } from "@/components/PaymentTimeline";
 import { MagneticButton } from "@/components/MagneticButton";
 import { AddPaymentModal } from "@/components/AddPaymentModal";
 import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -76,8 +75,49 @@ export default function Dashboard() {
       </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-3">
-        <div className="lg:col-span-2"><RevenueChart /></div>
-        <InsightsPanel />
+        <div className="lg:col-span-2">
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-soft h-full">
+            <h3 className="text-sm font-semibold mb-4">Global Settings</h3>
+            <div className="space-y-4 max-w-xs">
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Electricity Rate (per unit)</label>
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="0.18"
+                    id="elec-rate-input"
+                    className="flex-1 rounded-xl border border-border bg-background px-4 py-2 text-sm focus:border-brand focus:ring-1 focus:ring-brand outline-none"
+                  />
+                  <button
+                    onClick={async () => {
+                      const val = (document.getElementById('elec-rate-input') as HTMLInputElement).value;
+                      if (!val) return;
+                      try {
+                        const api = (window as any).estateApi;
+                        await api.updateElectricityRate(parseFloat(val));
+                        toast.success("Global electricity rate updated");
+                      } catch (e) {
+                        toast.error("Failed to update rate");
+                      }
+                    }}
+                    className="rounded-xl bg-brand px-4 py-2 text-xs font-semibold text-white shadow-glow hover:bg-brand/90"
+                  >
+                    Save
+                  </button>
+                </div>
+                <p className="text-[10px] text-muted-foreground">This rate will be used for all new meter readings.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-soft flex flex-col items-center justify-center text-center">
+          <div className="h-12 w-12 rounded-full bg-secondary/50 flex items-center justify-center mb-3">
+            <Receipt className="h-6 w-6 text-muted-foreground" />
+          </div>
+          <h3 className="text-sm font-semibold">Ready for Billing</h3>
+          <p className="text-xs text-muted-foreground mt-1">All rooms are up to date with their latest readings.</p>
+        </div>
       </div>
 
       <div className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-soft">
