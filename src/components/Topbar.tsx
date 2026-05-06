@@ -16,7 +16,7 @@ export function Topbar({ collapsed, onToggle, onOpenPalette }: Props) {
   const { user } = useAuth();
 
   return (
-    <header className="sticky top-0 z-30 border-b border-border bg-background/70 backdrop-blur-xl">
+    <header className="sticky top-0 z-30 border-b border-border bg-background/70 backdrop-blur-xl pt-safe">
       <div className="flex h-16 items-center gap-3 px-5 lg:px-8">
         <button
           onClick={onToggle}

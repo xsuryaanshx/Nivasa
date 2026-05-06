@@ -2,9 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Estate — Premium Rental Management Design System
-   All colors HSL. Tokens drive every surface, shadow, and gradient.
-*/
+/* Estate — Premium Rental Management Design System */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
@@ -12,37 +10,26 @@
   :root {
     --background: 210 20% 98%;
     --foreground: 222 47% 11%;
-
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
-
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
-
     --primary: 222 47% 11%;
     --primary-foreground: 210 20% 98%;
-
     --accent-blue: 221 83% 53%;
     --accent-blue-foreground: 210 20% 98%;
-
     --secondary: 210 20% 96%;
     --secondary-foreground: 222 47% 11%;
-
     --muted: 210 20% 96%;
     --muted-foreground: 215 16% 47%;
-
     --accent: 210 20% 96%;
     --accent-foreground: 222 47% 11%;
-
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 20% 98%;
-
     --border: 214 32% 91%;
     --input: 214 32% 91%;
     --ring: 221 83% 53%;
-
     --radius: 1rem;
-    
     --shadow-soft: 0 10px 30px -10px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
     --shadow-float: 0 20px 40px -15px rgba(0, 0, 0, 0.1);
   }
@@ -50,35 +37,25 @@
   .dark {
     --background: 222 47% 4%;
     --foreground: 210 20% 98%;
-
     --card: 222 47% 6%;
     --card-foreground: 210 20% 98%;
-
     --popover: 222 47% 6%;
     --popover-foreground: 210 20% 98%;
-
     --primary: 210 20% 98%;
     --primary-foreground: 222 47% 4%;
-
     --accent-blue: 217 91% 60%;
     --accent-blue-foreground: 222 47% 4%;
-
     --secondary: 222 47% 10%;
     --secondary-foreground: 210 20% 98%;
-
     --muted: 222 47% 10%;
     --muted-foreground: 215 20% 65%;
-
     --accent: 222 47% 10%;
     --accent-foreground: 210 20% 98%;
-
     --destructive: 0 62% 30%;
     --destructive-foreground: 210 20% 98%;
-
     --border: 222 47% 12%;
     --input: 222 47% 12%;
     --ring: 217 91% 60%;
-    
     --shadow-soft: 0 10px 30px -10px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
     --shadow-float: 0 20px 40px -15px rgba(0, 0, 0, 0.6);
   }
@@ -90,55 +67,65 @@
   }
   body {
     @apply bg-background text-foreground transition-colors duration-500 font-sans antialiased selection:bg-accent-blue/20 selection:text-accent-blue;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
   }
 }
 
 @layer components {
-  /* Interactive Menu (Dock) Styles */
   .menu {
-    @apply flex items-center justify-between px-3 py-2 rounded-2xl glass-strong max-w-[92vw] mx-auto;
+    @apply flex items-center justify-around px-2 py-3 rounded-[24px] glass-strong w-[94vw] mx-auto;
     --component-active-color: hsl(var(--accent-blue));
-    background: color-mix(in srgb, hsl(var(--card)) 80%, transparent);
-    backdrop-filter: blur(20px);
-    border: 1px solid color-mix(in srgb, hsl(var(--foreground)) 10%, transparent);
+    background: color-mix(in srgb, hsl(var(--card)) 90%, transparent);
+    backdrop-filter: blur(28px);
+    border: 1px solid color-mix(in srgb, hsl(var(--foreground)) 12%, transparent);
     box-shadow: var(--shadow-float);
   }
 
   .menu__item {
-    @apply relative flex flex-col items-center justify-center transition-all duration-300 px-2 cursor-pointer border-none bg-transparent outline-none py-1;
-    min-width: 60px;
+    @apply relative flex flex-col items-center justify-center transition-all duration-300 cursor-pointer border-none bg-transparent outline-none pt-1 pb-4;
+    flex: 1;
+    min-width: 0;
   }
 
   .menu__icon {
-    @apply transition-all duration-300 text-muted-foreground z-10;
+    @apply transition-all duration-500 text-muted-foreground/60 z-10;
   }
 
   .menu__item.active .menu__icon {
-    @apply text-[var(--component-active-color)] transform -translate-y-1;
+    @apply text-[var(--component-active-color)] transform -translate-y-3 scale-110;
   }
 
   .menu__text {
-    @apply absolute bottom-0 text-[9px] font-bold uppercase tracking-widest opacity-0 transition-all duration-300 text-[var(--component-active-color)];
+    @apply absolute bottom-[2px] text-[8px] font-black uppercase tracking-[0.2em] opacity-0 transition-all duration-500 text-[var(--component-active-color)];
     pointer-events: none;
-    transform: translateY(4px);
+    transform: translateY(10px);
   }
 
   .menu__item.active .menu__text {
-    @apply opacity-100 transform translate-y-[-2px];
+    @apply opacity-100 transform translate-y-0;
   }
 
   .menu__item::after {
     content: '';
-    @apply absolute bottom-[-4px] h-[3px] bg-[var(--component-active-color)] rounded-full transition-all duration-500;
+    @apply absolute bottom-[0px] h-[3px] bg-[var(--component-active-color)] rounded-full transition-all duration-700;
     width: 0;
-    box-shadow: 0 0 10px var(--component-active-color);
+    box-shadow: 0 0 15px var(--component-active-color);
   }
 
   .menu__item.active::after {
-    width: var(--lineWidth, 0);
+    width: 14px;
   }
 
   .glass-strong {
-    @apply backdrop-blur-2xl bg-white/40 dark:bg-black/40 border border-white/20 dark:border-white/10;
+    @apply backdrop-blur-3xl bg-white/70 dark:bg-black/70 border border-white/20 dark:border-white/10;
   }
+}
+
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
 }

@@ -21,6 +21,21 @@ const INJECTED_STYLES = `
       background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><filter id="noiseFilter"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23noiseFilter)"/></svg>');
   }
 
+  .perspective-container {
+      perspective: 1500px;
+  }
+  @media (max-width: 768px) {
+      .perspective-container {
+          perspective: 1000px;
+      }
+      .mockup-container {
+          transform: scale(0.7) translateY(50px) !important;
+      }
+      .hero-text-wrapper {
+          transform: scale(0.8) translateY(-100px) !important;
+      }
+  }
+
   .bg-grid-theme {
       background-size: 60px 60px;
       background-image: 
@@ -319,10 +334,9 @@ export function CinematicHero({
     <div
       ref={containerRef}
       className={cn(
-        "relative w-screen h-screen overflow-hidden flex items-center justify-center bg-background text-foreground font-sans antialiased transition-colors duration-1000",
+        "relative w-screen h-screen overflow-hidden flex items-center justify-center bg-background text-foreground font-sans antialiased transition-colors duration-1000 perspective-container",
         className
       )}
-      style={{ perspective: "1500px" }}
       {...props}
     >
       <style dangerouslySetInnerHTML={{ __html: INJECTED_STYLES }} />

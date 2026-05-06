@@ -101,7 +101,7 @@ const InteractiveMenu: React.FC<InteractiveMenuProps> = ({
             style={{ '--lineWidth': '0px' } as React.CSSProperties} 
           >
             <div className="menu__icon">
-              <IconComponent className="icon w-5 h-5" />
+              <IconComponent className="icon w-6 h-6" />
             </div>
             <strong
               className={`menu__text ${isActive ? 'active' : ''}`}

@@ -51,7 +51,7 @@ function AppShell() {
   }, []);
 
   return (
-    <div className="flex min-h-screen w-full bg-background">
+    <div className="flex min-h-screen w-full bg-background pt-safe">
       <AnimatePresence initial={false}>
         {!focus && (
           <motion.div
