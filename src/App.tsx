@@ -43,9 +43,9 @@ const App = () => {
             ) : (
               <motion.div
                 key="app"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
                 className="h-screen w-full overflow-hidden"
               >
                 <BrowserRouter>
