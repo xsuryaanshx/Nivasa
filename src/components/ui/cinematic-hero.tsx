@@ -67,19 +67,22 @@ const INJECTED_STYLES = `
 
   /* Deep Physical Card with Dynamic Mouse Lighting */
   .premium-depth-card {
-      background: linear-gradient(145deg, #162C6D 0%, #0A101D 100%);
-      box-shadow: 
-          0 40px 100px -20px rgba(0, 0, 0, 0.9),
-          0 20px 40px -20px rgba(0, 0, 0, 0.8),
-          inset 0 1px 2px rgba(255, 255, 255, 0.2),
-          inset 0 -2px 4px rgba(0, 0, 0, 0.8);
-      border: 1px solid rgba(255, 255, 255, 0.04);
-      position: relative;
+    background: linear-gradient(145deg, 
+      color-mix(in srgb, hsl(var(--accent-blue)) 20%, hsl(var(--background))), 
+      hsl(var(--background))
+    );
+    box-shadow: 
+        0 40px 100px -20px color-mix(in srgb, black 30%, transparent),
+        0 20px 40px -20px color-mix(in srgb, black 20%, transparent),
+        inset 0 1px 2px color-mix(in srgb, white 20%, transparent),
+        inset 0 -2px 4px color-mix(in srgb, black 20%, transparent);
+    border: 1px solid color-mix(in srgb, hsl(var(--foreground)) 5%, transparent);
+    position: relative;
   }
 
   .card-sheen {
       position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 50;
-      background: radial-gradient(800px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255,255,255,0.06) 0%, transparent 40%);
+      background: radial-gradient(800px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), color-mix(in srgb, hsl(var(--foreground)) 5%, transparent) 0%, transparent 40%);
       mix-blend-mode: screen; transition: opacity 0.3s ease;
   }
 
@@ -89,42 +92,42 @@ const INJECTED_STYLES = `
       box-shadow: 
           inset 0 0 0 2px #52525B, 
           inset 0 0 0 7px #000, 
-          0 40px 80px -15px rgba(0,0,0,0.9),
-          0 15px 25px -5px rgba(0,0,0,0.7);
+          0 40px 80px -15px rgba(0,0,0,0.4),
+          0 15px 25px -5px rgba(0,0,0,0.2);
       transform-style: preserve-3d;
   }
 
   .hardware-btn {
       background: linear-gradient(90deg, #404040 0%, #171717 100%);
       box-shadow: 
-          -2px 0 5px rgba(0,0,0,0.8),
-          inset -1px 0 1px rgba(255,255,255,0.15),
-          inset 1px 0 2px rgba(0,0,0,0.8);
-      border-left: 1px solid rgba(255,255,255,0.05);
+          -2px 0 5px rgba(0,0,0,0.3),
+          inset -1px 0 1px rgba(255,255,255,0.1),
+          inset 1px 0 2px rgba(0,0,0,0.3);
+      border-left: 1px solid rgba(255,255,255,0.02);
   }
   
   .screen-glare {
-      background: linear-gradient(110deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 45%);
+      background: linear-gradient(110deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 45%);
   }
 
   .widget-depth {
-      background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%);
+      background: linear-gradient(180deg, color-mix(in srgb, hsl(var(--foreground)) 4%, transparent) 0%, color-mix(in srgb, hsl(var(--foreground)) 1%, transparent) 100%);
       box-shadow: 
-          0 10px 20px rgba(0,0,0,0.3),
+          0 10px 20px rgba(0,0,0,0.1),
           inset 0 1px 1px rgba(255,255,255,0.05),
-          inset 0 -1px 1px rgba(0,0,0,0.5);
-      border: 1px solid rgba(255,255,255,0.03);
+          inset 0 -1px 1px rgba(0,0,0,0.2);
+      border: 1px solid color-mix(in srgb, hsl(var(--foreground)) 3%, transparent);
   }
 
   .floating-ui-badge {
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.01) 100%);
+      background: linear-gradient(135deg, color-mix(in srgb, hsl(var(--background)) 80%, transparent) 0%, color-mix(in srgb, hsl(var(--background)) 40%, transparent) 100%);
       backdrop-filter: blur(24px); 
       -webkit-backdrop-filter: blur(24px);
       box-shadow: 
-          0 0 0 1px rgba(255, 255, 255, 0.1),
-          0 25px 50px -12px rgba(0, 0, 0, 0.8),
-          inset 0 1px 1px rgba(255,255,255,0.2),
-          inset 0 -1px 1px rgba(0,0,0,0.5);
+          0 0 0 1px color-mix(in srgb, hsl(var(--foreground)) 10%, transparent),
+          0 25px 50px -12px rgba(0, 0, 0, 0.2),
+          inset 0 1px 1px color-mix(in srgb, white 20%, transparent),
+          inset 0 -1px 1px color-mix(in srgb, black 10%, transparent);
   }
 
   /* Physical Tactile Buttons */
@@ -134,11 +137,11 @@ const INJECTED_STYLES = `
   .btn-modern-light {
       background: linear-gradient(180deg, #FFFFFF 0%, #F1F5F9 100%);
       color: #0F172A;
-      box-shadow: 0 0 0 1px rgba(0,0,0,0.05), 0 2px 4px rgba(0,0,0,0.1), 0 12px 24px -4px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,1), inset 0 -3px 6px rgba(0,0,0,0.06);
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.05), 0 2px 4px rgba(0,0,0,0.1), 0 12px 24px -4px rgba(0,0,0,0.1), inset 0 1px 1px rgba(255,255,255,1), inset 0 -3px 6px rgba(0,0,0,0.06);
   }
   .btn-modern-light:hover {
       transform: translateY(-3px);
-      box-shadow: 0 0 0 1px rgba(0,0,0,0.05), 0 6px 12px -2px rgba(0,0,0,0.15), 0 20px 32px -6px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,1), inset 0 -3px 6px rgba(0,0,0,0.06);
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.05), 0 6px 12px -2px rgba(0,0,0,0.1), 0 20px 32px -6px rgba(0,0,0,0.2), inset 0 1px 1px rgba(255,255,255,1), inset 0 -3px 6px rgba(0,0,0,0.06);
   }
   .btn-modern-light:active {
       transform: translateY(1px);
@@ -148,17 +151,17 @@ const INJECTED_STYLES = `
   .btn-modern-dark {
       background: linear-gradient(180deg, #27272A 0%, #18181B 100%);
       color: #FFFFFF;
-      box-shadow: 0 0 0 1px rgba(255,255,255,0.1), 0 2px 4px rgba(0,0,0,0.6), 0 12px 24px -4px rgba(0,0,0,0.9), inset 0 1px 1px rgba(255,255,255,0.15), inset 0 -3px 6px rgba(0,0,0,0.8);
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.1), 0 2px 4px rgba(0,0,0,0.4), 0 12px 24px -4px rgba(0,0,0,0.6), inset 0 1px 1px rgba(255,255,255,0.1), inset 0 -3px 6px rgba(0,0,0,0.5);
   }
   .btn-modern-dark:hover {
       transform: translateY(-3px);
       background: linear-gradient(180deg, #3F3F46 0%, #27272A 100%);
-      box-shadow: 0 0 0 1px rgba(255,255,255,0.15), 0 6px 12px -2px rgba(0,0,0,0.7), 0 20px 32px -6px rgba(0,0,0,1), inset 0 1px 1px rgba(255,255,255,0.2), inset 0 -3px 6px rgba(0,0,0,0.8);
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.15), 0 6px 12px -2px rgba(0,0,0,0.5), 0 20px 32px -6px rgba(0,0,0,0.7), inset 0 1px 1px rgba(255,255,255,0.15), inset 0 -3px 6px rgba(0,0,0,0.5);
   }
   .btn-modern-dark:active {
       transform: translateY(1px);
       background: #18181B;
-      box-shadow: 0 0 0 1px rgba(255,255,255,0.05), inset 0 3px 8px rgba(0,0,0,0.9), inset 0 0 0 1px rgba(0,0,0,0.5);
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.05), inset 0 3px 8px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(0,0,0,0.3);
   }
 
   .progress-ring {
@@ -315,13 +318,19 @@ export function CinematicHero({
   return (
     <div
       ref={containerRef}
-      className={cn("relative w-screen h-screen overflow-hidden flex items-center justify-center bg-background text-foreground font-sans antialiased", className)}
+      className={cn(
+        "relative w-screen h-screen overflow-hidden flex items-center justify-center bg-background text-foreground font-sans antialiased transition-colors duration-1000",
+        className
+      )}
       style={{ perspective: "1500px" }}
       {...props}
     >
       <style dangerouslySetInnerHTML={{ __html: INJECTED_STYLES }} />
       <div className="film-grain" aria-hidden="true" />
       <div className="bg-grid-theme absolute inset-0 z-0 pointer-events-none opacity-50" aria-hidden="true" />
+
+      {/* Cinematic Overlays - Theme Responsive */}
+      <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background opacity-60 pointer-events-none z-0" />
 
       {/* BACKGROUND LAYER: Hero Texts */}
       <div className="hero-text-wrapper absolute z-10 flex flex-col items-center justify-center text-center w-screen px-4 will-change-transform transform-style-3d">
