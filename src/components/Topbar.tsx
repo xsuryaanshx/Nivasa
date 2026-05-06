@@ -1,9 +1,11 @@
-import { Bell, Focus, LogOut, PanelLeftClose, PanelLeftOpen, Search } from "lucide-react";
+import { Bell, Focus, LogOut, PanelLeftClose, PanelLeftOpen, Search, MoreVertical } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 import { CurrencySwitcher } from "./CurrencySwitcher";
 import { useFocusMode } from "./FocusModeProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
+import { useState, useRef, useEffect } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 
 interface Props {
   collapsed: boolean;
@@ -14,6 +16,19 @@ interface Props {
 export function Topbar({ collapsed, onToggle, onOpenPalette }: Props) {
   const { focus, toggle } = useFocusMode();
   const { user, signOut } = useAuth();
+  
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const onDown = (e: MouseEvent) => {
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(e.target as Node)) {
+        setMobileMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, []);
 
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-background/70 backdrop-blur-xl pt-safe">
@@ -35,14 +50,14 @@ export function Topbar({ collapsed, onToggle, onOpenPalette }: Props) {
           <kbd className="hidden lg:inline-block rounded bg-background px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">⌘K</kbd>
         </button>
 
-        {/* Right section — note: no overflow-hidden here so CurrencySwitcher dropdown can escape */}
-        <div className="ml-auto flex items-center gap-2">
+        {/* Desktop Right Section */}
+        <div className="ml-auto hidden md:flex items-center gap-2">
           <button
             onClick={toggle}
             aria-label="Toggle focus mode"
             title="Focus mode (F)"
             className={cn(
-              "hidden h-9 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium transition-colors sm:inline-flex",
+              "h-9 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium transition-colors hidden sm:inline-flex",
               focus
                 ? "border-foreground/20 bg-foreground text-background hover:opacity-90"
                 : "border-border bg-card text-foreground/80 hover:bg-secondary",
@@ -56,7 +71,6 @@ export function Topbar({ collapsed, onToggle, onOpenPalette }: Props) {
             )}>F</kbd>
           </button>
 
-          {/* CurrencySwitcher: parent has no overflow-hidden so dropdown is visible */}
           <CurrencySwitcher />
 
           <button className="relative inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground">
@@ -74,13 +88,72 @@ export function Topbar({ collapsed, onToggle, onOpenPalette }: Props) {
             <LogOut className="h-4 w-4" />
           </button>
 
-          {/* Dynamic user avatar — no hardcoded name */}
-          <div className="ml-1 hidden h-9 items-center gap-2.5 rounded-full border border-border bg-card pl-1 pr-3.5 md:inline-flex">
+          <div className="ml-1 flex h-9 items-center gap-2.5 rounded-full border border-border bg-card pl-1 pr-3.5">
             <div className="flex h-7 w-7 items-center justify-center rounded-full bg-foreground text-[10px] font-semibold text-background">
               {user?.initials || "U"}
             </div>
             <span className="text-sm font-medium">{user?.firstName || "User"}</span>
           </div>
+        </div>
+
+        {/* Mobile Right Section (Hamburger Menu) */}
+        <div className="ml-auto flex md:hidden items-center relative" ref={mobileMenuRef}>
+          <button
+            onClick={() => setMobileMenuOpen(prev => !prev)}
+            className="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+            aria-label="More options"
+          >
+            <MoreVertical className="h-5 w-5" />
+          </button>
+
+          <AnimatePresence>
+            {mobileMenuOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                transition={{ duration: 0.15, ease: "easeOut" }}
+                className="absolute right-0 top-full mt-2 w-56 rounded-xl border border-border glass-strong p-2 shadow-float z-50 flex flex-col gap-1"
+              >
+                <div className="flex items-center gap-2.5 px-2 py-2 mb-1">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-foreground text-[10px] font-semibold text-background">
+                    {user?.initials || "U"}
+                  </div>
+                  <div className="flex flex-col overflow-hidden">
+                    <span className="text-sm font-medium truncate">{user?.firstName || "User"}</span>
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Account</span>
+                  </div>
+                </div>
+                
+                <div className="hairline my-1" />
+
+                <div className="flex items-center justify-between px-2 py-2">
+                  <span className="text-sm font-medium text-foreground/80">Theme</span>
+                  <ThemeToggle />
+                </div>
+                
+                <div className="flex items-center justify-between px-2 py-2 relative z-[60]">
+                  <span className="text-sm font-medium text-foreground/80">Currency</span>
+                  <CurrencySwitcher />
+                </div>
+
+                <button className="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left text-sm font-medium text-foreground/80 transition-colors hover:bg-secondary">
+                  <Bell className="h-4 w-4" />
+                  Notifications
+                </button>
+
+                <div className="hairline my-1" />
+
+                <button 
+                  onClick={signOut}
+                  className="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sign Out
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </header>
