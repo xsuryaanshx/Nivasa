@@ -1,11 +1,5 @@
-import { CinematicHero } from "@/components/ui/cinematic-hero";
+import { Navigate } from "react-router-dom";
 
-const Index = () => {
-  return (
-    <div className="w-full min-h-screen overflow-x-hidden">
-      <CinematicHero />
-    </div>
-  );
-};
+const Index = () => <Navigate to="/login" replace />;
 
 export default Index;

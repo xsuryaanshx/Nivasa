@@ -11,11 +11,10 @@ export const SplashScreen = ({ isReady, onFinished }: SplashScreenProps) => {
   const [animationFinished, setAnimationFinished] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
 
-  useEffect(() => {
-    // Extended duration to 12s to allow all words to be seen with 2s pauses
+    // Optimized duration for 3 words (YOUR, PROPERTY, SIMPLIFIED)
     const timer = setTimeout(() => {
       setAnimationFinished(true);
-    }, 12000);
+    }, 4500);
 
     return () => clearTimeout(timer);
   }, []);
@@ -44,9 +43,9 @@ export const SplashScreen = ({ isReady, onFinished }: SplashScreenProps) => {
       >
         <div className="flex items-center justify-center w-full h-full">
           <GooeyText
-            texts={["RENTAL", "REIMAGINED", "SMART", "LIVING", "ESTATE"]}
-            morphTime={2}
-            cooldownTime={2}
+            texts={["YOUR", "PROPERTY", "SIMPLIFIED"]}
+            morphTime={0.8}
+            cooldownTime={0.5}
             className="font-bold"
             textClassName="text-foreground drop-shadow-[0_0_20px_hsl(var(--accent-blue)/0.4)]"
           />
