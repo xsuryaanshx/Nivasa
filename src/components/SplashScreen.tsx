@@ -12,23 +12,34 @@ export const SplashScreen = ({ isReady, onFinished }: SplashScreenProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    // Start video playback
-    if (videoRef.current) {
-      videoRef.current.play().catch(err => {
-        console.error("Video playback failed:", err);
-        // Fallback: mark as ended if playback fails
-        setVideoEnded(true);
-      });
-    }
+    // Start video playback with a small delay to ensure DOM is ready
+    const timer = setTimeout(() => {
+      if (videoRef.current) {
+        videoRef.current.play().catch(err => {
+          console.warn("Autoplay failed, likely due to browser policy or Low Power Mode:", err);
+          // Fallback: if autoplay fails, we still want to proceed after a reasonable delay
+          setTimeout(() => setVideoEnded(true), 3000);
+        });
+      }
+    }, 100);
+
+    // Absolute fallback: if video hasn't ended in 10 seconds, proceed anyway
+    const fallbackTimer = setTimeout(() => {
+      setVideoEnded(true);
+    }, 10000);
+
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(fallbackTimer);
+    };
   }, []);
 
   useEffect(() => {
     // Transition logic: Wait for both video to end AND app to be ready
-    // Or just video end if that's the primary cinematic driver
     if (videoEnded && isReady) {
       const timer = setTimeout(() => {
         setIsExiting(true);
-        setTimeout(onFinished, 1200); // Match exit animation duration
+        setTimeout(onFinished, 1200);
       }, 500);
       return () => clearTimeout(timer);
     }
@@ -48,10 +59,17 @@ export const SplashScreen = ({ isReady, onFinished }: SplashScreenProps) => {
         <video
           ref={videoRef}
           src="/Boot.mp4"
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover bg-[#020617]"
           muted
+          autoPlay
           playsInline
+          webkit-playsinline="true"
+          preload="auto"
           onEnded={() => setVideoEnded(true)}
+          onError={(e) => {
+            console.error("Video error:", e);
+            setVideoEnded(true);
+          }}
         />
 
         {/* Cinematic Overlays */}
