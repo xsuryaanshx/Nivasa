@@ -1,4 +1,4 @@
-import { Bell, Focus, PanelLeftClose, PanelLeftOpen, Search } from "lucide-react";
+import { Bell, Focus, LogOut, PanelLeftClose, PanelLeftOpen, Search } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 import { CurrencySwitcher } from "./CurrencySwitcher";
 import { useFocusMode } from "./FocusModeProvider";
@@ -13,11 +13,11 @@ interface Props {
 
 export function Topbar({ collapsed, onToggle, onOpenPalette }: Props) {
   const { focus, toggle } = useFocusMode();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
 
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-background/70 backdrop-blur-xl pt-safe">
-      <div className="flex h-16 items-center gap-3 px-5 lg:px-8">
+      <div className="flex h-20 lg:h-16 items-center gap-3 px-5 lg:px-8">
         <button
           onClick={onToggle}
           aria-label="Toggle sidebar"
@@ -32,7 +32,7 @@ export function Topbar({ collapsed, onToggle, onOpenPalette }: Props) {
         >
           <Search className="h-4 w-4" />
           <span className="flex-1 text-left">Search anything…</span>
-          <kbd className="rounded bg-background px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">⌘K</kbd>
+          <kbd className="hidden lg:inline-block rounded bg-background px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">⌘K</kbd>
         </button>
 
         {/* Right section — note: no overflow-hidden here so CurrencySwitcher dropdown can escape */}
@@ -65,6 +65,14 @@ export function Topbar({ collapsed, onToggle, onOpenPalette }: Props) {
           </button>
 
           <ThemeToggle />
+
+          <button 
+            onClick={signOut}
+            title="Logout"
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
 
           {/* Dynamic user avatar — no hardcoded name */}
           <div className="ml-1 hidden h-9 items-center gap-2.5 rounded-full border border-border bg-card pl-1 pr-3.5 md:inline-flex">

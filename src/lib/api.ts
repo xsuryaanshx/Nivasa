@@ -19,8 +19,8 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 const auth = {
-  signUp: async (email: string, password: string) => {
-    return await supabase.auth.signUp({ email, password });
+  signUp: async (email: string, password: string, fullName: string) => {
+    return await supabase.auth.signUp({ email, password, options: { data: { full_name: fullName } } });
   },
   signIn: async (email: string, password: string) => {
     return await supabase.auth.signInWithPassword({ email, password });

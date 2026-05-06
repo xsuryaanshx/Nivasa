@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { Building2, Home, LayoutDashboard, Receipt, Sparkles, Zap } from "lucide-react";
+import { Building2, Home, LayoutDashboard, Receipt, Sparkles, Zap, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const items = [
@@ -63,6 +63,23 @@ export function AppSidebar({ collapsed }: Props) {
         >
           <Zap className="h-4 w-4 shrink-0" />
           {!collapsed && <span className="truncate">Electricity</span>}
+        </button>
+      </div>
+
+      {/* Logout */}
+      <div className="mt-2 px-3">
+        <button
+          onClick={() => {
+             const api = (window as any).estateApi;
+             if (api) api.auth.signOut().then(() => window.location.href = "/login");
+          }}
+          className={cn(
+            "group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors",
+            "text-muted-foreground hover:bg-destructive/10 hover:text-destructive",
+          )}
+        >
+          <LogOut className="h-4 w-4 shrink-0" />
+          {!collapsed && <span className="truncate">Logout</span>}
         </button>
       </div>
 

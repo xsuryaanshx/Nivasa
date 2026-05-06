@@ -5,9 +5,9 @@ const STORAGE_KEY = "estate.currency";
 
 export function CurrencyProvider({ children }: { children: ReactNode }) {
   const [code, setCode] = useState<CurrencyCode>(() => {
-    if (typeof window === "undefined") return "USD";
+    if (typeof window === "undefined") return "INR";
     const saved = window.localStorage.getItem(STORAGE_KEY) as CurrencyCode | null;
-    return saved && saved in CURRENCIES ? saved : "USD";
+    return saved && saved in CURRENCIES ? saved : "INR";
   });
 
   useEffect(() => {

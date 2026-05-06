@@ -322,10 +322,11 @@ export function CinematicHero({
 
   // 3. Automatic "Boot-up" Redirect (Transition to app after intro)
   useEffect(() => {
+    console.log("CinematicHero: Animation started");
     const timer = setTimeout(() => {
-      // Automatic transition after the cinematic intro
+      console.log("CinematicHero: Animation complete, redirecting...");
       navigate("/login");
-    }, 5000); // 5 seconds of cinematic intro then move to login
+    }, 5000); 
 
     return () => clearTimeout(timer);
   }, [navigate]);
@@ -334,7 +335,7 @@ export function CinematicHero({
     <div
       ref={containerRef}
       className={cn(
-        "relative w-screen h-screen overflow-hidden flex items-center justify-center bg-background text-foreground font-sans antialiased transition-colors duration-1000 perspective-container",
+        "fixed inset-0 z-[100] overflow-hidden flex items-center justify-center bg-background text-foreground font-sans antialiased transition-colors duration-1000 perspective-container",
         className
       )}
       {...props}

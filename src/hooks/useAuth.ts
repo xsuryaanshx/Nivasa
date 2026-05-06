@@ -36,15 +36,28 @@ export function useAuth() {
   useEffect(() => {
     const api = (window as any).estateApi;
     if (!api) return;
-    const session = api.auth.getSession();
-    if (session?.user) {
-      setUser(buildUser(session.user));
-    } else {
-      // Fallback for demo / "continue as demo" path
-      const storedName = localStorage.getItem("estate_user_name") || "User";
-      setUser(buildUser({ id: "demo", email: "demo@estate.app", fullName: storedName }));
-    }
+    
+    const checkSession = async () => {
+      const session = await api.auth.getSession();
+      if (session?.user) {
+        const fullName = session.user.user_metadata?.full_name || session.user.email?.split("@")[0] || "User";
+        setUser(buildUser({ id: session.user.id, email: session.user.email || "", fullName }));
+      } else {
+        const storedName = localStorage.getItem("estate_user_name") || "User";
+        setUser(buildUser({ id: "demo", email: "demo@estate.app", fullName: storedName }));
+      }
+    };
+    
+    checkSession();
   }, []);
 
-  return { user };
+  const signOut = async () => {
+    const api = (window as any).estateApi;
+    if (api) await api.auth.signOut();
+    localStorage.removeItem("estate_user_name");
+    setUser(null);
+    window.location.href = "/login";
+  };
+
+  return { user, signOut };
 }
