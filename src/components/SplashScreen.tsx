@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
+import { GooeyText } from "@/components/ui/gooey-text-morphing";
 
 interface SplashScreenProps {
   isReady: boolean;
@@ -7,46 +8,31 @@ interface SplashScreenProps {
 }
 
 export const SplashScreen = ({ isReady, onFinished }: SplashScreenProps) => {
-  const [videoEnded, setVideoEnded] = useState(false);
+  const [animationFinished, setAnimationFinished] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    // Start video playback with a small delay to ensure DOM is ready
+    // Show the animation for at least 4.5 seconds to ensure it's seen
     const timer = setTimeout(() => {
-      if (videoRef.current) {
-        videoRef.current.play().catch(err => {
-          console.warn("Autoplay failed, likely due to browser policy or Low Power Mode:", err);
-          // Fallback: if autoplay fails, we still want to proceed after a reasonable delay
-          setTimeout(() => setVideoEnded(true), 3000);
-        });
-      }
-    }, 100);
+      setAnimationFinished(true);
+    }, 4500);
 
-    // Absolute fallback: if video hasn't ended in 10 seconds, proceed anyway
-    const fallbackTimer = setTimeout(() => {
-      setVideoEnded(true);
-    }, 10000);
-
-    return () => {
-      clearTimeout(timer);
-      clearTimeout(fallbackTimer);
-    };
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
-    // Transition logic: Wait for both video to end AND app to be ready
-    if (videoEnded && isReady) {
+    // Transition logic: Wait for both animation to "finish" AND app to be ready
+    if (animationFinished && isReady) {
       const timer = setTimeout(() => {
         setIsExiting(true);
         setTimeout(onFinished, 1200);
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [videoEnded, isReady, onFinished]);
+  }, [animationFinished, isReady, onFinished]);
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#020617] overflow-hidden">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-background overflow-hidden">
       <motion.div
         animate={{ 
           scale: isExiting ? 1.2 : 1,
@@ -56,21 +42,15 @@ export const SplashScreen = ({ isReady, onFinished }: SplashScreenProps) => {
         transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
         className="relative w-full h-full flex items-center justify-center"
       >
-        <video
-          ref={videoRef}
-          src="/Boot.mp4"
-          className="w-full h-full object-cover bg-[#020617]"
-          muted
-          autoPlay
-          playsInline
-          webkit-playsinline="true"
-          preload="auto"
-          onEnded={() => setVideoEnded(true)}
-          onError={(e) => {
-            console.error("Video error:", e);
-            setVideoEnded(true);
-          }}
-        />
+        <div className="flex items-center justify-center w-full h-full">
+          <GooeyText
+            texts={["SMART", "PROPERTY", "MANAGEMENT", "EASY"]}
+            morphTime={1.2}
+            cooldownTime={0.4}
+            className="font-bold"
+            textClassName="text-foreground drop-shadow-[0_0_15px_hsl(var(--accent-blue)/0.5)]"
+          />
+        </div>
 
         {/* Cinematic Overlays */}
         <div className="absolute inset-0 bg-gradient-to-t from-[#020617] via-transparent to-[#020617] opacity-40 pointer-events-none" />
@@ -97,3 +77,4 @@ export const SplashScreen = ({ isReady, onFinished }: SplashScreenProps) => {
     </div>
   );
 };
+
