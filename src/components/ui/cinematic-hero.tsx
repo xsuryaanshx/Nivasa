@@ -300,6 +300,18 @@ export function CinematicHero({
     return () => ctx.revert();
   },[metricValue]); 
 
+  // 3. Automatic "Boot-up" Redirect (if no interaction/scroll happens)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      // If user hasn't scrolled significantly, they might be waiting for a boot
+      if (window.scrollY < 100) {
+        window.location.href = "/login";
+      }
+    }, 15000); // 15 seconds of cinematic intro then move to login
+
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <div
       ref={containerRef}
@@ -310,6 +322,17 @@ export function CinematicHero({
       <style dangerouslySetInnerHTML={{ __html: INJECTED_STYLES }} />
       <div className="film-grain" aria-hidden="true" />
       <div className="bg-grid-theme absolute inset-0 z-0 pointer-events-none opacity-50" aria-hidden="true" />
+
+      {/* Scroll Indicator */}
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 3, duration: 1 }}
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-2"
+      >
+        <span className="text-[10px] uppercase tracking-[0.3em] font-bold text-muted-foreground/50">Scroll to explore</span>
+        <div className="w-[1px] h-12 bg-gradient-to-b from-blue-500 to-transparent" />
+      </motion.div>
 
       {/* BACKGROUND LAYER: Hero Texts */}
       <div className="hero-text-wrapper absolute z-10 flex flex-col items-center justify-center text-center w-screen px-4 will-change-transform transform-style-3d">
@@ -383,6 +406,18 @@ export function CinematicHero({
                   {/* Inner Screen Container */}
                   <div className="absolute inset-[7px] bg-[#050914] rounded-[2.5rem] overflow-hidden shadow-[inset_0_0_15px_rgba(0,0,0,1)] text-white z-10">
                     <div className="absolute inset-0 screen-glare z-40 pointer-events-none" aria-hidden="true" />
+
+                    {/* Status Bar (Matches Theme) */}
+                    <div className="absolute top-0 left-0 right-0 h-10 px-8 flex justify-between items-center z-50 text-[10px] font-bold text-white/70">
+                      <span>9:41</span>
+                      <div className="flex gap-1.5 items-center">
+                        <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21l-12-18h24z"/></svg>
+                        <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M2 22h20V2z"/></svg>
+                        <div className="w-5 h-2.5 border border-white/30 rounded-[2px] relative p-[1px]">
+                          <div className="h-full w-4/5 bg-white/70 rounded-[1px]" />
+                        </div>
+                      </div>
+                    </div>
 
                     {/* Dynamic Island Notch */}
                     <div className="absolute top-[5px] left-1/2 -translate-x-1/2 w-[100px] h-[28px] bg-black rounded-full z-50 flex items-center justify-end px-3 shadow-[inset_0_-1px_2px_rgba(255,255,255,0.1)]">

@@ -121,7 +121,7 @@ function AppShell() {
           onClick={() => setHelpOpen(true)}
           aria-label="Keyboard shortcuts"
           title="Keyboard shortcuts (?)"
-          className="fixed bottom-5 right-5 z-30 inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card/90 text-foreground/70 shadow-soft backdrop-blur transition-all hover:scale-105 hover:text-foreground"
+          className="fixed bottom-5 right-5 z-30 hidden lg:inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card/90 text-foreground/70 shadow-soft backdrop-blur transition-all hover:scale-105 hover:text-foreground"
         >
           <Keyboard className="h-4 w-4" />
         </button>

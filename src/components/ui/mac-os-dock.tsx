@@ -41,11 +41,11 @@ const MacOSDock: React.FC<MacOSDockProps> = ({
     
     // Scale icon size based on screen size
     if (smallerDimension < 480) {
-      // Mobile phones
+      // Mobile phones - Larger icons and more presence
       return {
-        baseIconSize: Math.max(40, smallerDimension * 0.08),
-        maxScale: 1.4,
-        effectWidth: smallerDimension * 0.4
+        baseIconSize: Math.max(52, smallerDimension * 0.12),
+        maxScale: 1.3,
+        effectWidth: smallerDimension * 0.6
       };
     } else if (smallerDimension < 768) {
       // Tablets
@@ -250,9 +250,10 @@ const MacOSDock: React.FC<MacOSDockProps> = ({
       ref={dockRef}
       className={`backdrop-blur-md ${className}`}
       style={{
-        width: `${contentWidth + padding * 2}px`,
+        width: typeof window !== 'undefined' && window.innerWidth < 480 ? '92vw' : `${contentWidth + padding * 2}px`,
+        maxWidth: '100vw',
         background: 'rgba(45, 45, 45, 0.75)',
-        borderRadius: `${Math.max(12, baseIconSize * 0.4)}px`,
+        borderRadius: typeof window !== 'undefined' && window.innerWidth < 480 ? '24px' : `${Math.max(12, baseIconSize * 0.4)}px`,
         border: '1px solid rgba(255, 255, 255, 0.15)',
         boxShadow: `
           0 ${Math.max(4, baseIconSize * 0.1)}px ${Math.max(16, baseIconSize * 0.4)}px rgba(0, 0, 0, 0.4),
@@ -260,7 +261,8 @@ const MacOSDock: React.FC<MacOSDockProps> = ({
           inset 0 1px 0 rgba(255, 255, 255, 0.15),
           inset 0 -1px 0 rgba(0, 0, 0, 0.2)
         `,
-        padding: `${padding}px`
+        padding: `${padding}px`,
+        margin: '0 auto'
       }}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
