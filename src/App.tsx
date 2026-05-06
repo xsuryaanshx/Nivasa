@@ -31,7 +31,7 @@ const App = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
-            className="h-screen w-full overflow-hidden"
+            className="w-full min-h-screen"
           >
             <BrowserRouter>
               <Routes>
