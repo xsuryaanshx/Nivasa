@@ -31,6 +31,10 @@ export default {
           DEFAULT: "hsl(var(--accent-blue))",
           foreground: "hsl(var(--accent-blue-foreground))",
         },
+        "accent-blue": {
+          DEFAULT: "hsl(var(--accent-blue))",
+          foreground: "hsl(var(--accent-blue-foreground))",
+        },
         status: {
           paid: "hsl(var(--status-paid))",
           pending: "hsl(var(--status-pending))",
