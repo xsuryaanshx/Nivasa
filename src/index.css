@@ -66,14 +66,12 @@
   }
   body {
     @apply bg-background text-foreground transition-colors duration-500 font-sans antialiased selection:bg-accent-blue/20 selection:text-accent-blue;
-    padding-top: env(safe-area-inset-top, 20px);
-    padding-bottom: env(safe-area-inset-bottom, 20px);
   }
 }
 
 @layer components {
   .menu {
-    @apply flex items-center justify-around px-2 py-4 rounded-[28px] glass-strong w-[96vw] mx-auto mb-2;
+    @apply flex items-center justify-between px-4 py-3 rounded-[32px] glass-strong w-[92vw] mx-auto mb-4;
     --component-active-color: hsl(var(--accent-blue));
     background: color-mix(in srgb, hsl(var(--card)) 95%, transparent);
     backdrop-filter: blur(32px);

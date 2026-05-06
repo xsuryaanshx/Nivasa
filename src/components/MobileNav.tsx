@@ -35,7 +35,7 @@ export function MobileNav() {
   }, [location.pathname, dockApps]);
 
   return (
-    <nav className="fixed bottom-6 left-0 right-0 z-50 flex justify-center lg:hidden pb-safe">
+    <nav className="fixed bottom-[calc(env(safe-area-inset-bottom)+1.5rem)] left-0 right-0 z-50 flex justify-center lg:hidden">
       <InteractiveMenu 
         items={dockApps}
         activeIndex={activeIndex}

@@ -2,13 +2,17 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import gsap from "gsap";
 import CustomEase from "gsap/CustomEase";
-import { MoreVertical, Search, X, MessageSquare, TrendingUp, Bookmark, Image as ImageIcon, Bell, Users, Settings } from "lucide-react";
+import { MoreVertical, Search, X, Moon, Sun, DollarSign, LogOut, Settings, Globe } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useTheme } from "next-themes";
+import { useCurrency } from "@/lib/currency";
 
 gsap.registerPlugin(CustomEase);
 
 export function MobileDrawerMenu() {
   const { user, signOut } = useAuth();
+  const { theme, setTheme } = useTheme();
+  const { currency, setCurrency } = useCurrency();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -61,7 +65,7 @@ export function MobileDrawerMenu() {
   return (
     <div 
       ref={menuRef}
-      className="mobile-drawer-menu absolute left-4 top-4 z-[50] h-[65px] w-[263px] overflow-hidden rounded-[32px] bg-secondary p-2 md:hidden"
+      className="mobile-drawer-menu absolute left-4 top-[calc(env(safe-area-inset-top)+1rem)] z-[50] h-[65px] w-[263px] overflow-hidden rounded-[32px] bg-secondary p-2 md:hidden"
     >
       <div ref={optionsRef} className="flex w-[263px] items-center gap-3">
         <button onClick={toggleMenu} className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-background text-foreground hover:bg-muted transition-colors">
@@ -80,38 +84,61 @@ export function MobileDrawerMenu() {
         </button>
       </div>
       
-      <div className="space-y-4 px-2 py-6">
-        <MenuItem icon={MessageSquare} label="Messages" />
-        <MenuItem icon={TrendingUp} label="Trending" />
-        <MenuItem icon={Bookmark} label="Bookmarks" />
-        <MenuItem icon={ImageIcon} label="Gallery" />
-        <MenuItem icon={Bell} label="Notifications" />
-        <MenuItem icon={Users} label="People" />
-        <MenuItem icon={Settings} label="Settings" />
+      <div className="space-y-3 px-2 py-6">
+        <MenuItem 
+          icon={theme === 'dark' ? Sun : Moon} 
+          label={`Theme: ${theme === 'dark' ? 'Light' : 'Dark'}`} 
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+        />
         
-        <div className="h-28 w-full overflow-hidden rounded-2xl bg-card mt-6 border border-border flex items-center justify-center p-4">
+        <MenuItem 
+          icon={Globe} 
+          label={`Currency: ${currency.code}`} 
+          onClick={() => {
+            const codes: any[] = ["INR", "USD", "EUR", "GBP", "AED"];
+            const nextIdx = (codes.indexOf(currency.code) + 1) % codes.length;
+            setCurrency(codes[nextIdx]);
+          }}
+        />
+
+        <MenuItem 
+          icon={Settings} 
+          label="Settings" 
+          onClick={() => {
+            toggleMenu();
+            navigate("/app/settings");
+          }}
+        />
+        
+        <MenuItem 
+          icon={LogOut} 
+          label="Logout" 
+          onClick={signOut}
+          className="text-destructive"
+        />
+        
+        <div className="h-24 w-full overflow-hidden rounded-2xl bg-card mt-6 border border-border flex items-center justify-center p-4">
            <div className="flex flex-col items-center gap-2">
              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-foreground text-background font-bold text-sm">
                 {user?.initials || "U"}
              </div>
-             <span className="text-sm font-medium">{user?.firstName || "User"}</span>
+             <div className="flex flex-col items-center">
+               <span className="text-sm font-semibold">{user?.firstName || "User"}</span>
+               <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Premium Member</span>
+             </div>
            </div>
         </div>
-        
-        <button 
-           onClick={signOut}
-           className="w-full py-3 mt-2 rounded-xl text-destructive bg-destructive/10 font-semibold text-sm"
-        >
-           Sign Out
-        </button>
       </div>
     </div>
   );
 }
 
-function MenuItem({ icon: Icon, label }: { icon: any, label: string }) {
+function MenuItem({ icon: Icon, label, onClick, className }: { icon: any, label: string, onClick?: () => void, className?: string }) {
   return (
-    <div className="flex items-center justify-start gap-4 hover:bg-background/50 p-2 rounded-2xl cursor-pointer transition-colors">
+    <div 
+      onClick={onClick}
+      className={`flex items-center justify-start gap-4 hover:bg-background/50 p-2 rounded-2xl cursor-pointer transition-colors ${className}`}
+    >
       <div className="flex h-10 w-14 shrink-0 items-center justify-center rounded-full bg-background text-foreground shadow-sm">
         <Icon className="h-5 w-5" />
       </div>
