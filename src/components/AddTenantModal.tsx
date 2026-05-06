@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { CheckCircle2, IdCard, Phone, Smartphone, User } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { CheckCircle2, IdCard, Phone, Smartphone, User, Loader2 } from "lucide-react";
 import { GlassModal } from "./GlassModal";
 import { MagneticButton } from "./MagneticButton";
-import { rooms } from "@/lib/mockData";
-import { assignTenantToRoom, isValidAadhar, isValidMobile } from "@/lib/tenantStore";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { isValidMobile, isValidAadhar } from "@/lib/tenantStore";
 
 interface Props {
   open: boolean;
@@ -25,7 +24,6 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
   const [loadingRooms, setLoadingRooms] = useState(false);
   const [roomId, setRoomId] = useState(defaultRoomId || "");
   const [name, setName] = useState("");
-  const [surname, setSurname] = useState("");
   const [mobile, setMobile] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [sameAsMobile, setSameAsMobile] = useState(true);
@@ -42,11 +40,12 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
       const data = await api.getRooms();
       setRoomsList(data);
       if (!roomId && data.length > 0) {
-        const vacant = data.find((r: any) => !r.tenant);
+        const vacant = data.find((r: any) => r.status === 'vacant');
         setRoomId(vacant ? vacant.id : data[0].id);
       }
     } catch (err) {
       console.error("Failed to fetch rooms:", err);
+      toast.error("Failed to load rooms");
     } finally {
       setLoadingRooms(false);
     }
@@ -58,16 +57,31 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
       setErrors({});
       fetchRooms();
       if (defaultRoomId) setRoomId(defaultRoomId);
+      // Reset form
+      setName("");
+      setMobile("");
+      setWhatsapp("");
+      setSameAsMobile(true);
+      setAadhar("");
     }
   }, [open, defaultRoomId]);
 
   const validate = () => {
     const e: Record<string, string> = {};
-    if (!name.trim()) e.name = "First name is required";
-    if (!surname.trim()) e.surname = "Surname is required";
-    if (!isValidMobile(mobile)) e.mobile = "Enter a valid mobile number";
-    if (!sameAsMobile && whatsapp && !isValidMobile(whatsapp)) e.whatsapp = "Enter a valid WhatsApp number";
-    if (!isValidAadhar(aadhar)) e.aadhar = "Aadhar must be 12 digits";
+    if (!name.trim()) e.name = "Full name is required";
+    if (!mobile.trim()) e.mobile = "Mobile number is required";
+    else if (!isValidMobile(mobile)) e.mobile = "Enter a valid mobile number";
+    
+    if (!sameAsMobile && whatsapp && !isValidMobile(whatsapp)) {
+      e.whatsapp = "Enter a valid WhatsApp number";
+    }
+    
+    if (aadhar && !isValidAadhar(aadhar)) {
+      e.aadhar = "Aadhar must be 12 digits";
+    }
+
+    if (!roomId) e.room = "Please select a room";
+
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -84,110 +98,193 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
       await api.addTenant({
         room_id: roomId,
         name: name.trim(),
-        surname: surname.trim(),
         phone: mobile.trim(),
-        whatsapp: (sameAsMobile ? mobile : whatsapp).trim(),
+        whatsapp_number: (sameAsMobile ? mobile : whatsapp).trim(),
         aadhar: aadhar.replace(/\s+/g, ""),
-        joined_at: new Date().toISOString().slice(0, 10)
+        joined_at: new Date().toISOString()
       });
 
       setSuccess(true);
-      toast.success("Tenant added", { 
-        description: `${name} ${surname} → Room ${roomsList.find((r) => r.id === roomId)?.number}` 
+      const selectedRoom = roomsList.find((r) => r.id === roomId);
+      toast.success("Tenant added successfully", { 
+        description: `${name} assigned to Room ${selectedRoom?.number}` 
       });
+      
       onAssigned?.(roomId);
+      
       setTimeout(() => {
         onClose();
-        setName(""); setSurname(""); setMobile(""); setWhatsapp(""); setAadhar("");
-      }, 700);
+      }, 1500);
     } catch (err: any) {
+      console.error("Submit error:", err);
+      toast.error(err.message || "Something went wrong while adding tenant");
       setErrors({ submit: err.message || "Failed to add tenant" });
     } finally {
       setSubmitting(false);
     }
   };
 
-  const vacantRooms = roomsList.filter((r) => !r.tenant);
+  const vacantRooms = roomsList.filter((r) => r.status === 'vacant');
 
   return (
-    <GlassModal open={open} onClose={onClose} title="Add new tenant" description="Assign a tenant to an available room">
-      {success ? (
-        <motion.div initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }}
-          className="flex flex-col items-center gap-3 py-8">
-          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 260, damping: 18 }}
-            className="flex h-14 w-14 items-center justify-center rounded-full bg-status-paid/15 text-status-paid">
-            <CheckCircle2 className="h-7 w-7" />
-          </motion.div>
-          <div className="text-base font-semibold">Tenant added</div>
-          <div className="text-xs text-muted-foreground">Closing…</div>
-        </motion.div>
-      ) : (
-        <form onSubmit={submit} className="space-y-4">
-          <Field label="Room">
-            <select
-              value={roomId} onChange={(e) => setRoomId(e.target.value)}
-              disabled={loadingRooms || submitting}
-              className="h-11 w-full appearance-none rounded-xl border border-border bg-card/70 px-3 text-sm outline-none focus:border-brand focus:shadow-[0_0_0_4px_hsl(var(--ring)/0.12)]"
+    <GlassModal 
+      open={open} 
+      onClose={onClose} 
+      title="Add New Tenant" 
+      description="Fill in the tenant details to assign them a room"
+    >
+      <div className="max-w-full sm:max-w-md mx-auto">
+        <AnimatePresence mode="wait">
+          {success ? (
+            <motion.div 
+              key="success"
+              initial={{ opacity: 0, scale: 0.95 }} 
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="flex flex-col items-center gap-4 py-12"
             >
-              {loadingRooms ? (
-                <option>Loading rooms...</option>
-              ) : (
-                (vacantRooms.length ? vacantRooms : roomsList).map((r) => (
-                  <option key={r.id} value={r.id}>
-                    Room {r.number} · {r.buildingName}{r.tenant ? ` · occupied by ${r.tenant.name}` : " · vacant"}
-                  </option>
-                ))
-              )}
-            </select>
-          </Field>
+              <motion.div 
+                initial={{ scale: 0 }} 
+                animate={{ scale: 1 }} 
+                transition={{ type: "spring", stiffness: 260, damping: 20 }}
+                className="flex h-20 w-20 items-center justify-center rounded-full bg-status-paid/20 text-status-paid shadow-glow"
+              >
+                <CheckCircle2 className="h-10 w-10" />
+              </motion.div>
+              <div className="text-center">
+                <div className="text-xl font-bold text-foreground">Success!</div>
+                <div className="text-sm text-muted-foreground mt-1">The tenant has been added.</div>
+              </div>
+            </motion.div>
+          ) : (
+            <motion.form 
+              key="form"
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onSubmit={submit} 
+              className="space-y-5 py-2"
+            >
+              <Field label="Assign Room" error={errors.room}>
+                <div className="relative">
+                  <select
+                    value={roomId} 
+                    onChange={(e) => setRoomId(e.target.value)}
+                    disabled={loadingRooms || submitting}
+                    className="h-12 w-full appearance-none rounded-xl border border-border bg-card/70 px-4 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-brand/10 transition-all disabled:opacity-50"
+                  >
+                    <option value="" disabled>Select a room</option>
+                    {loadingRooms ? (
+                      <option>Loading rooms...</option>
+                    ) : (
+                      (vacantRooms.length ? vacantRooms : roomsList).map((r) => (
+                        <option key={r.id} value={r.id}>
+                          Room {r.number} · {r.buildingName}{r.status === 'occupied' ? ` (Occupied)` : " (Vacant)"}
+                        </option>
+                      ))
+                    )}
+                  </select>
+                  <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground">
+                    <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </div>
+                </div>
+              </Field>
 
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="First name" error={errors.name}>
-              <IconInput icon={<User className="h-3.5 w-3.5" />}
-                value={name} onChange={(v) => setName(v)} placeholder="Aarav" />
-            </Field>
-            <Field label="Surname" error={errors.surname}>
-              <IconInput value={surname} onChange={(v) => setSurname(v)} placeholder="Sharma" />
-            </Field>
-          </div>
+              <Field label="Full Name" error={errors.name}>
+                <IconInput 
+                  icon={<User className="h-4 w-4" />}
+                  value={name} 
+                  onChange={(v) => setName(v)} 
+                  placeholder="Enter tenant's full name" 
+                  disabled={submitting}
+                />
+              </Field>
 
-          <Field label="Mobile number" error={errors.mobile}>
-            <IconInput icon={<Phone className="h-3.5 w-3.5" />}
-              value={mobile} onChange={(v) => setMobile(v)} placeholder="+91 98765 43210" inputMode="tel" />
-          </Field>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Field label="Mobile Number" error={errors.mobile}>
+                  <IconInput 
+                    icon={<Phone className="h-4 w-4" />}
+                    value={mobile} 
+                    onChange={(v) => setMobile(v)} 
+                    placeholder="98765 43210" 
+                    inputMode="tel"
+                    disabled={submitting}
+                  />
+                </Field>
 
-          <div>
-            <Field label="WhatsApp number" optional error={errors.whatsapp}>
-              <IconInput icon={<Smartphone className="h-3.5 w-3.5" />}
-                value={sameAsMobile ? mobile : whatsapp}
-                onChange={(v) => { setSameAsMobile(false); setWhatsapp(v); }}
-                disabled={sameAsMobile}
-                placeholder="+91 98765 43210" inputMode="tel" />
-            </Field>
-            <label className="mt-2 flex items-center gap-2 text-[11px] text-muted-foreground">
-              <input type="checkbox" checked={sameAsMobile}
-                onChange={(e) => setSameAsMobile(e.target.checked)}
-                className="h-3.5 w-3.5 accent-foreground" />
-              Same as mobile
-            </label>
-          </div>
+                <div className="space-y-2">
+                  <Field label="WhatsApp Number" optional error={errors.whatsapp}>
+                    <IconInput 
+                      icon={<Smartphone className="h-4 w-4" />}
+                      value={sameAsMobile ? mobile : whatsapp}
+                      onChange={(v) => { setSameAsMobile(false); setWhatsapp(v); }}
+                      disabled={sameAsMobile || submitting}
+                      placeholder="98765 43210" 
+                      inputMode="tel"
+                    />
+                  </Field>
+                  <label className="flex items-center gap-2.5 cursor-pointer group">
+                    <div className="relative flex items-center">
+                      <input 
+                        type="checkbox" 
+                        checked={sameAsMobile}
+                        onChange={(e) => setSameAsMobile(e.target.checked)}
+                        className="peer h-4 w-4 opacity-0 absolute"
+                        disabled={submitting}
+                      />
+                      <div className="h-4 w-4 rounded border border-border bg-card peer-checked:bg-brand peer-checked:border-brand transition-all flex items-center justify-center">
+                        <CheckCircle2 className="h-3 w-3 text-white scale-0 peer-checked:scale-100 transition-transform" />
+                      </div>
+                    </div>
+                    <span className="text-[11px] font-medium text-muted-foreground group-hover:text-foreground transition-colors">
+                      Same as mobile number
+                    </span>
+                  </label>
+                </div>
+              </div>
 
-          <Field label="Aadhar number" hint="12 digits" error={errors.aadhar}>
-            <IconInput icon={<IdCard className="h-3.5 w-3.5" />}
-              value={formatAadhar(aadhar)}
-              onChange={(v) => setAadhar(v.replace(/\D/g, ""))}
-              placeholder="1234 5678 9012" inputMode="numeric" maxLength={14} />
-          </Field>
+              <Field label="Aadhar Number" hint="12 digits" optional error={errors.aadhar}>
+                <IconInput 
+                  icon={<IdCard className="h-4 w-4" />}
+                  value={formatAadhar(aadhar)}
+                  onChange={(v) => setAadhar(v.replace(/\D/g, ""))}
+                  placeholder="1234 5678 9012" 
+                  inputMode="numeric" 
+                  maxLength={14}
+                  disabled={submitting}
+                />
+              </Field>
 
-          <div className="flex gap-2 pt-1">
-            <button type="button" onClick={onClose}
-              className="h-11 flex-1 rounded-xl border border-border bg-card/60 text-sm font-medium transition-colors hover:bg-card">
-              Cancel
-            </button>
-            <MagneticButton type="submit" className="flex-1">Add tenant</MagneticButton>
-          </div>
-        </form>
-      )}
+              <div className="flex gap-3 pt-4">
+                <button 
+                  type="button" 
+                  onClick={onClose}
+                  disabled={submitting}
+                  className="h-12 flex-1 rounded-xl border border-border bg-card/60 text-sm font-semibold transition-all hover:bg-secondary disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <MagneticButton 
+                  type="submit" 
+                  className="flex-1"
+                  disabled={submitting}
+                >
+                  {submitting ? (
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Adding...</span>
+                    </div>
+                  ) : (
+                    "Add Tenant"
+                  )}
+                </MagneticButton>
+              </div>
+            </motion.form>
+          )}
+        </AnimatePresence>
+      </div>
     </GlassModal>
   );
 }
@@ -196,17 +293,25 @@ function Field({ label, hint, optional, error, children }: {
   label: string; hint?: string; optional?: boolean; error?: string; children: React.ReactNode;
 }) {
   return (
-    <label className="block">
-      <div className="mb-1.5 flex items-center justify-between">
-        <span className="text-xs font-medium text-muted-foreground">
+    <div className="block">
+      <div className="mb-2 flex items-center justify-between">
+        <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/80">
           {label}
-          {optional && <span className="ml-1 text-[10px] text-muted-foreground/70">(optional)</span>}
+          {optional && <span className="ml-1 normal-case font-normal text-muted-foreground/60">(Optional)</span>}
         </span>
         {hint && !error && <span className="text-[10px] text-muted-foreground tnum">{hint}</span>}
-        {error && <span className="text-[10px] font-medium text-destructive">{error}</span>}
+        {error && (
+          <motion.span 
+            initial={{ opacity: 0, x: 5 }} 
+            animate={{ opacity: 1, x: 0 }}
+            className="text-[10px] font-semibold text-destructive bg-destructive/10 px-1.5 py-0.5 rounded"
+          >
+            {error}
+          </motion.span>
+        )}
       </div>
       {children}
-    </label>
+    </div>
   );
 }
 
@@ -222,17 +327,23 @@ function IconInput({
   disabled?: boolean;
 }) {
   return (
-    <div className="relative">
+    <div className="relative group">
       {icon && (
-        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">{icon}</span>
+        <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-brand transition-colors">
+          {icon}
+        </span>
       )}
       <input
-        value={value} onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder} inputMode={inputMode} maxLength={maxLength} disabled={disabled}
+        value={value} 
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder} 
+        inputMode={inputMode} 
+        maxLength={maxLength} 
+        disabled={disabled}
         className={cn(
-          "h-11 w-full rounded-xl border border-border bg-card/70 pr-3 text-sm outline-none transition-all focus:border-brand focus:shadow-[0_0_0_4px_hsl(var(--ring)/0.12)]",
-          icon ? "pl-9" : "pl-3.5",
-          disabled && "opacity-60",
+          "h-12 w-full rounded-xl border border-border bg-card/70 pr-4 text-sm outline-none transition-all focus:border-brand focus:ring-4 focus:ring-brand/10",
+          icon ? "pl-11" : "pl-4",
+          disabled && "opacity-50 cursor-not-allowed",
         )}
       />
     </div>

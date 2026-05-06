@@ -37,7 +37,7 @@ export function RoomCard({ room, index }: { room: Room; index: number }) {
 
   const remind = (e: React.MouseEvent) => {
     stop(e);
-    const phone = room.tenant?.whatsapp || room.tenant?.phone;
+    const phone = room.tenant?.whatsapp_number || room.tenant?.phone;
     if (phone) {
       const ok = openWhatsApp(
         phone,

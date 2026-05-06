@@ -7,11 +7,10 @@ const listeners = new Set<Listener>();
 
 export interface NewTenantInput {
   name: string;
-  surname: string;
   mobile: string;
-  whatsapp?: string;
+  whatsapp_number?: string;
   aadhar: string;
-  joinedAt?: string;
+  joined_at?: string;
 }
 
 export function assignTenantToRoom(roomId: string, input: NewTenantInput): Tenant {
@@ -20,12 +19,11 @@ export function assignTenantToRoom(roomId: string, input: NewTenantInput): Tenan
 
   const tenant: Tenant = {
     id: `t_${Date.now().toString(36)}`,
-    name: `${input.name.trim()} ${input.surname.trim()}`.trim(),
-    surname: input.surname.trim(),
+    name: input.name.trim(),
     phone: input.mobile.trim(),
-    whatsapp: (input.whatsapp ?? input.mobile).trim(),
+    whatsapp_number: (input.whatsapp_number ?? input.mobile).trim(),
     aadhar: input.aadhar.replace(/\s+/g, ""),
-    joinedAt: input.joinedAt ?? new Date().toISOString().slice(0, 10),
+    joined_at: input.joined_at ?? new Date().toISOString().slice(0, 10),
   };
 
   // Move existing tenant to past tenants if present.

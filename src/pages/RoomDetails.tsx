@@ -148,9 +148,9 @@ export default function RoomDetails() {
   };
 
   const sendInvoice = () => {
-    const phone = room.tenant?.whatsapp || room.tenant?.phone;
+    const phone = room.tenant?.whatsapp_number || room.tenant?.phone;
     if (!phone) {
-      toast.error("No WhatsApp number on file", { description: "Add a tenant with a WhatsApp number first." });
+      toast.error("No contact number on file");
       return;
     }
     const ok = openWhatsApp(phone, buildInvoiceMessage());
@@ -158,12 +158,28 @@ export default function RoomDetails() {
   };
 
   const sendReminder = () => {
-    const phone = room.tenant?.whatsapp || room.tenant?.phone;
+    const phone = room.tenant?.whatsapp_number || room.tenant?.phone;
     if (phone) {
       openWhatsApp(phone, `Hi ${room.tenant?.name ?? "tenant"}, a friendly reminder about the rent for Room ${room.number}. Thanks!`);
       toast.success("Reminder opened in WhatsApp");
     } else {
-      toast.success("Reminder sent", { description: "No WhatsApp on file — SMS fallback." });
+      toast.success("Reminder sent", { description: "No contact on file — SMS fallback." });
+    }
+  };
+
+  const handleRemoveTenant = async () => {
+    if (!room.tenant || !window.confirm(`Are you sure you want to remove ${room.tenant.name}? This will set the room to vacant.`)) return;
+
+    try {
+      const api = (window as any).estateApi;
+      if (!api) throw new Error("API not loaded");
+      
+      await api.removeTenant(room.id, room.tenant.id);
+      toast.success("Tenant removed successfully");
+      fetchData(); // Refresh data
+    } catch (error: any) {
+      console.error("Error removing tenant:", error);
+      toast.error(error.message || "Failed to remove tenant");
     }
   };
 
@@ -200,13 +216,22 @@ export default function RoomDetails() {
           <div className="flex items-center justify-between">
             <div className="text-xs font-semibold text-muted-foreground">Tenant</div>
             {room.tenant ? (
-              <button
-                type="button"
-                onClick={sendReminder}
-                className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] text-muted-foreground hover:bg-secondary hover:text-foreground"
-              >
-                <MessageCircle className="h-3 w-3" /> Chat
-              </button>
+              <div className="flex gap-1">
+                <button
+                  type="button"
+                  onClick={sendReminder}
+                  className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] text-muted-foreground hover:bg-secondary hover:text-foreground"
+                >
+                  <MessageCircle className="h-3 w-3" /> Chat
+                </button>
+                <button
+                  type="button"
+                  onClick={handleRemoveTenant}
+                  className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] text-destructive hover:bg-destructive/10"
+                >
+                  Remove
+                </button>
+              </div>
             ) : (
               <button
                 type="button"
@@ -231,7 +256,7 @@ export default function RoomDetails() {
                 </div>
               </div>
               <div className="mt-4 space-y-2">
-                <InfoRow icon={<MessageCircle className="h-3 w-3" />} k="WhatsApp" v={room.tenant.whatsapp ?? room.tenant.phone} />
+                <InfoRow icon={<MessageCircle className="h-3 w-3" />} k="WhatsApp" v={room.tenant.whatsapp_number ?? room.tenant.phone} />
                 <InfoRow icon={<IdCard className="h-3 w-3" />} k="Aadhar" v={maskAadhar(room.tenant.aadhar)} mono />
                 <div className="flex items-center justify-between rounded-xl bg-secondary/60 p-3">
                   <span className="text-xs text-muted-foreground">Status</span>
@@ -239,7 +264,9 @@ export default function RoomDetails() {
                 </div>
                 <div className="flex items-center justify-between rounded-xl bg-secondary/60 p-3">
                   <span className="text-xs text-muted-foreground">Joined</span>
-                  <span className="text-xs font-medium tnum">{room.tenant.joinedAt}</span>
+                  <span className="text-xs font-medium tnum">
+                    {new Date(room.tenant.joined_at).toLocaleDateString()}
+                  </span>
                 </div>
               </div>
             </>
@@ -344,13 +371,13 @@ export default function RoomDetails() {
                   "bg-[#25D366] text-white shadow-soft hover:opacity-90",
                   !room.tenant && "cursor-not-allowed opacity-50",
                 )}
-                title={room.tenant ? `WhatsApp ${room.tenant.whatsapp ?? room.tenant.phone}` : "No tenant assigned"}
+                title={room.tenant ? `WhatsApp ${room.tenant.whatsapp_number ?? room.tenant.phone}` : "No tenant assigned"}
               >
                 <Send className="h-3.5 w-3.5" />
                 Send invoice via WhatsApp
                 {room.tenant && (
                   <span className="ml-1 hidden rounded-md bg-white/20 px-1.5 py-0.5 font-mono text-[10px] sm:inline">
-                    {room.tenant.whatsapp ?? room.tenant.phone}
+                    {room.tenant.whatsapp_number ?? room.tenant.phone}
                   </span>
                 )}
               </button>

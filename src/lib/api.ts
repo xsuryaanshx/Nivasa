@@ -130,7 +130,7 @@ async function getPropertyDetails(buildingId: string | undefined) {
         number: u.name || u.number,
         status: u.status || "vacant",
         rent_amount: u.rent_amount,
-        tenant: tenants ? tenants.find((t: any) => t.unit_id === u.id) : null
+        tenant: tenants ? tenants.find((t: any) => t.room_id === u.id) : null
       })),
       occupancyRate: building.units?.length > 0 
         ? Math.round((building.units.filter((u: any) => u.status === 'occupied').length / building.units.length) * 100) 
@@ -237,37 +237,76 @@ async function addUnit(input: any) {
 async function addTenant(input: {
   room_id: string;
   name: string;
-  surname: string;
   phone: string;
-  whatsapp?: string;
+  whatsapp_number?: string;
   aadhar?: string;
   joined_at?: string;
 }) {
   try {
-    const { data: unit } = await supabase.from('units').select('building_id').eq('id', input.room_id).single();
+    // 1. Fetch building_id from the room automatically
+    const { data: room, error: roomError } = await supabase
+      .from('units')
+      .select('building_id')
+      .eq('id', input.room_id)
+      .single();
     
-    const { data, error } = await supabase
+    if (roomError || !room) throw new Error("Room not found");
+
+    // 2. Insert tenant with correct fields
+    const payload = {
+      name: input.name,
+      phone: input.phone,
+      whatsapp_number: input.whatsapp_number || input.phone,
+      aadhar: input.aadhar,
+      room_id: input.room_id,
+      building_id: room.building_id,
+      joined_at: input.joined_at || new Date().toISOString()
+    };
+
+    const { data: tenant, error: tenantError } = await supabase
       .from('tenants')
-      .insert([{
-        name: `${input.name} ${input.surname}`.trim(),
-        phone: input.phone,
-        whatsapp: input.whatsapp || input.phone,
-        aadhar: input.aadhar,
-        unit_id: input.room_id,
-        building_id: unit?.building_id,
-        joined_at: input.joined_at || new Date().toISOString()
-      }])
+      .insert([payload])
       .select()
       .single();
     
-    if (error) throw error;
+    if (tenantError) throw tenantError;
 
-    // Update unit status
-    await supabase.from('units').update({ status: 'occupied', tenant_id: data.id }).eq('id', input.room_id);
+    // 3. Update room status to 'occupied'
+    const { error: updateError } = await supabase
+      .from('units')
+      .update({ status: 'occupied' })
+      .eq('id', input.room_id);
 
-    return data;
+    if (updateError) console.error("Failed to update room status:", updateError);
+
+    return tenant;
   } catch (error) {
     console.error("Error in addTenant:", error);
+    throw error;
+  }
+}
+
+async function removeTenant(roomId: string, tenantId: string) {
+  try {
+    // 1. Delete tenant
+    const { error: tenantError } = await supabase
+      .from('tenants')
+      .delete()
+      .eq('id', tenantId);
+    
+    if (tenantError) throw tenantError;
+
+    // 2. Update room status to 'vacant'
+    const { error: roomError } = await supabase
+      .from('units')
+      .update({ status: 'vacant' })
+      .eq('id', roomId);
+
+    if (roomError) throw roomError;
+
+    return true;
+  } catch (error) {
+    console.error("Error in removeTenant:", error);
     throw error;
   }
 }
@@ -278,19 +317,22 @@ async function addPayment(input: any) {
     const { data, error } = await supabase
       .from('payments')
       .insert([{
-        unit_id: input.room_id,
+        building_id: input.building_id,
+        room_id: input.room_id,
+        tenant_id: input.tenant_id,
         amount: input.amount,
-        status: input.status,
-        method: input.method,
+        status: input.status.toLowerCase(),
+        method: input.method.toLowerCase(),
         paid_date: input.date,
-        note: input.note || input.reference
+        reference_number: input.reference,
+        note: input.note
       }])
       .select()
       .single();
     if (error) throw error;
 
-    // Update unit status if it was pending
-    if (input.status === 'paid') {
+    // Update unit status if it was paid
+    if (input.status.toLowerCase() === 'paid') {
       await supabase.from('units').update({ status: 'paid' }).eq('id', input.room_id);
     }
 
@@ -305,7 +347,7 @@ async function getRecentPayments(limit = 10) {
   try {
     const { data, error } = await supabase
       .from('payments')
-      .select('*, units(name, buildings(name)), tenants(name)')
+      .select('*, units(name, buildings(name)), tenants(name, phone, whatsapp_number)')
       .order('created_at', { ascending: false })
       .limit(limit);
     
@@ -313,15 +355,16 @@ async function getRecentPayments(limit = 10) {
 
     return (data || []).map(p => ({
       id: p.id,
-      roomId: p.unit_id,
+      roomId: p.room_id,
       tenantName: p.tenants?.name || 'Unknown',
       tenantPhone: p.tenants?.phone,
-      tenantWhatsapp: p.tenants?.whatsapp,
+      tenantWhatsapp: p.tenants?.whatsapp_number,
       amount: p.amount,
       date: p.paid_date || p.created_at,
       status: p.status as PaymentStatus,
-      method: p.method,
+      method: p.method.charAt(0).toUpperCase() + p.method.slice(1), // Capitalize for UI
       note: p.note,
+      reference: p.reference_number,
       roomNumber: p.units?.name,
       buildingName: p.units?.buildings?.name
     }));
@@ -427,6 +470,7 @@ export const estateApi = {
   addRoom,
   addUnit,
   addTenant,
+  removeTenant,
   addPayment,
   getRecentPayments,
   saveElectricityReading,

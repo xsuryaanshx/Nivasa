@@ -140,13 +140,14 @@ export function AddPaymentModal({ open, onClose, defaultRoomId }: Props) {
       if (!api) throw new Error("API not loaded");
 
       await api.addPayment({
+        building_id: buildingId,
         room_id: roomId,
         tenant_id: selectedRoom?.tenant?.id || null,
         amount: amountValue,
         method,
         status,
         date,
-        note: [note, reference].filter(Boolean).join(" · ") || undefined,
+        note: note || undefined,
         reference: reference || undefined,
       });
 

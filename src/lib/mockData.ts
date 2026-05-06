@@ -16,11 +16,10 @@ export interface Building {
 export interface Tenant {
   id: string;
   name: string;
-  surname?: string;
   phone: string;
-  whatsapp?: string;
+  whatsapp_number?: string;
   aadhar?: string;
-  joinedAt: string;
+  joined_at: string;
 }
 
 export interface ElectricityReading {
