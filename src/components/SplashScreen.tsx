@@ -12,10 +12,10 @@ export const SplashScreen = ({ isReady, onFinished }: SplashScreenProps) => {
   const [isExiting, setIsExiting] = useState(false);
 
   useEffect(() => {
-    // Show the animation for at least 7.5 seconds to allow for 3 words with 2s pauses
+    // Extended duration to 12s to allow all words to be seen with 2s pauses
     const timer = setTimeout(() => {
       setAnimationFinished(true);
-    }, 7500);
+    }, 12000);
 
     return () => clearTimeout(timer);
   }, []);
@@ -44,11 +44,11 @@ export const SplashScreen = ({ isReady, onFinished }: SplashScreenProps) => {
       >
         <div className="flex items-center justify-center w-full h-full">
           <GooeyText
-            texts={["RENTAL", "MADE", "EASY"]}
-            morphTime={1.5}
+            texts={["RENTAL", "REIMAGINED", "SMART", "LIVING", "ESTATE"]}
+            morphTime={2}
             cooldownTime={2}
             className="font-bold"
-            textClassName="text-foreground drop-shadow-[0_0_15px_hsl(var(--accent-blue)/0.5)]"
+            textClassName="text-foreground drop-shadow-[0_0_20px_hsl(var(--accent-blue)/0.4)]"
           />
         </div>
 

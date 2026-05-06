@@ -29,14 +29,14 @@ export function GooeyText({
 
     const setMorph = (fraction: number) => {
       if (text1Ref.current && text2Ref.current) {
-        // Smoother blur transition
-        const blurValue = (1 - fraction) * 12;
-        const blurValueNext = fraction * 12;
+        // More balanced blur values for cleaner formation
+        const blur1 = fraction * 10;
+        const blur2 = (1 - fraction) * 10;
 
-        text1Ref.current.style.filter = `blur(${blurValue}px)`;
+        text1Ref.current.style.filter = `blur(${blur1}px)`;
         text1Ref.current.style.opacity = `${Math.pow(1 - fraction, 0.4) * 100}%`;
 
-        text2Ref.current.style.filter = `blur(${blurValueNext}px)`;
+        text2Ref.current.style.filter = `blur(${blur2}px)`;
         text2Ref.current.style.opacity = `${Math.pow(fraction, 0.4) * 100}%`;
       }
     };
@@ -65,14 +65,16 @@ export function GooeyText({
     };
 
     let animationFrameId: number;
+    let lastTime = 0;
 
     function animate(currentTime: number) {
+      if (!lastTime) lastTime = currentTime;
       animationFrameId = requestAnimationFrame(animate);
       
-      const shouldIncrementIndex = cooldown > 0;
-      const dt = (currentTime - time.getTime()) / 1000;
-      time = new Date(currentTime);
+      const dt = (currentTime - lastTime) / 1000;
+      lastTime = currentTime;
 
+      const shouldIncrementIndex = cooldown > 0;
       cooldown -= dt;
 
       if (cooldown <= 0) {
@@ -89,10 +91,7 @@ export function GooeyText({
       }
     }
 
-    requestAnimationFrame((t) => {
-      time = new Date(t);
-      animate(t);
-    });
+    animationFrameId = requestAnimationFrame(animate);
 
     return () => {
       cancelAnimationFrame(animationFrameId);
@@ -110,7 +109,7 @@ export function GooeyText({
               values="1 0 0 0 0
                       0 1 0 0 0
                       0 0 1 0 0
-                      0 0 0 18 -7"
+                      0 0 0 20 -10"
             />
           </filter>
         </defs>
