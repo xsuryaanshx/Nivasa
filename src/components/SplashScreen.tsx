@@ -11,6 +11,7 @@ export const SplashScreen = ({ isReady, onFinished }: SplashScreenProps) => {
   const [animationFinished, setAnimationFinished] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
 
+  useEffect(() => {
     // Optimized duration for 3 words (YOUR, PROPERTY, SIMPLIFIED)
     const timer = setTimeout(() => {
       setAnimationFinished(true);
