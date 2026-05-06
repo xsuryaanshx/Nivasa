@@ -318,7 +318,7 @@ async function addPayment(input: any) {
       .from('payments')
       .insert([{
         building_id: input.building_id,
-        room_id: input.room_id,
+        unit_id: input.room_id,
         tenant_id: input.tenant_id,
         amount: input.amount,
         status: input.status.toLowerCase(),
@@ -347,7 +347,11 @@ async function getRecentPayments(limit = 10) {
   try {
     const { data, error } = await supabase
       .from('payments')
-      .select('*, units(name, buildings(name)), tenants(name, phone, whatsapp_number)')
+      .select(`
+        *,
+        units (name, buildings (name)),
+        tenants!tenant_id (name, phone, whatsapp_number)
+      `)
       .order('created_at', { ascending: false })
       .limit(limit);
     
@@ -355,7 +359,7 @@ async function getRecentPayments(limit = 10) {
 
     return (data || []).map(p => ({
       id: p.id,
-      roomId: p.room_id,
+      roomId: p.unit_id,
       tenantName: p.tenants?.name || 'Unknown',
       tenantPhone: p.tenants?.phone,
       tenantWhatsapp: p.tenants?.whatsapp_number,
