@@ -1,5 +1,5 @@
 import { createRoot } from "react-dom/client";
-console.log("BUILD VERSION:", "2026-05-06-07-46"); // Updated for verification
+console.log("BUILD VERSION:", "2026-05-06-08-20"); // Updated for verification
 import App from "./App.tsx";
 import "./index.css";
 import { estateApi } from "./lib/api.ts";

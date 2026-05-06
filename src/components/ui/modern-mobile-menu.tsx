@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Home, Briefcase, Calendar, Shield, Settings } from 'lucide-react';
 
 type IconComponentType = React.ElementType<{ className?: string }>;
 
@@ -18,14 +17,6 @@ export interface InteractiveMenuProps {
   onItemClick?: (index: number, id: string) => void;
 }
 
-const defaultItems: InteractiveMenuItem[] = [
-    { label: 'home', icon: Home, id: 'home' },
-    { label: 'strategy', icon: Briefcase, id: 'strategy' },
-    { label: 'period', icon: Calendar, id: 'period' },
-    { label: 'security', icon: Shield, id: 'security' },
-    { label: 'settings', icon: Settings, id: 'settings' },
-];
-
 const defaultAccentColor = 'var(--accent-blue, #3B82F6)';
 
 const InteractiveMenu: React.FC<InteractiveMenuProps> = ({ 
@@ -35,13 +26,7 @@ const InteractiveMenu: React.FC<InteractiveMenuProps> = ({
   onItemClick 
 }) => {
 
-  const finalItems = useMemo(() => {
-     const isValid = items && Array.isArray(items) && items.length >= 2;
-     if (!isValid) {
-        return defaultItems;
-     }
-     return items;
-  }, [items]);
+  const finalItems = useMemo(() => items || [], [items]);
 
   const [internalActiveIndex, setInternalActiveIndex] = useState(0);
   const activeIndex = externalActiveIndex !== undefined ? externalActiveIndex : internalActiveIndex;
@@ -51,6 +36,7 @@ const InteractiveMenu: React.FC<InteractiveMenuProps> = ({
 
   useEffect(() => {
     const setLineWidth = () => {
+      if (finalItems.length === 0) return;
       const activeItemElement = itemRefs.current[activeIndex];
       const activeTextElement = textRefs.current[activeIndex];
 
@@ -81,6 +67,8 @@ const InteractiveMenu: React.FC<InteractiveMenuProps> = ({
       const activeColor = accentColor || defaultAccentColor;
       return { '--component-active-color': activeColor } as React.CSSProperties;
   }, [accentColor]); 
+
+  if (finalItems.length === 0) return null;
 
   return (
     <nav
