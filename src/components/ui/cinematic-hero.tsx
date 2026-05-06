@@ -4,7 +4,7 @@ import React, { useEffect, useRef } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { cn } from "@/lib/utils";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
 if (typeof window !== "undefined") {
@@ -199,6 +199,7 @@ export function CinematicHero({
   const containerRef = useRef<HTMLDivElement>(null);
   const mainCardRef = useRef<HTMLDivElement>(null);
   const mockupRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
   const requestRef = useRef<number>(0);
 
   // 1. High-Performance Mouse Interaction Logic (Using requestAnimationFrame)
@@ -301,17 +302,15 @@ export function CinematicHero({
     return () => ctx.revert();
   },[metricValue]); 
 
-  // 3. Automatic "Boot-up" Redirect (if no interaction/scroll happens)
+  // 3. Automatic "Boot-up" Redirect (Transition to app after intro)
   useEffect(() => {
     const timer = setTimeout(() => {
-      // If user hasn't scrolled significantly, they might be waiting for a boot
-      if (window.scrollY < 100) {
-        window.location.href = "/login";
-      }
-    }, 15000); // 15 seconds of cinematic intro then move to login
+      // Automatic transition after the cinematic intro
+      navigate("/login");
+    }, 5000); // 5 seconds of cinematic intro then move to login
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [navigate]);
 
   return (
     <div
@@ -323,17 +322,6 @@ export function CinematicHero({
       <style dangerouslySetInnerHTML={{ __html: INJECTED_STYLES }} />
       <div className="film-grain" aria-hidden="true" />
       <div className="bg-grid-theme absolute inset-0 z-0 pointer-events-none opacity-50" aria-hidden="true" />
-
-      {/* Scroll Indicator */}
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 3, duration: 1 }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-2"
-      >
-        <span className="text-[10px] uppercase tracking-[0.3em] font-bold text-muted-foreground/50">Scroll to explore</span>
-        <div className="w-[1px] h-12 bg-gradient-to-b from-blue-500 to-transparent" />
-      </motion.div>
 
       {/* BACKGROUND LAYER: Hero Texts */}
       <div className="hero-text-wrapper absolute z-10 flex flex-col items-center justify-center text-center w-screen px-4 will-change-transform transform-style-3d">
