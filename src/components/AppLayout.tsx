@@ -11,6 +11,7 @@ import { AddTenantModal } from "./AddTenantModal";
 import { ShortcutsHelp } from "./ShortcutsHelp";
 import { MobileNav } from "./MobileNav";
 import { ElectricityBillingModal } from "./ElectricityBillingModal";
+import { MobileDrawerMenu } from "./MobileDrawerMenu";
 
 function AppShell() {
   const [collapsed, setCollapsed] = useState(false);
@@ -51,23 +52,27 @@ function AppShell() {
   }, []);
 
   return (
-    <div className="flex min-h-screen w-full bg-background pt-safe">
-      <AnimatePresence initial={false}>
-        {!focus && (
-          <motion.div
-            key="sidebar"
-            initial={{ width: 0, opacity: 0 }}
-            animate={{ width: "auto", opacity: 1 }}
-            exit={{ width: 0, opacity: 0 }}
-            transition={{ duration: 0.32, ease: [0.2, 0.7, 0.2, 1] }}
-            className="overflow-hidden"
-          >
-            <AppSidebar collapsed={collapsed} />
-          </motion.div>
-        )}
-      </AnimatePresence>
+    <div className="relative h-screen w-full overflow-hidden bg-secondary/30 pt-safe">
+      <MobileDrawerMenu />
+      
+      <div className="app-cover absolute w-full h-full left-0 top-0 z-10 flex min-w-0 flex-1 flex-col bg-background shadow-2xl overflow-y-auto transition-transform will-change-transform border border-border/10">
+        <div className="flex flex-1">
+          <AnimatePresence initial={false}>
+            {!focus && (
+              <motion.div
+                key="sidebar"
+                initial={{ width: 0, opacity: 0 }}
+                animate={{ width: "auto", opacity: 1 }}
+                exit={{ width: 0, opacity: 0 }}
+                transition={{ duration: 0.32, ease: [0.2, 0.7, 0.2, 1] }}
+                className="overflow-hidden hidden lg:block"
+              >
+                <AppSidebar collapsed={collapsed} />
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-      <div className="flex min-w-0 flex-1 flex-col">
+          <div className="flex min-w-0 flex-1 flex-col">
         <AnimatePresence initial={false}>
           {!focus && (
             <motion.div
@@ -143,7 +148,9 @@ function AppShell() {
         )}
       </AnimatePresence>
 
-      <MobileNav />
+          <MobileNav />
+        </div>
+      </div>
     </div>
   );
 }
