@@ -29,22 +29,25 @@ export function GooeyText({
 
     const setMorph = (fraction: number) => {
       if (text1Ref.current && text2Ref.current) {
-        text2Ref.current.style.filter = `blur(${Math.min(8 / fraction - 8, 100)}px)`;
-        text2Ref.current.style.opacity = `${Math.pow(fraction, 0.4) * 100}%`;
+        // Smoother blur transition
+        const blurValue = (1 - fraction) * 12;
+        const blurValueNext = fraction * 12;
 
-        fraction = 1 - fraction;
-        text1Ref.current.style.filter = `blur(${Math.min(8 / fraction - 8, 100)}px)`;
-        text1Ref.current.style.opacity = `${Math.pow(fraction, 0.4) * 100}%`;
+        text1Ref.current.style.filter = `blur(${blurValue}px)`;
+        text1Ref.current.style.opacity = `${Math.pow(1 - fraction, 0.4) * 100}%`;
+
+        text2Ref.current.style.filter = `blur(${blurValueNext}px)`;
+        text2Ref.current.style.opacity = `${Math.pow(fraction, 0.4) * 100}%`;
       }
     };
 
     const doCooldown = () => {
       morph = 0;
       if (text1Ref.current && text2Ref.current) {
-        text2Ref.current.style.filter = "";
-        text2Ref.current.style.opacity = "100%";
-        text1Ref.current.style.filter = "";
-        text1Ref.current.style.opacity = "0%";
+        text1Ref.current.style.filter = "blur(0px)";
+        text1Ref.current.style.opacity = "100%";
+        text2Ref.current.style.filter = "blur(0px)";
+        text2Ref.current.style.opacity = "0%";
       }
     };
 
@@ -63,12 +66,12 @@ export function GooeyText({
 
     let animationFrameId: number;
 
-    function animate() {
+    function animate(currentTime: number) {
       animationFrameId = requestAnimationFrame(animate);
-      const newTime = new Date();
+      
       const shouldIncrementIndex = cooldown > 0;
-      const dt = (newTime.getTime() - time.getTime()) / 1000;
-      time = newTime;
+      const dt = (currentTime - time.getTime()) / 1000;
+      time = new Date(currentTime);
 
       cooldown -= dt;
 
@@ -86,7 +89,10 @@ export function GooeyText({
       }
     }
 
-    animate();
+    requestAnimationFrame((t) => {
+      time = new Date(t);
+      animate(t);
+    });
 
     return () => {
       cancelAnimationFrame(animationFrameId);
@@ -104,7 +110,7 @@ export function GooeyText({
               values="1 0 0 0 0
                       0 1 0 0 0
                       0 0 1 0 0
-                      0 0 0 255 -140"
+                      0 0 0 18 -7"
             />
           </filter>
         </defs>
