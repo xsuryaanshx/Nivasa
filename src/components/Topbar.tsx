@@ -1,6 +1,7 @@
 import { Bell, Focus, LogOut, PanelLeftClose, PanelLeftOpen, Search, MoreVertical } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 import { CurrencySwitcher } from "./CurrencySwitcher";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 import { useFocusMode } from "./FocusModeProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
@@ -72,6 +73,7 @@ export function Topbar({ collapsed, onToggle, onOpenPalette }: Props) {
           </button>
 
           <CurrencySwitcher />
+          <LanguageSwitcher />
 
           <button className="relative inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground">
             <Bell className="h-4 w-4" />
@@ -94,6 +96,11 @@ export function Topbar({ collapsed, onToggle, onOpenPalette }: Props) {
             </div>
             <span className="text-sm font-medium">{user?.firstName || "User"}</span>
           </div>
+        </div>
+
+        {/* Mobile Right Section */}
+        <div className="ml-auto flex md:hidden items-center gap-2">
+          <LanguageSwitcher />
         </div>
 
       </div>
