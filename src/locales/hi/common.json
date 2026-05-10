@@ -1,0 +1,37 @@
+{
+  "nav": {
+    "dashboard": "डैशबोर्ड",
+    "buildings": "इमारतें",
+    "tenants": "किरायेदार",
+    "rooms": "कमरे",
+    "payments": "भुगतान",
+    "analytics": "एनालिटिक्स",
+    "settings": "सेटिंग्स",
+    "electricity": "बिजली",
+    "logout": "लॉगआउट"
+  },
+  "common": {
+    "search": "कुछ भी खोजें...",
+    "add_building": "इमारत जोड़ें",
+    "add_tenant": "किरायेदार जोड़ें",
+    "occupied": "कब्ज़ा",
+    "vacant": "खाली",
+    "revenue": "राजस्व",
+    "filters": "फ़िल्टर",
+    "profile": "प्रोफ़ाइल",
+    "notifications": "सूचनाएं",
+    "pro_tip": "प्रो टिप",
+    "jump_anywhere": "कहीं भी जाने के लिए ⌘K दबाएं।",
+    "exit_focus": "फोकस मोड से बाहर निकलें",
+    "good_morning": "शुभ प्रभात",
+    "good_afternoon": "शुभ दोपहर",
+    "good_evening": "शुभ संध्या",
+    "recent_payments": "हाल के भुगतान",
+    "pending_payments": "लंबित भुगतान",
+    "monthly_revenue": "मासिक राजस्व",
+    "all": "सभी",
+    "paid": "भुगतान किया",
+    "pending": "लंबित",
+    "late": "देर"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "buildings": "Buildings",
+    "tenants": "Tenants",
+    "rooms": "Rooms",
+    "payments": "Payments",
+    "analytics": "Analytics",
+    "settings": "Settings",
+    "electricity": "Electricity",
+    "logout": "Logout"
+  },
+  "common": {
+    "search": "Search anything...",
+    "add_building": "Add Building",
+    "add_tenant": "Add Tenant",
+    "occupied": "Occupied",
+    "vacant": "Vacant",
+    "revenue": "Revenue",
+    "filters": "Filters",
+    "profile": "Profile",
+    "notifications": "Notifications",
+    "pro_tip": "Pro tip",
+    "jump_anywhere": "Press ⌘K to jump anywhere.",
+    "exit_focus": "Exit focus mode",
+    "good_morning": "Good morning",
+    "good_afternoon": "Good afternoon",
+    "good_evening": "Good evening",
+    "recent_payments": "Recent payments",
+    "pending_payments": "Pending payments",
+    "monthly_revenue": "Monthly revenue",
+    "all": "All",
+    "paid": "Paid",
+    "pending": "Pending",
+    "late": "Late"
+  }
+}
