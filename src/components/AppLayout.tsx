@@ -12,6 +12,7 @@ import { ShortcutsHelp } from "./ShortcutsHelp";
 import { MobileNav } from "./MobileNav";
 import { ElectricityBillingModal } from "./ElectricityBillingModal";
 import { MobileDrawerMenu } from "./MobileDrawerMenu";
+import { LanguageProvider } from "./LanguageProvider";
 
 function AppShell() {
   const [collapsed, setCollapsed] = useState(false);
@@ -157,10 +158,12 @@ function AppShell() {
 
 export function AppLayout() {
   return (
-    <CurrencyProvider>
-      <FocusModeProvider>
-        <AppShell />
-      </FocusModeProvider>
-    </CurrencyProvider>
+    <LanguageProvider>
+      <CurrencyProvider>
+        <FocusModeProvider>
+          <AppShell />
+        </FocusModeProvider>
+      </CurrencyProvider>
+    </LanguageProvider>
   );
 }

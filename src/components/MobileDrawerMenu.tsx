@@ -6,6 +6,8 @@ import { MoreVertical, Search, X, Moon, Sun, DollarSign, LogOut, Settings, Globe
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "next-themes";
 import { useCurrency } from "@/lib/currency";
+import { useLanguage } from "./LanguageProvider";
+import { Languages } from "lucide-react";
 
 gsap.registerPlugin(CustomEase);
 
@@ -13,6 +15,7 @@ export function MobileDrawerMenu() {
   const { user, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
   const { currency, setCurrency } = useCurrency();
+  const { language, setLanguage, t } = useLanguage();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -65,7 +68,7 @@ export function MobileDrawerMenu() {
   return (
     <div 
       ref={menuRef}
-      className="mobile-drawer-menu absolute left-4 top-[calc(env(safe-area-inset-top)+1rem)] z-[50] h-[65px] w-[263px] overflow-hidden rounded-[32px] bg-secondary p-2 md:hidden"
+      className="mobile-drawer-menu fixed left-4 top-[calc(env(safe-area-inset-top)+1rem)] z-[50] h-[65px] w-[263px] overflow-hidden rounded-[32px] bg-secondary p-2 md:hidden"
     >
       <div ref={optionsRef} className="flex w-[263px] items-center gap-3">
         <button onClick={toggleMenu} className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-background text-foreground hover:bg-muted transition-colors">
@@ -76,7 +79,7 @@ export function MobileDrawerMenu() {
           <input
             type="text"
             className="h-12 w-full rounded-full border border-border bg-background pl-10 pr-4 text-sm outline-none placeholder:text-muted-foreground"
-            placeholder="Search"
+            placeholder={t('search')}
           />
         </div>
         <button onClick={toggleMenu} className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-background text-foreground hover:bg-muted transition-colors">
@@ -92,8 +95,14 @@ export function MobileDrawerMenu() {
         />
         
         <MenuItem 
+          icon={Languages} 
+          label={`Lang: ${language === 'en' ? 'English' : 'हिंदी'}`} 
+          onClick={() => setLanguage(language === 'en' ? 'hi' : 'en')}
+        />
+
+        <MenuItem 
           icon={Globe} 
-          label={`Currency: ${currency.code}`} 
+          label={`${t('currency')}: ${currency.code}`} 
           onClick={() => {
             const codes: any[] = ["INR", "USD", "EUR", "GBP", "AED"];
             const nextIdx = (codes.indexOf(currency.code) + 1) % codes.length;
@@ -103,7 +112,7 @@ export function MobileDrawerMenu() {
 
         <MenuItem 
           icon={Settings} 
-          label="Settings" 
+          label={t('settings')}
           onClick={() => {
             toggleMenu();
             navigate("/app/settings");
@@ -112,7 +121,7 @@ export function MobileDrawerMenu() {
         
         <MenuItem 
           icon={LogOut} 
-          label="Logout" 
+          label={t('logout')} 
           onClick={signOut}
           className="text-destructive"
         />
@@ -122,10 +131,10 @@ export function MobileDrawerMenu() {
              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-foreground text-background font-bold text-sm">
                 {user?.initials || "U"}
              </div>
-             <div className="flex flex-col items-center">
-               <span className="text-sm font-semibold">{user?.firstName || "User"}</span>
-               <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Premium Member</span>
-             </div>
+              <div className="flex flex-col items-center">
+                <span className="text-sm font-semibold">{user?.firstName || t('user')}</span>
+                <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{t('premium_member')}</span>
+              </div>
            </div>
         </div>
       </div>

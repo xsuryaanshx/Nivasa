@@ -1,19 +1,21 @@
 import { useEffect, useMemo, useState } from "react";
 import { Search, UserPlus } from "lucide-react";
+import { useLanguage } from "@/components/LanguageProvider";
 import { PageHeader } from "@/components/PageHeader";
 import { RoomCard } from "@/components/RoomCard";
 import { MagneticButton } from "@/components/MagneticButton";
 import { type PaymentStatus } from "@/lib/mockData";
 import { cn } from "@/lib/utils";
 
-const filters: ({ key: PaymentStatus | "all"; label: string })[] = [
-  { key: "all",     label: "All" },
-  { key: "paid",    label: "Paid" },
-  { key: "pending", label: "Pending" },
-  { key: "late",    label: "Late" },
+const getFilters = (t: any): ({ key: PaymentStatus | "all"; label: string })[] => [
+  { key: "all",     label: t('all') },
+  { key: "paid",    label: t('paid') },
+  { key: "pending", label: t('pending') },
+  { key: "late",    label: t('late') },
 ];
 
 export default function Rooms() {
+  const { t } = useLanguage();
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<PaymentStatus | "all">("all");
   const [roomsList, setRoomsList] = useState<any[]>([]);
@@ -47,11 +49,11 @@ export default function Rooms() {
   return (
     <div>
       <PageHeader
-        title="Rooms"
+        title={t('rooms')}
         subtitle="Each card surfaces tenant, status, and recent electricity at a glance."
         action={
           <MagneticButton onClick={() => window.dispatchEvent(new CustomEvent("estate:add-tenant"))}>
-            <UserPlus className="h-4 w-4" /> Add tenant
+            <UserPlus className="h-4 w-4" /> {t('add_tenant')}
           </MagneticButton>
         }
       />
@@ -66,7 +68,7 @@ export default function Rooms() {
           />
         </div>
         <div className="flex items-center gap-1 rounded-xl border border-border bg-card p-1">
-          {filters.map(f => (
+          {getFilters(t).map(f => (
             <button
               key={f.key}
               onClick={() => setStatus(f.key)}

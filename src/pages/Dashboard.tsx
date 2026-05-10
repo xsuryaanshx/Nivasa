@@ -7,16 +7,18 @@ import { MagneticButton } from "@/components/MagneticButton";
 import { AddPaymentModal } from "@/components/AddPaymentModal";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { useLanguage } from "@/components/LanguageProvider";
 
-function getGreeting() {
+function getGreetingKey() {
   const hour = new Date().getHours();
-  if (hour < 12) return "Good morning";
-  if (hour < 17) return "Good afternoon";
-  return "Good evening";
+  if (hour < 12) return "good_morning";
+  if (hour < 17) return "good_afternoon";
+  return "good_evening";
 }
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState({
     stats: { totalBuildings: 0, totalRooms: 0, occupied: 0, pending: 0, monthlyRevenue: 0 },
@@ -57,21 +59,21 @@ export default function Dashboard() {
   return (
     <div>
       <PageHeader
-        title={`${getGreeting()}, ${user?.firstName || "there"}`}
+        title={`${t(getGreetingKey() as any)}, ${user?.firstName || t('user')}`}
         subtitle="Here's what's happening across your properties today."
         action={
           <MagneticButton onClick={() => setAddOpen(true)}>
-            <Plus className="h-4 w-4" /> Add payment
+            <Plus className="h-4 w-4" /> {t('add_payment')}
           </MagneticButton>
         }
       />
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
-        <StatCard label="Buildings"        value={s.totalBuildings} icon={Building2} delta="+1"  trend="up"   delay={0.00} />
-        <StatCard label="Rooms"            value={s.totalRooms}     icon={Home}      delta="+2"  trend="up"   delay={0.05} />
-        <StatCard label="Occupied"         value={s.occupied}       icon={Users}     delta="92%" trend="flat" delay={0.10} />
-        <StatCard label="Pending payments" value={s.pending}        icon={Receipt}   delta="-1"  trend="up"   delay={0.15} />
-        <StatCard label="Monthly revenue"  value={s.monthlyRevenue} icon={DollarSign} money delta="+12%" trend="up" delay={0.20} />
+        <StatCard label={t('buildings')}        value={s.totalBuildings} icon={Building2} delta="+1"  trend="up"   delay={0.00} />
+        <StatCard label={t('rooms')}            value={s.totalRooms}     icon={Home}      delta="+2"  trend="up"   delay={0.05} />
+        <StatCard label={t('occupancy')}         value={s.occupied}       icon={Users}     delta="92%" trend="flat" delay={0.10} />
+        <StatCard label={t('pending_payments')} value={s.pending}        icon={Receipt}   delta="-1"  trend="up"   delay={0.15} />
+        <StatCard label={t('monthly_revenue')}  value={s.monthlyRevenue} icon={DollarSign} money delta="+12%" trend="up" delay={0.20} />
       </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-3">
@@ -123,7 +125,7 @@ export default function Dashboard() {
       <div className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-soft">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-sm font-semibold tracking-tight">Recent payments</div>
+            <div className="text-sm font-semibold tracking-tight">{t('recent_payments')}</div>
             <div className="text-xs text-muted-foreground">Latest activity across all properties</div>
           </div>
         </div>

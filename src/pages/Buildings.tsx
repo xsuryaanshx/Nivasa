@@ -9,6 +9,14 @@ import { AddBuildingModal } from "@/components/AddBuildingModal";
 import { EditBuildingModal } from "@/components/EditBuildingModal";
 import { AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { useLanguage } from "@/components/LanguageProvider";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function Buildings() {
   const [buildingsList, setBuildingsList] = useState<any[]>([]);
@@ -18,6 +26,7 @@ export default function Buildings() {
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const activeMenuRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const fetchBuildings = async () => {
     try {
@@ -63,11 +72,11 @@ export default function Buildings() {
   return (
     <div>
       <PageHeader
-        title="Buildings"
+        title={t('buildings')}
         subtitle="A clear view of every property in your portfolio."
         action={
           <MagneticButton onClick={() => setIsAddModalOpen(true)}>
-            <Plus className="h-4 w-4" /> Add building
+            <Plus className="h-4 w-4" /> {t('add_building')}
           </MagneticButton>
         }
       />
@@ -110,57 +119,48 @@ export default function Buildings() {
                   <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-brand text-white shadow-glow">
                     <Building2 className="h-5 w-5" />
                   </div>
-                  <div 
-                    className="relative"
-                    ref={activeMenuId === b.id ? activeMenuRef : null}
-                  >
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setActiveMenuId(activeMenuId === b.id ? null : b.id);
-                      }}
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-all hover:bg-secondary"
-                      aria-label="Toggle menu"
-                    >
-                      <MoreHorizontal className="h-4 w-4" />
-                    </button>
-
-                    <AnimatePresence>
-                      {activeMenuId === b.id && (
-                        <motion.div
-                          initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                          animate={{ opacity: 1, scale: 1, y: 0 }}
-                          exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                          className="absolute right-0 top-10 z-50 w-48 overflow-hidden rounded-xl border border-border bg-card p-1 shadow-xl"
+                  <div className="relative">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button 
+                          onClick={(e) => e.stopPropagation()}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-all hover:bg-secondary focus:outline-none"
+                          aria-label="Toggle menu"
                         >
-                          <button
-                            onClick={() => navigate(`/app/buildings/${b.id}`)}
-                            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-colors hover:bg-secondary"
-                          >
-                            <Eye className="h-3.5 w-3.5 text-brand" /> View Building
-                          </button>
-                          <button
-                            onClick={() => {
-                              setEditingBuilding(b);
-                              setActiveMenuId(null);
-                            }}
-                            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-colors hover:bg-secondary"
-                          >
-                            <Edit className="h-3.5 w-3.5 text-brand" /> Edit Building
-                          </button>
-                          <div className="my-1 h-px bg-border" />
-                          <button
-                            onClick={() => {
-                              handleDelete(b.id);
-                              setActiveMenuId(null);
-                            }}
-                            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-destructive transition-colors hover:bg-destructive/10"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" /> Delete Building
-                          </button>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48 rounded-xl">
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/app/buildings/${b.id}`);
+                          }}
+                          className="flex items-center gap-2 cursor-pointer"
+                        >
+                          <Eye className="h-3.5 w-3.5 text-brand" /> {t('view_building')}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingBuilding(b);
+                          }}
+                          className="flex items-center gap-2 cursor-pointer"
+                        >
+                          <Edit className="h-3.5 w-3.5 text-brand" /> {t('edit_building')}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(b.id);
+                          }}
+                          className="flex items-center gap-2 text-destructive focus:text-destructive cursor-pointer"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" /> {t('delete_building')}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
 
