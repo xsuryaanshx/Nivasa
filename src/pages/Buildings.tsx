@@ -56,16 +56,16 @@ export default function Buildings() {
   }, [activeMenuId]);
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this building? All associated units will be removed.")) return;
+    if (!confirm(t("delete_confirm_building"))) return;
     
     try {
       const api = (window as any).estateApi;
       await api.deleteBuilding(id);
-      toast.success("Building deleted successfully");
+      toast.success(t("building_deleted"));
       fetchBuildings();
     } catch (error) {
       console.error("Error deleting building:", error);
-      toast.error("Failed to delete building");
+      toast.error(t("building_delete_failed"));
     }
   };
 
@@ -73,7 +73,7 @@ export default function Buildings() {
     <div>
       <PageHeader
         title={t('buildings')}
-        subtitle="A clear view of every property in your portfolio."
+        subtitle={t("buildings_subtitle")}
         action={
           <MagneticButton onClick={() => setIsAddModalOpen(true)}>
             <Plus className="h-4 w-4" /> {t('add_building')}
@@ -170,14 +170,14 @@ export default function Buildings() {
                 </div>
 
                 <div className="mt-5 grid grid-cols-3 gap-3">
-                  <Metric label="Rooms"    value={b.rooms.toString()} />
-                  <Metric label="Occupied" value={`${b.occupied}/${b.rooms}`} />
-                  <Metric label="Revenue"  value={<Money value={b.monthlyRevenue} compact />} />
+                  <Metric label={t("rooms_label")} value={b.rooms.toString()} />
+                  <Metric label={t("occupied")} value={`${b.occupied}/${b.rooms}`} />
+                  <Metric label={t("revenue")} value={<Money value={b.monthlyRevenue} compact />} />
                 </div>
 
                 <div className="mt-5">
                   <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                    <span>Occupancy</span>
+                    <span>{t("occupancy")}</span>
                     <span className="tnum">{occ}%</span>
                   </div>
                   <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-secondary">

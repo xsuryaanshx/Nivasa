@@ -1,17 +1,19 @@
 import { NavLink } from "react-router-dom";
 import { Building2, Home, LayoutDashboard, Receipt, Sparkles, Zap, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const items = [
-  { to: "/app",            label: "Dashboard", icon: LayoutDashboard, end: true },
-  { to: "/app/buildings",  label: "Buildings", icon: Building2 },
-  { to: "/app/rooms",      label: "Rooms",     icon: Home },
-  { to: "/app/payments",   label: "Payments",  icon: Receipt },
-];
+import { useLanguage } from "./LanguageProvider";
 
 interface Props { collapsed: boolean; }
 
 export function AppSidebar({ collapsed }: Props) {
+  const { t } = useLanguage();
+  const items = [
+    { to: "/app", label: t("dashboard"), icon: LayoutDashboard, end: true },
+    { to: "/app/buildings", label: t("buildings"), icon: Building2 },
+    { to: "/app/rooms", label: t("rooms"), icon: Home },
+    { to: "/app/payments", label: t("payments"), icon: Receipt },
+  ];
+
   return (
     <aside
       className={cn(
@@ -26,7 +28,7 @@ export function AppSidebar({ collapsed }: Props) {
         {!collapsed && (
           <div className="leading-tight">
             <div className="text-sm font-semibold tracking-tight">Estate</div>
-            <div className="text-[11px] text-muted-foreground">Property OS</div>
+            <div className="text-[11px] text-muted-foreground">{t("property_os")}</div>
           </div>
         )}
       </div>
@@ -62,7 +64,7 @@ export function AppSidebar({ collapsed }: Props) {
           )}
         >
           <Zap className="h-4 w-4 shrink-0" />
-          {!collapsed && <span className="truncate">Electricity</span>}
+          {!collapsed && <span className="truncate">{t("electricity")}</span>}
         </button>
       </div>
 
@@ -79,14 +81,14 @@ export function AppSidebar({ collapsed }: Props) {
           )}
         >
           <LogOut className="h-4 w-4 shrink-0" />
-          {!collapsed && <span className="truncate">Logout</span>}
+          {!collapsed && <span className="truncate">{t("logout")}</span>}
         </button>
       </div>
 
       <div className={cn("mt-auto m-3 rounded-xl border border-border bg-card p-4", collapsed && "hidden")}>
-        <div className="text-xs font-medium">Pro tip</div>
+        <div className="text-xs font-medium">{t("pro_tip")}</div>
         <div className="mt-1 text-xs text-muted-foreground leading-relaxed">
-          Press <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px]">⌘K</kbd> to jump anywhere.
+          {t("command_tip")}
         </div>
       </div>
     </aside>

@@ -8,6 +8,7 @@ import type { Payment } from "@/lib/mockData";
 import { cn } from "@/lib/utils";
 import { openWhatsApp } from "@/lib/whatsapp";
 import { toast } from "sonner";
+import { useLanguage } from "./LanguageProvider";
 
 function fmtDate(d: string) {
   return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
@@ -25,6 +26,7 @@ interface Props {
 
 export function PaymentTimeline({ payments, dense = false, grouped = true }: Props) {
   const { currency } = useCurrency();
+  const { t } = useLanguage();
 
   const groups = useMemo(() => {
     if (!grouped) return [{ key: "All", items: payments, total: payments.reduce((s, p) => s + p.amount, 0) }];
@@ -44,8 +46,8 @@ export function PaymentTimeline({ payments, dense = false, grouped = true }: Pro
   if (payments.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-border bg-card/50 p-8 text-center">
-        <div className="text-sm font-medium">No payments yet</div>
-        <div className="mt-1 text-xs text-muted-foreground">When payments arrive, they&apos;ll appear here.</div>
+        <div className="text-sm font-medium">{t("no_payments_yet")}</div>
+        <div className="mt-1 text-xs text-muted-foreground">{t("payments_empty_hint")}</div>
       </div>
     );
   }
@@ -102,7 +104,7 @@ export function PaymentTimeline({ payments, dense = false, grouped = true }: Pro
                       onClick={() => toast.success("Receipt sent", { description: `${p.tenantName} · ${formatMoney(p.amount, currency)}` })}
                       className="inline-flex h-7 items-center gap-1 rounded-lg border border-border bg-card/70 px-2 text-[11px] font-medium text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100"
                     >
-                      <Receipt className="h-3 w-3" /> Receipt
+                      <Receipt className="h-3 w-3" /> {t("receipt")}
                     </button>
                     <StatusPill status={p.status} />
                     <span className="text-sm font-semibold tnum"><Money value={p.amount} /></span>

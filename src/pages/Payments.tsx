@@ -7,15 +7,17 @@ import { AddPaymentModal } from "@/components/AddPaymentModal";
 import { Money } from "@/components/Money";
 import { type PaymentStatus } from "@/lib/mockData";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/components/LanguageProvider";
 
-const filters: ({ key: PaymentStatus | "all"; label: string })[] = [
-  { key: "all",     label: "All" },
-  { key: "paid",    label: "Paid" },
-  { key: "pending", label: "Pending" },
-  { key: "late",    label: "Late" },
+const getFilters = (t: ReturnType<typeof useLanguage>["t"]): ({ key: PaymentStatus | "all"; label: string })[] => [
+  { key: "all", label: t("all") },
+  { key: "paid", label: t("paid") },
+  { key: "pending", label: t("pending") },
+  { key: "late", label: t("late") },
 ];
 
 export default function Payments() {
+  const { t } = useLanguage();
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<PaymentStatus | "all">("all");
   const [open, setOpen] = useState(false);
@@ -57,29 +59,29 @@ export default function Payments() {
   return (
     <div>
       <PageHeader
-        title="Payments"
-        subtitle="A calm timeline of every transaction across your portfolio."
+        title={t("payments")}
+        subtitle={t("payments_subtitle")}
         action={
           <MagneticButton onClick={() => setOpen(true)}>
-            <Plus className="h-4 w-4" /> Add payment
+            <Plus className="h-4 w-4" /> {t("add_payment")}
           </MagneticButton>
         }
       />
 
       <div className="mb-5 grid gap-3 md:grid-cols-3">
-        <Stat label="Filtered total" value={<Money value={total} />} />
-        <Stat label="Records"        value={loading ? "..." : filtered.length.toString()} />
-        <Stat label="Outstanding"    value={<Money value={outstanding} />} accent />
+        <Stat label={t("filtered_total")} value={<Money value={total} />} />
+        <Stat label={t("records")} value={loading ? "..." : filtered.length.toString()} />
+        <Stat label={t("outstanding")} value={<Money value={outstanding} />} accent />
       </div>
 
       <div className="mb-5 flex flex-wrap items-center gap-3">
         <div className="relative flex h-10 flex-1 min-w-[240px] max-w-md items-center gap-2 rounded-xl border border-border bg-card px-3.5">
           <Search className="h-4 w-4 text-muted-foreground" />
-          <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search tenant or method…"
+          <input value={q} onChange={e => setQ(e.target.value)} placeholder={t("search_tenant_method")}
             className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground" />
         </div>
         <div className="flex items-center gap-1 rounded-xl border border-border bg-card p-1">
-          {filters.map(f => (
+          {getFilters(t).map(f => (
             <button key={f.key} onClick={() => setStatus(f.key)}
               className={cn(
                 "rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
@@ -92,7 +94,7 @@ export default function Payments() {
 
       <div className="rounded-2xl border border-border bg-card p-5 shadow-soft">
         {loading ? (
-          <div className="h-64 flex items-center justify-center text-muted-foreground italic">Loading timeline...</div>
+          <div className="h-64 flex items-center justify-center text-muted-foreground italic">{t("loading_payments")}</div>
         ) : (
           <PaymentTimeline payments={filtered} />
         )}

@@ -50,7 +50,7 @@ export default function Rooms() {
     <div>
       <PageHeader
         title={t('rooms')}
-        subtitle="Each card surfaces tenant, status, and recent electricity at a glance."
+        subtitle={t("rooms_subtitle")}
         action={
           <MagneticButton onClick={() => window.dispatchEvent(new CustomEvent("estate:add-tenant"))}>
             <UserPlus className="h-4 w-4" /> {t('add_tenant')}
@@ -63,7 +63,7 @@ export default function Rooms() {
           <Search className="h-4 w-4 text-muted-foreground" />
           <input
             value={q} onChange={e => setQ(e.target.value)}
-            placeholder="Search rooms or tenants…"
+            placeholder={t("search_rooms")}
             className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
           />
         </div>
@@ -101,13 +101,14 @@ export default function Rooms() {
 }
 
 function EmptyState() {
+  const { t } = useLanguage();
   return (
     <div className="rounded-2xl border border-dashed border-border bg-card/50 p-12 text-center">
       <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-secondary">
         <Search className="h-5 w-5 text-muted-foreground" />
       </div>
-      <div className="text-sm font-medium">No rooms match your filters</div>
-      <div className="mt-1 text-xs text-muted-foreground">Try clearing the search or switching status.</div>
+      <div className="text-sm font-medium">{t("no_rooms_match")}</div>
+      <div className="mt-1 text-xs text-muted-foreground">{t("clear_search_hint")}</div>
     </div>
   );
 }

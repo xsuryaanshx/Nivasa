@@ -435,7 +435,7 @@ export default function RoomDetails() {
                 </div>
                 <div className="min-w-0">
                   <div className="text-sm font-medium truncate">{t.name}</div>
-                  <div className="text-[11px] text-muted-foreground">Joined {t.joinedAt}</div>
+                  <div className="text-[11px] text-muted-foreground">Joined {t.joined_at}</div>
                 </div>
               </li>
             ))}
@@ -449,7 +449,7 @@ export default function RoomDetails() {
         open={electricityOpen}
         onClose={() => setElectricityOpen(false)}
         defaultRoomId={room.id}
-        onSaved={() => force(v => v + 1)}
+        onSaved={fetchData}
       />
     </div>
   );

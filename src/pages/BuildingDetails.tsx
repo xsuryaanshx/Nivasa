@@ -7,10 +7,12 @@ import { MagneticButton } from "@/components/MagneticButton";
 import { Money } from "@/components/Money";
 import { toast } from "sonner";
 import { EditBuildingModal } from "@/components/EditBuildingModal";
+import { useLanguage } from "@/components/LanguageProvider";
 
 export default function BuildingDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isAddingRoom, setIsAddingRoom] = useState(false);
@@ -64,12 +66,12 @@ export default function BuildingDetails() {
     return (
       <div className="flex h-[60vh] flex-col items-center justify-center space-y-4">
         <div className="h-12 w-12 animate-spin rounded-full border-4 border-brand border-t-transparent" />
-        <p className="text-sm text-muted-foreground animate-pulse">Loading property details...</p>
+        <p className="text-sm text-muted-foreground animate-pulse">{t("loading_property_details")}</p>
       </div>
     );
   }
 
-  if (!data) return <div className="text-center py-20">Property not found.</div>;
+  if (!data) return <div className="text-center py-20">{t("property_not_found")}</div>;
 
   return (
     <motion.div
@@ -89,7 +91,7 @@ export default function BuildingDetails() {
                 onClick={() => setIsEditingBuilding(true)}
                 className="text-xs font-normal text-muted-foreground hover:text-brand underline underline-offset-4"
               >
-                Edit
+                {t("edit")}
               </button>
             </h1>
             <p className="text-sm text-muted-foreground">{data.address}</p>
@@ -108,19 +110,19 @@ export default function BuildingDetails() {
       <div className="mt-8 grid gap-4 md:grid-cols-4">
         <div className="rounded-2xl border border-border bg-card p-5 shadow-soft">
           <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
-            <DoorOpen className="h-3 w-3" /> Total Rooms
+            <DoorOpen className="h-3 w-3" /> {t("total_rooms")}
           </div>
           <div className="mt-1 text-2xl font-bold">{data.units.length}</div>
         </div>
         <div className="rounded-2xl border border-border bg-card p-5 shadow-soft">
           <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
-            <Users className="h-3 w-3" /> Occupancy
+            <Users className="h-3 w-3" /> {t("occupancy")}
           </div>
           <div className="mt-1 text-2xl font-bold">{Math.round(data.occupancyRate)}%</div>
         </div>
         <div className="rounded-2xl border border-border bg-card p-5 shadow-soft border-brand/20 bg-brand/[0.02]">
           <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-brand/70">
-            <Receipt className="h-3 w-3" /> Potential Revenue
+            <Receipt className="h-3 w-3" /> {t("potential_revenue")}
           </div>
           <div className="mt-1 text-2xl font-bold text-brand">
             <Money value={data.units.reduce((acc: number, u: any) => acc + (u.rent_amount || 0), 0)} />
@@ -128,7 +130,7 @@ export default function BuildingDetails() {
         </div>
         <div className="rounded-2xl border border-border bg-card p-5 shadow-soft">
           <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
-            <Users className="h-3 w-3" /> Active Tenants
+            <Users className="h-3 w-3" /> {t("active_tenants")}
           </div>
           <div className="mt-1 text-2xl font-bold">{data.tenants.length}</div>
         </div>
@@ -137,9 +139,9 @@ export default function BuildingDetails() {
       {/* Rooms list */}
       <div className="mt-8">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">Rooms &amp; Tenants</h2>
+          <h2 className="text-lg font-semibold">{t("rooms_tenants")}</h2>
           <MagneticButton onClick={() => setIsAddingRoom(!isAddingRoom)} className="h-9 px-4 text-xs">
-            <Plus className="h-3.5 w-3.5 mr-2" /> {isAddingRoom ? "Cancel" : "Add Room"}
+            <Plus className="h-3.5 w-3.5 mr-2" /> {isAddingRoom ? t("cancel") : t("add_room")}
           </MagneticButton>
         </div>
 
@@ -153,7 +155,7 @@ export default function BuildingDetails() {
             >
               <div className="grid gap-4 md:grid-cols-3">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-muted-foreground">Room Number</label>
+                  <label className="text-xs font-medium text-muted-foreground">{t("room_number")}</label>
                   <input
                     type="text"
                     placeholder="e.g. 101"
@@ -163,7 +165,7 @@ export default function BuildingDetails() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-muted-foreground">Monthly Rent</label>
+                  <label className="text-xs font-medium text-muted-foreground">{t("monthly_rent")}</label>
                   <input
                     type="number"
                     placeholder="0.00"
@@ -178,7 +180,7 @@ export default function BuildingDetails() {
                     disabled={addingRoom}
                     className="h-[38px] w-full rounded-xl bg-brand text-sm font-semibold text-white shadow-glow hover:bg-brand/90 disabled:opacity-60 transition-opacity"
                   >
-                    {addingRoom ? "Adding..." : "Create Room"}
+                    {addingRoom ? t("adding") : t("create_room")}
                   </button>
                 </div>
               </div>
@@ -190,11 +192,11 @@ export default function BuildingDetails() {
           <table className="w-full text-left text-sm">
             <thead className="bg-secondary/30 text-muted-foreground uppercase text-[10px] tracking-wider">
               <tr>
-                <th className="px-6 py-4 font-medium">Room</th>
-                <th className="px-6 py-4 font-medium">Status</th>
-                <th className="px-6 py-4 font-medium">Tenant</th>
-                <th className="px-6 py-4 font-medium text-right">Rent</th>
-                <th className="px-6 py-4 font-medium text-right">Actions</th>
+                <th className="px-6 py-4 font-medium">{t("room")}</th>
+                <th className="px-6 py-4 font-medium">{t("status")}</th>
+                <th className="px-6 py-4 font-medium">{t("tenant")}</th>
+                <th className="px-6 py-4 font-medium text-right">{t("rent")}</th>
+                <th className="px-6 py-4 font-medium text-right">{t("actions")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -244,9 +246,9 @@ export default function BuildingDetails() {
                   <td colSpan={5} className="px-6 py-20 text-center">
                     <div className="flex flex-col items-center justify-center text-muted-foreground">
                       <DoorOpen className="h-10 w-10 opacity-10 mb-3" />
-                      <p className="text-sm italic">No rooms have been added to this property yet.</p>
+                      <p className="text-sm italic">{t("no_rooms_added")}</p>
                       <button onClick={() => setIsAddingRoom(true)} className="mt-3 text-xs text-brand hover:underline">
-                        Add your first room
+                        {t("add_first_room")}
                       </button>
                     </div>
                   </td>

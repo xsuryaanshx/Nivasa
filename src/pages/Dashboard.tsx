@@ -60,7 +60,7 @@ export default function Dashboard() {
     <div>
       <PageHeader
         title={`${t(getGreetingKey() as any)}, ${user?.firstName || t('user')}`}
-        subtitle="Here's what's happening across your properties today."
+        subtitle={t("dashboard_subtitle")}
         action={
           <MagneticButton onClick={() => setAddOpen(true)}>
             <Plus className="h-4 w-4" /> {t('add_payment')}
@@ -79,10 +79,10 @@ export default function Dashboard() {
       <div className="mt-6 grid gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <div className="rounded-2xl border border-border bg-card p-6 shadow-soft h-full">
-            <h3 className="text-sm font-semibold mb-4">Global Settings</h3>
+            <h3 className="text-sm font-semibold mb-4">{t("global_settings")}</h3>
             <div className="space-y-4 max-w-xs">
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground">Electricity Rate (per unit)</label>
+                <label className="text-xs font-medium text-muted-foreground">{t("electricity_rate")}</label>
                 <div className="flex gap-2">
                   <input
                     type="number"
@@ -105,10 +105,10 @@ export default function Dashboard() {
                     }}
                     className="rounded-xl bg-brand px-4 py-2 text-xs font-semibold text-white shadow-glow hover:bg-brand/90"
                   >
-                    Save
+                    {t("save")}
                   </button>
                 </div>
-                <p className="text-[10px] text-muted-foreground">This rate will be used for all new meter readings.</p>
+                <p className="text-[10px] text-muted-foreground">{t("electricity_rate_hint")}</p>
               </div>
             </div>
           </div>
@@ -117,8 +117,8 @@ export default function Dashboard() {
           <div className="h-12 w-12 rounded-full bg-secondary/50 flex items-center justify-center mb-3">
             <Receipt className="h-6 w-6 text-muted-foreground" />
           </div>
-          <h3 className="text-sm font-semibold">Ready for Billing</h3>
-          <p className="text-xs text-muted-foreground mt-1">All rooms are up to date with their latest readings.</p>
+          <h3 className="text-sm font-semibold">{t("ready_for_billing")}</h3>
+          <p className="text-xs text-muted-foreground mt-1">{t("billing_ready_text")}</p>
         </div>
       </div>
 
@@ -126,12 +126,12 @@ export default function Dashboard() {
         <div className="flex items-center justify-between">
           <div>
             <div className="text-sm font-semibold tracking-tight">{t('recent_payments')}</div>
-            <div className="text-xs text-muted-foreground">Latest activity across all properties</div>
+            <div className="text-xs text-muted-foreground">{t("latest_activity")}</div>
           </div>
         </div>
         <div className="mt-4">
           {loading ? (
-            <div className="h-40 flex items-center justify-center text-muted-foreground">Loading payments...</div>
+            <div className="h-40 flex items-center justify-center text-muted-foreground">{t("loading_payments")}</div>
           ) : (
             <PaymentTimeline payments={recent} dense />
           )}
