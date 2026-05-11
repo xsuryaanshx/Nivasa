@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import gsap from "gsap";
 import CustomEase from "gsap/CustomEase";
-import { MoreVertical, Search, X, Moon, Sun, DollarSign, LogOut, Settings, Globe } from "lucide-react";
+import { MoreVertical, Search, X, Moon, Sun, LogOut, Settings, Globe, Languages } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "next-themes";
-import { useCurrency } from "@/lib/currency";
+import { useCurrency, type CurrencyCode } from "@/lib/currency";
 import { useLanguage } from "./LanguageProvider";
-import { Languages } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 gsap.registerPlugin(CustomEase);
 
@@ -32,7 +32,6 @@ export function MobileDrawerMenu() {
     
     if (nextState) {
       // Open animation
-      gsap.to(optionsRef.current, { x: -42, duration, ease: 'drawerEase' });
       gsap.to(menuRef.current, { height: window.innerHeight * 0.8, duration, ease: 'drawerEase' });
       gsap.to('.app-cover', {
         width: window.innerWidth * 0.65,
@@ -45,10 +44,8 @@ export function MobileDrawerMenu() {
         duration,
         ease: 'drawerEase',
       });
-      gsap.to('.topbar-elements', { opacity: 0, duration: 0.3 });
     } else {
       // Close animation
-      gsap.to(optionsRef.current, { x: 0, duration, ease: 'drawerEase' });
       gsap.to(menuRef.current, { height: 65, duration, ease: 'drawerEase' });
       gsap.to('.app-cover', {
         width: '100%',
@@ -61,20 +58,22 @@ export function MobileDrawerMenu() {
         duration,
         ease: 'drawerEase',
       });
-      gsap.to('.topbar-elements', { opacity: 1, duration: 0.5, delay: 0.2 });
     }
   };
 
   return (
     <div 
       ref={menuRef}
-      className="mobile-drawer-menu fixed left-4 top-[calc(env(safe-area-inset-top)+1rem)] z-[50] h-[65px] w-[263px] overflow-hidden rounded-[32px] bg-secondary p-2 md:hidden"
+      className={cn(
+        "mobile-drawer-menu fixed left-4 top-[calc(env(safe-area-inset-top)+1rem)] z-[50] h-[65px] overflow-hidden rounded-[32px] bg-secondary p-2 transition-[width] duration-500 ease-out md:hidden",
+        isOpen ? "w-[min(360px,calc(100vw-2rem))]" : "w-[65px]",
+      )}
     >
-      <div ref={optionsRef} className="flex w-[263px] items-center gap-3">
+      <div ref={optionsRef} className="flex w-full items-center gap-3">
         <button onClick={toggleMenu} className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-background text-foreground hover:bg-muted transition-colors">
           <MoreVertical className="h-5 w-5" />
         </button>
-        <div className="relative flex w-[218px] shrink-0 items-center justify-center overflow-hidden rounded-full">
+        <div className="relative flex min-w-0 flex-1 items-center justify-center overflow-hidden rounded-full">
           <Search className="absolute left-4 h-4 w-4 text-muted-foreground" />
           <input
             type="text"
@@ -104,7 +103,7 @@ export function MobileDrawerMenu() {
           icon={Globe} 
           label={`${t('currency')}: ${currency.code}`} 
           onClick={() => {
-            const codes: any[] = ["INR", "USD", "EUR", "GBP", "AED"];
+            const codes: CurrencyCode[] = ["INR", "USD", "EUR", "GBP", "AED"];
             const nextIdx = (codes.indexOf(currency.code) + 1) % codes.length;
             setCurrency(codes[nextIdx]);
           }}
@@ -142,7 +141,17 @@ export function MobileDrawerMenu() {
   );
 }
 
-function MenuItem({ icon: Icon, label, onClick, className }: { icon: any, label: string, onClick?: () => void, className?: string }) {
+function MenuItem({
+  icon: Icon,
+  label,
+  onClick,
+  className,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  onClick?: () => void;
+  className?: string;
+}) {
   return (
     <div 
       onClick={onClick}
