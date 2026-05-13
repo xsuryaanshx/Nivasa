@@ -1,6 +1,8 @@
 // Mock data for the Nivasa rental management app.
 // API_PLACEHOLDER: Replace these with Supabase queries when wiring backend.
 
+import type { OccupancyPriceTier } from "./rentByOccupancy";
+
 export type PaymentStatus = "paid" | "pending" | "late";
 
 export interface Building {
@@ -20,6 +22,8 @@ export interface Tenant {
   whatsapp_number?: string;
   aadhar?: string;
   joined_at: string;
+  /** Number of people billed for rent (used with occupancy-based room pricing). */
+  occupancy_count?: number;
 }
 
 export interface ElectricityReading {
@@ -44,6 +48,8 @@ export interface Room {
   buildingId: string;
   buildingName: string;
   rent: number;
+  /** When set, rent follows these tiers by tenant billing occupancy. */
+  occupancyPrices?: OccupancyPriceTier[] | null;
   status: PaymentStatus;
   tenant: Tenant | null;
   prevReading: number;

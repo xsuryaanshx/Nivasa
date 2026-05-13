@@ -35,7 +35,6 @@ export const translations = {
     paid: "Paid",
     pending: "Pending",
     late: "Late",
-    property_os: "Property OS",
     pro_tip: "Pro tip",
     command_tip: "Press ⌘K to jump anywhere.",
     notifications: "Notifications",
@@ -94,6 +93,15 @@ export const translations = {
     no_payments_yet: "No payments yet",
     payments_empty_hint: "When payments arrive, they'll appear here.",
     receipt: "Receipt",
+    occupancy_based_rent: "Occupancy-based rent",
+    occupancy_based_rent_hint:
+      "Set rent by how many people live in the room (e.g. one person vs two).",
+    rent_one_occupant: "Rent for 1 occupant",
+    per_additional_occupant: "Extra rent per additional occupant",
+    max_occupants_tiers: "Max occupants (tiers)",
+    generated_preview: "Preview",
+    people: "people",
+    configure_later_in_room: "You can fine-tune each tier later on the room page.",
   },
   hi: {
     dashboard: "डैशबोर्ड",
@@ -128,7 +136,6 @@ export const translations = {
     paid: "भुगतान किया",
     pending: "लंबित",
     late: "देर",
-    property_os: "प्रॉपर्टी OS",
     pro_tip: "सुझाव",
     command_tip: "कहीं भी जाने के लिए ⌘K दबाएं।",
     notifications: "सूचनाएं",
@@ -187,5 +194,14 @@ export const translations = {
     no_payments_yet: "अभी कोई भुगतान नहीं",
     payments_empty_hint: "भुगतान आने पर वे यहां दिखेंगे।",
     receipt: "रसीद",
+    occupancy_based_rent: "कब्ज़े के अनुसार किराया",
+    occupancy_based_rent_hint:
+      "कमरे में कितने लोग रहते हैं, उसके हिसाब से किराया (जैसे एक बनाम दो)।",
+    rent_one_occupant: "1 व्यक्ति का किराया",
+    per_additional_occupant: "हर अतिरिक्त व्यक्ति पर अतिरिक्त किराया",
+    max_occupants_tiers: "अधिकतम लोग (स्लैब)",
+    generated_preview: "पूर्वावलोकन",
+    people: "लोग",
+    configure_later_in_room: "बाद में कमरे के पेज से हर स्लैब ठीक कर सकते हैं।",
   }
 };

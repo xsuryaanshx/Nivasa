@@ -56,7 +56,7 @@ export default function Register() {
       >
         <div className="mb-7 flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl">
-            <img src="/logo.png" alt="Nivasa Logo" className="h-full w-full object-contain" />
+            <img src="/nivasa-brand.png" alt="Nivasa Logo" className="h-full w-full object-contain" />
           </div>
           <div>
             <div className="text-xl font-bold tracking-tight">Nivasa</div>

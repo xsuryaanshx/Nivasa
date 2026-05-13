@@ -28,6 +28,7 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
   const [whatsapp, setWhatsapp] = useState("");
   const [sameAsMobile, setSameAsMobile] = useState(true);
   const [aadhar, setAadhar] = useState("");
+  const [occupancyCount, setOccupancyCount] = useState("1");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -63,6 +64,7 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
       setWhatsapp("");
       setSameAsMobile(true);
       setAadhar("");
+      setOccupancyCount("1");
     }
   }, [open, defaultRoomId]);
 
@@ -101,7 +103,8 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
         phone: mobile.trim(),
         whatsapp_number: (sameAsMobile ? mobile : whatsapp).trim(),
         aadhar: aadhar.replace(/\s+/g, ""),
-        joined_at: new Date().toISOString()
+        joined_at: new Date().toISOString(),
+        occupancy_count: Math.max(1, parseInt(occupancyCount, 10) || 1),
       });
 
       setSuccess(true);
@@ -253,6 +256,20 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
                   placeholder="1234 5678 9012" 
                   inputMode="numeric" 
                   maxLength={14}
+                  disabled={submitting}
+                />
+              </Field>
+
+              <Field
+                label="Occupants (for rent)"
+                hint="Used when the room has occupancy-based pricing"
+              >
+                <IconInput
+                  icon={<User className="h-4 w-4" />}
+                  value={occupancyCount}
+                  onChange={(v) => setOccupancyCount(v.replace(/\D/g, "").slice(0, 2))}
+                  placeholder="1"
+                  inputMode="numeric"
                   disabled={submitting}
                 />
               </Field>

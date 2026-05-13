@@ -57,12 +57,12 @@ export function PaymentTimeline({ payments, dense = false, grouped = true }: Pro
       {groups.map((g) => (
         <div key={g.key}>
           {grouped && (
-            <div className="mb-2 flex items-center justify-between">
-              <div className="inline-flex items-center gap-2">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{g.key}</span>
-                <span className="rounded-full bg-secondary px-1.5 py-0.5 text-[10px] tnum text-muted-foreground">{g.items.length}</span>
+            <div className="mb-2 flex min-w-0 flex-wrap items-center justify-between gap-2">
+              <div className="inline-flex min-w-0 items-center gap-2">
+                <span className="truncate text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{g.key}</span>
+                <span className="shrink-0 rounded-full bg-secondary px-1.5 py-0.5 text-[10px] tnum text-muted-foreground">{g.items.length}</span>
               </div>
-              <span className="text-xs font-medium tnum">{formatMoney(g.total, currency)}</span>
+              <span className="shrink-0 text-xs font-medium tnum">{formatMoney(g.total, currency)}</span>
             </div>
           )}
           <ol className="relative">
@@ -82,32 +82,38 @@ export function PaymentTimeline({ payments, dense = false, grouped = true }: Pro
                   p.status === "pending" && "bg-status-pending",
                   p.status === "late"    && "bg-status-late",
                 )} />
-                <div className="flex items-center justify-between gap-3">
+                <div className="grid min-w-0 grid-cols-1 gap-2.5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-3">
                   <div className="min-w-0">
-                    <div className="text-sm font-medium truncate">{p.tenantName}</div>
-                    <div className="mt-0.5 text-xs text-muted-foreground">
+                    <div className="truncate text-sm font-medium">{p.tenantName}</div>
+                    <div className="mt-0.5 truncate text-xs text-muted-foreground">
                       {fmtDate(p.date)} · {p.method}{p.note ? ` · ${p.note}` : ""}
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    {(p as any).tenantPhone && (
+                  <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
+                    <div className="flex min-w-0 flex-wrap items-center gap-2">
+                      {(p as any).tenantPhone && (
+                        <button
+                          type="button"
+                          onClick={() => openWhatsApp((p as any).tenantWhatsapp || (p as any).tenantPhone, `Hi ${p.tenantName}, confirming receipt of your payment for ${formatMoney(p.amount, currency)}.`)}
+                          className="inline-flex h-7 shrink-0 items-center gap-1 rounded-lg border border-border bg-card/70 px-2 text-[11px] font-medium text-[#25D366] opacity-100 transition-opacity hover:bg-[#25D366]/5 sm:opacity-0 sm:group-hover:opacity-100"
+                        >
+                          <MessageCircle className="h-3 w-3" /> WhatsApp
+                        </button>
+                      )}
                       <button
                         type="button"
-                        onClick={() => openWhatsApp((p as any).tenantWhatsapp || (p as any).tenantPhone, `Hi ${p.tenantName}, confirming receipt of your payment for ${formatMoney(p.amount, currency)}.`)}
-                        className="inline-flex h-7 items-center gap-1 rounded-lg border border-border bg-card/70 px-2 text-[11px] font-medium text-[#25D366] opacity-0 transition-opacity hover:bg-[#25D366]/5 group-hover:opacity-100"
+                        onClick={() => toast.success("Receipt sent", { description: `${p.tenantName} · ${formatMoney(p.amount, currency)}` })}
+                        className="inline-flex h-7 shrink-0 items-center gap-1 rounded-lg border border-border bg-card/70 px-2 text-[11px] font-medium text-muted-foreground opacity-100 transition-opacity hover:text-foreground sm:opacity-0 sm:group-hover:opacity-100"
                       >
-                        <MessageCircle className="h-3 w-3" /> WhatsApp
+                        <Receipt className="h-3 w-3" /> {t("receipt")}
                       </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => toast.success("Receipt sent", { description: `${p.tenantName} · ${formatMoney(p.amount, currency)}` })}
-                      className="inline-flex h-7 items-center gap-1 rounded-lg border border-border bg-card/70 px-2 text-[11px] font-medium text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100"
-                    >
-                      <Receipt className="h-3 w-3" /> {t("receipt")}
-                    </button>
-                    <StatusPill status={p.status} />
-                    <span className="text-sm font-semibold tnum"><Money value={p.amount} /></span>
+                      <StatusPill status={p.status} />
+                    </div>
+                    <div className="flex justify-end sm:contents">
+                      <span className="shrink-0 text-sm font-semibold tnum tabular-nums">
+                        <Money value={p.amount} />
+                      </span>
+                    </div>
                   </div>
                 </div>
               </motion.li>

@@ -11,11 +11,23 @@ import {
   type PaymentStatus,
   type Tenant,
 } from "./mockData";
+import {
+  type OccupancyPriceTier,
+  computeRentFromTiers,
+  normalizeOccupancyTiers,
+  tiersToJsonbPayload,
+} from "./rentByOccupancy";
 
 const SUPABASE_URL = "https://ehmwvkxxoczoubbsjxvv.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVobXd2a3h4b2N6b3ViYnNqeHZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMzc5NjIsImV4cCI6MjA5MjcxMzk2Mn0._1thy8Nq3dsGBvEA8b_FPFbTbCyDk1fbwqxgUULDPG4";
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+  },
+});
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 const auth = {
@@ -34,6 +46,16 @@ const auth = {
   },
 };
 
+/** Required for rows (e.g. `units.user_id`) scoped to the logged-in Supabase user. */
+async function requireAuthUserId(): Promise<string> {
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error) throw error;
+  if (!user?.id) {
+    throw new Error("Sign in is required. Your session may have expired — sign in again, then add the room.");
+  }
+  return user.id;
+}
+
 // ── Buildings ─────────────────────────────────────────────────────────────────
 async function getBuildings(): Promise<(Building & { occupancyRate: number; rooms: number })[]> {
   try {
@@ -46,8 +68,10 @@ async function getBuildings(): Promise<(Building & { occupancyRate: number; room
     return (data || []).map(b => {
       const totalUnits = b.units ? b.units.length : 0;
       const occupiedUnits = b.units ? b.units.filter((u: any) => u.status === 'occupied').length : 0;
-      const monthlyRevenue = b.units 
-        ? b.units.filter((u: any) => u.status === 'occupied').reduce((acc: number, u: any) => acc + (u.rent_amount || 0), 0)
+      const monthlyRevenue = b.units
+        ? b.units
+            .filter((u: any) => u.status === "occupied")
+            .reduce((acc: number, u: any) => acc + (u.rent_amount || 0), 0)
         : 0;
 
       return {
@@ -124,17 +148,31 @@ async function getPropertyDetails(buildingId: string | undefined) {
     return {
       ...building,
       tenants: tenants || [],
-      units: (building.units || []).map((u: any) => ({
-        id: u.id,
-        name: `Room ${u.name || u.number}`,
-        number: u.name || u.number,
-        status: u.status || "vacant",
-        rent_amount: u.rent_amount,
-        tenant: tenants ? tenants.find((t: any) => t.room_id === u.id) : null
-      })),
-      occupancyRate: building.units?.length > 0 
-        ? Math.round((building.units.filter((u: any) => u.status === 'occupied').length / building.units.length) * 100) 
-        : 0
+      units: (building.units || []).map((u: any) => {
+        const tenant = tenants ? tenants.find((t: any) => t.room_id === u.id) : null;
+        const tiers = normalizeOccupancyTiers(u.occupancy_prices);
+        const occ =
+          tenant?.occupancy_count != null ? Math.max(1, Number(tenant.occupancy_count)) : 1;
+        const stored = Number(u.rent_amount) || 0;
+        const rent_amount =
+          tiers.length > 0
+            ? computeRentFromTiers(tiers, stored, tenant && u.status === "occupied" ? occ : 1)
+            : stored;
+        return {
+          id: u.id,
+          name: `Room ${u.name || u.number}`,
+          number: u.name || u.number,
+          status: u.status || "vacant",
+          rent_amount,
+          occupancy_prices: u.occupancy_prices ?? null,
+          tenant,
+        };
+      }),
+      occupancyRate: building.units?.length > 0
+        ? Math.round(
+            (building.units.filter((u: any) => u.status === "occupied").length / building.units.length) * 100,
+          )
+        : 0,
     };
   } catch (error) {
     console.error("Error in getPropertyDetails:", error);
@@ -143,6 +181,48 @@ async function getPropertyDetails(buildingId: string | undefined) {
 }
 
 // ── Rooms (Units) ─────────────────────────────────────────────────────────────
+
+function mapTenantFromRow(t: any): Tenant {
+  return {
+    id: t.id,
+    name: t.name,
+    phone: t.phone,
+    whatsapp_number: t.whatsapp_number,
+    aadhar: t.aadhar,
+    joined_at: t.joined_at,
+    occupancy_count: t.occupancy_count != null ? Math.max(1, Number(t.occupancy_count)) : 1,
+  };
+}
+
+function mapUnitToRoom(u: any): Room {
+  const tiers = normalizeOccupancyTiers(u.occupancy_prices);
+  const rawTenant =
+    u.tenants && Array.isArray(u.tenants) && u.tenants.length ? u.tenants[0] : null;
+  const tenant = rawTenant ? mapTenantFromRow(rawTenant) : null;
+  const billingOcc = tenant?.occupancy_count ?? 1;
+  const stored = Number(u.rent_amount) || 0;
+  const rent =
+    tiers.length > 0
+      ? computeRentFromTiers(tiers, stored, u.status === "occupied" && tenant ? billingOcc : 1)
+      : stored;
+
+  return {
+    id: u.id,
+    number: u.name || u.number,
+    buildingId: u.building_id,
+    buildingName: u.buildings?.name || "Unknown",
+    rent,
+    occupancyPrices: tiers.length > 0 ? tiers : null,
+    status: u.status as PaymentStatus,
+    tenant,
+    prevReading: u.prev_reading || 0,
+    currReading: u.curr_reading || 0,
+    ratePerUnit: u.rate_per_unit || 0.18,
+    history: [],
+    pastTenants: [],
+  };
+}
+
 async function getRooms(): Promise<Room[]> {
   try {
     const { data, error } = await supabase
@@ -150,20 +230,7 @@ async function getRooms(): Promise<Room[]> {
       .select('*, buildings(name), tenants(*)');
     if (error) throw error;
 
-    return (data || []).map((u: any) => ({
-      id: u.id,
-      number: u.name || u.number,
-      buildingId: u.building_id,
-      buildingName: u.buildings?.name || "Unknown",
-      rent: u.rent_amount || 0,
-      status: u.status as PaymentStatus,
-      tenant: u.tenants ? u.tenants[0] : null,
-      prevReading: u.prev_reading || 0,
-      currReading: u.curr_reading || 0,
-      ratePerUnit: u.rate_per_unit || 0.18,
-      history: [],
-      pastTenants: []
-    }));
+    return (data || []).map(mapUnitToRoom);
   } catch (error) {
     console.error("Error in getRooms:", error);
     throw error;
@@ -181,42 +248,96 @@ async function getRoomById(id: string): Promise<Room | null> {
     if (error) throw error;
     if (!data) return null;
 
-    return {
-      id: data.id,
-      number: data.name || data.number,
-      buildingId: data.building_id,
-      buildingName: data.buildings?.name || "Unknown",
-      rent: data.rent_amount || 0,
-      status: data.status as PaymentStatus,
-      tenant: data.tenants ? data.tenants[0] : null,
-      prevReading: data.prev_reading || 0,
-      currReading: data.curr_reading || 0,
-      ratePerUnit: data.rate_per_unit || 0.18,
-      history: [],
-      pastTenants: []
-    };
+    return mapUnitToRoom(data);
   } catch (error) {
     console.error("Error in getRoomById:", error);
     return null;
   }
 }
 
+async function syncUnitEffectiveRent(unitId: string) {
+  const { data: unit, error } = await supabase
+    .from("units")
+    .select("rent_amount, occupancy_prices, status")
+    .eq("id", unitId)
+    .single();
+  if (error || !unit) return;
+
+  const { data: tenantRow } = await supabase
+    .from("tenants")
+    .select("occupancy_count")
+    .eq("room_id", unitId)
+    .maybeSingle();
+
+  const tiers = normalizeOccupancyTiers(unit.occupancy_prices);
+  const occ =
+    unit.status === "occupied" && tenantRow
+      ? Math.max(1, Number(tenantRow.occupancy_count ?? 1))
+      : 1;
+  const stored = Number(unit.rent_amount) || 0;
+  const effective = computeRentFromTiers(tiers, stored, occ);
+  if (Math.abs(stored - effective) < 0.005) return;
+  await supabase.from("units").update({ rent_amount: effective }).eq("id", unitId);
+}
+
+async function updateRoom(
+  id: string,
+  updates: {
+    number?: string;
+    rent_amount?: number;
+    occupancy_prices?: OccupancyPriceTier[] | null;
+  },
+) {
+  const payload: Record<string, unknown> = {};
+  if (updates.number !== undefined) payload.name = updates.number;
+  if (updates.rent_amount !== undefined) payload.rent_amount = updates.rent_amount;
+  if (updates.occupancy_prices !== undefined) {
+    const tiers = normalizeOccupancyTiers(updates.occupancy_prices);
+    payload.occupancy_prices = tiersToJsonbPayload(tiers.length > 0 ? tiers : null);
+  }
+  const { error } = await supabase.from("units").update(payload).eq("id", id);
+  if (error) throw error;
+  await syncUnitEffectiveRent(id);
+}
+
+async function updateTenant(tenantId: string, updates: { occupancy_count?: number }) {
+  const patch: Record<string, unknown> = {};
+  if (updates.occupancy_count !== undefined) {
+    patch.occupancy_count = Math.max(1, Math.floor(Number(updates.occupancy_count)));
+  }
+  if (Object.keys(patch).length === 0) return;
+
+  const { data: row, error } = await supabase
+    .from("tenants")
+    .update(patch)
+    .eq("id", tenantId)
+    .select("room_id")
+    .single();
+  if (error) throw error;
+  if (row?.room_id) await syncUnitEffectiveRent(row.room_id);
+}
+
 async function addRoom(input: {
   building_id: string;
   number: string;
   rent: number;
+  occupancy_prices?: OccupancyPriceTier[] | null;
 }) {
   try {
-    const { data, error } = await supabase
-      .from('units')
-      .insert([{
-        building_id: input.building_id,
-        name: input.number,
-        rent_amount: input.rent,
-        status: 'vacant'
-      }])
-      .select()
-      .single();
+    const user_id = await requireAuthUserId();
+    const tiers = normalizeOccupancyTiers(input.occupancy_prices ?? null);
+    const hasTiers = tiers.length > 0;
+    const rent_amount = hasTiers ? computeRentFromTiers(tiers, input.rent, 1) : input.rent;
+    const row: Record<string, unknown> = {
+      building_id: input.building_id,
+      name: input.number,
+      rent_amount,
+      status: "vacant",
+      user_id,
+    };
+    if (hasTiers) row.occupancy_prices = tiersToJsonbPayload(tiers);
+
+    const { data, error } = await supabase.from("units").insert([row]).select().single();
     if (error) throw error;
     return data;
   } catch (error) {
@@ -230,6 +351,7 @@ async function addUnit(input: any) {
     building_id: input.building_id,
     number: input.name,
     rent: input.rent_amount,
+    occupancy_prices: input.occupancy_prices,
   });
 }
 
@@ -241,6 +363,7 @@ async function addTenant(input: {
   whatsapp_number?: string;
   aadhar?: string;
   joined_at?: string;
+  occupancy_count?: number;
 }) {
   try {
     // 1. Fetch building_id from the room automatically
@@ -252,6 +375,9 @@ async function addTenant(input: {
     
     if (roomError || !room) throw new Error("Room not found");
 
+    const occ =
+      input.occupancy_count != null ? Math.max(1, Math.floor(Number(input.occupancy_count))) : 1;
+
     // 2. Insert tenant with correct fields
     const payload = {
       name: input.name,
@@ -260,7 +386,8 @@ async function addTenant(input: {
       aadhar: input.aadhar,
       room_id: input.room_id,
       building_id: room.building_id,
-      joined_at: input.joined_at || new Date().toISOString()
+      joined_at: input.joined_at || new Date().toISOString(),
+      occupancy_count: occ,
     };
 
     const { data: tenant, error: tenantError } = await supabase
@@ -278,6 +405,8 @@ async function addTenant(input: {
       .eq('id', input.room_id);
 
     if (updateError) console.error("Failed to update room status:", updateError);
+
+    await syncUnitEffectiveRent(input.room_id);
 
     return tenant;
   } catch (error) {
@@ -303,6 +432,8 @@ async function removeTenant(roomId: string, tenantId: string) {
       .eq('id', roomId);
 
     if (roomError) throw roomError;
+
+    await syncUnitEffectiveRent(roomId);
 
     return true;
   } catch (error) {
@@ -473,6 +604,8 @@ export const nivasaApi = {
   getRoomById,
   addRoom,
   addUnit,
+  updateRoom,
+  updateTenant,
   addTenant,
   removeTenant,
   addPayment,

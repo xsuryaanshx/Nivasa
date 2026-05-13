@@ -23,12 +23,11 @@ export function AppSidebar({ collapsed }: Props) {
     >
       <div className="flex h-16 items-center gap-2.5 px-5">
         <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg">
-          <img src="/logo.png" alt="Nivasa Logo" className="h-full w-full object-contain" />
+          <img src="/nivasa-brand.png" alt="Nivasa Logo" className="h-full w-full object-contain" />
         </div>
         {!collapsed && (
           <div className="leading-tight">
-            <div className="text-sm font-semibold tracking-tight">Nivasa</div>
-            <div className="text-[11px] text-muted-foreground">{t("property_os")}</div>
+            <div className="text-xl font-semibold tracking-tight">Nivasa</div>
           </div>
         )}
       </div>
