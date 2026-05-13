@@ -42,7 +42,7 @@ export function EditBuildingModal({ open, onClose, onSuccess, buildingData }: Pr
     try {
       setSubmitting(true);
       setError(null);
-      const api = (window as any).estateApi;
+      const api = (window as any).nivasaApi;
       if (!api) throw new Error("API not loaded");
 
       // Use updateBuilding from our api layer (also wired to api.supabase.from for direct calls)

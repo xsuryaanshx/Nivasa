@@ -40,7 +40,7 @@ export function AddBuildingModal({ open, onClose, onSuccess }: Props) {
     try {
       setSubmitting(true);
       setError(null);
-      const api = (window as any).estateApi;
+      const api = (window as any).nivasaApi;
       if (!api) throw new Error("API not loaded");
 
       await api.addBuilding({

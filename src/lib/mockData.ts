@@ -1,4 +1,4 @@
-// Mock data for the Estate rental management app.
+// Mock data for the Nivasa rental management app.
 // API_PLACEHOLDER: Replace these with Supabase queries when wiring backend.
 
 export type PaymentStatus = "paid" | "pending" | "late";

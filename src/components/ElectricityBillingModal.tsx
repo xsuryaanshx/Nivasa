@@ -59,7 +59,7 @@ export function ElectricityBillingModal({ open, onClose, defaultRoomId, onSaved 
   const fetchData = async () => {
     try {
       setLoadingData(true);
-      const api = (window as any).estateApi;
+      const api = (window as any).nivasaApi;
       if (!api) return;
       const [buildings, rooms, globalRate] = await Promise.all([
         api.getBuildings(),
@@ -168,7 +168,7 @@ export function ElectricityBillingModal({ open, onClose, defaultRoomId, onSaved 
 
     try {
       setSubmitting(true);
-      const api = (window as any).estateApi;
+      const api = (window as any).nivasaApi;
       if (!api) throw new Error("API not loaded");
 
       await api.saveElectricityReading({

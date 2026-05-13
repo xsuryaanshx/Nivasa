@@ -27,7 +27,7 @@ export default function Payments() {
   const fetchPayments = async () => {
     try {
       setLoading(true);
-      const api = (window as any).estateApi;
+      const api = (window as any).nivasaApi;
       if (!api) return;
       const data = await api.getRecentPayments(100); // Fetch more for the payments page
       setPaymentsList(data);
@@ -42,8 +42,8 @@ export default function Payments() {
     fetchPayments();
 
     const h = () => setOpen(true);
-    window.addEventListener("estate:add-payment", h);
-    return () => window.removeEventListener("estate:add-payment", h);
+    window.addEventListener("nivasa:add-payment", h);
+    return () => window.removeEventListener("nivasa:add-payment", h);
   }, []);
 
   const filtered = useMemo(() => {

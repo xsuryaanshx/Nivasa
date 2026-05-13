@@ -84,13 +84,13 @@ export function CommandPalette({ open, onOpenChange, onToggleFocus, onShowHelp }
                 </Command.Group>
 
                 <Command.Group heading="Quick actions">
-                  <Item value="add payment new" onSelect={() => { close(); window.dispatchEvent(new CustomEvent("estate:add-payment")); }} icon={<Plus className="h-4 w-4" />}>
+                  <Item value="add payment new" onSelect={() => { close(); window.dispatchEvent(new CustomEvent("nivasa:add-payment")); }} icon={<Plus className="h-4 w-4" />}>
                     Add payment
                   </Item>
-                  <Item value="add tenant new" onSelect={() => { close(); window.dispatchEvent(new CustomEvent("estate:add-tenant")); }} icon={<UserPlus className="h-4 w-4" />}>
+                  <Item value="add tenant new" onSelect={() => { close(); window.dispatchEvent(new CustomEvent("nivasa:add-tenant")); }} icon={<UserPlus className="h-4 w-4" />}>
                     Add new tenant
                   </Item>
-                  <Item value="electricity meter reading" onSelect={() => { close(); window.dispatchEvent(new CustomEvent("estate:add-electricity")); }} icon={<Zap className="h-4 w-4" />}>
+                  <Item value="electricity meter reading" onSelect={() => { close(); window.dispatchEvent(new CustomEvent("nivasa:add-electricity")); }} icon={<Zap className="h-4 w-4" />}>
                     Enter electricity reading
                   </Item>
                   <Item value="mark all paid" onSelect={() => { close(); toast.success("Marked latest pending as paid"); }} icon={<CheckCircle2 className="h-4 w-4" />}>
@@ -171,7 +171,7 @@ export function CommandPalette({ open, onOpenChange, onToggleFocus, onShowHelp }
                   )}
                 </div>
                 <div className="inline-flex items-center gap-1.5">
-                  <span className="font-medium text-foreground">Estate</span>
+                  <span className="font-medium text-foreground">Nivasa</span>
                   <ArrowRight className="h-3 w-3" />
                 </div>
               </div>

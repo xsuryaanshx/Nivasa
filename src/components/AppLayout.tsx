@@ -26,14 +26,14 @@ function AppShell() {
   // Global tenant trigger (palette / pages dispatch this).
   useEffect(() => {
     const h = () => setTenantOpen(true);
-    window.addEventListener("estate:add-tenant", h);
-    return () => window.removeEventListener("estate:add-tenant", h);
+    window.addEventListener("nivasa:add-tenant", h);
+    return () => window.removeEventListener("nivasa:add-tenant", h);
   }, []);
 
   useEffect(() => {
     const h = () => setElectricityOpen(true);
-    window.addEventListener("estate:add-electricity", h);
-    return () => window.removeEventListener("estate:add-electricity", h);
+    window.addEventListener("nivasa:add-electricity", h);
+    return () => window.removeEventListener("nivasa:add-electricity", h);
   }, []);
 
   // "?" opens shortcuts help.

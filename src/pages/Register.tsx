@@ -23,14 +23,14 @@ export default function Register() {
 
     setLoading(true);
     try {
-      const api = (window as any).estateApi;
+      const api = (window as any).nivasaApi;
       if (!api) throw new Error("API not loaded");
 
       const { data, error } = await api.auth.signUp(email, pwd, fullName.trim());
       if (error) throw error;
 
       // Persist the name for the session
-      localStorage.setItem("estate_user_name", fullName.trim());
+      localStorage.setItem("nivasa_user_name", fullName.trim());
 
       toast.success("Account created!", {
         description: `Welcome, ${fullName.split(" ")[0]}! Please check your email for a confirmation link.`,
@@ -54,13 +54,13 @@ export default function Register() {
         transition={{ duration: 0.6, ease: [0.2, 0.7, 0.2, 1] }}
         className="relative z-10 w-full max-w-[420px] glass-strong rounded-2xl p-8 shadow-float"
       >
-        <div className="mb-7 flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-foreground text-background">
-            <Sparkles className="h-4 w-4" />
+        <div className="mb-7 flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl">
+            <img src="/logo.png" alt="Nivasa Logo" className="h-full w-full object-contain" />
           </div>
           <div>
-            <div className="text-base font-semibold tracking-tight">Estate</div>
-            <div className="text-xs text-muted-foreground">Join the workspace</div>
+            <div className="text-xl font-bold tracking-tight">Nivasa</div>
+            <div className="text-xs text-muted-foreground font-medium">Join the workspace</div>
           </div>
         </div>
 

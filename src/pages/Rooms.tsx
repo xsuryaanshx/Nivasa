@@ -24,7 +24,7 @@ export default function Rooms() {
   const fetchRooms = async () => {
     try {
       setLoading(true);
-      const api = (window as any).estateApi;
+      const api = (window as any).nivasaApi;
       if (!api) return;
       const data = await api.getRooms();
       setRoomsList(data);
@@ -52,7 +52,7 @@ export default function Rooms() {
         title={t('rooms')}
         subtitle={t("rooms_subtitle")}
         action={
-          <MagneticButton onClick={() => window.dispatchEvent(new CustomEvent("estate:add-tenant"))}>
+          <MagneticButton onClick={() => window.dispatchEvent(new CustomEvent("nivasa:add-tenant"))}>
             <UserPlus className="h-4 w-4" /> {t('add_tenant')}
           </MagneticButton>
         }

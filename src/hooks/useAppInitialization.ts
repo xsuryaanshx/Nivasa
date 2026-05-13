@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { estateApi } from "@/lib/api";
+import { nivasaApi } from "@/lib/api";
 
 export const useAppInitialization = () => {
   const [isReady, setIsReady] = useState(false);
@@ -9,12 +9,12 @@ export const useAppInitialization = () => {
     const initialize = async () => {
       try {
         // 1. Auth check
-        const { data: { session } } = await estateApi.supabase.auth.getSession();
+        const { data: { session } } = await nivasaApi.supabase.auth.getSession();
         
         // 2. Initial Data fetch (Dashboard stats or similar)
         // This pre-warms the cache
         if (session) {
-          await estateApi.getDashboardStats();
+          await nivasaApi.getDashboardStats();
         }
 
         // 3. Theme & Font check (mocked for now, but hookable)

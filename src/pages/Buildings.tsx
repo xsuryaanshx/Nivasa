@@ -31,7 +31,7 @@ export default function Buildings() {
   const fetchBuildings = async () => {
     try {
       setLoading(true);
-      const api = (window as any).estateApi;
+      const api = (window as any).nivasaApi;
       if (!api) return;
       const data = await api.getBuildings();
       setBuildingsList(data);
@@ -59,7 +59,7 @@ export default function Buildings() {
     if (!confirm(t("delete_confirm_building"))) return;
     
     try {
-      const api = (window as any).estateApi;
+      const api = (window as any).nivasaApi;
       await api.deleteBuilding(id);
       toast.success(t("building_deleted"));
       fetchBuildings();

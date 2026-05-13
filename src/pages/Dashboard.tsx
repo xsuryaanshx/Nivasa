@@ -29,7 +29,7 @@ export default function Dashboard() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const api = (window as any).estateApi;
+      const api = (window as any).nivasaApi;
       if (!api) return;
 
       const [stats, recent] = await Promise.all([
@@ -49,8 +49,8 @@ export default function Dashboard() {
     fetchData();
 
     const handler = () => setAddOpen(true);
-    window.addEventListener("estate:add-payment", handler);
-    return () => window.removeEventListener("estate:add-payment", handler);
+    window.addEventListener("nivasa:add-payment", handler);
+    return () => window.removeEventListener("nivasa:add-payment", handler);
   }, []);
 
   const s = data.stats;
@@ -96,7 +96,7 @@ export default function Dashboard() {
                       const val = (document.getElementById('elec-rate-input') as HTMLInputElement).value;
                       if (!val) return;
                       try {
-                        const api = (window as any).estateApi;
+                        const api = (window as any).nivasaApi;
                         await api.updateElectricityRate(parseFloat(val));
                         toast.success("Global electricity rate updated");
                       } catch (e) {

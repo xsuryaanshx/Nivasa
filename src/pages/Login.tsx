@@ -19,7 +19,7 @@ export default function Login() {
     
     setLoading(true);
     try {
-      const api = (window as any).estateApi;
+      const api = (window as any).nivasaApi;
       if (!api) throw new Error("API not loaded");
       
       const { data, error } = await api.auth.signIn(user, pwd);
@@ -27,7 +27,7 @@ export default function Login() {
 
       // Persist session user name so Topbar reads it dynamically
       if (data?.user?.fullName) {
-        localStorage.setItem("estate_user_name", data.user.fullName);
+        localStorage.setItem("nivasa_user_name", data.user.fullName);
       }
       
       navigate("/app");
@@ -49,13 +49,13 @@ export default function Login() {
         transition={{ duration: 0.6, ease: [0.2, 0.7, 0.2, 1] }}
         className="relative z-10 w-full max-w-[420px] glass-strong rounded-2xl p-8 shadow-float"
       >
-        <div className="mb-7 flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-foreground text-background">
-            <Sparkles className="h-4 w-4" />
+        <div className="mb-7 flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl">
+            <img src="/logo.png" alt="Nivasa Logo" className="h-full w-full object-contain" />
           </div>
           <div>
-            <div className="text-base font-semibold tracking-tight">Estate</div>
-            <div className="text-xs text-muted-foreground">Welcome back</div>
+            <div className="text-xl font-bold tracking-tight">Nivasa</div>
+            <div className="text-xs text-muted-foreground font-medium">Welcome back</div>
           </div>
         </div>
 

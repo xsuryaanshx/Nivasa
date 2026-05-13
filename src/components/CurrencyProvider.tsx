@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { CURRENCIES, CurrencyContext, type CurrencyCode } from "@/lib/currency";
 
-const STORAGE_KEY = "estate.currency";
+const STORAGE_KEY = "nivasa.currency";
 
 export function CurrencyProvider({ children }: { children: ReactNode }) {
   const [code, setCode] = useState<CurrencyCode>(() => {

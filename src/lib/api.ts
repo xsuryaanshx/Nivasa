@@ -1,5 +1,5 @@
 /**
- * estateApi — central API facade.
+ * nivasaApi — central API facade.
  * Wired to Supabase backend.
  */
 
@@ -461,7 +461,7 @@ async function getDashboardStats() {
 }
 
 // ── Export ────────────────────────────────────────────────────────────────────
-export const estateApi = {
+export const nivasaApi = {
   auth,
   supabase,
   getBuildings,
@@ -483,8 +483,8 @@ export const estateApi = {
   getDashboardStats,
 };
 
-export type EstateApi = typeof estateApi;
+export type NivasaApi = typeof nivasaApi;
 
 declare global {
-  interface Window { estateApi: EstateApi; }
+  interface Window { nivasaApi: NivasaApi; }
 }

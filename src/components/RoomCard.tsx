@@ -138,7 +138,7 @@ export function RoomCard({ room, index }: { room: Room; index: number }) {
           {!room.tenant && (
             <QuickAction
               tone="info"
-              onClick={(e) => { stop(e); window.dispatchEvent(new CustomEvent("estate:add-tenant")); }}
+              onClick={(e) => { stop(e); window.dispatchEvent(new CustomEvent("nivasa:add-tenant")); }}
             >
               <BellRing className="h-3.5 w-3.5" /> Add tenant
             </QuickAction>

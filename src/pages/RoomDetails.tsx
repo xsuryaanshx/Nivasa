@@ -44,7 +44,7 @@ export default function RoomDetails() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const api = (window as any).estateApi;
+      const api = (window as any).nivasaApi;
       if (!api || !id) return;
       const data = await api.getRoomById(id);
       if (data) {
@@ -68,8 +68,8 @@ export default function RoomDetails() {
   // Listen for global "Add payment" trigger.
   useEffect(() => {
     const h = () => setAddOpen(true);
-    window.addEventListener("estate:add-payment", h);
-    return () => window.removeEventListener("estate:add-payment", h);
+    window.addEventListener("nivasa:add-payment", h);
+    return () => window.removeEventListener("nivasa:add-payment", h);
   }, []);
 
   // Editable electricity readings (UI-only).
@@ -80,7 +80,7 @@ export default function RoomDetails() {
   const saveElectricityReading = async () => {
     try {
       setSavingElectricity(true);
-      const api = (window as any).estateApi;
+      const api = (window as any).nivasaApi;
       if (!api || !room) throw new Error("API not loaded");
       const now = new Date();
       const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
@@ -131,7 +131,7 @@ export default function RoomDetails() {
     const tenantName = room.tenant?.name ?? "Tenant";
     const monthLabel = new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" });
     return [
-      `*Estate · Invoice — ${monthLabel}*`,
+      `*Nivasa · Invoice — ${monthLabel}*`,
       ``,
       `Hi ${tenantName},`,
       `Here is your bill for Room ${room.number}, ${room.buildingName}:`,
@@ -171,7 +171,7 @@ export default function RoomDetails() {
     if (!room.tenant || !window.confirm(`Are you sure you want to remove ${room.tenant.name}? This will set the room to vacant.`)) return;
 
     try {
-      const api = (window as any).estateApi;
+      const api = (window as any).nivasaApi;
       if (!api) throw new Error("API not loaded");
       
       await api.removeTenant(room.id, room.tenant.id);

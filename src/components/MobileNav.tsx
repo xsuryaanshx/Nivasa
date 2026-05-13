@@ -21,7 +21,7 @@ export function MobileNav() {
 
   const handleAppClick = (index: number, id: string) => {
     if (id === "electricity") {
-      window.dispatchEvent(new CustomEvent("estate:add-electricity"));
+      window.dispatchEvent(new CustomEvent("nivasa:add-electricity"));
     } else {
       navigate(id);
     }

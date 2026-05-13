@@ -35,7 +35,7 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
   const fetchRooms = async () => {
     try {
       setLoadingRooms(true);
-      const api = (window as any).estateApi;
+      const api = (window as any).nivasaApi;
       if (!api) return;
       const data = await api.getRooms();
       setRoomsList(data);
@@ -92,7 +92,7 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
 
     try {
       setSubmitting(true);
-      const api = (window as any).estateApi;
+      const api = (window as any).nivasaApi;
       if (!api) throw new Error("API not loaded");
 
       await api.addTenant({

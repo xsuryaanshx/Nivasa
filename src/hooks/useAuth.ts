@@ -1,5 +1,5 @@
 /**
- * useAuth — lightweight auth hook backed by estateApi.
+ * useAuth — lightweight auth hook backed by nivasaApi.
  * Reads current session from the API facade.
  */
 import { useEffect, useState } from "react";
@@ -34,7 +34,7 @@ export function useAuth() {
   const [user, setUser] = useState<AuthUser | null>(null);
 
   useEffect(() => {
-    const api = (window as any).estateApi;
+    const api = (window as any).nivasaApi;
     if (!api) return;
     
     const checkSession = async () => {
@@ -43,8 +43,8 @@ export function useAuth() {
         const fullName = session.user.user_metadata?.full_name || session.user.email?.split("@")[0] || "User";
         setUser(buildUser({ id: session.user.id, email: session.user.email || "", fullName }));
       } else {
-        const storedName = localStorage.getItem("estate_user_name") || "User";
-        setUser(buildUser({ id: "demo", email: "demo@estate.app", fullName: storedName }));
+        const storedName = localStorage.getItem("nivasa_user_name") || "User";
+        setUser(buildUser({ id: "demo", email: "demo@nivasa.app", fullName: storedName }));
       }
     };
     
@@ -52,9 +52,9 @@ export function useAuth() {
   }, []);
 
   const signOut = async () => {
-    const api = (window as any).estateApi;
+    const api = (window as any).nivasaApi;
     if (api) await api.auth.signOut();
-    localStorage.removeItem("estate_user_name");
+    localStorage.removeItem("nivasa_user_name");
     setUser(null);
     window.location.href = "/login";
   };

@@ -23,7 +23,7 @@ export default function BuildingDetails() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const api = (window as any).estateApi;
+      const api = (window as any).nivasaApi;
       if (!api) return;
       const buildingData = await api.getPropertyDetails(id);
       setData(buildingData);
@@ -45,7 +45,7 @@ export default function BuildingDetails() {
 
     try {
       setAddingRoom(true);
-      const api = (window as any).estateApi;
+      const api = (window as any).nivasaApi;
       await api.addRoom({
         building_id: id,
         number: newRoom.number.trim(),
