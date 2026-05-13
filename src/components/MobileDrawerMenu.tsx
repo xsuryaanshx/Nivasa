@@ -1,7 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import gsap from "gsap";
-import CustomEase from "gsap/CustomEase";
+import { AnimatePresence, motion } from "framer-motion";
 import { MoreVertical, Search, X, Moon, Sun, LogOut, Settings, Globe, Languages } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "next-themes";
@@ -9,135 +8,142 @@ import { useCurrency, type CurrencyCode } from "@/lib/currency";
 import { useLanguage } from "./LanguageProvider";
 import { cn } from "@/lib/utils";
 
-gsap.registerPlugin(CustomEase);
+type MobileDrawerMenuProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onOpenPalette?: () => void;
+};
 
-export function MobileDrawerMenu() {
+export function MobileDrawerMenu({ open, onOpenChange, onOpenPalette }: MobileDrawerMenuProps) {
   const { user, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
   const { currency, setCurrency } = useCurrency();
   const { language, setLanguage, t } = useLanguage();
   const navigate = useNavigate();
-  const [isOpen, setIsOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-  const optionsRef = useRef<HTMLDivElement>(null);
-  
-  useEffect(() => {
-    CustomEase.create('drawerEase', 'M0,0 C0.25,0.1 0.25,1 1,1');
-  }, []);
 
-  const toggleMenu = () => {
-    const nextState = !isOpen;
-    setIsOpen(nextState);
-    const duration = 0.75;
-    
-    if (nextState) {
-      // Open animation
-      gsap.to(menuRef.current, { height: window.innerHeight * 0.8, duration, ease: 'drawerEase' });
-      gsap.to('.app-cover', {
-        width: window.innerWidth * 0.65,
-        height: window.innerHeight * 0.8,
-        left: 'auto',
-        right: 16,
-        top: '50%',
-        y: '-50%',
-        borderRadius: 32,
-        duration,
-        ease: 'drawerEase',
-      });
-    } else {
-      // Close animation
-      gsap.to(menuRef.current, { height: 65, duration, ease: 'drawerEase' });
-      gsap.to('.app-cover', {
-        width: '100%',
-        height: '100%',
-        left: 0,
-        right: 'auto',
-        top: 0,
-        y: 0,
-        borderRadius: 0,
-        duration,
-        ease: 'drawerEase',
-      });
-    }
-  };
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onOpenChange(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onOpenChange]);
+
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
+  const close = () => onOpenChange(false);
 
   return (
-    <div 
-      ref={menuRef}
-      className={cn(
-        "mobile-drawer-menu fixed left-4 top-[calc(env(safe-area-inset-top)+1rem)] z-[50] h-[65px] overflow-hidden rounded-[32px] bg-secondary p-2 transition-[width] duration-500 ease-out md:hidden",
-        isOpen ? "w-[min(360px,calc(100vw-2rem))]" : "w-[65px]",
-      )}
-    >
-      <div ref={optionsRef} className="flex w-full items-center gap-3">
-        <button onClick={toggleMenu} className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-background text-foreground hover:bg-muted transition-colors">
-          <MoreVertical className="h-5 w-5" />
-        </button>
-        <div className="relative flex min-w-0 flex-1 items-center justify-center overflow-hidden rounded-full">
-          <Search className="absolute left-4 h-4 w-4 text-muted-foreground" />
-          <input
-            type="text"
-            className="h-12 w-full rounded-full border border-border bg-background pl-10 pr-4 text-sm outline-none placeholder:text-muted-foreground"
-            placeholder={t('search')}
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.div
+            role="presentation"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-[2px] md:hidden"
+            onClick={close}
           />
-        </div>
-        <button onClick={toggleMenu} className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-background text-foreground hover:bg-muted transition-colors">
-          <X className="h-5 w-5" />
-        </button>
-      </div>
-      
-      <div className="space-y-3 px-2 py-6">
-        <MenuItem 
-          icon={theme === 'dark' ? Sun : Moon} 
-          label={`Theme: ${theme === 'dark' ? 'Light' : 'Dark'}`} 
-          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-        />
-        
-        <MenuItem 
-          icon={Languages} 
-          label={`Lang: ${language === 'en' ? 'English' : 'हिंदी'}`} 
-          onClick={() => setLanguage(language === 'en' ? 'hi' : 'en')}
-        />
-
-        <MenuItem 
-          icon={Globe} 
-          label={`${t('currency')}: ${currency.code}`} 
-          onClick={() => {
-            const codes: CurrencyCode[] = ["INR", "USD", "EUR", "GBP", "AED"];
-            const nextIdx = (codes.indexOf(currency.code) + 1) % codes.length;
-            setCurrency(codes[nextIdx]);
-          }}
-        />
-
-        <MenuItem 
-          icon={Settings} 
-          label={t('settings')}
-          onClick={() => {
-            toggleMenu();
-            navigate("/app/settings");
-          }}
-        />
-        
-        <MenuItem 
-          icon={LogOut} 
-          label={t('logout')} 
-          onClick={signOut}
-          className="text-destructive"
-        />
-        
-        <div className="h-24 w-full overflow-hidden rounded-2xl bg-card mt-6 border border-border flex items-center justify-center p-4">
-           <div className="flex flex-col items-center gap-2">
-             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-foreground text-background font-bold text-sm">
-                {user?.initials || "U"}
-             </div>
-              <div className="flex flex-col items-center">
-                <span className="text-sm font-semibold">{user?.firstName || t('user')}</span>
-                <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{t('premium_member')}</span>
+          <motion.aside
+            role="dialog"
+            aria-modal="true"
+            initial={{ x: "-100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "-100%" }}
+            transition={{ type: "spring", damping: 28, stiffness: 320 }}
+            className={cn(
+              "fixed left-0 top-0 z-[101] flex h-[100dvh] w-[min(90vw,22rem)] flex-col overflow-hidden rounded-br-[2rem] rounded-tr-[2rem] border-y border-r border-border/60 bg-secondary/95 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] shadow-xl md:hidden",
+            )}
+          >
+            <div className="flex shrink-0 items-center gap-2 p-3">
+              <button
+                type="button"
+                onClick={() => {
+                  onOpenPalette?.();
+                  close();
+                }}
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-background text-foreground transition-colors hover:bg-muted"
+              >
+                <MoreVertical className="h-5 w-5" />
+              </button>
+              <div className="relative flex min-w-0 flex-1 items-center">
+                <Search className="pointer-events-none absolute left-3.5 h-4 w-4 text-muted-foreground" />
+                <input
+                  type="search"
+                  className="h-11 w-full rounded-full border border-border bg-background pl-10 pr-3 text-sm outline-none ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
+                  placeholder={t("search")}
+                  autoComplete="off"
+                />
               </div>
-           </div>
-        </div>
-      </div>
-    </div>
+              <button
+                type="button"
+                onClick={close}
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-background text-foreground transition-colors hover:bg-muted"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-3 pb-4">
+              <MenuItem
+                icon={theme === "dark" ? Moon : Sun}
+                label={`Theme: ${theme === "dark" ? "Dark" : "Light"}`}
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              />
+              <MenuItem
+                icon={Languages}
+                label={`Lang: ${language === "en" ? "English" : "हिंदी"}`}
+                onClick={() => setLanguage(language === "en" ? "hi" : "en")}
+              />
+              <MenuItem
+                icon={Globe}
+                label={`${t("currency")}: ${currency.code}`}
+                onClick={() => {
+                  const codes: CurrencyCode[] = ["INR", "USD", "EUR", "GBP", "AED"];
+                  const nextIdx = (codes.indexOf(currency.code) + 1) % codes.length;
+                  setCurrency(codes[nextIdx]);
+                }}
+              />
+              <MenuItem
+                icon={Settings}
+                label={t("settings")}
+                onClick={() => {
+                  close();
+                  navigate("/app/settings");
+                }}
+              />
+              <MenuItem icon={LogOut} label={t("logout")} onClick={signOut} className="text-destructive" />
+
+              <div className="mt-auto rounded-2xl border border-border bg-card p-4 shadow-sm">
+                <div className="flex flex-col items-center gap-2">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#1e293b] text-sm font-bold text-white dark:bg-foreground dark:text-background">
+                    {user?.initials || "U"}
+                  </div>
+                  <div className="flex flex-col items-center text-center">
+                    <span className="text-sm font-semibold text-foreground">
+                      {user?.email?.split("@")[0] || user?.firstName || t("user")}
+                    </span>
+                    <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                      {t("premium_member")}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.aside>
+        </>
+      )}
+    </AnimatePresence>
   );
 }
 
@@ -153,14 +159,18 @@ function MenuItem({
   className?: string;
 }) {
   return (
-    <div 
+    <button
+      type="button"
       onClick={onClick}
-      className={`flex items-center justify-start gap-4 hover:bg-background/50 p-2 rounded-2xl cursor-pointer transition-colors ${className}`}
+      className={cn(
+        "flex w-full items-center gap-3 rounded-2xl p-2.5 text-left transition-colors hover:bg-background/60",
+        className,
+      )}
     >
-      <div className="flex h-10 w-14 shrink-0 items-center justify-center rounded-full bg-background text-foreground shadow-sm">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-background text-foreground shadow-sm">
         <Icon className="h-5 w-5" />
       </div>
-      <span className="font-semibold text-sm text-foreground/90 capitalize">{label}</span>
-    </div>
+      <span className="text-sm font-semibold text-foreground/90">{label}</span>
+    </button>
   );
 }

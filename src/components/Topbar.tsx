@@ -1,37 +1,23 @@
-import { Bell, Focus, LogOut, PanelLeftClose, PanelLeftOpen, Search, MoreVertical } from "lucide-react";
+import { Bell, Focus, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Search } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 import { CurrencySwitcher } from "./CurrencySwitcher";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { useFocusMode } from "./FocusModeProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
-import { useState, useRef, useEffect } from "react";
-import { AnimatePresence, motion } from "framer-motion";
 import { useLanguage } from "./LanguageProvider";
 
 interface Props {
   collapsed: boolean;
   onToggle: () => void;
   onOpenPalette: () => void;
+  onOpenMobileDrawer?: () => void;
 }
 
-export function Topbar({ collapsed, onToggle, onOpenPalette }: Props) {
+export function Topbar({ collapsed, onToggle, onOpenPalette, onOpenMobileDrawer }: Props) {
   const { focus, toggle } = useFocusMode();
   const { user, signOut } = useAuth();
   const { t } = useLanguage();
-  
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const mobileMenuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const onDown = (e: MouseEvent) => {
-      if (mobileMenuRef.current && !mobileMenuRef.current.contains(e.target as Node)) {
-        setMobileMenuOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", onDown);
-    return () => document.removeEventListener("mousedown", onDown);
-  }, []);
 
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-background/70 backdrop-blur-xl pt-safe">
@@ -42,6 +28,15 @@ export function Topbar({ collapsed, onToggle, onOpenPalette }: Props) {
           className="hidden h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground lg:inline-flex"
         >
           {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onOpenMobileDrawer?.()}
+          aria-label="Open menu"
+          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-secondary/40 text-foreground transition-colors hover:bg-secondary md:hidden"
+        >
+          <Menu className="h-5 w-5" />
         </button>
 
         <button

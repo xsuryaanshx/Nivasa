@@ -20,6 +20,7 @@ function AppShell() {
   const [tenantOpen, setTenantOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [electricityOpen, setElectricityOpen] = useState(false);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const location = useLocation();
   const { focus, toggle } = useFocusMode();
 
@@ -54,7 +55,11 @@ function AppShell() {
 
   return (
     <div className="relative h-[100dvh] w-full overflow-hidden bg-secondary/30">
-      <MobileDrawerMenu />
+      <MobileDrawerMenu
+        open={mobileDrawerOpen}
+        onOpenChange={setMobileDrawerOpen}
+        onOpenPalette={() => setPaletteOpen(true)}
+      />
       
       <div className="app-cover absolute w-full h-full left-0 top-0 z-10 flex min-w-0 flex-1 flex-col bg-background shadow-2xl overflow-y-auto transition-transform will-change-transform border border-border/10 pb-[env(safe-area-inset-bottom)]">
         <div className="flex flex-1">
@@ -88,6 +93,7 @@ function AppShell() {
                 collapsed={collapsed}
                 onToggle={() => setCollapsed(v => !v)}
                 onOpenPalette={() => setPaletteOpen(true)}
+                onOpenMobileDrawer={() => setMobileDrawerOpen(true)}
               />
             </motion.div>
           )}
@@ -149,9 +155,9 @@ function AppShell() {
         )}
       </AnimatePresence>
 
-          <MobileNav />
         </div>
       </div>
+      <MobileNav />
     </div>
   );
 }

@@ -70,13 +70,28 @@
 }
 
 @layer components {
+  /* Mobile bottom dock — Apple-style frosted glass */
   .menu {
-    @apply flex items-center justify-between px-4 py-3 rounded-[32px] glass-strong w-[92vw] mx-auto mb-4;
-    --component-active-color: hsl(var(--accent-blue));
-    background: color-mix(in srgb, hsl(var(--card)) 95%, transparent);
-    backdrop-filter: blur(32px);
-    border: 1px solid color-mix(in srgb, hsl(var(--foreground)) 15%, transparent);
-    box-shadow: 0 20px 50px -10px rgba(0,0,0,0.2);
+    @apply relative mx-auto flex w-full max-w-md items-center justify-between gap-0.5 rounded-[2rem] px-2 py-2 sm:px-4 sm:py-2.5;
+    --component-active-color: hsl(var(--foreground));
+    background: hsl(0 0% 100% / 0.55);
+    -webkit-backdrop-filter: saturate(180%) blur(28px);
+    backdrop-filter: saturate(180%) blur(28px);
+    border: 1px solid hsl(0 0% 100% / 0.42);
+    box-shadow:
+      0 1px 0 hsl(0 0% 100% / 0.55) inset,
+      0 0 0 0.5px hsl(220 10% 10% / 0.04),
+      0 10px 40px -8px hsl(220 40% 2% / 0.18),
+      0 4px 14px -4px hsl(220 40% 2% / 0.08);
+  }
+
+  .dark .menu {
+    background: hsl(220 13% 9% / 0.62);
+    border: 1px solid hsl(0 0% 100% / 0.1);
+    box-shadow:
+      0 1px 0 hsl(0 0% 100% / 0.06) inset,
+      0 0 0 0.5px hsl(0 0% 0% / 0.35),
+      0 12px 48px -10px hsl(0 0% 0% / 0.55);
   }
 
   .menu__item {
@@ -86,11 +101,11 @@
   }
 
   .menu__icon {
-    @apply transition-all duration-500 text-muted-foreground/40 z-10;
+    @apply z-10 text-muted-foreground/45 transition-all duration-500 dark:text-muted-foreground/35;
   }
 
   .menu__item.active .menu__icon {
-    @apply text-[var(--component-active-color)] transform -translate-y-4 scale-125;
+    @apply scale-110 -translate-y-1 transform text-[var(--component-active-color)];
   }
 
   .menu__text {
@@ -101,17 +116,6 @@
 
   .menu__item.active .menu__text {
     @apply opacity-100 transform translate-y-0;
-  }
-
-  .menu__item::after {
-    content: '';
-    @apply absolute bottom-[2px] h-[4px] bg-[var(--component-active-color)] rounded-full transition-all duration-700;
-    width: 0;
-    box-shadow: 0 0 20px var(--component-active-color);
-  }
-
-  .menu__item.active::after {
-    width: 16px;
   }
 
   .glass-strong {

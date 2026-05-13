@@ -37,12 +37,17 @@ export function MobileNav() {
   }, [location.pathname, dockApps]);
 
   return (
-    <nav className="fixed bottom-[calc(env(safe-area-inset-bottom)+1.5rem)] left-0 right-0 z-50 flex justify-center lg:hidden px-4">
-      <InteractiveMenu 
+    <div
+      className="fixed inset-x-0 bottom-0 z-50 flex justify-center lg:hidden"
+      style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
+    >
+    <div className="w-full max-w-lg px-3 pt-2">
+      <InteractiveMenu
         items={dockApps}
         activeIndex={activeIndex}
         onItemClick={handleAppClick}
       />
-    </nav>
+    </div>
+    </div>
   );
 }
