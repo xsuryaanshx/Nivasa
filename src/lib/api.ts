@@ -5,6 +5,10 @@
 
 import { createClient } from "@supabase/supabase-js";
 import {
+  buildings as mockBuildings,
+  rooms as mockRooms,
+  payments as mockPayments,
+  stats as mockStats,
   type Building,
   type Room,
   type Payment,
@@ -59,6 +63,14 @@ async function requireAuthUserId(): Promise<string> {
 // ── Buildings ─────────────────────────────────────────────────────────────────
 async function getBuildings(): Promise<(Building & { occupancyRate: number; rooms: number })[]> {
   try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      return mockBuildings.map(b => ({
+        ...b,
+        occupancyRate: b.rooms > 0 ? Math.round((b.occupied / b.rooms) * 100) : 0
+      }));
+    }
+
     const { data, error } = await supabase
       .from('buildings')
       .select('*, units(*)');
@@ -92,6 +104,13 @@ async function getBuildings(): Promise<(Building & { occupancyRate: number; room
 
 async function addBuilding(input: { name: string; address: string; total_rooms?: number }) {
   try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      const b = { id: `b${Date.now()}`, name: input.name, address: input.address, rooms: input.total_rooms || 0, occupied: 0, monthlyRevenue: 0 };
+      mockBuildings.push(b);
+      return b;
+    }
+
     const { data, error } = await supabase
       .from('buildings')
       .insert([{ name: input.name, address: input.address }])
@@ -131,6 +150,27 @@ async function deleteBuilding(id: string) {
 async function getPropertyDetails(buildingId: string | undefined) {
   if (!buildingId) throw new Error("Building ID required");
   try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      const b = mockBuildings.find(x => x.id === buildingId);
+      if (!b) throw new Error("Building not found");
+      const bRooms = mockRooms.filter(r => r.buildingId === buildingId);
+      return {
+        ...b,
+        tenants: bRooms.map(r => r.tenant).filter(Boolean),
+        units: bRooms.map(r => ({
+          id: r.id,
+          name: `Room ${r.number}`,
+          number: r.number,
+          status: r.status,
+          rent_amount: r.rent,
+          occupancy_prices: r.occupancyPrices,
+          tenant: r.tenant,
+        })),
+        occupancyRate: bRooms.length > 0 ? Math.round((bRooms.filter(r => r.tenant).length / bRooms.length) * 100) : 0
+      };
+    }
+
     const { data: building, error: bError } = await supabase
       .from('buildings')
       .select('*, units(*)')
@@ -225,6 +265,9 @@ function mapUnitToRoom(u: any): Room {
 
 async function getRooms(): Promise<Room[]> {
   try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return mockRooms;
+
     const { data, error } = await supabase
       .from('units')
       .select('*, buildings(name), tenants!fk_room(*)');
@@ -239,6 +282,9 @@ async function getRooms(): Promise<Room[]> {
 
 async function getRoomById(id: string): Promise<Room | null> {
   try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return mockRooms.find(r => r.id === id) || null;
+
     const { data, error } = await supabase
       .from('units')
       .select('*, buildings(name), tenants!fk_room(*)')
@@ -324,6 +370,27 @@ async function addRoom(input: {
   occupancy_prices?: OccupancyPriceTier[] | null;
 }) {
   try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      const b = mockBuildings.find(b => b.id === input.building_id);
+      const r: Room = {
+        id: `r${Date.now()}`,
+        number: input.number,
+        buildingId: input.building_id,
+        buildingName: b?.name || "Unknown",
+        rent: input.rent,
+        status: "vacant" as PaymentStatus,
+        tenant: null,
+        prevReading: 0,
+        currReading: 0,
+        ratePerUnit: 8.5,
+        history: [],
+        pastTenants: []
+      };
+      mockRooms.push(r);
+      return r;
+    }
+
     const user_id = await requireAuthUserId();
     const tiers = normalizeOccupancyTiers(input.occupancy_prices ?? null);
     const hasTiers = tiers.length > 0;
@@ -366,6 +433,24 @@ async function addTenant(input: {
   occupancy_count?: number;
 }) {
   try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      const r = mockRooms.find(x => x.id === input.room_id);
+      if (r) {
+        r.tenant = {
+          id: `t${Date.now()}`,
+          name: input.name,
+          phone: input.phone,
+          whatsapp_number: input.whatsapp_number,
+          aadhar: input.aadhar,
+          joined_at: input.joined_at || new Date().toISOString(),
+          occupancy_count: input.occupancy_count || 1
+        };
+        r.status = 'occupied' as any;
+      }
+      return r?.tenant;
+    }
+
     // 1. Fetch building_id from the room automatically
     const { data: room, error: roomError } = await supabase
       .from('units')
@@ -445,6 +530,26 @@ async function removeTenant(roomId: string, tenantId: string) {
 // ── Payments ──────────────────────────────────────────────────────────────────
 async function addPayment(input: any) {
   try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      const r = mockRooms.find(x => x.id === input.room_id);
+      const p: Payment = {
+        id: `p${Date.now()}`,
+        roomId: input.room_id,
+        tenantName: r?.tenant?.name || "Unknown",
+        amount: input.amount,
+        date: input.date,
+        status: input.status as PaymentStatus,
+        method: input.method as any,
+        note: input.note
+      };
+      mockPayments.unshift(p);
+      if (input.status.toLowerCase() === 'paid' && r) {
+        r.status = 'paid';
+      }
+      return p;
+    }
+
     const { data, error } = await supabase
       .from('payments')
       .insert([{
@@ -476,6 +581,20 @@ async function addPayment(input: any) {
 
 async function getRecentPayments(limit = 10) {
   try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      return mockPayments.slice(0, limit).map(p => {
+        const r = mockRooms.find(x => x.id === p.roomId);
+        return {
+          ...p,
+          tenantPhone: r?.tenant?.phone,
+          tenantWhatsapp: r?.tenant?.whatsapp_number,
+          roomNumber: r?.number,
+          buildingName: r?.buildingName
+        };
+      });
+    }
+
     const { data, error } = await supabase
       .from('payments')
       .select(`
@@ -567,6 +686,9 @@ async function updateElectricityRate(rate: number) {
 // ── Dashboard stats ───────────────────────────────────────────────────────────
 async function getDashboardStats() {
   try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return mockStats();
+
     const [buildings, units, payments] = await Promise.all([
       supabase.from('buildings').select('*', { count: 'exact', head: true }),
       supabase.from('units').select('*'),
