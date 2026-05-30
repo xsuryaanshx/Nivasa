@@ -1,5 +1,6 @@
 import { Building2, DollarSign, Home, Receipt, Users, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/PageHeader";
 import { StatCard } from "@/components/StatCard";
 import { PaymentTimeline } from "@/components/PaymentTimeline";
@@ -19,6 +20,7 @@ function getGreetingKey() {
 export default function Dashboard() {
   const { user } = useAuth();
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState({
     stats: { totalBuildings: 0, totalRooms: 0, occupied: 0, pending: 0, monthlyRevenue: 0 },
@@ -69,11 +71,11 @@ export default function Dashboard() {
       />
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
-        <StatCard label={t('buildings')}        value={s.totalBuildings} icon={Building2} delta="+1"  trend="up"   delay={0.00} />
-        <StatCard label={t('rooms')}            value={s.totalRooms}     icon={Home}      delta="+2"  trend="up"   delay={0.05} />
-        <StatCard label={t('occupancy')}         value={s.occupied}       icon={Users}     delta="92%" trend="flat" delay={0.10} />
-        <StatCard label={t('pending_payments')} value={s.pending}        icon={Receipt}   delta="-1"  trend="up"   delay={0.15} />
-        <StatCard label={t('monthly_revenue')}  value={s.monthlyRevenue} icon={DollarSign} money delta="+12%" trend="up" delay={0.20} />
+        <StatCard label={t('buildings')}        value={s.totalBuildings} icon={Building2} delta="+1"  trend="up"   delay={0.00} onClick={() => navigate("/app/buildings")} />
+        <StatCard label={t('rooms')}            value={s.totalRooms}     icon={Home}      delta="+2"  trend="up"   delay={0.05} onClick={() => navigate("/app/rooms")} />
+        <StatCard label={t('occupancy')}         value={s.occupied}       icon={Users}     delta="92%" trend="flat" delay={0.10} onClick={() => navigate("/app/rooms?status=occupied")} />
+        <StatCard label={t('pending_payments')} value={s.pending}        icon={Receipt}   delta="-1"  trend="up"   delay={0.15} onClick={() => navigate("/app/payments?status=pending")} />
+        <StatCard label={t('monthly_revenue')}  value={s.monthlyRevenue} icon={DollarSign} money delta="+12%" trend="up" delay={0.20} onClick={() => navigate("/app/payments?status=paid")} />
       </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-3">

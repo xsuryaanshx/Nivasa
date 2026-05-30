@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Plus, Search } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { MagneticButton } from "@/components/MagneticButton";
@@ -19,7 +20,17 @@ const getFilters = (t: ReturnType<typeof useLanguage>["t"]): ({ key: PaymentStat
 export default function Payments() {
   const { t } = useLanguage();
   const [q, setQ] = useState("");
-  const [status, setStatus] = useState<PaymentStatus | "all">("all");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const statusParam = searchParams.get("status") as PaymentStatus | "all" | null;
+  const [status, setStatus] = useState<PaymentStatus | "all">(statusParam || "all");
+
+  const handleSetStatus = (s: PaymentStatus | "all") => {
+    setStatus(s);
+    const newParams = new URLSearchParams(searchParams);
+    if (s === "all") newParams.delete("status");
+    else newParams.set("status", s);
+    setSearchParams(newParams);
+  };
   const [open, setOpen] = useState(false);
   const [paymentsList, setPaymentsList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -82,7 +93,7 @@ export default function Payments() {
         </div>
         <div className="flex items-center gap-1 rounded-xl border border-border bg-card p-1">
           {getFilters(t).map(f => (
-            <button key={f.key} onClick={() => setStatus(f.key)}
+            <button key={f.key} onClick={() => handleSetStatus(f.key)}
               className={cn(
                 "rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
                 status === f.key ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground",

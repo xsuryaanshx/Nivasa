@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Search, UserPlus } from "lucide-react";
 import { useLanguage } from "@/components/LanguageProvider";
 import { PageHeader } from "@/components/PageHeader";
@@ -17,7 +18,17 @@ const getFilters = (t: any): ({ key: PaymentStatus | "all"; label: string })[] =
 export default function Rooms() {
   const { t } = useLanguage();
   const [q, setQ] = useState("");
-  const [status, setStatus] = useState<PaymentStatus | "all">("all");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const statusParam = searchParams.get("status") as PaymentStatus | "all" | null;
+  const [status, setStatus] = useState<PaymentStatus | "all">(statusParam || "all");
+
+  const handleSetStatus = (s: PaymentStatus | "all") => {
+    setStatus(s);
+    const newParams = new URLSearchParams(searchParams);
+    if (s === "all") newParams.delete("status");
+    else newParams.set("status", s);
+    setSearchParams(newParams);
+  };
   const [roomsList, setRoomsList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -71,7 +82,7 @@ export default function Rooms() {
           {getFilters(t).map(f => (
             <button
               key={f.key}
-              onClick={() => setStatus(f.key)}
+              onClick={() => handleSetStatus(f.key)}
               className={cn(
                 "rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
                 status === f.key ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground",

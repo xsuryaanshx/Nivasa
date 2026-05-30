@@ -14,9 +14,10 @@ interface Props {
   delta?: string;
   trend?: "up" | "down" | "flat";
   delay?: number;
+  onClick?: () => void;
 }
 
-export function StatCard({ label, value, icon: Icon, money, suffix, delta, trend = "up", delay = 0 }: Props) {
+export function StatCard({ label, value, icon: Icon, money, suffix, delta, trend = "up", delay = 0, onClick }: Props) {
   const { currency } = useCurrency();
   // For money values we pre-apply the rate (so the count-up animation feels natural)
   // and only the symbol/locale formatting happens inside the formatter.
@@ -29,7 +30,11 @@ export function StatCard({ label, value, icon: Icon, money, suffix, delta, trend
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay, ease: [0.2, 0.7, 0.2, 1] }}
-      className="group relative overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-soft transition-all hover:shadow-elev"
+      onClick={onClick}
+      className={cn(
+        "group relative overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-soft transition-all hover:shadow-elev",
+        onClick && "cursor-pointer"
+      )}
     >
       <div className="flex items-start justify-between">
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-secondary/70 text-foreground/80">
