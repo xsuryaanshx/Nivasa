@@ -176,7 +176,7 @@ async function getPropertyDetails(buildingId: string | undefined) {
       const bRooms = mockRooms.filter(r => r.buildingId === buildingId);
       return {
         ...b,
-        tenants: bRooms.map(r => r.tenant).filter(Boolean),
+        tenants: bRooms.flatMap(r => r.tenants),
         units: bRooms.map(r => ({
           id: r.id,
           name: `Room ${r.number}`,
@@ -184,9 +184,9 @@ async function getPropertyDetails(buildingId: string | undefined) {
           status: r.status,
           rent_amount: r.rent,
           occupancy_prices: r.occupancyPrices,
-          tenant: r.tenant,
+          tenants: r.tenants,
         })),
-        occupancyRate: bRooms.length > 0 ? Math.round((bRooms.filter(r => r.tenant).length / bRooms.length) * 100) : 0
+        occupancyRate: bRooms.length > 0 ? Math.round((bRooms.filter(r => r.tenants.length > 0).length / bRooms.length) * 100) : 0
       };
     }
 
@@ -208,14 +208,13 @@ async function getPropertyDetails(buildingId: string | undefined) {
       ...building,
       tenants: tenants || [],
       units: (building.units || []).map((u: any) => {
-        const tenant = tenants ? tenants.find((t: any) => t.room_id === u.id) : null;
+        const unitTenants = tenants ? tenants.filter((t: any) => t.room_id === u.id).map(mapTenantFromRow) : [];
         const tiers = normalizeOccupancyTiers(u.occupancy_prices);
-        const occ =
-          tenant?.occupancy_count != null ? Math.max(1, Number(tenant.occupancy_count)) : 1;
+        const occ = Math.max(1, unitTenants.length);
         const stored = Number(u.rent_amount) || 0;
         const rent_amount =
           tiers.length > 0
-            ? computeRentFromTiers(tiers, stored, tenant && u.status === "occupied" ? occ : 1)
+            ? computeRentFromTiers(tiers, stored, unitTenants.length > 0 && u.status === "occupied" ? occ : 1)
             : stored;
         return {
           id: u.id,
@@ -224,7 +223,7 @@ async function getPropertyDetails(buildingId: string | undefined) {
           status: u.status || "vacant",
           rent_amount,
           occupancy_prices: u.occupancy_prices ?? null,
-          tenant,
+          tenants: unitTenants,
         };
       }),
       occupancyRate: building.units?.length > 0
@@ -255,14 +254,12 @@ function mapTenantFromRow(t: any): Tenant {
 
 function mapUnitToRoom(u: any): Room {
   const tiers = normalizeOccupancyTiers(u.occupancy_prices);
-  const rawTenant =
-    u.tenants && Array.isArray(u.tenants) && u.tenants.length ? u.tenants[0] : null;
-  const tenant = rawTenant ? mapTenantFromRow(rawTenant) : null;
-  const billingOcc = tenant?.occupancy_count ?? 1;
+  const unitTenants = u.tenants && Array.isArray(u.tenants) ? u.tenants.map(mapTenantFromRow) : [];
+  const billingOcc = Math.max(1, unitTenants.length);
   const stored = Number(u.rent_amount) || 0;
   const rent =
     tiers.length > 0
-      ? computeRentFromTiers(tiers, stored, u.status === "occupied" && tenant ? billingOcc : 1)
+      ? computeRentFromTiers(tiers, stored, u.status === "occupied" && unitTenants.length > 0 ? billingOcc : 1)
       : stored;
 
   return {
@@ -273,7 +270,7 @@ function mapUnitToRoom(u: any): Room {
     rent,
     occupancyPrices: tiers.length > 0 ? tiers : null,
     status: u.status as PaymentStatus,
-    tenant,
+    tenants: unitTenants,
     prevReading: u.prev_reading || 0,
     currReading: u.curr_reading || 0,
     ratePerUnit: u.rate_per_unit || 0.18,
@@ -328,16 +325,15 @@ async function syncUnitEffectiveRent(unitId: string) {
     .single();
   if (error || !unit) return;
 
-  const { data: tenantRow } = await supabase
+  const { count, error: tError } = await supabase
     .from("tenants")
-    .select("occupancy_count")
-    .eq("room_id", unitId)
-    .maybeSingle();
+    .select("*", { count: "exact", head: true })
+    .eq("room_id", unitId);
 
   const tiers = normalizeOccupancyTiers(unit.occupancy_prices);
   const occ =
-    unit.status === "occupied" && tenantRow
-      ? Math.max(1, Number(tenantRow.occupancy_count ?? 1))
+    unit.status === "occupied" && count != null
+      ? Math.max(1, count)
       : 1;
   const stored = Number(unit.rent_amount) || 0;
   const effective = computeRentFromTiers(tiers, stored, occ);
@@ -399,7 +395,7 @@ async function addRoom(input: {
         buildingName: b?.name || "Unknown",
         rent: input.rent,
         status: "vacant" as PaymentStatus,
-        tenant: null,
+        tenants: [],
         prevReading: 0,
         currReading: 0,
         ratePerUnit: 8.5,
@@ -456,18 +452,20 @@ async function addTenant(input: {
     if (!session) {
       const r = mockRooms.find(x => x.id === input.room_id);
       if (r) {
-        r.tenant = {
+        const t = {
           id: `t${Date.now()}`,
           name: input.name,
           phone: input.phone,
           whatsapp_number: input.whatsapp_number,
           aadhar: input.aadhar,
           joined_at: input.joined_at || new Date().toISOString(),
-          occupancy_count: input.occupancy_count || 1
+          occupancy_count: 1
         };
+        r.tenants.push(t);
         r.status = 'occupied' as any;
+        return t;
       }
-      return r?.tenant;
+      return null;
     }
 
     // 1. Fetch building_id from the room automatically
@@ -529,13 +527,19 @@ async function removeTenant(roomId: string, tenantId: string) {
     
     if (tenantError) throw tenantError;
 
-    // 2. Update room status to 'vacant'
-    const { error: roomError } = await supabase
-      .from('units')
-      .update({ status: 'vacant' })
-      .eq('id', roomId);
-
-    if (roomError) throw roomError;
+    // 2. Update room status to 'vacant' if no tenants left
+    const { count, error: checkError } = await supabase
+      .from('tenants')
+      .select('*', { count: 'exact', head: true })
+      .eq('room_id', roomId);
+    
+    if (count === 0) {
+      const { error: roomError } = await supabase
+        .from('units')
+        .update({ status: 'vacant' })
+        .eq('id', roomId);
+      if (roomError) throw roomError;
+    }
 
     await syncUnitEffectiveRent(roomId);
 
@@ -555,7 +559,7 @@ async function addPayment(input: any) {
       const p: Payment = {
         id: `p${Date.now()}`,
         roomId: input.room_id,
-        tenantName: r?.tenant?.name || "Unknown",
+        tenantName: r?.tenants?.[0]?.name || "Unknown",
         amount: input.amount,
         date: input.date,
         status: input.status as PaymentStatus,

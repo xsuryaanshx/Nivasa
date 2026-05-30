@@ -43,8 +43,7 @@ export default function RoomDetails() {
   const [tierRows, setTierRows] = useState<{ members: string; amount: string }[]>([]);
   const [pricingSaving, setPricingSaving] = useState(false);
   const [flatIfClear, setFlatIfClear] = useState("");
-  const [tenantOccDraft, setTenantOccDraft] = useState("1");
-  const [tenantOccSaving, setTenantOccSaving] = useState(false);
+
   const { currency } = useCurrency();
 
   const fetchData = async () => {
@@ -199,35 +198,63 @@ export default function RoomDetails() {
     }
   };
 
-  const saveTenantOccupancy = async () => {
-    if (!room?.tenant) return;
-    const n = parseInt(tenantOccDraft, 10);
-    if (!Number.isFinite(n) || n < 1) {
-      toast.error("Enter a valid occupant count (1 or more).");
-      return;
-    }
-    try {
-      setTenantOccSaving(true);
-      const api = (window as any).nivasaApi;
-      if (!api) throw new Error("API not loaded");
-      await api.updateTenant(room.tenant.id, { occupancy_count: n });
-      toast.success("Billing occupancy updated");
-      fetchData();
-    } catch (err: any) {
-      toast.error(err.message || "Failed to update");
-    } finally {
-      setTenantOccSaving(false);
-    }
-  };
+// Deprecated saveTenantOccupancy – removed in multi-tenant mode
+
   const usagePct = Math.min(100, Math.round((used / 250) * 100));
 
-  const buildInvoiceMessage = () => {
-    const tenantName = room.tenant?.name ?? "Tenant";
+  // Legacy buildInvoiceMessage removed – per-tenant invoice uses buildInvoiceMessageForTenant
+  const sendInvoiceToTenant = (tenant: any) => {
+    const phone = tenant.whatsapp_number || tenant.phone;
+    if (!phone) {
+      toast.error("No contact number on file");
+      return;
+    }
+    const ok = openWhatsApp(phone, buildInvoiceMessageForTenant(tenant));
+    if (ok) toast.success("Invoice opened in WhatsApp", { description: `${tenant.name} · ${phone}` });
+  };
+
+  const sendReminderAll = () => {
+  if (!room.tenants || room.tenants.length === 0) {
+    toast.error("No tenants to send reminder");
+    return;
+  }
+  room.tenants.forEach(t => sendReminderToTenant(t));
+};
+
+  const sendReminderToTenant = (tenant: any) => {
+    const phone = tenant.whatsapp_number || tenant.phone;
+    if (phone) {
+      openWhatsApp(phone, `Hi ${tenant.name ?? "tenant"}, a friendly reminder about the rent for Room ${room.number}. Thanks!`);
+      toast.success("Reminder opened in WhatsApp");
+    } else {
+      toast.success("Reminder sent", { description: "No contact on file — SMS fallback." });
+    }
+  };
+
+  const handleRemoveTenant = async (tenantId: string) => {
+    const tenant = room.tenants?.find(t => t.id === tenantId);
+    if (!tenant || !window.confirm(`Are you sure you want to remove ${tenant.name}? This will free a bed.`)) return;
+
+    try {
+      const api = (window as any).nivasaApi;
+      if (!api) throw new Error("API not loaded");
+
+      await api.removeTenant(room.id, tenantId);
+      toast.success("Tenant removed successfully");
+      fetchData(); // Refresh data
+    } catch (error: any) {
+      console.error("Error removing tenant:", error);
+      toast.error(error.message || "Failed to remove tenant");
+    }
+  };
+
+  // New helper to build invoice message for a specific tenant
+  const buildInvoiceMessageForTenant = (tenant: any) => {
     const monthLabel = new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" });
     return [
       `*Nivasa · Invoice — ${monthLabel}*`,
       ``,
-      `Hi ${tenantName},`,
+      `Hi ${tenant.name},`,
       `Here is your bill for Room ${room.number}, ${room.buildingName}:`,
       ``,
       `• Rent: ${formatMoney(room.rent, currency, { decimals: 0 })}`,
@@ -239,42 +266,6 @@ export default function RoomDetails() {
       ``,
       `Reply here if you have any questions. Thanks!`,
     ].join("\n");
-  };
-
-  const sendInvoice = () => {
-    const phone = room.tenant?.whatsapp_number || room.tenant?.phone;
-    if (!phone) {
-      toast.error("No contact number on file");
-      return;
-    }
-    const ok = openWhatsApp(phone, buildInvoiceMessage());
-    if (ok) toast.success("Invoice opened in WhatsApp", { description: `${room.tenant?.name} · ${phone}` });
-  };
-
-  const sendReminder = () => {
-    const phone = room.tenant?.whatsapp_number || room.tenant?.phone;
-    if (phone) {
-      openWhatsApp(phone, `Hi ${room.tenant?.name ?? "tenant"}, a friendly reminder about the rent for Room ${room.number}. Thanks!`);
-      toast.success("Reminder opened in WhatsApp");
-    } else {
-      toast.success("Reminder sent", { description: "No contact on file — SMS fallback." });
-    }
-  };
-
-  const handleRemoveTenant = async () => {
-    if (!room.tenant || !window.confirm(`Are you sure you want to remove ${room.tenant.name}? This will set the room to vacant.`)) return;
-
-    try {
-      const api = (window as any).nivasaApi;
-      if (!api) throw new Error("API not loaded");
-      
-      await api.removeTenant(room.id, room.tenant.id);
-      toast.success("Tenant removed successfully");
-      fetchData(); // Refresh data
-    } catch (error: any) {
-      console.error("Error removing tenant:", error);
-      toast.error(error.message || "Failed to remove tenant");
-    }
   };
 
   return (
@@ -307,104 +298,51 @@ export default function RoomDetails() {
       />
 
       <div className="grid gap-4 lg:grid-cols-3">
-        {/* Tenant */}
+        {/* Tenants Section */}
         <div className="rounded-2xl border border-border bg-card p-5 shadow-soft">
-          <div className="flex items-center justify-between">
-            <div className="text-xs font-semibold text-muted-foreground">Tenant</div>
-            {room.tenant ? (
-              <div className="flex gap-1">
-                <button
-                  type="button"
-                  onClick={sendReminder}
-                  className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] text-muted-foreground hover:bg-secondary hover:text-foreground"
-                >
-                  <MessageCircle className="h-3 w-3" /> Chat
-                </button>
-                <button
-                  type="button"
-                  onClick={handleRemoveTenant}
-                  className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] text-destructive hover:bg-destructive/10"
-                >
-                  Remove
-                </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setTenantOpen(true)}
-                className="inline-flex items-center gap-1 rounded-md bg-foreground px-2 py-1 text-[11px] font-medium text-background hover:opacity-90"
-              >
-                <UserPlus className="h-3 w-3" /> Add tenant
-              </button>
-            )}
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-xs font-semibold text-muted-foreground">Tenants</div>
+            <div className="text-xs text-muted-foreground">
+              Filled: {room.tenants?.length ?? 0}/{room.occupancyPrices?.length ? Math.max(...room.occupancyPrices.map(t => t.members)) : 1}
+            </div>
           </div>
-          {room.tenant ? (
-            <>
-              <div className="mt-4 flex items-center gap-3.5">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-brand text-white text-base font-semibold shadow-glow">
-                  {initials(room.tenant.name)}
-                </div>
-                <div className="min-w-0">
-                  <div className="text-base font-semibold tracking-tight truncate">{room.tenant.name}</div>
-                  <div className="mt-0.5 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <Phone className="h-3 w-3" /> {room.tenant.phone}
-                  </div>
-                </div>
-              </div>
-              <div className="mt-4 space-y-2">
-                <InfoRow icon={<MessageCircle className="h-3 w-3" />} k="WhatsApp" v={room.tenant.whatsapp_number ?? room.tenant.phone} />
-                <InfoRow icon={<IdCard className="h-3 w-3" />} k="Aadhar" v={maskAadhar(room.tenant.aadhar)} mono />
-                {room.occupancyPrices?.length ? (
-                  <div className="rounded-xl bg-secondary/60 p-3">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs text-muted-foreground">People billed for rent</span>
+          {room.tenants && room.tenants.length > 0 ? (
+            <div className="space-y-4">
+              {room.tenants.map((t) => (
+                <div key={t.id} className="flex items-center justify-between rounded-xl bg-secondary/60 p-3">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-brand text-white text-sm font-semibold shadow-glow">
+                      {initials(t.name)}
                     </div>
-                    <div className="mt-2 flex items-center gap-2">
-                      <input
-                        type="number"
-                        min={1}
-                        max={24}
-                        value={tenantOccDraft}
-                        onChange={(e) => setTenantOccDraft(e.target.value)}
-                        className="h-9 w-20 rounded-lg border border-border bg-card px-2 text-sm font-semibold tnum outline-none focus:border-brand"
-                      />
-                      <button
-                        type="button"
-                        onClick={saveTenantOccupancy}
-                        disabled={tenantOccSaving}
-                        className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1.5 text-[11px] font-medium hover:bg-secondary disabled:opacity-50"
-                      >
-                        <Save className="h-3 w-3" />
-                        {tenantOccSaving ? "Saving…" : "Apply"}
-                      </button>
+                    <div className="min-w-0">
+                      <div className="text-base font-semibold truncate">{t.name}</div>
+                      <div className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <Phone className="h-3 w-3" /> {t.phone}
+                      </div>
                     </div>
                   </div>
-                ) : null}
-                <div className="flex items-center justify-between rounded-xl bg-secondary/60 p-3">
-                  <span className="text-xs text-muted-foreground">Status</span>
-                  <StatusPill status={room.status} />
+                  <div className="flex gap-2 items-center">
+                    <button type="button" onClick={() => sendInvoiceToTenant(t)} className="inline-flex items-center gap-1 text-xs text-foreground hover:underline">
+                      <Send className="h-3 w-3" /> Invoice
+                    </button>
+                    <button type="button" onClick={() => sendReminderToTenant(t)} className="inline-flex items-center gap-1 text-xs text-foreground hover:underline">
+                      <MessageCircle className="h-3 w-3" /> Reminder
+                    </button>
+                    <button type="button" onClick={() => handleRemoveTenant(t.id)} className="inline-flex items-center gap-1 text-xs text-destructive hover:underline">
+                      <UserPlus className="h-3 w-3" /> Remove
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between rounded-xl bg-secondary/60 p-3">
-                  <span className="text-xs text-muted-foreground">Joined</span>
-                  <span className="text-xs font-medium tnum">
-                    {new Date(room.tenant.joined_at).toLocaleDateString()}
-                  </span>
-                </div>
-              </div>
-            </>
+              ))}
+            </div>
           ) : (
-            <button
-              type="button"
-              onClick={() => setTenantOpen(true)}
-              className="mt-4 flex w-full flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-secondary/40 p-6 text-center transition-colors hover:bg-secondary"
-            >
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-card">
-                <UserPlus className="h-4 w-4 text-foreground" />
-              </div>
-              <div className="text-sm font-medium">This room is vacant</div>
-              <div className="text-[11px] text-muted-foreground">Click to assign a new tenant</div>
-            </button>
+            <div className="text-sm text-muted-foreground">No tenants assigned.</div>
           )}
+          <div className="mt-4 flex justify-end">
+            <MagneticButton variant="ghost" onClick={() => setTenantOpen(true)} disabled={room.tenants?.length >= (room.occupancyPrices?.length ? Math.max(...room.occupancyPrices.map(t => t.members)) : 1)}>
+              <UserPlus className="h-4 w-4" /> Add Tenant
+            </MagneticButton>
+          </div>
         </div>
 
         {/* Electricity — meter readings */}
@@ -484,25 +422,7 @@ export default function RoomDetails() {
                 <Save className="h-3.5 w-3.5" />
                 {savingElectricity ? "Saving…" : "Save Reading"}
               </button>
-              <button
-                type="button"
-                onClick={sendInvoice}
-                disabled={!room.tenant}
-                className={cn(
-                  "inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition-all",
-                  "bg-[#25D366] text-white shadow-soft hover:opacity-90",
-                  !room.tenant && "cursor-not-allowed opacity-50",
-                )}
-                title={room.tenant ? `WhatsApp ${room.tenant.whatsapp_number ?? room.tenant.phone}` : "No tenant assigned"}
-              >
-                <Send className="h-3.5 w-3.5" />
-                Send invoice via WhatsApp
-                {room.tenant && (
-                  <span className="ml-1 hidden rounded-md bg-white/20 px-1.5 py-0.5 font-mono text-[10px] sm:inline">
-                    {room.tenant.whatsapp_number ?? room.tenant.phone}
-                  </span>
-                )}
-              </button>
+              {/* Legacy single-tenant invoice button removed – use per-tenant actions */}
             </div>
           </div>
         </div>

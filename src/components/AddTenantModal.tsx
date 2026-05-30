@@ -28,7 +28,7 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
   const [whatsapp, setWhatsapp] = useState("");
   const [sameAsMobile, setSameAsMobile] = useState(true);
   const [aadhar, setAadhar] = useState("");
-  const [occupancyCount, setOccupancyCount] = useState("1");
+
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -64,7 +64,7 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
       setWhatsapp("");
       setSameAsMobile(true);
       setAadhar("");
-      setOccupancyCount("1");
+
     }
   }, [open, defaultRoomId]);
 
@@ -104,7 +104,7 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
         whatsapp_number: (sameAsMobile ? mobile : whatsapp).trim(),
         aadhar: aadhar.replace(/\s+/g, ""),
         joined_at: new Date().toISOString(),
-        occupancy_count: Math.max(1, parseInt(occupancyCount, 10) || 1),
+        occupancy_count: 1,
       });
 
       setSuccess(true);
@@ -127,7 +127,13 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
     }
   };
 
-  const vacantRooms = roomsList.filter((r) => r.status === 'vacant');
+  const getRoomCapacity = (r: any) => {
+    if (r.capacity) return r.capacity;
+    if (r.occupancyPrices?.length) return Math.max(...r.occupancyPrices.map((t: any) => t.members));
+    return 1;
+  };
+
+  const availableRooms = roomsList.filter((r) => r.tenants?.length < getRoomCapacity(r));
 
   return (
     <GlassModal 
@@ -180,11 +186,16 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
                     {loadingRooms ? (
                       <option>Loading rooms...</option>
                     ) : (
-                      (vacantRooms.length ? vacantRooms : roomsList).map((r) => (
-                        <option key={r.id} value={r.id}>
-                          Room {r.number} · {r.buildingName}{r.status === 'occupied' ? ` (Occupied)` : " (Vacant)"}
-                        </option>
-                      ))
+                      (availableRooms.length ? availableRooms : roomsList).map((r) => {
+                        const cap = getRoomCapacity(r);
+                        const occ = r.tenants?.length || 0;
+                        const isFull = occ >= cap;
+                        return (
+                          <option key={r.id} value={r.id} disabled={isFull}>
+                            Room {r.number} · {r.buildingName} ({occ}/{cap} filled)
+                          </option>
+                        );
+                      })
                     )}
                   </select>
                   <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground">
@@ -260,19 +271,7 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
                 />
               </Field>
 
-              <Field
-                label="Occupants (for rent)"
-                hint="Used when the room has occupancy-based pricing"
-              >
-                <IconInput
-                  icon={<User className="h-4 w-4" />}
-                  value={occupancyCount}
-                  onChange={(v) => setOccupancyCount(v.replace(/\D/g, "").slice(0, 2))}
-                  placeholder="1"
-                  inputMode="numeric"
-                  disabled={submitting}
-                />
-              </Field>
+
 
               <div className="flex gap-3 pt-4">
                 <button 

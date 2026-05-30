@@ -41,7 +41,7 @@ export function CommandPalette({ open, onOpenChange, onToggleFocus, onShowHelp }
   const close = () => onOpenChange(false);
   const go = (path: string) => { close(); navigate(path); };
 
-  const tenantRooms = useMemo(() => rooms.filter(r => r.tenant), []);
+  const tenantRooms = useMemo(() => rooms.filter(r => r.tenants.length > 0), []);
 
   return (
     <AnimatePresence>
@@ -127,7 +127,7 @@ export function CommandPalette({ open, onOpenChange, onToggleFocus, onShowHelp }
 
                 <Command.Group heading="Rooms">
                   {rooms.slice(0, 8).map(r => (
-                    <Item key={r.id} value={`room ${r.number} ${r.buildingName} ${r.tenant?.name ?? ""}`}
+                    <Item key={r.id} value={`room ${r.number} ${r.buildingName} ${r.tenants.map(t => t.name).join(" ")}`}
                       onSelect={() => go(`/app/rooms/${r.id}`)} icon={<Home className="h-4 w-4" />}>
                       Room {r.number} <span className="text-muted-foreground">· {r.buildingName}</span>
                     </Item>
@@ -135,12 +135,12 @@ export function CommandPalette({ open, onOpenChange, onToggleFocus, onShowHelp }
                 </Command.Group>
 
                 <Command.Group heading="Tenants">
-                  {tenantRooms.slice(0, 6).map(r => (
-                    <Item key={r.id} value={`tenant ${r.tenant!.name} ${r.number}`}
+                  {tenantRooms.slice(0, 6).flatMap(r => r.tenants.map(t => (
+                    <Item key={t.id} value={`tenant ${t.name} ${r.number}`}
                       onSelect={() => go(`/app/rooms/${r.id}`)} icon={<User className="h-4 w-4" />}>
-                      {r.tenant!.name} <span className="text-muted-foreground">· Room {r.number}</span>
+                      {t.name} <span className="text-muted-foreground">· Room {r.number}</span>
                     </Item>
-                  ))}
+                  )))}
                 </Command.Group>
 
                 <Command.Group heading="Buildings">
