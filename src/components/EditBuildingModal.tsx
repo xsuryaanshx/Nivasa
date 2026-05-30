@@ -14,16 +14,12 @@ interface Props {
 export function EditBuildingModal({ open, onClose, onSuccess, buildingData }: Props) {
   const [name, setName] = useState(buildingData.name);
   const [address, setAddress] = useState(buildingData.address);
-  const [totalRooms, setTotalRooms] = useState<string>(
-    buildingData.total_rooms !== undefined ? String(buildingData.total_rooms) : ""
-  );
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setName(buildingData.name);
     setAddress(buildingData.address);
-    setTotalRooms(buildingData.total_rooms !== undefined ? String(buildingData.total_rooms) : "");
     setError(null);
   }, [buildingData]);
 
@@ -33,12 +29,6 @@ export function EditBuildingModal({ open, onClose, onSuccess, buildingData }: Pr
       setError("Building name and address are required");
       return;
     }
-    const rooms = parseInt(totalRooms, 10);
-    if (totalRooms !== "" && (isNaN(rooms) || rooms < 0)) {
-      setError("Total rooms must be a positive integer");
-      return;
-    }
-
     try {
       setSubmitting(true);
       setError(null);
@@ -49,7 +39,6 @@ export function EditBuildingModal({ open, onClose, onSuccess, buildingData }: Pr
       await api.updateBuilding(buildingData.id, {
         name: name.trim(),
         address: address.trim(),
-        total_rooms: totalRooms !== "" ? rooms : undefined,
       });
 
       toast.success("Building updated");
@@ -101,28 +90,6 @@ export function EditBuildingModal({ open, onClose, onSuccess, buildingData }: Pr
                 type="text"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
-                className="h-11 w-full rounded-xl border border-border bg-secondary/30 pl-10 pr-4 text-sm outline-none transition-all focus:border-brand focus:ring-4 focus:ring-brand/10"
-              />
-            </div>
-          </div>
-
-          {/* Total Rooms (replaces "Total Units") */}
-          <div className="space-y-1.5">
-            <label htmlFor="edit-building-total-rooms" className="text-xs font-medium text-muted-foreground">
-              Total Rooms{" "}
-              <span className="text-muted-foreground/60 text-[10px]">(optional)</span>
-            </label>
-            <div className="relative">
-              <DoorOpen className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <input
-                id="edit-building-total-rooms"
-                type="number"
-                inputMode="numeric"
-                min={0}
-                step={1}
-                placeholder="e.g. 24"
-                value={totalRooms}
-                onChange={(e) => setTotalRooms(e.target.value)}
                 className="h-11 w-full rounded-xl border border-border bg-secondary/30 pl-10 pr-4 text-sm outline-none transition-all focus:border-brand focus:ring-4 focus:ring-brand/10"
               />
             </div>

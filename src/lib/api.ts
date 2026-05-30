@@ -117,6 +117,20 @@ async function addBuilding(input: { name: string; address: string; total_rooms?:
       .select()
       .single();
     if (error) throw error;
+
+    if (input.total_rooms && input.total_rooms > 0) {
+      const user_id = await requireAuthUserId();
+      const unitsToInsert = Array.from({ length: input.total_rooms }).map((_, i) => ({
+        building_id: data.id,
+        name: `${i + 1}`,
+        rent_amount: 0,
+        status: "vacant",
+        user_id,
+      }));
+      const { error: unitsError } = await supabase.from('units').insert(unitsToInsert);
+      if (unitsError) console.error("Error inserting auto-generated units:", unitsError);
+    }
+
     return data;
   } catch (error) {
     console.error("Error in addBuilding:", error);
@@ -126,11 +140,16 @@ async function addBuilding(input: { name: string; address: string; total_rooms?:
 
 async function updateBuilding(id: string, updates: any) {
   try {
-    const { error } = await supabase
-      .from('buildings')
-      .update(updates)
-      .eq('id', id);
-    if (error) throw error;
+    const payload = { ...updates };
+    delete payload.total_rooms; // Not a column in the buildings table
+
+    if (Object.keys(payload).length > 0) {
+      const { error } = await supabase
+        .from('buildings')
+        .update(payload)
+        .eq('id', id);
+      if (error) throw error;
+    }
   } catch (error) {
     console.error("Error in updateBuilding:", error);
     throw error;
