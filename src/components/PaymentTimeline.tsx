@@ -100,13 +100,6 @@ export function PaymentTimeline({ payments, dense = false, grouped = true }: Pro
                           <MessageCircle className="h-3 w-3" /> WhatsApp
                         </button>
                       )}
-                      <button
-                        type="button"
-                        onClick={() => toast.success("Receipt sent", { description: `${p.tenantName} · ${formatMoney(p.amount, currency)}` })}
-                        className="inline-flex h-7 shrink-0 items-center gap-1 rounded-lg border border-border bg-card/70 px-2 text-[11px] font-medium text-muted-foreground opacity-100 transition-opacity hover:text-foreground sm:opacity-0 sm:group-hover:opacity-100"
-                      >
-                        <Receipt className="h-3 w-3" /> {t("receipt")}
-                      </button>
                       <StatusPill status={p.status} />
                     </div>
                     <div className="flex justify-end sm:contents">
