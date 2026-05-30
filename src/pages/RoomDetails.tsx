@@ -64,7 +64,6 @@ export default function RoomDetails() {
             : [],
         );
         setFlatIfClear(String(data.rent));
-        setTenantOccDraft(String(Math.max(1, data.tenant?.occupancy_count ?? 1)));
       }
     } catch (error) {
       console.error("Error fetching room details:", error);
@@ -281,7 +280,7 @@ export default function RoomDetails() {
         }`}
         action={
           <div className="flex flex-wrap items-center gap-2">
-            <MagneticButton variant="ghost" onClick={sendReminder}>
+            <MagneticButton variant="ghost" onClick={sendReminderAll}>
               <BellRing className="h-4 w-4" /> Send reminder
             </MagneticButton>
             <MagneticButton variant="ghost" onClick={() => toast.success("Marked as paid")}>
