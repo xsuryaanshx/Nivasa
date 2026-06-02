@@ -123,12 +123,20 @@ export function NotificationsPanel({ open, onClose }: Props) {
     if (open) loadNotifications();
   }, [open]);
 
-  // Close on Escape
+  // Close on Escape & lock body scroll
   useEffect(() => {
+    if (open) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
+    return () => {
+      document.body.style.overflow = "";
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open, onClose]);
 
   const markAllRead = () =>
     setNotifs((prev) => prev.map((n) => ({ ...n, read: true })));
@@ -160,7 +168,7 @@ export function NotificationsPanel({ open, onClose }: Props) {
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: "100%", opacity: 0 }}
             transition={{ type: "spring", damping: 28, stiffness: 300 }}
-            className="fixed right-0 top-0 z-[100] flex h-[100dvh] w-full max-w-sm flex-col border-l border-border bg-card shadow-2xl"
+            className="fixed right-0 top-0 z-[100] flex h-[100dvh] w-full max-w-sm flex-col border-l border-border bg-card shadow-2xl pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
           >
             {/* Header */}
             <div className="flex shrink-0 items-center justify-between border-b border-border px-5 py-4">
