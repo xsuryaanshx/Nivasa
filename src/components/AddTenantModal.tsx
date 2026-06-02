@@ -114,6 +114,7 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
       });
       
       onAssigned?.(roomId);
+      window.dispatchEvent(new CustomEvent("nivasa:refresh"));
       
       setTimeout(() => {
         onClose();

@@ -48,6 +48,9 @@ export default function Rooms() {
 
   useEffect(() => {
     fetchRooms();
+    const handler = () => fetchRooms();
+    window.addEventListener("nivasa:refresh", handler);
+    return () => window.removeEventListener("nivasa:refresh", handler);
   }, []);
 
   const filtered = useMemo(() => roomsList.filter(r => {

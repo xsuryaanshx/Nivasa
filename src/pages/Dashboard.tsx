@@ -51,8 +51,15 @@ export default function Dashboard() {
     fetchData();
 
     const handler = () => setAddOpen(true);
+    const refreshHandler = () => fetchData();
+    
     window.addEventListener("nivasa:add-payment", handler);
-    return () => window.removeEventListener("nivasa:add-payment", handler);
+    window.addEventListener("nivasa:refresh", refreshHandler);
+    
+    return () => {
+      window.removeEventListener("nivasa:add-payment", handler);
+      window.removeEventListener("nivasa:refresh", refreshHandler);
+    };
   }, []);
 
   const s = data.stats;

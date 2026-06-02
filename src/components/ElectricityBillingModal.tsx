@@ -77,7 +77,7 @@ export function ElectricityBillingModal({ open, onClose, defaultRoomId, onSaved 
           setRoomsList(rooms.filter((r: any) => r.buildingId === defRoom.buildingId));
           setRoomId(defaultRoomId);
           // Pre-fill from room data
-          setPrevReading(String(defRoom.currReading || 0));
+          setPrevReading(defRoom.currReading ? String(defRoom.currReading) : "");
           setCurrReading("");
           // Use global rate if room rate is not specifically set (or just always use global for now as per prompt)
           setRatePerUnit(String(defRoom.ratePerUnit || globalRate || 0.18));
@@ -94,7 +94,7 @@ export function ElectricityBillingModal({ open, onClose, defaultRoomId, onSaved 
           const firstRoom = filtered[0];
           setRoomId(firstRoom.id);
           // Last ending reading becomes new starting reading
-          setPrevReading(String(firstRoom.currReading || 0));
+          setPrevReading(firstRoom.currReading ? String(firstRoom.currReading) : "");
           setCurrReading("");
           setRatePerUnit(String(firstRoom.ratePerUnit || globalRate || 0.18));
         }
@@ -122,7 +122,7 @@ export function ElectricityBillingModal({ open, onClose, defaultRoomId, onSaved 
     if (filtered.length > 0) {
       const r = filtered[0];
       setRoomId(r.id);
-      setPrevReading(String(r.currReading || 0));
+      setPrevReading(r.currReading ? String(r.currReading) : "");
       setCurrReading("");
       setRatePerUnit(String(r.ratePerUnit || 0.18));
     } else {
@@ -136,7 +136,7 @@ export function ElectricityBillingModal({ open, onClose, defaultRoomId, onSaved 
     const room = allRooms.find((r: any) => r.id === rId);
     if (room) {
       // Auto-fill prev reading from room's current reading (prev month's end)
-      setPrevReading(String(room.currReading || 0));
+      setPrevReading(room.currReading ? String(room.currReading) : "");
       setCurrReading("");
       setRatePerUnit(String(room.ratePerUnit || 0.18));
     }

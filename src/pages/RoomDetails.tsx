@@ -75,6 +75,9 @@ export default function RoomDetails() {
 
   useEffect(() => {
     fetchData();
+    const handler = () => fetchData();
+    window.addEventListener("nivasa:refresh", handler);
+    return () => window.removeEventListener("nivasa:refresh", handler);
   }, [id]);
 
   // Listen for global "Add payment" trigger.
@@ -85,9 +88,9 @@ export default function RoomDetails() {
   }, []);
 
   // Editable electricity readings (UI-only).
-  const [startReading, setStartReading] = useState<number>(0);
-  const [endReading,   setEndReading]   = useState<number>(0);
-  const [pricePerUnit, setPricePerUnit] = useState<number>(0);
+  const [startReading, setStartReading] = useState<number | string>("");
+  const [endReading,   setEndReading]   = useState<number | string>("");
+  const [pricePerUnit, setPricePerUnit] = useState<number | string>("");
 
   const saveElectricityReading = async () => {
     try {
@@ -99,9 +102,9 @@ export default function RoomDetails() {
       await api.saveElectricityReading({
         room_id: room.id,
         month,
-        prev_reading: startReading,
-        curr_reading: endReading,
-        rate_per_unit: pricePerUnit,
+        prev_reading: Number(startReading) || 0,
+        curr_reading: Number(endReading) || 0,
+        rate_per_unit: Number(pricePerUnit) || 0,
       });
       toast.success("Meter reading saved", {
         description: `${used} units · ${formatMoney(cost, currency, { decimals: 2 })}`,
@@ -134,8 +137,8 @@ export default function RoomDetails() {
     );
   }
 
-  const used = Math.max(0, endReading - startReading);
-  const cost = used * pricePerUnit;
+  const used = Math.max(0, (Number(endReading) || 0) - (Number(startReading) || 0));
+  const cost = used * (Number(pricePerUnit) || 0);
   const totalDue = room.rent + cost;
 
   const saveOccupancyPricing = async () => {
@@ -614,8 +617,8 @@ function NumberField({
 }: {
   label: string;
   hint?: string;
-  value: number;
-  onChange: (v: number) => void;
+  value: number | string;
+  onChange: (v: number | string) => void;
   prefix?: string;
   suffix?: string;
   step?: number;
@@ -631,8 +634,8 @@ function NumberField({
         {prefix && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground tnum">{prefix}</span>}
         <input
           type="number" inputMode="decimal" step="any"
-          value={Number.isFinite(value) ? value : 0}
-          onChange={(e) => onChange(Number(e.target.value))}
+          value={value === 0 && String(value) === "0" ? "" : value === "" ? "" : Number.isFinite(Number(value)) ? value : ""}
+          onChange={(e) => onChange(e.target.value === "" ? "" : Number(e.target.value))}
           step={step ?? 1} min={0}
           className={cn(
             "h-11 w-full rounded-xl border border-border bg-card/70 text-sm font-semibold tnum outline-none transition-all focus:border-brand focus:shadow-[0_0_0_4px_hsl(var(--ring)/0.12)]",
