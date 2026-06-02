@@ -11,6 +11,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { createPortal } from "react-dom";
 
 interface AppNotification {
   id: string;
@@ -137,7 +138,9 @@ export function NotificationsPanel({ open, onClose }: Props) {
 
   const unread = notifs.filter((n) => !n.read).length;
 
-  return (
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
     <AnimatePresence>
       {open && (
         <>
@@ -147,7 +150,7 @@ export function NotificationsPanel({ open, onClose }: Props) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-40 bg-black/30 backdrop-blur-[2px]"
+            className="fixed inset-0 z-[100] bg-black/30 backdrop-blur-[2px]"
             onClick={onClose}
           />
 
@@ -157,7 +160,7 @@ export function NotificationsPanel({ open, onClose }: Props) {
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: "100%", opacity: 0 }}
             transition={{ type: "spring", damping: 28, stiffness: 300 }}
-            className="fixed right-0 top-0 z-50 flex h-[100dvh] w-full max-w-sm flex-col border-l border-border bg-card shadow-2xl"
+            className="fixed right-0 top-0 z-[100] flex h-[100dvh] w-full max-w-sm flex-col border-l border-border bg-card shadow-2xl"
           >
             {/* Header */}
             <div className="flex shrink-0 items-center justify-between border-b border-border px-5 py-4">
@@ -282,6 +285,7 @@ export function NotificationsPanel({ open, onClose }: Props) {
           </motion.aside>
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }

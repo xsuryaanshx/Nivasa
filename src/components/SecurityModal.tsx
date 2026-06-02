@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { X, Lock, Eye, EyeOff, ShieldCheck, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { createPortal } from "react-dom";
 
 interface Props {
   open: boolean;
@@ -94,7 +95,9 @@ export function SecurityModal({ open, onClose }: Props) {
     }
   };
 
-  return (
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
     <AnimatePresence>
       {open && (
         <>
@@ -103,18 +106,18 @@ export function SecurityModal({ open, onClose }: Props) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm"
             onClick={onClose}
           />
 
           {/* Modal */}
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 pointer-events-none">
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 16 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 16 }}
               transition={{ duration: 0.22, ease: [0.2, 0.7, 0.2, 1] }}
-              className="w-full max-w-md overflow-hidden rounded-2xl border border-border bg-card shadow-2xl"
+              className="w-full max-w-md overflow-hidden rounded-2xl border border-border bg-card shadow-2xl pointer-events-auto"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
@@ -261,6 +264,7 @@ export function SecurityModal({ open, onClose }: Props) {
           </div>
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }

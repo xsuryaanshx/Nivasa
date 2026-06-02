@@ -30,6 +30,7 @@ import { CURRENCIES, useCurrency, type CurrencyCode } from "@/lib/currency";
 import { useLanguage } from "@/components/LanguageProvider";
 import { cn } from "@/lib/utils";
 import type { Language } from "@/lib/translations";
+import { createPortal } from "react-dom";
 
 const PLAN_FEATURES = {
   free: {
@@ -136,7 +137,9 @@ function LanguageRegionPanel({ open, onClose }: { open: boolean; onClose: () => 
   const { language, setLanguage } = useLanguage();
   const { currency, setCurrency } = useCurrency();
 
-  return (
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
     <AnimatePresence>
       {open && (
         <>
@@ -144,16 +147,16 @@ function LanguageRegionPanel({ open, onClose }: { open: boolean; onClose: () => 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm"
             onClick={onClose}
           />
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 pointer-events-none">
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 16 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 16 }}
               transition={{ duration: 0.22, ease: [0.2, 0.7, 0.2, 1] }}
-              className="w-full max-w-md overflow-hidden rounded-2xl border border-border bg-card shadow-2xl"
+              className="w-full max-w-md overflow-hidden rounded-2xl border border-border bg-card shadow-2xl pointer-events-auto"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
@@ -253,7 +256,8 @@ function LanguageRegionPanel({ open, onClose }: { open: boolean; onClose: () => 
           </div>
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }
 
