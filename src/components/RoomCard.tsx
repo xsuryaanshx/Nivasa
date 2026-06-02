@@ -17,6 +17,8 @@ function initials(name: string) {
 export function RoomCard({ room, index }: { room: Room; index: number }) {
   const ref = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const primaryTenant = room.tenants?.[0];
+  const moreTenantsCount = (room.tenants?.length || 0) - 1;
   // Mouse-track tilt + glow position
   const px = useMotionValue(0.5);
   const py = useMotionValue(0.5);
@@ -37,13 +39,13 @@ export function RoomCard({ room, index }: { room: Room; index: number }) {
 
   const remind = (e: React.MouseEvent) => {
     stop(e);
-    const phone = room.tenant?.whatsapp_number || room.tenant?.phone;
+    const phone = primaryTenant?.whatsapp_number || primaryTenant?.phone;
     if (phone) {
       const ok = openWhatsApp(
         phone,
-        `Hi ${room.tenant?.name ?? "tenant"}, this is a friendly reminder about the rent for Room ${room.number} at ${room.buildingName}. Please let me know if you have any questions.`,
+        `Hi ${primaryTenant?.name ?? "tenant"}, this is a friendly reminder about the rent for Room ${room.number} at ${room.buildingName}. Please let me know if you have any questions.`,
       );
-      toast.success(ok ? "WhatsApp opened" : "Reminder sent", { description: room.tenant?.name ?? `Room ${room.number}` });
+      toast.success(ok ? "WhatsApp opened" : "Reminder sent", { description: primaryTenant?.name ?? `Room ${room.number}` });
     } else {
       toast.success("Reminder queued", { description: `Room ${room.number}` });
     }
@@ -96,14 +98,16 @@ export function RoomCard({ room, index }: { room: Room; index: number }) {
         </div>
 
         <div className="relative mt-4 flex items-center gap-2.5">
-          {room.tenant ? (
+          {primaryTenant ? (
             <>
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-brand text-[10px] font-semibold text-white shadow-glow">
-                {initials(room.tenant.name)}
+                {initials(primaryTenant.name)}
               </div>
               <div className="min-w-0">
-                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Tenant</div>
-                <div className="text-sm font-medium truncate">{room.tenant.name}</div>
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  Tenant {moreTenantsCount > 0 ? `(+${moreTenantsCount})` : ""}
+                </div>
+                <div className="text-sm font-medium truncate">{primaryTenant.name}</div>
               </div>
             </>
           ) : (
@@ -122,7 +126,7 @@ export function RoomCard({ room, index }: { room: Room; index: number }) {
 
         {/* Hover quick-actions */}
         <div className="relative mt-4 flex flex-wrap items-center gap-1.5 opacity-0 translate-y-1 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0 focus-within:opacity-100 focus-within:translate-y-0">
-          {room.tenant && room.status !== "paid" && (
+          {primaryTenant && room.status !== "paid" && (
             <QuickAction
               tone="success"
               onClick={(e) => { stop(e); toast.success("Marked as paid", { description: `Room ${room.number}` }); }}
@@ -130,12 +134,12 @@ export function RoomCard({ room, index }: { room: Room; index: number }) {
               <CheckCircle2 className="h-3.5 w-3.5" /> Mark paid
             </QuickAction>
           )}
-          {room.tenant && (
+          {primaryTenant && (
             <QuickAction onClick={remind}>
               <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
             </QuickAction>
           )}
-          {!room.tenant && (
+          {!primaryTenant && (
             <QuickAction
               tone="info"
               onClick={(e) => { stop(e); window.dispatchEvent(new CustomEvent("nivasa:add-tenant")); }}

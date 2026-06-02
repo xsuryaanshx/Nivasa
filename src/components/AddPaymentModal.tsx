@@ -142,7 +142,7 @@ export function AddPaymentModal({ open, onClose, defaultRoomId }: Props) {
       await api.addPayment({
         building_id: buildingId,
         room_id: roomId,
-        tenant_id: selectedRoom?.tenant?.id || null,
+        tenant_id: selectedRoom?.tenants?.[0]?.id || null,
         amount: amountValue,
         method,
         status,
@@ -225,7 +225,7 @@ export function AddPaymentModal({ open, onClose, defaultRoomId }: Props) {
                 ) : (
                   roomsList.map(r => (
                     <option key={r.id} value={r.id}>
-                      Room {r.number}{r.tenant ? ` · ${r.tenant.name}` : " · vacant"}
+                      Room {r.number}{r.tenants?.length ? ` · ${r.tenants.map((t: any) => t.name).join(", ")}` : " · vacant"}
                     </option>
                   ))
                 )}

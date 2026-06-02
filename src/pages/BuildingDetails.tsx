@@ -324,12 +324,13 @@ export default function BuildingDetails() {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-muted-foreground">
-                    {room.tenant ? (
+                    {room.tenants && room.tenants.length > 0 ? (
                       <div className="flex items-center gap-2">
                         <div className="h-6 w-6 rounded-full bg-secondary flex items-center justify-center text-[10px] font-bold">
-                          {room.tenant.name[0]}
+                          {room.tenants[0].name[0]}
                         </div>
-                        {room.tenant.name}
+                        {room.tenants[0].name}
+                        {room.tenants.length > 1 && <span className="text-[10px] opacity-70">(+{room.tenants.length - 1})</span>}
                       </div>
                     ) : (
                       <span className="opacity-30">—</span>

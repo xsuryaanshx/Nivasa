@@ -56,7 +56,7 @@ export default function Rooms() {
   const filtered = useMemo(() => roomsList.filter(r => {
     if (status !== "all" && r.status !== status) return false;
     if (!q) return true;
-    const hay = `${r.number} ${r.buildingName} ${r.tenant?.name ?? ""}`.toLowerCase();
+    const hay = `${r.number} ${r.buildingName} ${r.tenants?.map((t: any) => t.name).join(" ") ?? ""}`.toLowerCase();
     return hay.includes(q.toLowerCase());
   }), [q, status, roomsList]);
 

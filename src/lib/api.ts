@@ -632,8 +632,8 @@ async function getRecentPayments(limit = 10) {
         const r = mockRooms.find(x => x.id === p.roomId);
         return {
           ...p,
-          tenantPhone: r?.tenant?.phone,
-          tenantWhatsapp: r?.tenant?.whatsapp_number,
+          tenantPhone: r?.tenants?.[0]?.phone,
+          tenantWhatsapp: r?.tenants?.[0]?.whatsapp_number,
           roomNumber: r?.number,
           buildingName: r?.buildingName
         };
