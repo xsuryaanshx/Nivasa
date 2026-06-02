@@ -44,6 +44,8 @@ export default function Buildings() {
 
   useEffect(() => {
     fetchBuildings();
+    const refreshHandler = () => fetchBuildings();
+    window.addEventListener("nivasa:refresh", refreshHandler);
 
     const handleClickOutside = (e: MouseEvent) => {
       if (activeMenuRef.current && !activeMenuRef.current.contains(e.target as Node)) {
@@ -52,7 +54,10 @@ export default function Buildings() {
     };
 
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("nivasa:refresh", refreshHandler);
+    };
   }, [activeMenuId]);
 
   const handleDelete = async (id: string) => {
@@ -63,6 +68,7 @@ export default function Buildings() {
       await api.deleteBuilding(id);
       toast.success(t("building_deleted"));
       fetchBuildings();
+      window.dispatchEvent(new CustomEvent("nivasa:refresh"));
     } catch (error) {
       console.error("Error deleting building:", error);
       toast.error(t("building_delete_failed"));

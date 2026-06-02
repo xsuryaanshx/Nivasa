@@ -57,6 +57,7 @@ export function AddBuildingModal({ open, onClose, onSuccess }: Props) {
       setTimeout(() => {
         handleClose();
         onSuccess?.();
+        window.dispatchEvent(new CustomEvent("nivasa:refresh"));
       }, 1500);
     } catch (err: any) {
       console.error("Error adding building:", err);

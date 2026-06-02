@@ -42,6 +42,9 @@ export default function BuildingDetails() {
 
   useEffect(() => {
     fetchData();
+    const handler = () => fetchData();
+    window.addEventListener("nivasa:refresh", handler);
+    return () => window.removeEventListener("nivasa:refresh", handler);
   }, [id]);
 
   const handleAddRoom = async () => {
@@ -88,6 +91,7 @@ export default function BuildingDetails() {
       setOccPer("");
       setOccMax("4");
       fetchData();
+      window.dispatchEvent(new CustomEvent("nivasa:refresh"));
     } catch (error) {
       toast.error("Failed to add room");
     } finally {

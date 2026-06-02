@@ -53,8 +53,15 @@ export default function Payments() {
     fetchPayments();
 
     const h = () => setOpen(true);
+    const refreshHandler = () => fetchPayments();
+
     window.addEventListener("nivasa:add-payment", h);
-    return () => window.removeEventListener("nivasa:add-payment", h);
+    window.addEventListener("nivasa:refresh", refreshHandler);
+
+    return () => {
+      window.removeEventListener("nivasa:add-payment", h);
+      window.removeEventListener("nivasa:refresh", refreshHandler);
+    };
   }, []);
 
   const filtered = useMemo(() => {

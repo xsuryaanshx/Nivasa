@@ -157,6 +157,7 @@ export function AddPaymentModal({ open, onClose, defaultRoomId }: Props) {
         toast.success("Payment recorded", {
           description: `${currency.symbol}${amountValue.toLocaleString(undefined, { maximumFractionDigits: 2 })} · Room ${selectedRoom?.number ?? "?"} · ${status}`,
         });
+        window.dispatchEvent(new CustomEvent("nivasa:refresh"));
       }, 700);
     } catch (err: any) {
       setError(err.message || "Failed to save payment");

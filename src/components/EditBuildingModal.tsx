@@ -44,6 +44,7 @@ export function EditBuildingModal({ open, onClose, onSuccess, buildingData }: Pr
       toast.success("Building updated");
       onClose();
       onSuccess?.();
+      window.dispatchEvent(new CustomEvent("nivasa:refresh"));
     } catch (err: any) {
       console.error("Error updating building:", err);
       setError(err.message || "Failed to update building");

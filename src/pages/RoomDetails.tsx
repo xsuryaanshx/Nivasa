@@ -110,6 +110,7 @@ export default function RoomDetails() {
         description: `${used} units · ${formatMoney(cost, currency, { decimals: 2 })}`,
       });
       fetchData();
+      window.dispatchEvent(new CustomEvent("nivasa:refresh"));
     } catch (err: any) {
       toast.error("Failed to save reading", { description: err.message });
     } finally {
@@ -171,6 +172,7 @@ export default function RoomDetails() {
         toast.success("Occupancy pricing saved");
       }
       fetchData();
+      window.dispatchEvent(new CustomEvent("nivasa:refresh"));
     } catch (err: any) {
       toast.error(err.message || "Failed to save pricing");
     } finally {
@@ -193,6 +195,7 @@ export default function RoomDetails() {
       setTierRows([]);
       toast.success("Room now uses a single monthly rent.");
       fetchData();
+      window.dispatchEvent(new CustomEvent("nivasa:refresh"));
     } catch (err: any) {
       toast.error(err.message || "Failed to update");
     } finally {
@@ -244,6 +247,7 @@ export default function RoomDetails() {
       await api.removeTenant(room.id, tenantId);
       toast.success("Tenant removed successfully");
       fetchData(); // Refresh data
+      window.dispatchEvent(new CustomEvent("nivasa:refresh"));
     } catch (error: any) {
       console.error("Error removing tenant:", error);
       toast.error(error.message || "Failed to remove tenant");
