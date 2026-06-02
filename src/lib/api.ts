@@ -158,6 +158,11 @@ async function updateBuilding(id: string, updates: any) {
 
 async function deleteBuilding(id: string) {
   try {
+    // Delete related records first to avoid foreign key constraint errors
+    await supabase.from('payments').delete().eq('building_id', id);
+    await supabase.from('tenants').delete().eq('building_id', id);
+    await supabase.from('units').delete().eq('building_id', id);
+
     const { error } = await supabase.from('buildings').delete().eq('id', id);
     if (error) throw error;
   } catch (error) {
