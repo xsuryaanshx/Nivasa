@@ -85,12 +85,6 @@ export function AppSidebar({ collapsed }: Props) {
         </button>
       </div>
 
-      <div className={cn("mt-auto m-3 rounded-xl border border-border bg-card p-4", collapsed && "hidden")}>
-        <div className="text-xs font-medium">{t("pro_tip")}</div>
-        <div className="mt-1 text-xs text-muted-foreground leading-relaxed">
-          {t("command_tip")}
-        </div>
-      </div>
     </aside>
   );
 }
