@@ -11,6 +11,7 @@ export default function Login() {
   const [pwd, setPwd] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,6 +23,12 @@ export default function Login() {
       const api = (window as any).nivasaApi;
       if (!api) throw new Error("API not loaded");
       
+      if (!rememberMe) {
+        sessionStorage.setItem("nivasa_no_remember", "true");
+      } else {
+        sessionStorage.removeItem("nivasa_no_remember");
+      }
+
       const { data, error } = await api.auth.signIn(user, pwd);
       if (error) throw error;
 
@@ -89,6 +96,19 @@ export default function Login() {
               </button>
             </div>
           </Field>
+
+          <div className="flex items-center space-x-2 mt-2">
+            <input
+              type="checkbox"
+              id="remember"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              className="h-4 w-4 rounded border-border bg-card/70 text-brand focus:ring-brand/20 outline-none accent-brand"
+            />
+            <label htmlFor="remember" className="text-sm text-muted-foreground font-medium cursor-pointer select-none">
+              Keep me logged in
+            </label>
+          </div>
 
           {error && (
             <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}

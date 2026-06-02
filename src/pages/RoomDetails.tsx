@@ -457,7 +457,7 @@ export default function RoomDetails() {
             {tierRows.map((row, idx) => (
               <div key={idx} className="grid grid-cols-[1fr_1fr_auto] gap-2">
                 <input
-                  type="number"
+                  type="number" inputMode="decimal" step="any"
                   min={1}
                   value={row.members}
                   onChange={(e) => {
@@ -468,7 +468,7 @@ export default function RoomDetails() {
                   className="h-10 rounded-xl border border-border bg-card px-3 text-sm tnum outline-none focus:border-brand"
                 />
                 <input
-                  type="number"
+                  type="number" inputMode="decimal" step="any"
                   min={0}
                   step={100}
                   value={row.amount}
@@ -512,7 +512,7 @@ export default function RoomDetails() {
                   Flat rent if removing all tiers
                 </span>
                 <input
-                  type="number"
+                  type="number" inputMode="decimal" step="any"
                   value={flatIfClear}
                   onChange={(e) => setFlatIfClear(e.target.value)}
                   className="h-9 rounded-lg border border-border bg-card px-2 text-sm tnum outline-none focus:border-brand"
@@ -630,7 +630,7 @@ function NumberField({
       <div className="relative">
         {prefix && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground tnum">{prefix}</span>}
         <input
-          type="number" inputMode={decimals ? "decimal" : "numeric"}
+          type="number" inputMode="decimal" step="any"
           value={Number.isFinite(value) ? value : 0}
           onChange={(e) => onChange(Number(e.target.value))}
           step={step ?? 1} min={0}

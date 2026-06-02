@@ -49,7 +49,7 @@ export function isValidAadhar(s: string) {
   return /^\d{12}$/.test(s.replace(/\s+/g, ""));
 }
 
-/** Loose mobile validation: at least 7 digits, allow + and spaces. */
+/** Loose mobile validation: at least 7 digits, allow +, spaces, dashes, parentheses, and dots. */
 export function isValidMobile(s: string) {
-  return /^[+]?[\d\s\-()]{7,}$/.test(s.trim());
+  return /^[+]?[\d\s\-().]{7,}$/.test(s.trim());
 }

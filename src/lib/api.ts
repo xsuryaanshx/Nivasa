@@ -25,9 +25,26 @@ import {
 const SUPABASE_URL = "https://ehmwvkxxoczoubbsjxvv.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVobXd2a3h4b2N6b3ViYnNqeHZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMzc5NjIsImV4cCI6MjA5MjcxMzk2Mn0._1thy8Nq3dsGBvEA8b_FPFbTbCyDk1fbwqxgUULDPG4";
 
+const customStorage = {
+  getItem: (key: string) => {
+    return localStorage.getItem(key) ?? sessionStorage.getItem(key);
+  },
+  setItem: (key: string, value: string) => {
+    if (sessionStorage.getItem("nivasa_no_remember") === "true") {
+      sessionStorage.setItem(key, value);
+    } else {
+      localStorage.setItem(key, value);
+    }
+  },
+  removeItem: (key: string) => {
+    localStorage.removeItem(key);
+    sessionStorage.removeItem(key);
+  }
+};
+
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
-    persistSession: true,
+    storage: customStorage,
     autoRefreshToken: true,
     detectSessionInUrl: true,
   },

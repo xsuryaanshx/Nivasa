@@ -418,9 +418,9 @@ function MeterInput({
     <div className="relative">
       <input
         type="number"
-        inputMode="numeric"
+        inputMode="decimal"
         min={0}
-        step={1}
+        step="any"
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}

@@ -87,7 +87,7 @@ export default function Dashboard() {
                 <label className="text-xs font-medium text-muted-foreground">{t("electricity_rate")}</label>
                 <div className="flex gap-2">
                   <input
-                    type="number"
+                    type="number" inputMode="decimal" step="any"
                     step="0.01"
                     placeholder="0.18"
                     id="elec-rate-input"

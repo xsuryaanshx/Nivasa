@@ -215,7 +215,7 @@ export default function BuildingDetails() {
                   <div className="space-y-1.5">
                     <label className="text-xs font-medium text-muted-foreground">{t("monthly_rent")}</label>
                     <input
-                      type="number"
+                      type="number" inputMode="decimal" step="any"
                       placeholder="0.00"
                       value={newRoom.rent}
                       onChange={(e) => setNewRoom({ ...newRoom, rent: e.target.value })}
@@ -227,7 +227,7 @@ export default function BuildingDetails() {
                     <div className="space-y-1.5">
                       <label className="text-xs font-medium text-muted-foreground">{t("rent_one_occupant")}</label>
                       <input
-                        type="number"
+                        type="number" inputMode="decimal" step="any"
                         placeholder="0.00"
                         value={occBase}
                         onChange={(e) => setOccBase(e.target.value)}
@@ -237,7 +237,7 @@ export default function BuildingDetails() {
                     <div className="space-y-1.5">
                       <label className="text-xs font-medium text-muted-foreground">{t("per_additional_occupant")}</label>
                       <input
-                        type="number"
+                        type="number" inputMode="decimal" step="any"
                         placeholder="0.00"
                         value={occPer}
                         onChange={(e) => setOccPer(e.target.value)}
@@ -247,7 +247,7 @@ export default function BuildingDetails() {
                     <div className="space-y-1.5">
                       <label className="text-xs font-medium text-muted-foreground">{t("max_occupants_tiers")}</label>
                       <input
-                        type="number"
+                        type="number" inputMode="decimal" step="any"
                         min={2}
                         max={24}
                         placeholder="4"
