@@ -18,6 +18,7 @@ import Profile from "./pages/Profile.tsx";
 import { AppLayout } from "./components/AppLayout.tsx";
 import { ThemeProvider } from "./components/ThemeProvider.tsx";
 import BuildingDetails from "./pages/BuildingDetails.tsx";
+import { AddToHomeScreen } from "./components/AddToHomeScreen.tsx";
 
 const queryClient = new QueryClient();
 
@@ -67,6 +68,7 @@ const App = () => {
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
+            <AddToHomeScreen />
           </motion.div>
         </TooltipProvider>
       </QueryClientProvider>
