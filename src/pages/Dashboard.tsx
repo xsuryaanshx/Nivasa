@@ -68,7 +68,7 @@ export default function Dashboard() {
   return (
     <div>
       <PageHeader
-        title={`${t(getGreetingKey() as any)}, ${user?.firstName || t('user')}`}
+        title={`${t(getGreetingKey() as any)}, ${user?.fullName || t('user')}`}
         subtitle={t("dashboard_subtitle")}
         action={
           <MagneticButton onClick={() => setAddOpen(true)}>

@@ -15,7 +15,9 @@ export interface AuthUser {
 }
 
 function buildUser(raw: { id: string; email: string; fullName: string }): AuthUser {
-  const full = raw.fullName || raw.email.split("@")[0];
+  let full = raw.fullName || raw.email.split("@")[0];
+  if (full === "rohittiwary54") full = "Rohit Tiwary";
+  
   const parts = full.trim().split(/\s+/);
   const initials = parts
     .slice(0, 2)
