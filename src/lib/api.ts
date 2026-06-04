@@ -65,6 +65,11 @@ const auth = {
     const { data } = await supabase.auth.getSession();
     return data.session;
   },
+  updateProfile: async (updates: { full_name?: string }) => {
+    const { data, error } = await supabase.auth.updateUser({ data: updates });
+    if (error) throw error;
+    return data;
+  },
 };
 
 /** Required for rows (e.g. `units.user_id`) scoped to the logged-in Supabase user. */

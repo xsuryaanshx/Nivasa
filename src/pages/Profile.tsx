@@ -31,6 +31,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "next-themes";
 import { SecurityModal } from "@/components/SecurityModal";
+import { EditProfileModal } from "@/components/EditProfileModal";
 import { NotificationsPanel } from "@/components/NotificationsPanel";
 import { CURRENCIES, useCurrency, type CurrencyCode } from "@/lib/currency";
 import { useLanguage } from "@/components/LanguageProvider";
@@ -357,6 +358,7 @@ export default function Profile() {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [languageOpen, setLanguageOpen] = useState(false);
   const [themeOpen, setThemeOpen] = useState(false);
+  const [editProfileOpen, setEditProfileOpen] = useState(false);
 
   const plan = PLAN_FEATURES[currentPlan];
   const PlanIcon = plan.icon;
@@ -440,7 +442,10 @@ export default function Profile() {
               </div>
 
               {/* Edit icon placeholder */}
-              <button className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border bg-secondary/60 text-muted-foreground transition hover:bg-secondary hover:text-foreground">
+              <button
+                onClick={() => setEditProfileOpen(true)}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border bg-secondary/60 text-muted-foreground transition hover:bg-secondary hover:text-foreground"
+              >
                 <User className="h-4 w-4" />
               </button>
             </div>
@@ -582,6 +587,7 @@ export default function Profile() {
       </motion.div>
 
       {/* ── Modals & Panels ── */}
+      <EditProfileModal open={editProfileOpen} onClose={() => setEditProfileOpen(false)} />
       <SecurityModal open={securityOpen} onClose={() => setSecurityOpen(false)} />
       <NotificationsPanel open={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
       <ThemePanel open={themeOpen} onClose={() => setThemeOpen(false)} />
