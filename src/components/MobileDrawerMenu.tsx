@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { MoreVertical, Search, X, Moon, Sun, LogOut, Settings, Globe, Languages, Download } from "lucide-react";
+import { MoreVertical, Search, X, Moon, Sun, LogOut, Settings, Globe, Languages } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "next-themes";
 import { useCurrency, type CurrencyCode } from "@/lib/currency";
@@ -120,14 +120,6 @@ export function MobileDrawerMenu({ open, onOpenChange, onOpenPalette }: MobileDr
                 onClick={() => {
                   close();
                   navigate("/app/profile");
-                }}
-              />
-              <MenuItem
-                icon={Download}
-                label="Add to Homescreen"
-                onClick={() => {
-                  close();
-                  window.dispatchEvent(new Event('trigger-a2hs'));
                 }}
               />
               <MenuItem icon={LogOut} label={t("logout")} onClick={signOut} className="text-destructive" />
