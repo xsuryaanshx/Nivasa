@@ -5,24 +5,21 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 export const AddToHomeScreen = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [showPrompt, setShowPrompt] = useState(true); // Forced to true for preview
+  const [showPrompt, setShowPrompt] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
 
   useEffect(() => {
     // Check if app is already installed
     if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone) {
-      // setIsStandalone(true); // Commented out for preview
-      // return;
+      setIsStandalone(true);
+      return;
     }
 
     // Check for iOS
     const userAgent = window.navigator.userAgent.toLowerCase();
     const isIosDevice = /iphone|ipad|ipod/.test(userAgent);
     setIsIOS(isIosDevice);
-
-    // Force show for preview purposes
-    setShowPrompt(true);
 
     const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault();
@@ -33,10 +30,16 @@ export const AddToHomeScreen = () => {
       }
     };
 
+    const handleTrigger = () => {
+      setShowPrompt(true);
+    };
+
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('trigger-a2hs', handleTrigger);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('trigger-a2hs', handleTrigger);
     };
   }, []);
 
