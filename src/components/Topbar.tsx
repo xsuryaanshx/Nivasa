@@ -51,14 +51,9 @@ export function Topbar({ collapsed, onToggle, onOpenPalette, onOpenMobileDrawer 
             {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
           </button>
 
-          <button
-            type="button"
-            onClick={() => onOpenMobileDrawer?.()}
-            aria-label="Open menu"
-            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-secondary/40 text-foreground transition-colors hover:bg-secondary md:hidden"
-          >
-            <Menu className="h-5 w-5" />
-          </button>
+          <div className="flex shrink-0 items-center md:hidden pr-2">
+            <img src="/logo.jpg" alt="Nivasa" className="h-9 w-auto object-contain mix-blend-multiply dark:invert" />
+          </div>
 
           <button
             onClick={onOpenPalette}
