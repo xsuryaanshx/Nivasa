@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { SecurityModal } from "@/components/SecurityModal";
 import { NotificationsPanel } from "@/components/NotificationsPanel";
 import { CURRENCIES, useCurrency, type CurrencyCode } from "@/lib/currency";
@@ -264,6 +265,7 @@ function LanguageRegionPanel({ open, onClose }: { open: boolean; onClose: () => 
 // ── Main Profile Page ─────────────────────────────────────────────────────────
 export default function Profile() {
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const [currentPlan] = useState<"free" | "pro">("free");
   const [securityOpen, setSecurityOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -412,16 +414,24 @@ export default function Profile() {
             {APP_FEATURES.map((feat) => {
               const Icon = feat.icon;
               return (
-                <div
+                <button
                   key={feat.label}
-                  className="flex flex-col gap-2 rounded-2xl border border-border/50 bg-card p-4 shadow-soft transition hover:border-border"
+                  onClick={() => {
+                    if (feat.label === "Buildings") navigate("/app/buildings");
+                    else if (feat.label === "Rooms") navigate("/app/rooms");
+                    else if (feat.label === "Payments") navigate("/app/payments");
+                    else if (feat.label === "Analytics") navigate("/app");
+                    else if (feat.label === "Electricity") navigate("/app"); // Electricity settings are on dashboard
+                    else if (feat.label === "Multi-language") setLanguageOpen(true);
+                  }}
+                  className="flex flex-col gap-2 rounded-2xl border border-border/50 bg-card p-4 shadow-soft transition hover:border-border hover:bg-secondary/50 active:scale-[0.97] text-left"
                 >
                   <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${feat.bg}`}>
                     <Icon className={`h-4 w-4 ${feat.color}`} />
                   </div>
                   <p className="text-sm font-semibold text-foreground">{feat.label}</p>
                   <p className="text-[11px] leading-snug text-muted-foreground">{feat.desc}</p>
-                </div>
+                </button>
               );
             })}
           </div>
