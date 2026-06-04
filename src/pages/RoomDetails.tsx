@@ -315,29 +315,57 @@ export default function RoomDetails() {
           {room.tenants && room.tenants.length > 0 ? (
             <div className="space-y-4">
               {room.tenants.map((t) => (
-                <div key={t.id} className="flex items-center justify-between rounded-xl bg-secondary/60 p-3">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-brand text-white text-sm font-semibold shadow-glow">
+                <div key={t.id} className="flex items-center justify-between rounded-xl bg-secondary/60 p-3 gap-2">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-brand text-white text-sm font-semibold shadow-glow">
                       {initials(t.name)}
                     </div>
                     <div className="min-w-0">
-                      <div className="text-base font-semibold truncate">{t.name}</div>
-                      <div className="mt-0.5 flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
-                        <span className="flex items-center gap-1"><Phone className="h-3 w-3" /> {t.phone}</span>
-                        {t.joined_at && <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> Joined: {new Date(t.joined_at).toLocaleDateString()}</span>}
-                        {(t.depositAmount || 0) > 0 && <span className="flex items-center gap-1"><Banknote className="h-3 w-3" /> Deposit: {formatMoney(t.depositAmount || 0, currency, { decimals: 0 })} {t.depositMethod && `(${t.depositMethod})`}</span>}
+                      <div className="text-sm font-semibold truncate" title={t.name}>{t.name}</div>
+                      <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+                        <a
+                          href={`tel:${t.phone}`}
+                          className="flex items-center gap-1 hover:text-foreground hover:underline truncate"
+                          title={`Call ${t.name}`}
+                        >
+                          <Phone className="h-3 w-3 shrink-0" /> {t.phone}
+                        </a>
+                        {t.joined_at && <span className="flex items-center gap-1 shrink-0"><Calendar className="h-3 w-3" /> Joined: {new Date(t.joined_at).toLocaleDateString()}</span>}
+                        {(t.depositAmount || 0) > 0 && <span className="flex items-center gap-1 shrink-0"><Banknote className="h-3 w-3" /> Deposit: {formatMoney(t.depositAmount || 0, currency, { decimals: 0 })} {t.depositMethod && `(${t.depositMethod})`}</span>}
                       </div>
                     </div>
                   </div>
-                  <div className="flex gap-2 items-center">
-                    <button type="button" onClick={() => sendInvoiceToTenant(t)} className="inline-flex items-center gap-1 text-xs text-foreground hover:underline">
-                      <Send className="h-3 w-3" /> Invoice
+                  <div className="flex gap-1 items-center shrink-0">
+                    <a
+                      href={`tel:${t.phone}`}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-foreground hover:bg-secondary transition-colors"
+                      title={`Call ${t.name}`}
+                    >
+                      <Phone className="h-4 w-4" />
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => sendInvoiceToTenant(t)}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-foreground hover:bg-secondary transition-colors"
+                      title="Send Invoice"
+                    >
+                      <Send className="h-4 w-4" />
                     </button>
-                    <button type="button" onClick={() => sendReminderToTenant(t)} className="inline-flex items-center gap-1 text-xs text-foreground hover:underline">
-                      <MessageCircle className="h-3 w-3" /> Reminder
+                    <button
+                      type="button"
+                      onClick={() => sendReminderToTenant(t)}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-foreground hover:bg-secondary transition-colors"
+                      title="Send WhatsApp Reminder"
+                    >
+                      <MessageCircle className="h-4 w-4" />
                     </button>
-                    <button type="button" onClick={() => handleRemoveTenant(t.id)} className="inline-flex items-center gap-1 text-xs text-destructive hover:underline">
-                      <UserPlus className="h-3 w-3" /> Remove
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveTenant(t.id)}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
+                      title="Remove Tenant"
+                    >
+                      <UserPlus className="h-4 w-4" />
                     </button>
                   </div>
                 </div>

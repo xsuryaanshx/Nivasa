@@ -24,12 +24,25 @@
     <meta property="og:description" content="A premium, minimal rental management dashboard. Manage buildings, rooms, tenants, and payments with calm clarity." />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
-    <script type="module" crossorigin src="/assets/index-CWMF1QNn.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-OKVoWu21.css">
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <script type="module" crossorigin src="/assets/index-BJk3Dhv1.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-ltJIDduj.css">
   </head>
 
   <body>
     <div id="root"></div>
     <!-- Supabase CDN -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').then((registration) => {
+            console.log('SW registered: ', registration);
+          }).catch((registrationError) => {
+            console.log('SW registration failed: ', registrationError);
+          });
+        });
+      }
+    </script>
   </body>
 </html>

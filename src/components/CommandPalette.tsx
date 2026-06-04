@@ -7,7 +7,7 @@ import { forwardRef, useEffect, useMemo, useState, type ComponentPropsWithoutRef
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { useTheme } from "next-themes";
-import { rooms, buildings } from "@/lib/mockData";
+import { rooms as mockRooms, buildings as mockBuildings } from "@/lib/mockData";
 import { CURRENCIES, useCurrency, type CurrencyCode } from "@/lib/currency";
 import { toast } from "sonner";
 
@@ -24,6 +24,9 @@ export function CommandPalette({ open, onOpenChange, onToggleFocus, onShowHelp }
   const { theme, setTheme } = useTheme();
   const { currency, setCurrency } = useCurrency();
 
+  const [roomsList, setRoomsList] = useState<any[]>(mockRooms);
+  const [buildingsList, setBuildingsList] = useState<any[]>(mockBuildings);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
@@ -38,10 +41,37 @@ export function CommandPalette({ open, onOpenChange, onToggleFocus, onShowHelp }
 
   useEffect(() => { if (!open) setQuery(""); }, [open]);
 
+  useEffect(() => {
+    if (open) {
+      const fetchData = async () => {
+        try {
+          const api = (window as any).nivasaApi;
+          if (api) {
+            const { data: { session } } = await api.supabase.auth.getSession();
+            if (session) {
+              const [fetchedRooms, fetchedBuildings] = await Promise.all([
+                api.getRooms(),
+                api.getBuildings()
+              ]);
+              setRoomsList(fetchedRooms || []);
+              setBuildingsList(fetchedBuildings || []);
+            } else {
+              setRoomsList(mockRooms);
+              setBuildingsList(mockBuildings);
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching data for command palette:", error);
+        }
+      };
+      fetchData();
+    }
+  }, [open]);
+
   const close = () => onOpenChange(false);
   const go = (path: string) => { close(); navigate(path); };
 
-  const tenantRooms = useMemo(() => rooms.filter(r => r.tenants.length > 0), []);
+  const tenantRooms = useMemo(() => roomsList.filter(r => (r.tenants?.length || 0) > 0), [roomsList]);
 
   return (
     <AnimatePresence>
@@ -125,32 +155,38 @@ export function CommandPalette({ open, onOpenChange, onToggleFocus, onShowHelp }
                   })}
                 </Command.Group>
 
-                <Command.Group heading="Rooms">
-                  {rooms.slice(0, 8).map(r => (
-                    <Item key={r.id} value={`room ${r.number} ${r.buildingName} ${r.tenants.map(t => t.name).join(" ")}`}
-                      onSelect={() => go(`/app/rooms/${r.id}`)} icon={<Home className="h-4 w-4" />}>
-                      Room {r.number} <span className="text-muted-foreground">· {r.buildingName}</span>
-                    </Item>
-                  ))}
-                </Command.Group>
+                {roomsList.length > 0 && (
+                  <Command.Group heading="Rooms">
+                    {roomsList.slice(0, 8).map(r => (
+                      <Item key={r.id} value={`room ${r.number} ${r.buildingName} ${(r.tenants || []).map((t: any) => t.name).join(" ")}`}
+                        onSelect={() => go(`/app/rooms/${r.id}`)} icon={<Home className="h-4 w-4" />}>
+                        Room {r.number} <span className="text-muted-foreground">· {r.buildingName}</span>
+                      </Item>
+                    ))}
+                  </Command.Group>
+                )}
 
-                <Command.Group heading="Tenants">
-                  {tenantRooms.slice(0, 6).flatMap(r => r.tenants.map(t => (
-                    <Item key={t.id} value={`tenant ${t.name} ${r.number}`}
-                      onSelect={() => go(`/app/rooms/${r.id}`)} icon={<User className="h-4 w-4" />}>
-                      {t.name} <span className="text-muted-foreground">· Room {r.number}</span>
-                    </Item>
-                  )))}
-                </Command.Group>
+                {tenantRooms.length > 0 && (
+                  <Command.Group heading="Tenants">
+                    {tenantRooms.slice(0, 6).flatMap(r => (r.tenants || []).map((t: any) => (
+                      <Item key={t.id} value={`tenant ${t.name} ${r.number}`}
+                        onSelect={() => go(`/app/rooms/${r.id}`)} icon={<User className="h-4 w-4" />}>
+                        {t.name} <span className="text-muted-foreground">· Room {r.number}</span>
+                      </Item>
+                    )))}
+                  </Command.Group>
+                )}
 
-                <Command.Group heading="Buildings">
-                  {buildings.map(b => (
-                    <Item key={b.id} value={`building ${b.name} ${b.address}`}
-                      onSelect={() => go("/app/buildings")} icon={<Building2 className="h-4 w-4" />}>
-                      {b.name} <span className="text-muted-foreground">· {b.rooms} rooms</span>
-                    </Item>
-                  ))}
-                </Command.Group>
+                {buildingsList.length > 0 && (
+                  <Command.Group heading="Buildings">
+                    {buildingsList.map(b => (
+                      <Item key={b.id} value={`building ${b.name} ${b.address || ""}`}
+                        onSelect={() => go("/app/buildings")} icon={<Building2 className="h-4 w-4" />}>
+                        {b.name} <span className="text-muted-foreground">· {b.rooms} rooms</span>
+                      </Item>
+                    ))}
+                  </Command.Group>
+                )}
               </Command.List>
 
               <div className="hairline" />

@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ReceiptIndianRupee, MessageCircle } from "lucide-react";
+import { ReceiptIndianRupee, MessageCircle, Phone } from "lucide-react";
 import { StatusPill } from "./StatusPill";
 import { Money } from "./Money";
 import { useCurrency, formatMoney } from "@/lib/currency";
@@ -92,13 +92,21 @@ export function PaymentTimeline({ payments, dense = false, grouped = true }: Pro
                   <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
                     <div className="flex min-w-0 flex-wrap items-center gap-2">
                       {(p as any).tenantPhone && (
-                        <button
-                          type="button"
-                          onClick={() => openWhatsApp((p as any).tenantWhatsapp || (p as any).tenantPhone, `Hi ${p.tenantName}, confirming ReceiptIndianRupee of your payment for ${formatMoney(p.amount, currency)}.`)}
-                          className="inline-flex h-7 shrink-0 items-center gap-1 rounded-lg border border-border bg-card/70 px-2 text-[11px] font-medium text-[#25D366] opacity-100 transition-opacity hover:bg-[#25D366]/5 sm:opacity-0 sm:group-hover:opacity-100"
-                        >
-                          <MessageCircle className="h-3 w-3" /> WhatsApp
-                        </button>
+                        <>
+                          <a
+                            href={`tel:${(p as any).tenantPhone}`}
+                            className="inline-flex h-7 shrink-0 items-center gap-1 rounded-lg border border-border bg-card/70 px-2 text-[11px] font-medium text-foreground opacity-100 transition-opacity hover:bg-secondary sm:opacity-0 sm:group-hover:opacity-100"
+                          >
+                            <Phone className="h-3 w-3" /> Call
+                          </a>
+                          <button
+                            type="button"
+                            onClick={() => openWhatsApp((p as any).tenantWhatsapp || (p as any).tenantPhone, `Hi ${p.tenantName}, confirming ReceiptIndianRupee of your payment for ${formatMoney(p.amount, currency)}.`)}
+                            className="inline-flex h-7 shrink-0 items-center gap-1 rounded-lg border border-border bg-card/70 px-2 text-[11px] font-medium text-[#25D366] opacity-100 transition-opacity hover:bg-[#25D366]/5 sm:opacity-0 sm:group-hover:opacity-100"
+                          >
+                            <MessageCircle className="h-3 w-3" /> WhatsApp
+                          </button>
+                        </>
                       )}
                       <StatusPill status={p.status} />
                     </div>
