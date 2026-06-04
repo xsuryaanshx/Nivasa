@@ -517,11 +517,14 @@ export default function Profile() {
                 <button
                   key={feat.label}
                   onClick={() => {
+                    const scroller = document.querySelector('.app-cover');
+                    if (scroller) scroller.scrollTop = 0;
+                    
                     if (feat.label === "Buildings") navigate("/app/buildings");
                     else if (feat.label === "Rooms") navigate("/app/rooms");
                     else if (feat.label === "Payments") navigate("/app/payments");
                     else if (feat.label === "Analytics") navigate("/app");
-                    else if (feat.label === "Electricity") navigate("/app"); // Electricity settings are on dashboard
+                    else if (feat.label === "Electricity") navigate("/app"); 
                     else if (feat.label === "Multi-language") setLanguageOpen(true);
                   }}
                   className="flex flex-col gap-2 rounded-2xl border border-border/50 bg-card p-4 shadow-soft transition hover:border-border hover:bg-secondary/50 active:scale-[0.97] text-left"
@@ -548,7 +551,11 @@ export default function Profile() {
               return (
                 <button
                   key={item.label}
-                  onClick={item.onClick}
+                  onClick={() => {
+                    const scroller = document.querySelector('.app-cover');
+                    if (scroller) scroller.scrollTop = 0;
+                    item.onClick();
+                  }}
                   className={`flex w-full items-center gap-3 px-4 py-3.5 text-left transition hover:bg-secondary/50 active:scale-[0.99] ${
                     i < MENU_ITEMS.length - 1 ? "border-b border-border/40" : ""
                   }`}

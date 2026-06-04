@@ -110,7 +110,9 @@ function AppShell() {
         </AnimatePresence>
 
         <main className="relative flex-1 px-5 py-8 pb-44 lg:px-10 lg:pb-8">
-          <AnimatePresence mode="wait">
+          <AnimatePresence mode="wait" onExitComplete={() => {
+            if (scrollRef.current) scrollRef.current.scrollTop = 0;
+          }}>
             <motion.div
               key={location.pathname}
               initial={{ opacity: 0, y: 8 }}
