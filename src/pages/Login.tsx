@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Eye, EyeOff, Sparkles } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { MagneticButton } from "@/components/MagneticButton";
 
@@ -12,6 +12,21 @@ export default function Login() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
+
+  useEffect(() => {
+    const checkUser = async () => {
+      try {
+        const api = (window as any).nivasaApi;
+        if (api) {
+          const session = await api.auth.getSession();
+          if (session?.user) {
+            navigate("/app", { replace: true });
+          }
+        }
+      } catch (e) {}
+    };
+    checkUser();
+  }, [navigate]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();

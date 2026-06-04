@@ -67,14 +67,23 @@ export function CinematicHero({
       
       const tl = gsap.timeline({
         delay: 0.3,
-        onComplete: () => {
-          // Fade out the entire container and then navigate
+        onComplete: async () => {
+          // Check session while fading out
+          let dest = "/login";
+          try {
+            const api = (window as any).nivasaApi;
+            if (api) {
+              const session = await api.auth.getSession();
+              if (session?.user) dest = "/app";
+            }
+          } catch (e) {}
+          
           gsap.to(containerRef.current, {
             opacity: 0,
             duration: 0.6,
             ease: "power2.inOut",
             onComplete: () => {
-              navigate("/login", { replace: true });
+              navigate(dest, { replace: true });
             }
           });
         }
