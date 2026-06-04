@@ -1,5 +1,5 @@
 import { Outlet, useLocation } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Focus, Keyboard } from "lucide-react";
 import { AppSidebar } from "./AppSidebar";
@@ -23,6 +23,13 @@ function AppShell() {
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const location = useLocation();
   const { focus, toggle } = useFocusMode();
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = 0;
+    }
+  }, [location.pathname]);
 
   // Global tenant trigger (palette / pages dispatch this).
   useEffect(() => {
@@ -61,7 +68,10 @@ function AppShell() {
         onOpenPalette={() => setPaletteOpen(true)}
       />
       
-      <div className="app-cover absolute w-full h-full left-0 top-0 z-10 flex min-w-0 flex-1 flex-col bg-background shadow-2xl overflow-y-auto transition-transform will-change-transform border border-border/10 pb-[env(safe-area-inset-bottom)]">
+      <div 
+        ref={scrollRef}
+        className="app-cover absolute w-full h-full left-0 top-0 z-10 flex min-w-0 flex-1 flex-col bg-background shadow-2xl overflow-y-auto transition-transform will-change-transform border border-border/10 pb-[env(safe-area-inset-bottom)]"
+      >
         <div className="flex flex-1">
           <AnimatePresence initial={false}>
             {!focus && (
