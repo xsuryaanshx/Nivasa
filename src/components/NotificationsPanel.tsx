@@ -217,7 +217,7 @@ export function NotificationsPanel({ open, onClose }: Props) {
                   <div className="h-7 w-7 animate-spin rounded-full border-2 border-brand border-t-transparent" />
                 </div>
               ) : notifs.length === 0 ? (
-                <div className="flex h-40 flex-col items-center justify-center gap-2 text-center">
+                <div className="fixed inset-0 z-[100] flex items-start pt-24 justify-center p-4 pointer-events-none">
                   <BellOff className="h-8 w-8 text-muted-foreground/40" />
                   <p className="text-sm text-muted-foreground">No notifications</p>
                 </div>
