@@ -21,10 +21,15 @@ import {
   Coins,
   Languages,
   X,
+  Moon,
+  Sun,
+  Monitor,
+  Palette,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTheme } from "next-themes";
 import { SecurityModal } from "@/components/SecurityModal";
 import { NotificationsPanel } from "@/components/NotificationsPanel";
 import { CURRENCIES, useCurrency, type CurrencyCode } from "@/lib/currency";
@@ -127,6 +132,87 @@ const stagger = {
     show: { opacity: 1, y: 0, transition: { duration: 0.38, ease: [0.22, 1, 0.36, 1] } },
   },
 };
+
+// ── Theme Sub-panel ────────────────────────────────────────────────────────
+function ThemePanel({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { theme, setTheme } = useTheme();
+
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm"
+            onClick={onClose}
+          />
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 pointer-events-none">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 16 }}
+              transition={{ duration: 0.22, ease: [0.2, 0.7, 0.2, 1] }}
+              className="w-full max-w-sm overflow-hidden rounded-2xl border border-border bg-card shadow-2xl pointer-events-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between border-b border-border px-6 py-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10">
+                    <Palette className="h-4 w-4 text-amber-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">Theme</p>
+                    <p className="text-xs text-muted-foreground">App appearance</p>
+                  </div>
+                </div>
+                <button
+                  onClick={onClose}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-2">
+                {[
+                  { id: "light", label: "Light", icon: Sun },
+                  { id: "dark", label: "Dark", icon: Moon },
+                  { id: "system", label: "System Default", icon: Monitor },
+                ].map((t) => {
+                  const active = theme === t.id;
+                  const Icon = t.icon;
+                  return (
+                    <button
+                      key={t.id}
+                      onClick={() => setTheme(t.id)}
+                      className={cn(
+                        "flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left transition-all",
+                        active
+                          ? "border-brand bg-brand/5 shadow-soft"
+                          : "border-border bg-secondary/30 hover:bg-secondary/60",
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Icon className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm font-semibold text-foreground">{t.label}</span>
+                      </div>
+                      {active && <Check className="h-4 w-4 text-brand shrink-0" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </motion.div>
+          </div>
+        </>
+      )}
+    </AnimatePresence>,
+    document.body
+  );
+}
 
 // ── Language & Region Sub-panel ─────────────────────────────────────────────
 const LANGUAGE_OPTIONS: { code: Language; label: string; native: string }[] = [
@@ -270,6 +356,7 @@ export default function Profile() {
   const [securityOpen, setSecurityOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [languageOpen, setLanguageOpen] = useState(false);
+  const [themeOpen, setThemeOpen] = useState(false);
 
   const plan = PLAN_FEATURES[currentPlan];
   const PlanIcon = plan.icon;
@@ -282,6 +369,14 @@ export default function Profile() {
       onClick: () => setNotificationsOpen(true),
       accent: "text-blue-400",
       bg: "bg-blue-500/10",
+    },
+    {
+      icon: Palette,
+      label: "Theme",
+      desc: "Light, dark, & system preferences",
+      onClick: () => setThemeOpen(true),
+      accent: "text-amber-400",
+      bg: "bg-amber-500/10",
     },
     {
       icon: Shield,
@@ -489,6 +584,7 @@ export default function Profile() {
       {/* ── Modals & Panels ── */}
       <SecurityModal open={securityOpen} onClose={() => setSecurityOpen(false)} />
       <NotificationsPanel open={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
+      <ThemePanel open={themeOpen} onClose={() => setThemeOpen(false)} />
       <LanguageRegionPanel open={languageOpen} onClose={() => setLanguageOpen(false)} />
     </>
   );
