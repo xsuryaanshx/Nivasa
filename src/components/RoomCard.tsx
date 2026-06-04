@@ -1,6 +1,6 @@
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
-import { BellRing, Building2, CheckCircle2, ArrowUpRight, MessageCircle } from "lucide-react";
+import { BellRing, Building2, CheckCircle2, ArrowUpRight, MessageCircle, Phone } from "lucide-react";
 import { useRef, type MouseEvent } from "react";
 import { Sparkline } from "./Sparkline";
 import { StatusPill } from "./StatusPill";
@@ -100,7 +100,7 @@ export function RoomCard({ room, index }: { room: Room; index: number }) {
         <div className="relative mt-4 flex items-center gap-2.5">
           {primaryTenant ? (
             <>
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-brand text-[10px] font-semibold text-white shadow-glow">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-brand text-[10px] font-semibold text-white shadow-glow">
                 {initials(primaryTenant.name)}
               </div>
               <div className="min-w-0">
@@ -137,6 +137,19 @@ export function RoomCard({ room, index }: { room: Room; index: number }) {
           {primaryTenant && (
             <QuickAction onClick={remind}>
               <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
+            </QuickAction>
+          )}
+          {primaryTenant && (
+            <QuickAction onClick={(e) => {
+              stop(e);
+              const phone = primaryTenant?.phone;
+              if (phone) {
+                window.location.href = `tel:${phone}`;
+              } else {
+                toast.error("No phone number available");
+              }
+            }}>
+              <Phone className="h-3.5 w-3.5" /> Call
             </QuickAction>
           )}
           {!primaryTenant && (
