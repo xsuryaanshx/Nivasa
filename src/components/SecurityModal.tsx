@@ -111,7 +111,7 @@ export function SecurityModal({ open, onClose }: Props) {
           />
 
           {/* Modal */}
-          <div className="fixed inset-0 z-[100] flex items-start pt-24 justify-center p-4 pointer-events-none">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 pointer-events-none">
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 16 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}

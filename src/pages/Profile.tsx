@@ -151,7 +151,7 @@ function ThemePanel({ open, onClose }: { open: boolean; onClose: () => void }) {
             className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm"
             onClick={onClose}
           />
-          <div className="fixed inset-0 z-[100] flex items-start pt-24 justify-center p-4 pointer-events-none">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 pointer-events-none">
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 16 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -238,7 +238,7 @@ function LanguageRegionPanel({ open, onClose }: { open: boolean; onClose: () => 
             className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm"
             onClick={onClose}
           />
-          <div className="fixed inset-0 z-[100] flex items-start pt-24 justify-center p-4 pointer-events-none">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 pointer-events-none">
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 16 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -551,11 +551,7 @@ export default function Profile() {
               return (
                 <button
                   key={item.label}
-                  onClick={() => {
-                    const scroller = document.querySelector('.app-cover');
-                    if (scroller) scroller.scrollTop = 0;
-                    item.onClick();
-                  }}
+                  onClick={item.onClick}
                   className={`flex w-full items-center gap-3 px-4 py-3.5 text-left transition hover:bg-secondary/50 active:scale-[0.99] ${
                     i < MENU_ITEMS.length - 1 ? "border-b border-border/40" : ""
                   }`}
