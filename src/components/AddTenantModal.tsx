@@ -30,7 +30,10 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
   const [aadhar, setAadhar] = useState("");
   const [depositAmount, setDepositAmount] = useState("");
   const [depositMethod, setDepositMethod] = useState("Cash");
-  const [joinedAt, setJoinedAt] = useState(() => new Date().toISOString().slice(0, 10));
+  const [joinedAt, setJoinedAt] = useState(() => {
+    const d = new Date();
+    return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
+  });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -69,7 +72,8 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
       setAadhar("");
       setDepositAmount("");
       setDepositMethod("Cash");
-      setJoinedAt(new Date().toISOString().slice(0, 10));
+      const d = new Date();
+      setJoinedAt(`${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`);
 
     }
   }, [open, defaultRoomId]);
@@ -103,13 +107,23 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
       const api = (window as any).nivasaApi;
       if (!api) throw new Error("API not loaded");
 
+      let joinedIso = new Date().toISOString();
+      if (joinedAt) {
+        const parts = joinedAt.split("/");
+        if (parts.length === 3) {
+          const [d, m, y] = parts;
+          const parsed = new Date(`${y}-${m}-${d}`);
+          if (!isNaN(parsed.getTime())) joinedIso = parsed.toISOString();
+        }
+      }
+
       await api.addTenant({
         room_id: roomId,
         name: name.trim(),
         phone: mobile.trim(),
         whatsapp_number: (sameAsMobile ? mobile : whatsapp).trim(),
         aadhar: aadhar.replace(/\s+/g, ""),
-        joined_at: joinedAt ? new Date(joinedAt).toISOString() : new Date().toISOString(),
+        joined_at: joinedIso,
         occupancy_count: 1,
         depositAmount: depositAmount ? Number(depositAmount) : 0,
         depositMethod: depositMethod,
@@ -320,7 +334,7 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
                   icon={<Calendar className="h-4 w-4" />}
                   value={joinedAt} 
                   onChange={setJoinedAt}
-                  placeholder="YYYY-MM-DD"
+                  placeholder="DD/MM/YYYY"
                   disabled={submitting}
                 />
               </Field>
