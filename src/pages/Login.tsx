@@ -25,8 +25,10 @@ export default function Login() {
       
       if (!rememberMe) {
         sessionStorage.setItem("nivasa_no_remember", "true");
+        localStorage.setItem("nivasa_no_remember", "true");
       } else {
         sessionStorage.removeItem("nivasa_no_remember");
+        localStorage.removeItem("nivasa_no_remember");
       }
 
       const { data, error } = await api.auth.signIn(user, pwd);

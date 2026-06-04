@@ -27,13 +27,17 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const customStorage = {
   getItem: (key: string) => {
-    return localStorage.getItem(key) ?? sessionStorage.getItem(key);
+    const local = localStorage.getItem(key);
+    if (local !== null && local !== undefined) return local;
+    return sessionStorage.getItem(key);
   },
   setItem: (key: string, value: string) => {
-    if (sessionStorage.getItem("nivasa_no_remember") === "true") {
+    if (sessionStorage.getItem("nivasa_no_remember") === "true" || localStorage.getItem("nivasa_no_remember") === "true") {
       sessionStorage.setItem(key, value);
+      localStorage.removeItem(key);
     } else {
       localStorage.setItem(key, value);
+      sessionStorage.removeItem(key);
     }
   },
   removeItem: (key: string) => {
