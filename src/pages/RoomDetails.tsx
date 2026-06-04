@@ -1,6 +1,6 @@
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
-  ArrowLeft, BellRing, CheckCircle2, IdCard, MessageCircle, Phone, Plus, Save, Send, UserPlus, Zap,
+  ArrowLeft, BellRing, CheckCircle2, IdCard, MessageCircle, Phone, Plus, Save, Send, UserPlus, Zap, Calendar, Banknote
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
@@ -322,8 +322,10 @@ export default function RoomDetails() {
                     </div>
                     <div className="min-w-0">
                       <div className="text-base font-semibold truncate">{t.name}</div>
-                      <div className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Phone className="h-3 w-3" /> {t.phone}
+                      <div className="mt-0.5 flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
+                        <span className="flex items-center gap-1"><Phone className="h-3 w-3" /> {t.phone}</span>
+                        {t.joined_at && <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> Joined: {new Date(t.joined_at).toLocaleDateString()}</span>}
+                        {(t.depositAmount || 0) > 0 && <span className="flex items-center gap-1"><Banknote className="h-3 w-3" /> Deposit: {formatMoney(t.depositAmount || 0, currency, { decimals: 0 })} {t.depositMethod && `(${t.depositMethod})`}</span>}
                       </div>
                     </div>
                   </div>
@@ -587,7 +589,10 @@ export default function RoomDetails() {
                 </div>
                 <div className="min-w-0">
                   <div className="text-sm font-medium truncate">{t.name}</div>
-                  <div className="text-[11px] text-muted-foreground">Joined {t.joined_at}</div>
+                  <div className="text-[11px] text-muted-foreground">
+                    Joined: {t.joined_at ? new Date(t.joined_at).toLocaleDateString() : 'N/A'}
+                    {t.leftAt && ` • Left: ${new Date(t.leftAt).toLocaleDateString()}`}
+                  </div>
                 </div>
               </li>
             ))}

@@ -24,6 +24,10 @@ export interface Tenant {
   joined_at: string;
   /** Number of people billed for rent (used with occupancy-based room pricing). */
   occupancy_count?: number;
+  depositAmount?: number;
+  depositMethod?: "Cash" | "Bank" | "UPI";
+  status?: "active" | "vacated";
+  leftAt?: string;
 }
 
 export interface ElectricityReading {
@@ -78,32 +82,32 @@ const seedReadings = (base: number) =>
 
 export const rooms: Room[] = [
   { id: "r1",  number: "A-101", buildingId: "b1", buildingName: "Shreeji Heights", rent: 14000, status: "paid",
-    tenants: [{ id: "t1", name: "Aarav Sharma",  phone: "+91 98765 43210", joined_at: "2024-03-12" }],
+    tenants: [{ id: "t1", name: "Aarav Sharma",  phone: "+91 98765 43210", joined_at: "2024-03-12", depositAmount: 20000, depositMethod: "UPI", status: "active" }],
     prevReading: 4820, currReading: 4956, ratePerUnit: 8.5, history: seedReadings(120), pastTenants: [] },
   { id: "r2",  number: "A-102", buildingId: "b1", buildingName: "Shreeji Heights", rent: 14000, status: "pending",
-    tenants: [{ id: "t2", name: "Neha Gupta",  phone: "+91 98765 43211", joined_at: "2024-08-01" }],
+    tenants: [{ id: "t2", name: "Neha Gupta",  phone: "+91 98765 43211", joined_at: "2024-08-01", depositAmount: 15000, depositMethod: "Cash", status: "active" }],
     prevReading: 3120, currReading: 3289, ratePerUnit: 8.5, history: seedReadings(140), pastTenants: [] },
   { id: "r3",  number: "A-201", buildingId: "b1", buildingName: "Shreeji Heights", rent: 15000, status: "late",
-    tenants: [{ id: "t3", name: "Rajesh Kumar",  phone: "+91 98765 43212", joined_at: "2023-11-20" }],
+    tenants: [{ id: "t3", name: "Rajesh Kumar",  phone: "+91 98765 43212", joined_at: "2023-11-20", depositAmount: 25000, depositMethod: "Bank", status: "active" }],
     prevReading: 5621, currReading: 5840, ratePerUnit: 8.5, history: seedReadings(180),
-    pastTenants: [{ id: "tp1", name: "Suresh Menon", phone: "+91 98765 43213", joined_at: "2022-01-05" }] },
+    pastTenants: [{ id: "tp1", name: "Suresh Menon", phone: "+91 98765 43213", joined_at: "2022-01-05", leftAt: "2023-10-31", status: "vacated" }] },
   { id: "r4",  number: "12",  buildingId: "b2", buildingName: "Omkar Residency",    rent: 12500, status: "paid",
-    tenants: [{ id: "t4", name: "Priya Patel",   phone: "+91 98765 43214", joined_at: "2024-06-15" }],
+    tenants: [{ id: "t4", name: "Priya Patel",   phone: "+91 98765 43214", joined_at: "2024-06-15", status: "active" }],
     prevReading: 2100, currReading: 2310, ratePerUnit: 8.5, history: seedReadings(200), pastTenants: [] },
   { id: "r5",  number: "14",  buildingId: "b2", buildingName: "Omkar Residency",    rent: 12500, status: "paid",
-    tenants: [{ id: "t5", name: "Rahul Verma",  phone: "+91 98765 43215", joined_at: "2024-02-08" }],
+    tenants: [{ id: "t5", name: "Rahul Verma",  phone: "+91 98765 43215", joined_at: "2024-02-08", status: "active" }],
     prevReading: 1800, currReading: 1932, ratePerUnit: 8.5, history: seedReadings(110), pastTenants: [] },
   { id: "r6",  number: "B-07",  buildingId: "b3", buildingName: "Gokuldham Society", rent: 13000, status: "pending",
-    tenants: [{ id: "t6", name: "Vikram Singh",  phone: "+91 98765 43216", joined_at: "2024-09-22" }],
+    tenants: [{ id: "t6", name: "Vikram Singh",  phone: "+91 98765 43216", joined_at: "2024-09-22", status: "active" }],
     prevReading: 2980, currReading: 3094, ratePerUnit: 8.5, history: seedReadings(105), pastTenants: [] },
   { id: "r7",  number: "B-08",  buildingId: "b3", buildingName: "Gokuldham Society", rent: 13000, status: "paid",
-    tenants: [{ id: "t7", name: "Sneha Desai",   phone: "+91 98765 43217", joined_at: "2023-12-01" }],
+    tenants: [{ id: "t7", name: "Sneha Desai",   phone: "+91 98765 43217", joined_at: "2023-12-01", status: "active" }],
     prevReading: 4501, currReading: 4612, ratePerUnit: 8.5, history: seedReadings(98),  pastTenants: [] },
   { id: "r8",  number: "B-11",  buildingId: "b3", buildingName: "Gokuldham Society", rent: 13500, status: "late",
-    tenants: [{ id: "t8", name: "Amit Joshi", phone: "+91 98765 43218", joined_at: "2024-04-17" }],
+    tenants: [{ id: "t8", name: "Amit Joshi", phone: "+91 98765 43218", joined_at: "2024-04-17", status: "active" }],
     prevReading: 3340, currReading: 3580, ratePerUnit: 8.5, history: seedReadings(160), pastTenants: [] },
   { id: "r9",  number: "3A",  buildingId: "b4", buildingName: "Sunshine Apartments",   rent: 18000, status: "paid",
-    tenants: [{ id: "t9", name: "Pooja Reddy", phone: "+91 98765 43219", joined_at: "2024-01-10" }],
+    tenants: [{ id: "t9", name: "Pooja Reddy", phone: "+91 98765 43219", joined_at: "2024-01-10", status: "active" }],
     prevReading: 6010, currReading: 6122, ratePerUnit: 8.5, history: seedReadings(90),  pastTenants: [] },
   { id: "r10", number: "3B",  buildingId: "b4", buildingName: "Sunshine Apartments",   rent: 18000, status: "pending",
     tenants: [], prevReading: 0, currReading: 0, ratePerUnit: 8.5, history: seedReadings(60), pastTenants: [] },

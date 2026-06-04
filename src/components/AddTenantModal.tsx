@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, IdCard, Phone, Smartphone, User, Loader2 } from "lucide-react";
+import { CheckCircle2, IdCard, Phone, Smartphone, User, Loader2, Calendar, Banknote, CreditCard } from "lucide-react";
 import { GlassModal } from "./GlassModal";
 import { MagneticButton } from "./MagneticButton";
 import { cn } from "@/lib/utils";
@@ -28,6 +28,9 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
   const [whatsapp, setWhatsapp] = useState("");
   const [sameAsMobile, setSameAsMobile] = useState(true);
   const [aadhar, setAadhar] = useState("");
+  const [depositAmount, setDepositAmount] = useState("");
+  const [depositMethod, setDepositMethod] = useState("Cash");
+  const [joinedAt, setJoinedAt] = useState(() => new Date().toISOString().slice(0, 10));
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -64,6 +67,9 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
       setWhatsapp("");
       setSameAsMobile(true);
       setAadhar("");
+      setDepositAmount("");
+      setDepositMethod("Cash");
+      setJoinedAt(new Date().toISOString().slice(0, 10));
 
     }
   }, [open, defaultRoomId]);
@@ -103,8 +109,10 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
         phone: mobile.trim(),
         whatsapp_number: (sameAsMobile ? mobile : whatsapp).trim(),
         aadhar: aadhar.replace(/\s+/g, ""),
-        joined_at: new Date().toISOString(),
+        joined_at: joinedAt ? new Date(joinedAt).toISOString() : new Date().toISOString(),
         occupancy_count: 1,
+        depositAmount: depositAmount ? Number(depositAmount) : 0,
+        depositMethod: depositMethod,
       });
 
       setSuccess(true);
@@ -268,6 +276,51 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
                   placeholder="1234 5678 9012" 
                   inputMode="numeric" 
                   maxLength={14}
+                  disabled={submitting}
+                />
+              </Field>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Field label="Deposit Amount" optional>
+                  <IconInput 
+                    icon={<Banknote className="h-4 w-4" />}
+                    value={depositAmount} 
+                    onChange={setDepositAmount} 
+                    placeholder="e.g. 10000" 
+                    inputMode="numeric"
+                    disabled={submitting}
+                  />
+                </Field>
+                <Field label="Deposit Method" optional>
+                  <div className="relative">
+                    <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-brand transition-colors">
+                      <CreditCard className="h-4 w-4" />
+                    </span>
+                    <select
+                      value={depositMethod}
+                      onChange={(e) => setDepositMethod(e.target.value)}
+                      disabled={submitting}
+                      className="h-12 w-full appearance-none rounded-xl border border-border bg-card/70 pl-11 pr-4 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-brand/10 transition-all disabled:opacity-50"
+                    >
+                      <option value="Cash">Cash</option>
+                      <option value="UPI">UPI</option>
+                      <option value="Bank">Bank Transfer</option>
+                    </select>
+                    <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground">
+                      <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </div>
+                  </div>
+                </Field>
+              </div>
+
+              <Field label="Joining Date" optional>
+                <IconInput 
+                  icon={<Calendar className="h-4 w-4" />}
+                  value={joinedAt} 
+                  onChange={setJoinedAt}
+                  placeholder="YYYY-MM-DD"
                   disabled={submitting}
                 />
               </Field>

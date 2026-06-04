@@ -245,7 +245,7 @@ async function getPropertyDetails(buildingId: string | undefined) {
           status: u.status || "vacant",
           rent_amount,
           occupancy_prices: u.occupancy_prices ?? null,
-          tenants: unitTenants,
+          tenants: unitTenants.filter((t: any) => t.status !== 'vacated'),
         };
       }),
       occupancyRate: building.units?.length > 0
@@ -271,6 +271,10 @@ function mapTenantFromRow(t: any): Tenant {
     aadhar: t.aadhar,
     joined_at: t.joined_at,
     occupancy_count: t.occupancy_count != null ? Math.max(1, Number(t.occupancy_count)) : 1,
+    depositAmount: t.deposit_amount,
+    depositMethod: t.deposit_method,
+    status: t.status,
+    leftAt: t.left_at,
   };
 }
 
@@ -292,12 +296,12 @@ function mapUnitToRoom(u: any): Room {
     rent,
     occupancyPrices: tiers.length > 0 ? tiers : null,
     status: u.status as PaymentStatus,
-    tenants: unitTenants,
+    tenants: unitTenants.filter(t => t.status !== 'vacated'),
     prevReading: u.prev_reading || 0,
     currReading: u.curr_reading || 0,
     ratePerUnit: u.rate_per_unit || 0.18,
     history: [],
-    pastTenants: [],
+    pastTenants: unitTenants.filter(t => t.status === 'vacated'),
   };
 }
 
@@ -468,6 +472,8 @@ async function addTenant(input: {
   aadhar?: string;
   joined_at?: string;
   occupancy_count?: number;
+  depositAmount?: number;
+  depositMethod?: string;
 }) {
   try {
     const { data: { session } } = await supabase.auth.getSession();
@@ -481,7 +487,10 @@ async function addTenant(input: {
           whatsapp_number: input.whatsapp_number,
           aadhar: input.aadhar,
           joined_at: input.joined_at || new Date().toISOString(),
-          occupancy_count: 1
+          occupancy_count: 1,
+          depositAmount: input.depositAmount || 0,
+          depositMethod: input.depositMethod as any || "Cash",
+          status: "active"
         };
         r.tenants.push(t);
         r.status = 'occupied' as any;
@@ -512,6 +521,9 @@ async function addTenant(input: {
       building_id: room.building_id,
       joined_at: input.joined_at || new Date().toISOString(),
       occupancy_count: occ,
+      deposit_amount: input.depositAmount || 0,
+      deposit_method: input.depositMethod || 'Cash',
+      status: 'active'
     };
 
     const { data: tenant, error: tenantError } = await supabase
@@ -541,10 +553,10 @@ async function addTenant(input: {
 
 async function removeTenant(roomId: string, tenantId: string) {
   try {
-    // 1. Delete tenant
+    // 1. Mark tenant as vacated
     const { error: tenantError } = await supabase
       .from('tenants')
-      .delete()
+      .update({ status: 'vacated', left_at: new Date().toISOString() })
       .eq('id', tenantId);
     
     if (tenantError) throw tenantError;
@@ -553,7 +565,8 @@ async function removeTenant(roomId: string, tenantId: string) {
     const { count, error: checkError } = await supabase
       .from('tenants')
       .select('*', { count: 'exact', head: true })
-      .eq('room_id', roomId);
+      .eq('room_id', roomId)
+      .neq('status', 'vacated');
     
     if (count === 0) {
       const { error: roomError } = await supabase
