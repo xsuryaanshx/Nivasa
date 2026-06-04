@@ -1,7 +1,7 @@
 'use client';
 
 import { useNavigate, useLocation } from "react-router-dom";
-import { Building2, Home, LayoutDashboard, Receipt, UserCircle2 } from "lucide-react";
+import { Building2, Home, LayoutDashboard, ReceiptIndianRupee, UserCircle2 } from "lucide-react";
 import { InteractiveMenu } from "./ui/modern-mobile-menu";
 import { useMemo } from "react";
 import { useLanguage } from "./LanguageProvider";
@@ -15,7 +15,7 @@ export function MobileNav() {
     { id: "/app", label: t('home'), icon: LayoutDashboard },
     { id: "/app/buildings", label: t('buildings'), icon: Building2 },
     { id: "/app/rooms", label: t('rooms'), icon: Home },
-    { id: "/app/payments", label: t('payments'), icon: Receipt },
+    { id: "/app/payments", label: t('payments'), icon: ReceiptIndianRupee },
     { id: "/app/profile", label: "Profile", icon: UserCircle2 },
   ], [t]);
 

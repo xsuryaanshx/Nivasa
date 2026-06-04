@@ -1,4 +1,4 @@
-import { Building2, DollarSign, Home, Receipt, Users, Plus } from "lucide-react";
+import { Building2, IndianRupee, Home, ReceiptIndianRupee, Users, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/PageHeader";
@@ -81,8 +81,8 @@ export default function Dashboard() {
         <StatCard label={t('buildings')}        value={s.totalBuildings} icon={Building2} delta="+1"  trend="up"   delay={0.00} onClick={() => navigate("/app/buildings")} />
         <StatCard label={t('rooms')}            value={s.totalRooms}     icon={Home}      delta="+2"  trend="up"   delay={0.05} onClick={() => navigate("/app/rooms")} />
         <StatCard label={t('occupancy')}         value={s.occupied}       icon={Users}     delta="92%" trend="flat" delay={0.10} onClick={() => navigate("/app/rooms?status=occupied")} />
-        <StatCard label={t('pending_payments')} value={s.pending}        icon={Receipt}   delta="-1"  trend="up"   delay={0.15} onClick={() => navigate("/app/payments?status=pending")} />
-        <StatCard label={t('monthly_revenue')}  value={s.monthlyRevenue} icon={DollarSign} money delta="+12%" trend="up" delay={0.20} onClick={() => navigate("/app/payments?status=paid")} />
+        <StatCard label={t('pending_payments')} value={s.pending}        icon={ReceiptIndianRupee}   delta="-1"  trend="up"   delay={0.15} onClick={() => navigate("/app/payments?status=pending")} />
+        <StatCard label={t('monthly_revenue')}  value={s.monthlyRevenue} icon={IndianRupee} money delta="+12%" trend="up" delay={0.20} onClick={() => navigate("/app/payments?status=paid")} />
       </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-3">
@@ -124,7 +124,7 @@ export default function Dashboard() {
         </div>
         <div className="rounded-2xl border border-border bg-card p-6 shadow-soft flex flex-col items-center justify-center text-center">
           <div className="h-12 w-12 rounded-full bg-secondary/50 flex items-center justify-center mb-3">
-            <Receipt className="h-6 w-6 text-muted-foreground" />
+            <ReceiptIndianRupee className="h-6 w-6 text-muted-foreground" />
           </div>
           <h3 className="text-sm font-semibold">{t("ready_for_billing")}</h3>
           <p className="text-xs text-muted-foreground mt-1">{t("billing_ready_text")}</p>

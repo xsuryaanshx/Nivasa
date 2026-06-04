@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { Building2, Home, LayoutDashboard, Receipt, Sparkles, UserCircle2, Zap, LogOut } from "lucide-react";
+import { Building2, Home, LayoutDashboard, ReceiptIndianRupee, Sparkles, UserCircle2, Zap, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "./LanguageProvider";
 
@@ -11,7 +11,7 @@ export function AppSidebar({ collapsed }: Props) {
     { to: "/app", label: t("dashboard"), icon: LayoutDashboard, end: true },
     { to: "/app/buildings", label: t("buildings"), icon: Building2 },
     { to: "/app/rooms", label: t("rooms"), icon: Home },
-    { to: "/app/payments", label: t("payments"), icon: Receipt },
+    { to: "/app/payments", label: t("payments"), icon: ReceiptIndianRupee },
     { to: "/app/profile", label: "Profile", icon: UserCircle2 },
   ];
 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Building2, MoreHorizontal, Plus, ArrowLeft, Users, Receipt, DoorOpen } from "lucide-react";
+import { Building2, MoreHorizontal, Plus, ArrowLeft, Users, ReceiptIndianRupee, DoorOpen } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { MagneticButton } from "@/components/MagneticButton";
 import { Money } from "@/components/Money";
@@ -159,7 +159,7 @@ export default function BuildingDetails() {
         </div>
         <div className="rounded-2xl border border-border bg-card p-5 shadow-soft border-brand/20 bg-brand/[0.02]">
           <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-brand/70">
-            <Receipt className="h-3 w-3" /> {t("potential_revenue")}
+            <ReceiptIndianRupee className="h-3 w-3" /> {t("potential_revenue")}
           </div>
           <div className="mt-1 text-2xl font-bold text-brand">
             <Money value={data.units.reduce((acc: number, u: any) => acc + (u.rent_amount || 0), 0)} />

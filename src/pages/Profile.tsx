@@ -7,7 +7,7 @@ import {
   Zap,
   Building2,
   Home,
-  Receipt,
+  ReceiptIndianRupee,
   BarChart3,
   Globe,
   Bell,
@@ -87,7 +87,7 @@ const APP_FEATURES = [
     bg: "bg-violet-500/10",
   },
   {
-    icon: Receipt,
+    icon: ReceiptIndianRupee,
     label: "Payments",
     desc: "Rent & payment history",
     color: "text-emerald-400",

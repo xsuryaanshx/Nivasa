@@ -1,7 +1,7 @@
 import { Command } from "cmdk";
 import {
   ArrowRight, Building2, CheckCircle2, Coins, CornerDownLeft, Focus, Home, Keyboard,
-  LayoutDashboard, Moon, Plus, Receipt, Search, Sun, User, UserPlus, Zap,
+  LayoutDashboard, Moon, Plus, ReceiptIndianRupee, Search, Sun, User, UserPlus, Zap,
 } from "lucide-react";
 import { forwardRef, useEffect, useMemo, useState, type ComponentPropsWithoutRef, type ElementRef, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
@@ -80,7 +80,7 @@ export function CommandPalette({ open, onOpenChange, onToggleFocus, onShowHelp }
                   <Item value="dashboard nav home" onSelect={() => go("/app")}            icon={<LayoutDashboard className="h-4 w-4" />} shortcut="G D">Go to Dashboard</Item>
                   <Item value="buildings"          onSelect={() => go("/app/buildings")}  icon={<Building2 className="h-4 w-4" />}        shortcut="G B">Go to Buildings</Item>
                   <Item value="rooms"              onSelect={() => go("/app/rooms")}      icon={<Home className="h-4 w-4" />}             shortcut="G R">Go to Rooms</Item>
-                  <Item value="payments"           onSelect={() => go("/app/payments")}   icon={<Receipt className="h-4 w-4" />}          shortcut="G P">Go to Payments</Item>
+                  <Item value="payments"           onSelect={() => go("/app/payments")}   icon={<ReceiptIndianRupee className="h-4 w-4" />}          shortcut="G P">Go to Payments</Item>
                 </Command.Group>
 
                 <Command.Group heading="Quick actions">
