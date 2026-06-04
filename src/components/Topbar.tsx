@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { useLanguage } from "./LanguageProvider";
 import { NotificationsPanel } from "./NotificationsPanel";
 import { useState, useEffect } from "react";
+import { useTheme } from "next-themes";
 
 interface Props {
   collapsed: boolean;
@@ -20,9 +21,12 @@ export function Topbar({ collapsed, onToggle, onOpenPalette, onOpenMobileDrawer 
   const { t } = useLanguage();
   const [notifOpen, setNotifOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
 
   // Load unread badge count on mount
   useEffect(() => {
+    setMounted(true);
     const loadCount = async () => {
       try {
         const api = (window as any).nivasaApi;
@@ -39,6 +43,8 @@ export function Topbar({ collapsed, onToggle, onOpenPalette, onOpenMobileDrawer 
     loadCount();
   }, []);
 
+  const logoSrc = mounted && resolvedTheme === "dark" ? "/logo-dark.png" : "/logo.jpg";
+
   return (
     <>
       <header className="sticky top-0 z-30 border-b border-border bg-background/70 backdrop-blur-xl pt-safe">
@@ -52,7 +58,7 @@ export function Topbar({ collapsed, onToggle, onOpenPalette, onOpenMobileDrawer 
           </button>
 
           <div className="flex shrink-0 items-center md:hidden pr-2">
-            <img src="/logo.jpg" alt="Nivasa" className="h-9 w-auto object-contain mix-blend-multiply dark:invert" />
+            <img src={logoSrc} alt="Nivasa" className="h-9 w-auto object-contain" />
           </div>
 
           <button

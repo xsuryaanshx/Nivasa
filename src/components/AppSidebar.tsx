@@ -2,6 +2,7 @@ import { NavLink } from "react-router-dom";
 import { Building2, Home, LayoutDashboard, ReceiptIndianRupee, Sparkles, UserCircle2, Zap, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "./LanguageProvider";
+import { NivasaLogo } from "./NivasaLogo";
 
 interface Props { collapsed: boolean; }
 
@@ -23,9 +24,7 @@ export function AppSidebar({ collapsed }: Props) {
       )}
     >
       <div className="flex h-16 items-center gap-2.5 px-5">
-        <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg">
-          <img src="/nivasa-brand.png" alt="Nivasa Logo" className="h-full w-full object-contain" />
-        </div>
+        <NivasaLogo className="h-10 w-10 rounded-lg" />
         {!collapsed && (
           <div className="leading-tight">
             <div className="text-xl font-semibold tracking-tight">Nivasa</div>
