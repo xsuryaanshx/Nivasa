@@ -56,9 +56,17 @@ export default function Rooms() {
   useEffect(() => {
     if (!loading) {
       setTimeout(() => {
-        const saved = sessionStorage.getItem('roomsScroll');
-        if (saved) {
-          window.scrollTo({ top: parseInt(saved, 10), behavior: 'instant' });
+        const lastPath = sessionStorage.getItem('lastPath');
+        const isFromRoomDetail = lastPath && /^\/app\/rooms\/[a-zA-Z0-9_-]+$/.test(lastPath);
+
+        if (isFromRoomDetail) {
+          const saved = sessionStorage.getItem('roomsScroll');
+          if (saved) {
+            window.scrollTo({ top: parseInt(saved, 10), behavior: 'instant' });
+          }
+        } else {
+          window.scrollTo({ top: 0, behavior: 'instant' });
+          sessionStorage.setItem('roomsScroll', '0');
         }
       }, 50); // slight delay to ensure DOM layout is complete
 
