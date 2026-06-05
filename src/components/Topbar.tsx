@@ -67,7 +67,7 @@ export function Topbar({ collapsed, onToggle, onOpenPalette, onOpenMobileDrawer 
           </button>
 
           <div className="flex shrink-0 items-center md:hidden pr-2">
-            <img src={logoSrc} alt="Nivasa" className="h-12 w-auto object-contain" />
+            <img src={logoSrc} alt="Nivasa" className="h-14 w-auto object-contain" />
           </div>
 
           <button

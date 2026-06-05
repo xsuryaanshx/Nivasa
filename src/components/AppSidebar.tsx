@@ -24,7 +24,7 @@ export function AppSidebar({ collapsed }: Props) {
       )}
     >
       <div className="flex h-16 items-center gap-2.5 px-5">
-        <NivasaLogo className="h-12 w-12 rounded-lg" />
+        <NivasaLogo className="h-14 w-14 rounded-lg" />
         {!collapsed && (
           <div className="leading-tight">
             <div className="text-xl font-semibold tracking-tight">Nivasa</div>
