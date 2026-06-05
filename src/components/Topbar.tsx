@@ -43,7 +43,7 @@ export function Topbar({ collapsed, onToggle, onOpenPalette, onOpenMobileDrawer 
     loadCount();
   }, []);
 
-  const logoSrc = mounted && resolvedTheme === "dark" ? "/logo-dark.png" : "/logo.png";
+  const logoSrc = mounted && resolvedTheme === "dark" ? "/logo-dark-v2.png" : "/logo-v2.png";
 
   return (
     <>
