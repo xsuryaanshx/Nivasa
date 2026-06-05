@@ -22,18 +22,21 @@ export function EditProfileModal({ open, onClose }: { open: boolean; onClose: ()
     try {
       setLoading(true);
       const api = (window as any).nivasaApi;
-      if (api?.auth?.updateProfile) {
-        await api.auth.updateProfile({ full_name: name });
-        toast.success("Profile updated successfully!");
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
-      } else {
-        localStorage.setItem("nivasa_user_name", name);
-        toast.success("Profile updated (local)!");
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
+      if (api?.auth) {
+        const session = await api.auth.getSession();
+        if (session?.user) {
+          await api.auth.updateProfile({ full_name: name });
+          toast.success("Profile updated successfully!");
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+        } else {
+          localStorage.setItem("nivasa_user_name", name);
+          toast.success("Profile updated (local)!");
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+        }
       }
       onClose();
     } catch (e: any) {
