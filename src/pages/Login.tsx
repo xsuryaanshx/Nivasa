@@ -75,7 +75,7 @@ export default function Login() {
       >
         <div className="mb-7 flex items-center gap-3">
           <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-xl">
-            <img src="/nivasa-brand.png" alt="Nivasa Logo" className="h-full w-full object-contain" />
+            <img src="/nivasa-brand-v2.png" alt="Nivasa Logo" className="h-full w-full object-contain" />
           </div>
           <div>
             <div className="text-xl font-bold tracking-tight">Nivasa</div>
