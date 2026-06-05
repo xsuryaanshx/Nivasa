@@ -13,20 +13,15 @@ export const SplashScreen = ({ isReady, onFinished }: SplashScreenProps) => {
   const [isExiting, setIsExiting] = useState(false);
 
   useEffect(() => {
-    // Line 1 appears after a brief moment
-    const line1Timer = setTimeout(() => {
-      setShowLine1(true);
-    }, 500);
+    // Line 1 appears instantly
+    setShowLine1(true);
 
-    // Line 2 appears 2 seconds after line 1
+    // Line 2 appears 0.75s after line 1
     const line2Timer = setTimeout(() => {
       setShowLine2(true);
-    }, 2500);
+    }, 750);
 
-    return () => {
-      clearTimeout(line1Timer);
-      clearTimeout(line2Timer);
-    };
+    return () => clearTimeout(line2Timer);
   }, []);
 
   useEffect(() => {
@@ -35,7 +30,7 @@ export const SplashScreen = ({ isReady, onFinished }: SplashScreenProps) => {
       const timer = setTimeout(() => {
         setIsExiting(true);
         setTimeout(onFinished, 1000);
-      }, 1500);
+      }, 1000);
       return () => clearTimeout(timer);
     }
   }, [showLine2, isReady, onFinished]);
