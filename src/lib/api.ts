@@ -164,10 +164,132 @@ async function addBuilding(input: { name: string; address: string; total_rooms?:
   }
 }
 
+async function adjustBuildingRooms(buildingId: string, targetCount: number) {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    // Mock mode
+    const currentRooms = mockRooms.filter(r => r.buildingId === buildingId);
+    const currentCount = currentRooms.length;
+    if (targetCount === currentCount) return;
+
+    if (targetCount > currentCount) {
+      const diff = targetCount - currentCount;
+      const b = mockBuildings.find(x => x.id === buildingId);
+      const existingNums = currentRooms
+        .map(r => parseInt(r.number.replace(/\D/g, ""), 10))
+        .filter(n => !isNaN(n));
+      let nextNum = existingNums.length > 0 ? Math.max(...existingNums) + 1 : 1;
+      
+      for (let i = 0; i < diff; i++) {
+        mockRooms.push({
+          id: `r${Date.now()}_${i}`,
+          number: `${nextNum++}`,
+          buildingId,
+          buildingName: b?.name || "Unknown",
+          rent: 0,
+          status: "vacant",
+          tenants: [],
+          prevReading: 0,
+          currReading: 0,
+          ratePerUnit: 8.5,
+          history: [],
+          pastTenants: []
+        });
+      }
+    } else {
+      const diff = currentCount - targetCount;
+      const vacantRooms = currentRooms.filter(r => r.status === "vacant" && (!r.tenants || r.tenants.length === 0));
+      if (vacantRooms.length < diff) {
+        throw new Error(`Cannot reduce room count to ${targetCount} because some rooms are occupied. Please vacate rooms first.`);
+      }
+      const roomsToDelete = vacantRooms.slice(0, diff);
+      roomsToDelete.forEach(r => {
+        const idx = mockRooms.findIndex(mr => mr.id === r.id);
+        if (idx !== -1) mockRooms.splice(idx, 1);
+      });
+    }
+    // Also update mockBuildings.rooms count
+    const b = mockBuildings.find(x => x.id === buildingId);
+    if (b) {
+      b.rooms = targetCount;
+    }
+    return;
+  }
+
+  // Supabase mode
+  const user_id = await requireAuthUserId();
+  const { data: units, error: unitsError } = await supabase
+    .from('units')
+    .select('id, name, status')
+    .eq('building_id', buildingId);
+  
+  if (unitsError) throw unitsError;
+
+  const currentCount = units.length;
+  if (targetCount === currentCount) return;
+
+  if (targetCount > currentCount) {
+    const diff = targetCount - currentCount;
+    const existingNums = units
+      .map(u => parseInt(u.name.replace(/\D/g, ""), 10))
+      .filter(n => !isNaN(n));
+    let nextNum = existingNums.length > 0 ? Math.max(...existingNums) + 1 : 1;
+    const unitsToInsert = Array.from({ length: diff }).map((_, i) => ({
+      building_id: buildingId,
+      name: `${nextNum + i}`,
+      rent_amount: 0,
+      status: "vacant",
+      user_id,
+    }));
+    const { error } = await supabase.from('units').insert(unitsToInsert);
+    if (error) throw error;
+  } else {
+    const diff = currentCount - targetCount;
+    
+    // Check tenants in units
+    const { data: tenants, error: tenantsError } = await supabase
+      .from('tenants')
+      .select('room_id, status')
+      .eq('building_id', buildingId)
+      .neq('status', 'vacated');
+    
+    if (tenantsError) throw tenantsError;
+
+    const occupiedUnitIds = new Set((tenants || []).map(t => t.room_id));
+    const vacantUnits = units.filter(u => u.status !== 'occupied' && !occupiedUnitIds.has(u.id));
+
+    if (vacantUnits.length < diff) {
+      throw new Error(`Cannot reduce room count to ${targetCount} because some rooms are occupied. Please vacate rooms first.`);
+    }
+
+    const unitsToDelete = vacantUnits.slice(0, diff).map(u => u.id);
+    
+    // Clean up payments/tenants for deleted vacant units
+    await supabase.from('payments').delete().in('unit_id', unitsToDelete);
+    await supabase.from('tenants').delete().in('room_id', unitsToDelete);
+    const { error } = await supabase.from('units').delete().in('id', unitsToDelete);
+    if (error) throw error;
+  }
+}
+
 async function updateBuilding(id: string, updates: any) {
   try {
     const payload = { ...updates };
+    const targetRooms = payload.total_rooms;
     delete payload.total_rooms; // Not a column in the buildings table
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      const b = mockBuildings.find(x => x.id === id);
+      if (b) {
+        if (payload.name !== undefined) b.name = payload.name;
+        if (payload.address !== undefined) b.address = payload.address;
+      }
+      if (targetRooms !== undefined) {
+        await adjustBuildingRooms(id, targetRooms);
+      }
+      return;
+    }
 
     if (Object.keys(payload).length > 0) {
       const { error } = await supabase
@@ -176,11 +298,43 @@ async function updateBuilding(id: string, updates: any) {
         .eq('id', id);
       if (error) throw error;
     }
+
+    if (targetRooms !== undefined) {
+      await adjustBuildingRooms(id, targetRooms);
+    }
   } catch (error) {
     console.error("Error in updateBuilding:", error);
     throw error;
   }
 }
+
+async function deleteRoom(id: string) {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      const idx = mockRooms.findIndex(r => r.id === id);
+      if (idx !== -1) {
+        mockRooms.splice(idx, 1);
+      }
+      const cleanPayments = mockPayments.filter(p => p.roomId !== id);
+      mockPayments.length = 0;
+      mockPayments.push(...cleanPayments);
+      return true;
+    }
+
+    // Supabase mode
+    await supabase.from('payments').delete().eq('unit_id', id);
+    await supabase.from('tenants').delete().eq('room_id', id);
+    
+    const { error } = await supabase.from('units').delete().eq('id', id);
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error("Error in deleteRoom:", error);
+    throw error;
+  }
+}
+
 
 async function deleteBuilding(id: string) {
   try {
@@ -818,6 +972,7 @@ export const nivasaApi = {
   addRoom,
   addUnit,
   updateRoom,
+  deleteRoom,
   updateTenant,
   addTenant,
   removeTenant,

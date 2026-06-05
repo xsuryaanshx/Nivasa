@@ -1,10 +1,9 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { MoreVertical, Search, X, Moon, Sun, LogOut, Settings, Globe, Languages } from "lucide-react";
+import { MoreVertical, Search, X, Moon, Sun, LogOut, Settings, Languages } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "next-themes";
-import { useCurrency, type CurrencyCode } from "@/lib/currency";
 import { useLanguage } from "./LanguageProvider";
 import { cn } from "@/lib/utils";
 
@@ -17,7 +16,6 @@ type MobileDrawerMenuProps = {
 export function MobileDrawerMenu({ open, onOpenChange, onOpenPalette }: MobileDrawerMenuProps) {
   const { user, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
-  const { currency, setCurrency } = useCurrency();
   const { language, setLanguage, t } = useLanguage();
   const navigate = useNavigate();
 
@@ -105,15 +103,7 @@ export function MobileDrawerMenu({ open, onOpenChange, onOpenPalette }: MobileDr
                 label={`Lang: ${language === "en" ? "English" : "हिंदी"}`}
                 onClick={() => setLanguage(language === "en" ? "hi" : "en")}
               />
-              <MenuItem
-                icon={Globe}
-                label={`${t("currency")}: ${currency.code}`}
-                onClick={() => {
-                  const codes: CurrencyCode[] = ["INR", "USD", "EUR", "GBP", "AED"];
-                  const nextIdx = (codes.indexOf(currency.code) + 1) % codes.length;
-                  setCurrency(codes[nextIdx]);
-                }}
-              />
+
               <MenuItem
                 icon={Settings}
                 label={t("settings")}

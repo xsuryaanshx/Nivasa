@@ -1,6 +1,6 @@
 import { Command } from "cmdk";
 import {
-  ArrowRight, Building2, CheckCircle2, Coins, CornerDownLeft, Home, Keyboard,
+  ArrowRight, Building2, CheckCircle2, CornerDownLeft, Home, Keyboard,
   LayoutDashboard, Moon, Plus, ReceiptIndianRupee, Search, Sun, User, UserPlus, Zap,
 } from "lucide-react";
 import { forwardRef, useEffect, useMemo, useState, type ComponentPropsWithoutRef, type ElementRef, type ReactNode } from "react";
@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { useTheme } from "next-themes";
 import { rooms as mockRooms, buildings as mockBuildings } from "@/lib/mockData";
-import { CURRENCIES, useCurrency, type CurrencyCode } from "@/lib/currency";
+
 import { toast } from "sonner";
 
 interface Props {
@@ -21,7 +21,6 @@ export function CommandPalette({ open, onOpenChange, onShowHelp }: Props) {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const { theme, setTheme } = useTheme();
-  const { currency, setCurrency } = useCurrency();
 
   const [roomsList, setRoomsList] = useState<any[]>(mockRooms);
   const [buildingsList, setBuildingsList] = useState<any[]>(mockBuildings);
@@ -136,19 +135,7 @@ export function CommandPalette({ open, onOpenChange, onShowHelp }: Props) {
                   )}
                 </Command.Group>
 
-                <Command.Group heading={`Currency · ${currency.code}`}>
-                  {(Object.keys(CURRENCIES) as CurrencyCode[]).map(code => {
-                    const c = CURRENCIES[code];
-                    return (
-                      <Item key={code} value={`currency ${code} ${c.label}`}
-                        onSelect={() => { setCurrency(code); close(); toast.success(`Currency set to ${c.code}`, { description: c.label }); }}
-                        icon={<Coins className="h-4 w-4" />}
-                        right={<span className="font-mono text-xs text-muted-foreground">{c.symbol}</span>}>
-                        {c.code} <span className="text-muted-foreground">· {c.label}</span>
-                      </Item>
-                    );
-                  })}
-                </Command.Group>
+
 
                 {roomsList.length > 0 && (
                   <Command.Group heading="Rooms">

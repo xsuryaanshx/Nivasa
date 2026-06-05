@@ -18,7 +18,6 @@ import {
   Sparkles,
   Crown,
   Check,
-  Coins,
   Languages,
   X,
   Moon,
@@ -34,7 +33,6 @@ import { useTheme } from "next-themes";
 import { SecurityModal } from "@/components/SecurityModal";
 import { EditProfileModal } from "@/components/EditProfileModal";
 import { NotificationsPanel } from "@/components/NotificationsPanel";
-import { CURRENCIES, useCurrency, type CurrencyCode } from "@/lib/currency";
 import { useLanguage } from "@/components/LanguageProvider";
 import { cn } from "@/lib/utils";
 import type { Language } from "@/lib/translations";
@@ -231,7 +229,6 @@ const LANGUAGE_OPTIONS: { code: Language; label: string; native: string }[] = [
 
 function LanguageRegionPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { language, setLanguage } = useLanguage();
-  const { currency, setCurrency } = useCurrency();
 
   if (typeof document === "undefined") return null;
 
@@ -263,7 +260,7 @@ function LanguageRegionPanel({ open, onClose }: { open: boolean; onClose: () => 
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-foreground">Language & Region</p>
-                    <p className="text-xs text-muted-foreground">Language, currency & display</p>
+                    <p className="text-xs text-muted-foreground">Language preference</p>
                   </div>
                 </div>
                 <button
@@ -306,40 +303,7 @@ function LanguageRegionPanel({ open, onClose }: { open: boolean; onClose: () => 
                   </div>
                 </div>
 
-                {/* Currency */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                    <Coins className="h-3.5 w-3.5" />
-                    Display Currency
-                  </div>
-                  <div className="grid grid-cols-1 gap-1.5 max-h-56 overflow-y-auto pr-1">
-                    {(Object.keys(CURRENCIES) as CurrencyCode[]).map((code) => {
-                      const c = CURRENCIES[code];
-                      const active = currency.code === code;
-                      return (
-                        <button
-                          key={code}
-                          onClick={() => setCurrency(code)}
-                          className={cn(
-                            "flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition-all",
-                            active
-                              ? "border-brand bg-brand/5 shadow-soft"
-                              : "border-border/50 bg-secondary/20 hover:bg-secondary/50",
-                          )}
-                        >
-                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-secondary text-sm font-bold tnum">
-                            {c.symbol}
-                          </span>
-                          <span className="flex-1">
-                            <span className="block text-sm font-semibold text-foreground">{c.code}</span>
-                            <span className="block text-xs text-muted-foreground">{c.label}</span>
-                          </span>
-                          {active && <Check className="h-4 w-4 text-brand shrink-0" />}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
+
 
                 <button
                   onClick={onClose}
@@ -399,7 +363,7 @@ export default function Profile() {
     {
       icon: Globe,
       label: "Language & Region",
-      desc: "Language, currency, timezone",
+      desc: "Language preference",
       onClick: () => setLanguageOpen(true),
       accent: "text-cyan-400",
       bg: "bg-cyan-500/10",
