@@ -15,6 +15,7 @@ import RoomDetails from "./pages/RoomDetails.tsx";
 import Payments from "./pages/Payments.tsx";
 import Register from "./pages/Register.tsx";
 import Profile from "./pages/Profile.tsx";
+import Expenses from "./pages/Expenses.tsx";
 import { AppLayout } from "./components/AppLayout.tsx";
 import { ThemeProvider } from "./components/ThemeProvider.tsx";
 import BuildingDetails from "./pages/BuildingDetails.tsx";
@@ -63,6 +64,7 @@ const App = () => {
                   <Route path="rooms/:id" element={<RoomDetails />} />
                   <Route path="payments" element={<Payments />} />
                   <Route path="profile" element={<Profile />} />
+                  <Route path="expenses" element={<Expenses />} />
                 </Route>
                 <Route path="*" element={<NotFound />} />
               </Routes>

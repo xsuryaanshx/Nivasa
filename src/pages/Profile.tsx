@@ -115,6 +115,13 @@ const APP_FEATURES = [
     bg: "bg-rose-500/10",
   },
   {
+    icon: Banknote,
+    label: "Expenses",
+    desc: "Manage add-on costs",
+    color: "text-emerald-500",
+    bg: "bg-emerald-500/10",
+  },
+  {
     icon: Globe,
     label: "Multi-language",
     desc: "Supports EN, HI, and more",
@@ -523,6 +530,7 @@ export default function Profile() {
                     if (feat.label === "Buildings") navigate("/app/buildings");
                     else if (feat.label === "Rooms") navigate("/app/rooms");
                     else if (feat.label === "Payments") navigate("/app/payments");
+                    else if (feat.label === "Expenses") navigate("/app/expenses");
                     else if (feat.label === "Analytics") navigate("/app");
                     else if (feat.label === "Electricity") navigate("/app"); 
                     else if (feat.label === "Multi-language") setLanguageOpen(true);

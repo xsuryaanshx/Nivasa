@@ -12,10 +12,12 @@ import { MagneticButton } from "@/components/MagneticButton";
 import { AddPaymentModal } from "@/components/AddPaymentModal";
 import { AddTenantModal } from "@/components/AddTenantModal";
 import { ElectricityBillingModal } from "@/components/ElectricityBillingModal";
+import { TenantExpensesModal } from "@/components/TenantExpensesModal";
 import { Money } from "@/components/Money";
 import { type Room } from "@/lib/mockData";
 import { normalizeOccupancyTiers, type OccupancyPriceTier } from "@/lib/rentByOccupancy";
 import { subscribeTenants } from "@/lib/tenantStore";
+import { getTenantExpenses, getCustomExpenses } from "@/lib/expensesStore";
 import { useCurrency, formatMoney, formatNumeric } from "@/lib/currency";
 import { openWhatsApp } from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
@@ -39,6 +41,7 @@ export default function RoomDetails() {
   const [addOpen, setAddOpen] = useState(false);
   const [tenantOpen, setTenantOpen] = useState(false);
   const [electricityOpen, setElectricityOpen] = useState(false);
+  const [expensesTenant, setExpensesTenant] = useState<any>(null);
   const [savingElectricity, setSavingElectricity] = useState(false);
   const [tierRows, setTierRows] = useState<{ members: string; amount: string }[]>([]);
   const [pricingSaving, setPricingSaving] = useState(false);
@@ -278,6 +281,23 @@ export default function RoomDetails() {
   // New helper to build invoice message for a specific tenant
   const buildInvoiceMessageForTenant = (tenant: any) => {
     const monthLabel = new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" });
+    
+    const activeExpenseIds = getTenantExpenses(tenant.id);
+    const globalExpenses = getCustomExpenses();
+    const activeExpenses = globalExpenses.filter(e => activeExpenseIds.includes(e.id));
+    
+    let totalAddons = 0;
+    const addonLines: string[] = [];
+    if (activeExpenses.length > 0) {
+      addonLines.push(``, `*Add-ons:*`);
+      activeExpenses.forEach(exp => {
+        totalAddons += exp.cost;
+        addonLines.push(`• ${exp.name}: ${formatMoney(exp.cost, currency, { decimals: 0 })}`);
+      });
+    }
+
+    const finalTotal = totalDue + totalAddons;
+
     return [
       `*Nivasa · Invoice — ${monthLabel}*`,
       ``,
@@ -288,8 +308,9 @@ export default function RoomDetails() {
       `• Electricity meter: ${startReading.toLocaleString()} → ${endReading.toLocaleString()} (${used} units)`,
       `• Rate / unit: ${currency.symbol}${formatNumeric(pricePerUnit, currency, 2)}`,
       `• Electricity total: ${formatMoney(cost, currency, { decimals: 2 })}`,
+      ...addonLines,
       ``,
-      `*Total due: ${formatMoney(totalDue, currency, { decimals: 2 })}*`,
+      `*Total due: ${formatMoney(finalTotal, currency, { decimals: 2 })}*`,
       ``,
       `Reply here if you have any questions. Thanks!`,
     ].join("\n");
@@ -388,6 +409,14 @@ export default function RoomDetails() {
                     >
                       <Phone className="h-4 w-4" />
                     </a>
+                    <button
+                      type="button"
+                      onClick={() => setExpensesTenant(t)}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-emerald-500 hover:bg-emerald-500/10 transition-colors"
+                      title="Add-ons / Expenses"
+                    >
+                      <Banknote className="h-4 w-4" />
+                    </button>
                     <button
                       type="button"
                       onClick={() => sendInvoiceToTenant(t)}
@@ -675,6 +704,7 @@ export default function RoomDetails() {
 
       <AddPaymentModal open={addOpen} onClose={() => setAddOpen(false)} defaultRoomId={room.id} />
       <AddTenantModal open={tenantOpen} onClose={() => setTenantOpen(false)} defaultRoomId={room.id} />
+      <TenantExpensesModal open={!!expensesTenant} tenant={expensesTenant} onClose={() => setExpensesTenant(null)} />
       <ElectricityBillingModal
         open={electricityOpen}
         onClose={() => setElectricityOpen(false)}
