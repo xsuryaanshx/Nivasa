@@ -6,7 +6,6 @@ const groups: { title: string; items: { keys: string[]; label: string }[] }[] = 
     items: [
       { keys: ["⌘", "K"], label: "Open command palette" },
       { keys: ["?"], label: "Show this shortcuts panel" },
-      { keys: ["F"], label: "Toggle focus mode" },
       { keys: ["Esc"], label: "Close any modal" },
     ],
   },

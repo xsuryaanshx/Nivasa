@@ -1,6 +1,6 @@
 import { Command } from "cmdk";
 import {
-  ArrowRight, Building2, CheckCircle2, Coins, CornerDownLeft, Focus, Home, Keyboard,
+  ArrowRight, Building2, CheckCircle2, Coins, CornerDownLeft, Home, Keyboard,
   LayoutDashboard, Moon, Plus, ReceiptIndianRupee, Search, Sun, User, UserPlus, Zap,
 } from "lucide-react";
 import { forwardRef, useEffect, useMemo, useState, type ComponentPropsWithoutRef, type ElementRef, type ReactNode } from "react";
@@ -14,11 +14,10 @@ import { toast } from "sonner";
 interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  onToggleFocus?: () => void;
   onShowHelp?: () => void;
 }
 
-export function CommandPalette({ open, onOpenChange, onToggleFocus, onShowHelp }: Props) {
+export function CommandPalette({ open, onOpenChange, onShowHelp }: Props) {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const { theme, setTheme } = useTheme();
@@ -126,11 +125,7 @@ export function CommandPalette({ open, onOpenChange, onToggleFocus, onShowHelp }
                   <Item value="mark all paid" onSelect={() => { close(); toast.success("Marked latest pending as paid"); }} icon={<CheckCircle2 className="h-4 w-4" />}>
                     Mark latest as paid
                   </Item>
-                  {onToggleFocus && (
-                    <Item value="focus mode toggle" onSelect={() => { close(); onToggleFocus(); }} icon={<Focus className="h-4 w-4" />} shortcut="F">
-                      Toggle focus mode
-                    </Item>
-                  )}
+
                   <Item value="theme dark light" onSelect={() => { setTheme(theme === "dark" ? "light" : "dark"); }} icon={theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}>
                     Switch to {theme === "dark" ? "light" : "dark"} mode
                   </Item>

@@ -1,6 +1,5 @@
-import { Bell, Focus, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Search } from "lucide-react";
+import { Bell, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Search } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
-import { useFocusMode } from "./FocusModeProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "./LanguageProvider";
@@ -16,7 +15,6 @@ interface Props {
 }
 
 export function Topbar({ collapsed, onToggle, onOpenPalette, onOpenMobileDrawer }: Props) {
-  const { focus, toggle } = useFocusMode();
   const { user, signOut } = useAuth();
   const { t } = useLanguage();
   const [notifOpen, setNotifOpen] = useState(false);
@@ -81,24 +79,7 @@ export function Topbar({ collapsed, onToggle, onOpenPalette, onOpenMobileDrawer 
 
           {/* Desktop Right Section */}
           <div className="ml-auto hidden md:flex items-center gap-2">
-            <button
-              onClick={toggle}
-              aria-label="Toggle focus mode"
-              title={`${t("focus_mode")} (F)`}
-              className={cn(
-                "h-9 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium transition-colors hidden sm:inline-flex",
-                focus
-                  ? "border-foreground/20 bg-foreground text-background hover:opacity-90"
-                  : "border-border bg-card text-foreground/80 hover:bg-secondary",
-              )}
-            >
-              <Focus className="h-3.5 w-3.5" />
-              <span>{t("focus")}</span>
-              <kbd className={cn(
-                "ml-1 rounded px-1 py-0.5 font-mono text-[10px]",
-                focus ? "bg-background/20 text-background/80" : "bg-secondary text-muted-foreground",
-              )}>F</kbd>
-            </button>
+
 
             {/* Bell — opens notifications panel */}
             <button
