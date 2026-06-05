@@ -25,6 +25,7 @@ import {
   Sun,
   Monitor,
   Palette,
+  Banknote,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
