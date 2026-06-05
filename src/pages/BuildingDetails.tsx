@@ -208,7 +208,7 @@ export default function BuildingDetails() {
                   <label className="text-xs font-medium text-muted-foreground">{t("room_number")}</label>
                   <input
                     type="text"
-                    placeholder="e.g. 101"
+                    placeholder="e.g. 101 or Master Bedroom"
                     value={newRoom.number}
                     onChange={(e) => setNewRoom({ ...newRoom, number: e.target.value })}
                     className="w-full rounded-xl border border-border bg-background px-4 py-2 text-sm focus:border-brand focus:ring-1 focus:ring-brand outline-none"

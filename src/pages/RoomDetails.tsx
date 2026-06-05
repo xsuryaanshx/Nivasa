@@ -1,6 +1,6 @@
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
-  ArrowLeft, BellRing, CheckCircle2, IdCard, MessageCircle, Phone, Plus, Save, Send, UserPlus, Zap, Calendar, Banknote
+  ArrowLeft, BellRing, CheckCircle2, IdCard, MessageCircle, Phone, Plus, Save, Send, UserPlus, Zap, Calendar, Banknote, Edit2
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
@@ -102,7 +102,7 @@ export default function RoomDetails() {
       const now = new Date();
       const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
       await api.saveElectricityReading({
-        room_id: room.id,
+        room_number: "Room Name / Number",
         month,
         prev_reading: Number(startReading) || 0,
         curr_reading: Number(endReading) || 0,
@@ -320,8 +320,10 @@ export default function RoomDetails() {
             </div>
           ) : (
             <div className="flex items-center gap-2 group cursor-pointer" onClick={() => { setEditNameValue(room.number); setIsEditingName(true); }}>
-              <span>Room {room.number}</span>
-              <span className="opacity-0 group-hover:opacity-100 rounded bg-secondary px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground transition-opacity">Edit</span>
+              <span>{room.number}</span>
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors" title="Edit Name">
+                <Edit2 className="h-3.5 w-3.5" />
+              </div>
             </div>
           )
         }
