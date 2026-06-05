@@ -15,7 +15,7 @@ export const SplashScreen = ({ isReady, onFinished }: SplashScreenProps) => {
     // Optimized duration for 3 words (YOUR, PROPERTY, SIMPLIFIED)
     const timer = setTimeout(() => {
       setAnimationFinished(true);
-    }, 2000);
+    }, 4500);
 
     return () => clearTimeout(timer);
   }, []);
@@ -44,7 +44,7 @@ export const SplashScreen = ({ isReady, onFinished }: SplashScreenProps) => {
       >
         <div className="flex items-center justify-center w-full h-full">
           <GooeyText
-            texts={["YOUR", "PROPERTIES", "SIMPLIFIED"]}
+            texts={["YOUR", "PROPERTY", "SIMPLIFIED"]}
             morphTime={0.8}
             cooldownTime={0.5}
             className="font-bold"
