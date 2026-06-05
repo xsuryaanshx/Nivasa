@@ -43,7 +43,7 @@ export function Topbar({ collapsed, onToggle, onOpenPalette, onOpenMobileDrawer 
     loadCount();
   }, []);
 
-  const logoSrc = mounted && resolvedTheme === "dark" ? "/logo-dark.png" : "/logo.jpg";
+  const logoSrc = mounted && resolvedTheme === "dark" ? "/logo-dark.png" : "/logo.png";
 
   return (
     <>
@@ -67,7 +67,7 @@ export function Topbar({ collapsed, onToggle, onOpenPalette, onOpenMobileDrawer 
           </button>
 
           <div className="flex shrink-0 items-center md:hidden pr-2">
-            <img src={logoSrc} alt="Nivasa" className="h-9 w-auto object-contain" />
+            <img src={logoSrc} alt="Nivasa" className="h-12 w-auto object-contain" />
           </div>
 
           <button

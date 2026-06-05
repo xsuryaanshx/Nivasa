@@ -55,7 +55,7 @@ export default function Register() {
         className="relative z-10 w-full max-w-[420px] glass-strong rounded-2xl p-8 shadow-float"
       >
         <div className="mb-7 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl">
+          <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl">
             <img src="/nivasa-brand.png" alt="Nivasa Logo" className="h-full w-full object-contain" />
           </div>
           <div>
