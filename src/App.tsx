@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -19,6 +19,7 @@ import Expenses from "./pages/Expenses.tsx";
 import { AppLayout } from "./components/AppLayout.tsx";
 import { ThemeProvider } from "./components/ThemeProvider.tsx";
 import BuildingDetails from "./pages/BuildingDetails.tsx";
+import { SplashScreen } from "./components/SplashScreen.tsx";
 
 const queryClient = new QueryClient();
 
@@ -37,10 +38,18 @@ const AnalyticsTracker = () => {
 };
 
 const App = () => {
+  const [showSplash, setShowSplash] = useState(true);
+
   return (
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
+          {showSplash && (
+            <SplashScreen 
+              isReady={true} 
+              onFinished={() => setShowSplash(false)} 
+            />
+          )}
           <Toaster />
           <Sonner />
           
