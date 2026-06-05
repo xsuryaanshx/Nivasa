@@ -319,12 +319,21 @@ async function getRooms(): Promise<Room[]> {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return mockRooms;
 
-    const { data, error } = await supabase
+    const { data: units, error } = await supabase
       .from('units')
-      .select('*, buildings(name), tenants(*)');
+      .select('*, buildings(name)');
     if (error) throw error;
 
-    return (data || []).map(mapUnitToRoom);
+    const { data: tenants } = await supabase
+      .from('tenants')
+      .select('*');
+
+    const unitsWithTenants = (units || []).map(u => ({
+      ...u,
+      tenants: tenants ? tenants.filter((t: any) => t.room_id === u.id) : []
+    }));
+
+    return unitsWithTenants.map(mapUnitToRoom);
   } catch (error) {
     console.error("Error in getRooms:", error);
     throw error;
@@ -336,16 +345,26 @@ async function getRoomById(id: string): Promise<Room | null> {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return mockRooms.find(r => r.id === id) || null;
 
-    const { data, error } = await supabase
+    const { data: unit, error } = await supabase
       .from('units')
-      .select('*, buildings(name), tenants(*)')
+      .select('*, buildings(name)')
       .eq('id', id)
       .single();
     
     if (error) throw error;
-    if (!data) return null;
+    if (!unit) return null;
 
-    return mapUnitToRoom(data);
+    const { data: tenants } = await supabase
+      .from('tenants')
+      .select('*')
+      .eq('room_id', id);
+
+    const unitWithTenants = {
+      ...unit,
+      tenants: tenants || []
+    };
+
+    return mapUnitToRoom(unitWithTenants);
   } catch (error) {
     console.error("Error in getRoomById:", error);
     return null;
