@@ -38,10 +38,21 @@ const AnalyticsTracker = () => {
 };
 
 const App = () => {
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(() => {
+    try {
+      return !sessionStorage.getItem("nivasa:splash-shown");
+    } catch {
+      return true;
+    }
+  });
 
   const handleSplashFinished = useCallback(() => {
     setShowSplash(false);
+    try {
+      sessionStorage.setItem("nivasa:splash-shown", "true");
+    } catch (e) {
+      console.warn("sessionStorage is not available:", e);
+    }
   }, []);
 
   return (
