@@ -1,7 +1,7 @@
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { BellRing, Building2, CheckCircle2, ArrowUpRight, MessageCircle, Phone } from "lucide-react";
-import { useRef, type MouseEvent } from "react";
+import { useRef, type MouseEvent, useState } from "react";
 import { Sparkline } from "./Sparkline";
 import { StatusPill } from "./StatusPill";
 import { Money } from "./Money";
@@ -9,6 +9,7 @@ import type { Room } from "@/lib/mockData";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { openWhatsApp } from "@/lib/whatsapp";
+import { RoomActionSheet } from "./RoomActionSheet";
 
 function initials(name: string) {
   return name.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase();
@@ -51,6 +52,71 @@ export function RoomCard({ room, index }: { room: Room; index: number }) {
     }
   };
 
+  const [showActionSheet, setShowActionSheet] = useState(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const isLongPressedRef = useRef(false);
+  const startPosRef = useRef({ x: 0, y: 0 });
+  const [isPressing, setIsPressing] = useState(false);
+
+  const startPress = (clientX: number, clientY: number) => {
+    isLongPressedRef.current = false;
+    startPosRef.current = { x: clientX, y: clientY };
+    setIsPressing(true);
+
+    timerRef.current = setTimeout(() => {
+      isLongPressedRef.current = true;
+      setIsPressing(false);
+      if (navigator.vibrate) {
+        navigator.vibrate(60);
+      }
+      setShowActionSheet(true);
+    }, 600);
+  };
+
+  const endPress = () => {
+    setIsPressing(false);
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    startPress(touch.clientX, touch.clientY);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    endPress();
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    const dx = Math.abs(touch.clientX - startPosRef.current.x);
+    const dy = Math.abs(touch.clientY - startPosRef.current.y);
+    if (dx > 10 || dy > 10) {
+      endPress();
+    }
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (e.button !== 0) return;
+    startPress(e.clientX, e.clientY);
+  };
+
+  const handleMouseUp = () => {
+    endPress();
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isPressing) return;
+    const dx = Math.abs(e.clientX - startPosRef.current.x);
+    const dy = Math.abs(e.clientY - startPosRef.current.y);
+    if (dx > 10 || dy > 10) {
+      endPress();
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 14 }}
@@ -60,10 +126,26 @@ export function RoomCard({ room, index }: { room: Room; index: number }) {
     >
       <motion.div
         ref={ref}
-        onMouseMove={onMove}
-        onMouseLeave={onLeave}
-        onClick={() => navigate(`/app/rooms/${room.id}`)}
+        onMouseMove={(e) => { onMove(e); handleMouseMove(e); }}
+        onMouseLeave={() => { onLeave(); endPress(); }}
+        onMouseDown={handleMouseDown}
+        onMouseUp={handleMouseUp}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        onTouchMove={handleTouchMove}
+        onClick={(e) => {
+          if (isLongPressedRef.current) {
+            e.preventDefault();
+            e.stopPropagation();
+            isLongPressedRef.current = false;
+            return;
+          }
+          navigate(`/app/rooms/${room.id}`);
+        }}
         style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
+        animate={{
+          scale: isPressing ? 0.96 : 1,
+        }}
         whileHover={{ y: -4 }}
         transition={{ type: "spring", stiffness: 250, damping: 22 }}
         className="group relative cursor-pointer overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-soft transition-shadow duration-300 hover:shadow-elev"
@@ -169,6 +251,11 @@ export function RoomCard({ room, index }: { room: Room; index: number }) {
           </Link>
         </div>
       </motion.div>
+      <RoomActionSheet
+        open={showActionSheet}
+        onClose={() => setShowActionSheet(false)}
+        room={room}
+      />
     </motion.div>
   );
 }

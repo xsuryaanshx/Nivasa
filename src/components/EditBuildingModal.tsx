@@ -14,12 +14,16 @@ interface Props {
 export function EditBuildingModal({ open, onClose, onSuccess, buildingData }: Props) {
   const [name, setName] = useState(buildingData.name);
   const [address, setAddress] = useState(buildingData.address);
+  const [totalRooms, setTotalRooms] = useState<string>(
+    String(buildingData.total_rooms ?? (buildingData as any).rooms ?? 0)
+  );
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setName(buildingData.name);
     setAddress(buildingData.address);
+    setTotalRooms(String(buildingData.total_rooms ?? (buildingData as any).rooms ?? 0));
     setError(null);
   }, [buildingData]);
 
@@ -27,6 +31,11 @@ export function EditBuildingModal({ open, onClose, onSuccess, buildingData }: Pr
     e.preventDefault();
     if (!name.trim() || !address.trim()) {
       setError("Building name and address are required");
+      return;
+    }
+    const roomsCount = parseInt(totalRooms, 10);
+    if (isNaN(roomsCount) || roomsCount < 0) {
+      setError("Total rooms must be a non-negative number");
       return;
     }
     try {
@@ -39,6 +48,7 @@ export function EditBuildingModal({ open, onClose, onSuccess, buildingData }: Pr
       await api.updateBuilding(buildingData.id, {
         name: name.trim(),
         address: address.trim(),
+        total_rooms: roomsCount,
       });
 
       toast.success("Building updated");
@@ -91,6 +101,24 @@ export function EditBuildingModal({ open, onClose, onSuccess, buildingData }: Pr
                 type="text"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
+                className="h-11 w-full rounded-xl border border-border bg-secondary/30 pl-10 pr-4 text-sm outline-none transition-all focus:border-brand focus:ring-4 focus:ring-brand/10"
+              />
+            </div>
+          </div>
+
+          {/* Total Rooms */}
+          <div className="space-y-1.5">
+            <label htmlFor="edit-building-rooms" className="text-xs font-medium text-muted-foreground">
+              Total Rooms <span className="text-destructive">*</span>
+            </label>
+            <div className="relative">
+              <DoorOpen className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <input
+                id="edit-building-rooms"
+                type="number"
+                min={0}
+                value={totalRooms}
+                onChange={(e) => setTotalRooms(e.target.value)}
                 className="h-11 w-full rounded-xl border border-border bg-secondary/30 pl-10 pr-4 text-sm outline-none transition-all focus:border-brand focus:ring-4 focus:ring-brand/10"
               />
             </div>

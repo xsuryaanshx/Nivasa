@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Building2, MoreHorizontal, Plus, ArrowLeft, Users, ReceiptIndianRupee, DoorOpen } from "lucide-react";
@@ -9,6 +9,9 @@ import { toast } from "sonner";
 import { EditBuildingModal } from "@/components/EditBuildingModal";
 import { useLanguage } from "@/components/LanguageProvider";
 import { buildTiersFromBaseAndPerAdditional } from "@/lib/rentByOccupancy";
+import { cn } from "@/lib/utils";
+import { RoomActionSheet } from "@/components/RoomActionSheet";
+import type { Room } from "@/lib/mockData";
 
 export default function BuildingDetails() {
   const { id } = useParams();
@@ -24,6 +27,90 @@ export default function BuildingDetails() {
   const [occPer, setOccPer] = useState("");
   const [occMax, setOccMax] = useState("4");
   const [addingRoom, setAddingRoom] = useState(false);
+
+  // Long press for room table rows
+  const [selectedRoomForSheet, setSelectedRoomForSheet] = useState<Room | null>(null);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const isLongPressedRef = useRef(false);
+  const startPosRef = useRef({ x: 0, y: 0 });
+  const [pressingRoomId, setPressingRoomId] = useState<string | null>(null);
+
+  const startPress = (roomId: string, clientX: number, clientY: number) => {
+    isLongPressedRef.current = false;
+    startPosRef.current = { x: clientX, y: clientY };
+    setPressingRoomId(roomId);
+
+    timerRef.current = setTimeout(() => {
+      isLongPressedRef.current = true;
+      setPressingRoomId(null);
+      if (navigator.vibrate) {
+        navigator.vibrate(60);
+      }
+      const r = data?.units?.find((u: any) => u.id === roomId);
+      if (r) {
+        setSelectedRoomForSheet({
+          id: r.id,
+          number: r.number,
+          buildingId: data.id,
+          buildingName: data.name,
+          rent: r.rent_amount,
+          occupancyPrices: r.occupancy_prices,
+          status: r.status,
+          tenants: r.tenants,
+          prevReading: 0,
+          currReading: 0,
+          ratePerUnit: 0.18,
+          history: [],
+          pastTenants: []
+        });
+      }
+    }, 600);
+  };
+
+  const endPress = () => {
+    setPressingRoomId(null);
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  };
+
+  const handleTouchStart = (roomId: string, e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    startPress(roomId, touch.clientX, touch.clientY);
+  };
+
+  const handleTouchEnd = () => {
+    endPress();
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    const dx = Math.abs(touch.clientX - startPosRef.current.x);
+    const dy = Math.abs(touch.clientY - startPosRef.current.y);
+    if (dx > 10 || dy > 10) {
+      endPress();
+    }
+  };
+
+  const handleMouseDown = (roomId: string, e: React.MouseEvent) => {
+    if (e.button !== 0) return;
+    startPress(roomId, e.clientX, e.clientY);
+  };
+
+  const handleMouseUp = () => {
+    endPress();
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!pressingRoomId) return;
+    const dx = Math.abs(e.clientX - startPosRef.current.x);
+    const dy = Math.abs(e.clientY - startPosRef.current.y);
+    if (dx > 10 || dy > 10) {
+      endPress();
+    }
+  };
+
 
   const fetchData = async () => {
     try {
@@ -310,8 +397,25 @@ export default function BuildingDetails() {
               {data.units.map((room: any) => (
                 <tr
                   key={room.id}
-                  onClick={() => navigate(`/app/rooms/${room.id}`)}
-                  className="hover:bg-secondary/10 transition-colors cursor-pointer"
+                  onMouseDown={(e) => handleMouseDown(room.id, e)}
+                  onMouseUp={handleMouseUp}
+                  onMouseMove={handleMouseMove}
+                  onTouchStart={(e) => handleTouchStart(room.id, e)}
+                  onTouchEnd={handleTouchEnd}
+                  onTouchMove={handleTouchMove}
+                  onClick={(e) => {
+                    if (isLongPressedRef.current) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      isLongPressedRef.current = false;
+                      return;
+                    }
+                    navigate(`/app/rooms/${room.id}`);
+                  }}
+                  className={cn(
+                    "transition-all duration-150 cursor-pointer select-none",
+                    pressingRoomId === room.id ? "bg-secondary/35 scale-[0.99]" : "hover:bg-secondary/10"
+                  )}
                 >
                   <td className="px-6 py-4 font-semibold">{room.name}</td>
                   <td className="px-6 py-4">
@@ -366,6 +470,14 @@ export default function BuildingDetails() {
           </table>
         </div>
       </div>
+      {selectedRoomForSheet && (
+        <RoomActionSheet
+          open={!!selectedRoomForSheet}
+          onClose={() => setSelectedRoomForSheet(null)}
+          room={selectedRoomForSheet}
+          onSuccess={fetchData}
+        />
+      )}
     </motion.div>
   );
 }

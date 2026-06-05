@@ -1,4 +1,4 @@
-import { Bell, LogOut, Menu, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { Bell, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Search } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
@@ -10,10 +10,11 @@ import { useTheme } from "next-themes";
 interface Props {
   collapsed: boolean;
   onToggle: () => void;
+  onOpenPalette: () => void;
   onOpenMobileDrawer?: () => void;
 }
 
-export function Topbar({ collapsed, onToggle, onOpenMobileDrawer }: Props) {
+export function Topbar({ collapsed, onToggle, onOpenPalette, onOpenMobileDrawer }: Props) {
   const { user, signOut } = useAuth();
   const { t } = useLanguage();
   const [notifOpen, setNotifOpen] = useState(false);
@@ -67,7 +68,14 @@ export function Topbar({ collapsed, onToggle, onOpenMobileDrawer }: Props) {
             <img src={logoSrc} alt="Nivasa" className="h-14 w-auto object-contain" />
           </div>
 
-
+          <button
+            onClick={onOpenPalette}
+            className="group flex h-10 flex-1 max-w-md items-center gap-2.5 rounded-xl border border-border bg-secondary/40 px-3.5 text-sm text-muted-foreground transition-colors hover:bg-secondary cursor-pointer"
+          >
+            <Search className="h-4 w-4" />
+            <span className="flex-1 text-left">{t("search")}</span>
+            <kbd className="hidden lg:inline-block rounded bg-background px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">⌘K</kbd>
+          </button>
 
           {/* Desktop Right Section */}
           <div className="ml-auto hidden md:flex items-center gap-2">
