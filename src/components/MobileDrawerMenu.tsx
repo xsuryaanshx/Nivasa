@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { X, Moon, Sun, LogOut, Settings, Globe, Languages } from "lucide-react";
+import { MoreVertical, Search, X, Moon, Sun, LogOut, Settings, Globe, Languages } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "next-themes";
 import { useCurrency, type CurrencyCode } from "@/lib/currency";
@@ -11,9 +11,10 @@ import { cn } from "@/lib/utils";
 type MobileDrawerMenuProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onOpenPalette?: () => void;
 };
 
-export function MobileDrawerMenu({ open, onOpenChange }: MobileDrawerMenuProps) {
+export function MobileDrawerMenu({ open, onOpenChange, onOpenPalette }: MobileDrawerMenuProps) {
   const { user, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
   const { currency, setCurrency } = useCurrency();
@@ -64,8 +65,26 @@ export function MobileDrawerMenu({ open, onOpenChange }: MobileDrawerMenuProps) 
               "fixed left-0 top-0 z-[101] flex h-[100dvh] w-[min(90vw,22rem)] flex-col overflow-hidden rounded-br-[2rem] rounded-tr-[2rem] border-y border-r border-border/60 bg-secondary/95 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] shadow-xl md:hidden",
             )}
           >
-            <div className="flex shrink-0 items-center justify-between p-3">
-              <span className="text-lg font-bold px-3">Menu</span>
+            <div className="flex shrink-0 items-center gap-2 p-3">
+              <button
+                type="button"
+                onClick={() => {
+                  onOpenPalette?.();
+                  close();
+                }}
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-background text-foreground transition-colors hover:bg-muted"
+              >
+                <MoreVertical className="h-5 w-5" />
+              </button>
+              <div className="relative flex min-w-0 flex-1 items-center">
+                <Search className="pointer-events-none absolute left-3.5 h-4 w-4 text-muted-foreground" />
+                <input
+                  type="search"
+                  className="h-11 w-full rounded-full border border-border bg-background pl-10 pr-3 text-sm outline-none ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
+                  placeholder={t("search")}
+                  autoComplete="off"
+                />
+              </div>
               <button
                 type="button"
                 onClick={close}

@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Keyboard } from "lucide-react";
 import { AppSidebar } from "./AppSidebar";
 import { Topbar } from "./Topbar";
+import { CommandPalette } from "./CommandPalette";
 import { CurrencyProvider } from "./CurrencyProvider";
 import { AddTenantModal } from "./AddTenantModal";
 import { ShortcutsHelp } from "./ShortcutsHelp";
@@ -14,6 +15,7 @@ import { LanguageProvider } from "./LanguageProvider";
 
 function AppShell() {
   const [collapsed, setCollapsed] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const [tenantOpen, setTenantOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [electricityOpen, setElectricityOpen] = useState(false);
@@ -62,6 +64,7 @@ function AppShell() {
       <MobileDrawerMenu
         open={mobileDrawerOpen}
         onOpenChange={setMobileDrawerOpen}
+        onOpenPalette={() => setPaletteOpen(true)}
       />
       
       <div 
@@ -77,6 +80,7 @@ function AppShell() {
             <Topbar
               collapsed={collapsed}
               onToggle={() => setCollapsed(v => !v)}
+              onOpenPalette={() => setPaletteOpen(true)}
               onOpenMobileDrawer={() => setMobileDrawerOpen(true)}
             />
 
@@ -99,7 +103,11 @@ function AppShell() {
         </main>
       </div>
 
-
+      <CommandPalette
+        open={paletteOpen}
+        onOpenChange={setPaletteOpen}
+        onShowHelp={() => setHelpOpen(true)}
+      />
 
       <AddTenantModal open={tenantOpen} onClose={() => setTenantOpen(false)} />
       <ElectricityBillingModal open={electricityOpen} onClose={() => setElectricityOpen(false)} />
