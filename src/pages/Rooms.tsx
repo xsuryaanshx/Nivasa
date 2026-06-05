@@ -29,6 +29,17 @@ export default function Rooms() {
     else newParams.set("status", s);
     setSearchParams(newParams);
   };
+
+  const buildingParam = searchParams.get("building") as string | null;
+  const [selectedBuilding, setSelectedBuilding] = useState<string | "all">(buildingParam || "all");
+
+  const handleSetBuilding = (b: string | "all") => {
+    setSelectedBuilding(b);
+    const newParams = new URLSearchParams(searchParams);
+    if (b === "all") newParams.delete("building");
+    else newParams.set("building", b);
+    setSearchParams(newParams);
+  };
   const [roomsList, setRoomsList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -78,12 +89,30 @@ export default function Rooms() {
     }
   }, [loading]);
 
-  const filtered = useMemo(() => roomsList.filter(r => {
-    if (status !== "all" && r.status !== status) return false;
-    if (!q) return true;
-    const hay = `${r.number} ${r.buildingName} ${r.tenants?.map((t: any) => t.name).join(" ") ?? ""}`.toLowerCase();
-    return hay.includes(q.toLowerCase());
-  }), [q, status, roomsList]);
+  const buildingsList = useMemo(() => {
+    const b = new Set(roomsList.map(r => r.buildingName).filter(Boolean));
+    return Array.from(b).sort();
+  }, [roomsList]);
+
+  const filtered = useMemo(() => {
+    let result = roomsList.filter(r => {
+      if (status !== "all" && r.status !== status) return false;
+      if (selectedBuilding !== "all" && r.buildingName !== selectedBuilding) return false;
+      if (!q) return true;
+      const hay = `${r.number} ${r.buildingName} ${r.tenants?.map((t: any) => t.name).join(" ") ?? ""}`.toLowerCase();
+      return hay.includes(q.toLowerCase());
+    });
+
+    const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+    result.sort((a, b) => {
+      const b1 = a.buildingName || '';
+      const b2 = b.buildingName || '';
+      if (b1 !== b2) return collator.compare(b1, b2);
+      return collator.compare(a.number || '', b.number || '');
+    });
+
+    return result;
+  }, [q, status, selectedBuilding, roomsList]);
 
   return (
     <div>
@@ -106,6 +135,18 @@ export default function Rooms() {
             className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
           />
         </div>
+        
+        <select 
+          value={selectedBuilding} 
+          onChange={(e) => handleSetBuilding(e.target.value)}
+          className="h-10 rounded-xl border border-border bg-card px-3 py-1.5 text-sm outline-none focus:border-brand"
+        >
+          <option value="all">All Buildings</option>
+          {buildingsList.map(b => (
+            <option key={b} value={b as string}>{b as string}</option>
+          ))}
+        </select>
+
         <div className="flex items-center gap-1 rounded-xl border border-border bg-card p-1">
           {getFilters(t).map(f => (
             <button
