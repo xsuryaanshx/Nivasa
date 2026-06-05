@@ -71,11 +71,6 @@ function AppShell() {
       
       <div 
         ref={scrollRef}
-        onScroll={(e) => {
-          if (location.pathname === '/app/rooms') {
-            sessionStorage.setItem('roomsScroll', (e.target as HTMLDivElement).scrollTop.toString());
-          }
-        }}
         className="app-cover absolute w-full h-full left-0 top-0 z-10 flex min-w-0 flex-1 flex-col bg-background shadow-2xl overflow-y-auto border border-border/10 pb-[env(safe-area-inset-bottom)]"
       >
         <div className="flex flex-1">

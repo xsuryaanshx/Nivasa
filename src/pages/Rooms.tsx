@@ -64,6 +64,14 @@ export default function Rooms() {
           }
         }
       }, 50); // slight delay to ensure DOM layout is complete
+
+      const appCover = document.querySelector('.app-cover');
+      if (!appCover) return;
+      const handleScroll = (e: Event) => {
+        sessionStorage.setItem('roomsScroll', (e.target as HTMLDivElement).scrollTop.toString());
+      };
+      appCover.addEventListener('scroll', handleScroll, { passive: true });
+      return () => appCover.removeEventListener('scroll', handleScroll);
     }
   }, [loading]);
 

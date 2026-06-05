@@ -47,7 +47,19 @@ export function Topbar({ collapsed, onToggle, onOpenPalette, onOpenMobileDrawer 
 
   return (
     <>
-      <header className="sticky top-0 z-30 border-b border-border bg-background/70 backdrop-blur-xl pt-safe">
+      <header 
+        className="sticky top-0 z-30 border-b border-border bg-background/70 backdrop-blur-xl pt-safe cursor-pointer"
+        onClick={(e) => {
+          const target = e.target as HTMLElement;
+          if (target.closest('button') || target.closest('input') || target.closest('a')) {
+            return;
+          }
+          const appCover = document.querySelector('.app-cover');
+          if (appCover) {
+            appCover.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+        }}
+      >
         <div className="flex h-20 lg:h-16 items-center gap-3 px-5 lg:px-8">
           <button
             onClick={onToggle}
