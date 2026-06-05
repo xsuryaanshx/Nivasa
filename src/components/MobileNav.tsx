@@ -24,9 +24,10 @@ export function MobileNav() {
   };
 
   const activeIndex = useMemo(() => {
+    const currentPath = location.pathname === "/app/expenses" ? "/app/profile" : location.pathname;
     const index = dockApps.findIndex(app => {
-      if (app.id === "/app") return location.pathname === "/app";
-      return location.pathname.startsWith(app.id);
+      if (app.id === "/app") return currentPath === "/app";
+      return currentPath.startsWith(app.id);
     });
     return index === -1 ? 0 : index;
   }, [location.pathname, dockApps]);

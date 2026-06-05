@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { Building2, Home, LayoutDashboard, ReceiptIndianRupee, Sparkles, UserCircle2, Zap, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "./LanguageProvider";
@@ -8,6 +8,7 @@ interface Props { collapsed: boolean; }
 
 export function AppSidebar({ collapsed }: Props) {
   const { t } = useLanguage();
+  const location = useLocation();
   const items = [
     { to: "/app", label: t("dashboard"), icon: LayoutDashboard, end: true },
     { to: "/app/buildings", label: t("buildings"), icon: Building2 },
@@ -38,14 +39,17 @@ export function AppSidebar({ collapsed }: Props) {
             key={item.to}
             to={item.to}
             end={item.end}
-            className={({ isActive }) =>
-              cn(
+            className={() => {
+              const isItemActive = item.to === "/app/profile"
+                ? (location.pathname === "/app/profile" || location.pathname === "/app/expenses")
+                : (item.end ? location.pathname === item.to : location.pathname.startsWith(item.to));
+              return cn(
                 "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors",
-                isActive
+                isItemActive
                   ? "bg-sidebar-accent text-foreground"
                   : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground",
-              )
-            }
+              );
+            }}
           >
             <item.icon className="h-4 w-4 shrink-0" />
             {!collapsed && <span className="truncate">{item.label}</span>}
