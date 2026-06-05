@@ -533,7 +533,7 @@ export default function Profile() {
                     else if (feat.label === "Payments") navigate("/app/payments");
                     else if (feat.label === "Expenses") navigate("/app/expenses");
                     else if (feat.label === "Analytics") navigate("/app");
-                    else if (feat.label === "Electricity") navigate("/app"); 
+                    else if (feat.label === "Electricity") window.dispatchEvent(new CustomEvent("nivasa:add-electricity")); 
                     else if (feat.label === "Multi-language") setLanguageOpen(true);
                   }}
                   className="flex flex-col gap-2 rounded-2xl border border-border/50 bg-card p-4 shadow-soft transition hover:border-border hover:bg-secondary/50 active:scale-[0.97] text-left"
