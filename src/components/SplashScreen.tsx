@@ -44,7 +44,7 @@ export const SplashScreen = ({ isReady, onFinished }: SplashScreenProps) => {
       >
         <div className="flex items-center justify-center w-full h-full">
           <GooeyText
-            texts={["YOUR", "PROPERTY", "SIMPLIFIED"]}
+            texts={["YOUR", "PROPERTIES", "SIMPLIFIED"]}
             morphTime={0.8}
             cooldownTime={0.5}
             className="font-bold"
