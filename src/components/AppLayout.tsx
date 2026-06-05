@@ -26,6 +26,7 @@ function AppShell() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (location.pathname === '/app/rooms') return;
     if (scrollRef.current) {
       scrollRef.current.scrollTop = 0;
     }
@@ -118,6 +119,7 @@ function AppShell() {
               exit={{ opacity: 0, y: -4 }}
               transition={{ duration: 0.28, ease: [0.2, 0.7, 0.2, 1] }}
               onAnimationStart={() => {
+                if (location.pathname === '/app/rooms') return;
                 if (scrollRef.current) scrollRef.current.scrollTop = 0;
                 window.scrollTo(0, 0);
               }}
