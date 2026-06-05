@@ -60,7 +60,25 @@ export function CinematicHero({
   const navigate = useNavigate();
 
   useEffect(() => {
-    const ctx = gsap.context(() => {
+    let active = true;
+    const checkFastBypass = async () => {
+      try {
+        const api = (window as any).nivasaApi;
+        if (api) {
+          const session = await api.auth.getSession();
+          if (session?.user && active) {
+            navigate("/app", { replace: true });
+            return true;
+          }
+        }
+      } catch (e) {}
+      return false;
+    };
+
+    let ctx: gsap.Context | null = null;
+    checkFastBypass().then((bypassed) => {
+      if (bypassed) return;
+      ctx = gsap.context(() => {
       // Setup initial hidden state
       gsap.set(".text-track", { autoAlpha: 0, y: 60, scale: 0.85, filter: "blur(20px)", rotationX: -20 });
       gsap.set(".text-days", { autoAlpha: 1, clipPath: "inset(0 100% 0 0)" });
@@ -96,8 +114,12 @@ export function CinematicHero({
         .to({}, { duration: 2.0 });
 
     }, containerRef);
+    });
 
-    return () => ctx.revert();
+    return () => {
+      active = false;
+      if (ctx) ctx.revert();
+    };
   }, [navigate]);
 
   return (

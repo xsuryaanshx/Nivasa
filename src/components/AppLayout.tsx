@@ -70,7 +70,7 @@ function AppShell() {
       
       <div 
         ref={scrollRef}
-        className="app-cover absolute w-full h-full left-0 top-0 z-10 flex min-w-0 flex-1 flex-col bg-background shadow-2xl overflow-y-auto transition-transform will-change-transform border border-border/10 pb-[env(safe-area-inset-bottom)]"
+        className="app-cover absolute w-full h-full left-0 top-0 z-10 flex min-w-0 flex-1 flex-col bg-background shadow-2xl overflow-y-auto border border-border/10 pb-[env(safe-area-inset-bottom)]"
       >
         <div className="flex flex-1">
           <AnimatePresence initial={false}>
