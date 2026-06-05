@@ -321,7 +321,7 @@ async function getRooms(): Promise<Room[]> {
 
     const { data, error } = await supabase
       .from('units')
-      .select('*, buildings(name), tenants!fk_room(*)');
+      .select('*, buildings(name), tenants(*)');
     if (error) throw error;
 
     return (data || []).map(mapUnitToRoom);
@@ -338,7 +338,7 @@ async function getRoomById(id: string): Promise<Room | null> {
 
     const { data, error } = await supabase
       .from('units')
-      .select('*, buildings(name), tenants!fk_room(*)')
+      .select('*, buildings(name), tenants(*)')
       .eq('id', id)
       .single();
     

@@ -43,6 +43,8 @@ export default function RoomDetails() {
   const [tierRows, setTierRows] = useState<{ members: string; amount: string }[]>([]);
   const [pricingSaving, setPricingSaving] = useState(false);
   const [flatIfClear, setFlatIfClear] = useState("");
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editNameValue, setEditNameValue] = useState("");
 
   const { currency } = useCurrency();
 
@@ -141,6 +143,25 @@ export default function RoomDetails() {
   const used = Math.max(0, (Number(endReading) || 0) - (Number(startReading) || 0));
   const cost = used * (Number(pricePerUnit) || 0);
   const totalDue = room.rent + cost;
+
+  const handleSaveName = async () => {
+    const val = editNameValue.trim();
+    if (!val || !room) {
+      setIsEditingName(false);
+      return;
+    }
+    try {
+      const api = (window as any).nivasaApi;
+      if (!api) throw new Error("API not loaded");
+      await api.updateRoom(room.id, { number: val });
+      toast.success("Room name updated");
+      setIsEditingName(false);
+      fetchData();
+      window.dispatchEvent(new CustomEvent("nivasa:refresh"));
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update room name");
+    }
+  };
 
   const saveOccupancyPricing = async () => {
     const parsed: OccupancyPriceTier[] = tierRows
@@ -281,7 +302,29 @@ export default function RoomDetails() {
       </Link>
 
       <PageHeader
-        title={`Room ${room.number}`}
+        title={
+          isEditingName ? (
+            <div className="flex items-center gap-3">
+              <input
+                autoFocus
+                value={editNameValue}
+                onChange={(e) => setEditNameValue(e.target.value)}
+                className="h-10 w-48 rounded-xl border border-border bg-card px-3 text-xl font-bold tracking-tight outline-none focus:border-brand focus:ring-4 focus:ring-brand/10 transition-all"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleSaveName();
+                  if (e.key === "Escape") setIsEditingName(false);
+                }}
+              />
+              <button onClick={handleSaveName} className="rounded-lg bg-brand/10 px-3 py-1.5 text-xs font-semibold text-brand hover:bg-brand/20 transition-colors">Save</button>
+              <button onClick={() => setIsEditingName(false)} className="rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-secondary transition-colors">Cancel</button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 group cursor-pointer" onClick={() => { setEditNameValue(room.number); setIsEditingName(true); }}>
+              <span>Room {room.number}</span>
+              <span className="opacity-0 group-hover:opacity-100 rounded bg-secondary px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground transition-opacity">Edit</span>
+            </div>
+          )
+        }
         subtitle={`${room.buildingName} · ${formatMoney(room.rent, currency, { decimals: 0 })} / month${
           room.occupancyPrices?.length ? " (by current billing occupancy)" : ""
         }`}
