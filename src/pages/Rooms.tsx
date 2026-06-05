@@ -53,6 +53,20 @@ export default function Rooms() {
     return () => window.removeEventListener("nivasa:refresh", handler);
   }, []);
 
+  useEffect(() => {
+    if (!loading) {
+      setTimeout(() => {
+        const saved = sessionStorage.getItem('roomsScroll');
+        if (saved) {
+          const appCover = document.querySelector('.app-cover');
+          if (appCover) {
+            appCover.scrollTop = parseInt(saved, 10);
+          }
+        }
+      }, 50); // slight delay to ensure DOM layout is complete
+    }
+  }, [loading]);
+
   const filtered = useMemo(() => roomsList.filter(r => {
     if (status !== "all" && r.status !== status) return false;
     if (!q) return true;
