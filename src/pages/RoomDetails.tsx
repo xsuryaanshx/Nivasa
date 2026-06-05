@@ -11,6 +11,7 @@ import { PaymentTimeline } from "@/components/PaymentTimeline";
 import { MagneticButton } from "@/components/MagneticButton";
 import { AddPaymentModal } from "@/components/AddPaymentModal";
 import { AddTenantModal } from "@/components/AddTenantModal";
+import { EditTenantModal } from "@/components/EditTenantModal";
 import { ElectricityBillingModal } from "@/components/ElectricityBillingModal";
 import { TenantExpensesModal } from "@/components/TenantExpensesModal";
 import { Money } from "@/components/Money";
@@ -40,6 +41,7 @@ export default function RoomDetails() {
   const [loading, setLoading] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
   const [tenantOpen, setTenantOpen] = useState(false);
+  const [editingTenant, setEditingTenant] = useState<any>(null);
   const [electricityOpen, setElectricityOpen] = useState(false);
   const [expensesTenant, setExpensesTenant] = useState<any>(null);
   const [savingElectricity, setSavingElectricity] = useState(false);
@@ -411,6 +413,14 @@ export default function RoomDetails() {
                     </a>
                     <button
                       type="button"
+                      onClick={() => setEditingTenant(t)}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-blue-500 hover:bg-blue-500/10 transition-colors"
+                      title="Edit Tenant"
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => setExpensesTenant(t)}
                       className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-emerald-500 hover:bg-emerald-500/10 transition-colors"
                       title="Add-ons / Expenses"
@@ -449,7 +459,7 @@ export default function RoomDetails() {
             <div className="text-sm text-muted-foreground">No tenants assigned.</div>
           )}
           <div className="mt-4 flex justify-end">
-            <MagneticButton variant="ghost" onClick={() => setTenantOpen(true)} disabled={room.tenants?.length >= (room.occupancyPrices?.length ? Math.max(...room.occupancyPrices.map(t => t.members)) : 1)}>
+            <MagneticButton variant="ghost" onClick={() => setTenantOpen(true)}>
               <UserPlus className="h-4 w-4" /> Add Tenant
             </MagneticButton>
           </div>
@@ -704,6 +714,7 @@ export default function RoomDetails() {
 
       <AddPaymentModal open={addOpen} onClose={() => setAddOpen(false)} defaultRoomId={room.id} />
       <AddTenantModal open={tenantOpen} onClose={() => setTenantOpen(false)} defaultRoomId={room.id} />
+      <EditTenantModal open={!!editingTenant} tenant={editingTenant} onClose={() => setEditingTenant(null)} onUpdated={fetchData} />
       <TenantExpensesModal open={!!expensesTenant} tenant={expensesTenant} onClose={() => setExpensesTenant(null)} />
       <ElectricityBillingModal
         open={electricityOpen}

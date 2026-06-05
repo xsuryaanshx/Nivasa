@@ -1,17 +1,18 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, IdCard, Phone, Smartphone, User, Loader2, Calendar, Banknote, CreditCard } from "lucide-react";
+import { CheckCircle2, IdCard, Phone, Smartphone, User, Loader2, Banknote, CreditCard } from "lucide-react";
 import { GlassModal } from "./GlassModal";
 import { MagneticButton } from "./MagneticButton";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { isValidMobile, isValidAadhar } from "@/lib/tenantStore";
+import { type Tenant } from "@/lib/mockData";
 
 interface Props {
   open: boolean;
+  tenant: Tenant | null;
   onClose: () => void;
-  defaultRoomId?: string;
-  onAssigned?: (roomId: string) => void;
+  onUpdated?: () => void;
 }
 
 function formatAadhar(v: string) {
@@ -19,10 +20,7 @@ function formatAadhar(v: string) {
   return digits.replace(/(\d{4})(?=\d)/g, "$1 ");
 }
 
-export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Props) {
-  const [roomsList, setRoomsList] = useState<any[]>([]);
-  const [loadingRooms, setLoadingRooms] = useState(false);
-  const [roomId, setRoomId] = useState(defaultRoomId || "");
+export function EditTenantModal({ open, tenant, onClose, onUpdated }: Props) {
   const [name, setName] = useState("");
   const [mobile, setMobile] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
@@ -30,53 +28,24 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
   const [aadhar, setAadhar] = useState("");
   const [depositAmount, setDepositAmount] = useState("");
   const [depositMethod, setDepositMethod] = useState("Cash");
-  const [joinedAt, setJoinedAt] = useState(() => {
-    const d = new Date();
-    return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
-  });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const fetchRooms = async () => {
-    try {
-      setLoadingRooms(true);
-      const api = (window as any).nivasaApi;
-      if (!api) return;
-      const data = await api.getRooms();
-      setRoomsList(data);
-      if (!roomId && data.length > 0) {
-        const vacant = data.find((r: any) => r.status === 'vacant');
-        setRoomId(vacant ? vacant.id : data[0].id);
-      }
-    } catch (err) {
-      console.error("Failed to fetch rooms:", err);
-      toast.error("Failed to load rooms");
-    } finally {
-      setLoadingRooms(false);
-    }
-  };
-
   useEffect(() => {
-    if (open) {
+    if (open && tenant) {
       setSuccess(false);
       setErrors({});
-      fetchRooms();
-      if (defaultRoomId) setRoomId(defaultRoomId);
-      // Reset form
-      setName("");
-      setMobile("");
-      setWhatsapp("");
-      setSameAsMobile(true);
-      setAadhar("");
-      setDepositAmount("");
-      setDepositMethod("Cash");
-      const d = new Date();
-      setJoinedAt(`${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`);
-
+      setName(tenant.name || "");
+      setMobile(tenant.phone || "");
+      setWhatsapp(tenant.whatsapp_number || "");
+      setSameAsMobile(tenant.phone === tenant.whatsapp_number);
+      setAadhar(tenant.aadhar || "");
+      setDepositAmount(tenant.depositAmount ? String(tenant.depositAmount) : "");
+      setDepositMethod(tenant.depositMethod || "Cash");
     }
-  }, [open, defaultRoomId]);
+  }, [open, tenant]);
 
   const validate = () => {
     const e: Record<string, string> = {};
@@ -92,50 +61,32 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
       e.aadhar = "Aadhar must be 12 digits";
     }
 
-    if (!roomId) e.room = "Please select a room";
-
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
+    if (!validate() || !tenant) return;
 
     try {
       setSubmitting(true);
       const api = (window as any).nivasaApi;
       if (!api) throw new Error("API not loaded");
 
-      let joinedIso = new Date().toISOString();
-      if (joinedAt) {
-        const parts = joinedAt.split("/");
-        if (parts.length === 3) {
-          const [d, m, y] = parts;
-          const parsed = new Date(`${y}-${m}-${d}`);
-          if (!isNaN(parsed.getTime())) joinedIso = parsed.toISOString();
-        }
-      }
-
-      await api.addTenant({
-        room_id: roomId,
+      await api.updateTenant(tenant.id, {
         name: name.trim(),
         phone: mobile.trim(),
         whatsapp_number: (sameAsMobile ? mobile : whatsapp).trim(),
         aadhar: aadhar.replace(/\s+/g, ""),
-        joined_at: joinedIso,
-        occupancy_count: 1,
         depositAmount: depositAmount ? Number(depositAmount) : 0,
         depositMethod: depositMethod,
       });
 
       setSuccess(true);
-      const selectedRoom = roomsList.find((r) => r.id === roomId);
-      toast.success("Tenant added successfully", { 
-        description: `${name} assigned to Room ${selectedRoom?.number}` 
-      });
+      toast.success("Tenant updated successfully");
       
-      onAssigned?.(roomId);
+      onUpdated?.();
       window.dispatchEvent(new CustomEvent("nivasa:refresh"));
       
       setTimeout(() => {
@@ -143,27 +94,19 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
       }, 1500);
     } catch (err: any) {
       console.error("Submit error:", err);
-      toast.error(err.message || "Something went wrong while adding tenant");
-      setErrors({ submit: err.message || "Failed to add tenant" });
+      toast.error(err.message || "Something went wrong while updating tenant");
+      setErrors({ submit: err.message || "Failed to update tenant" });
     } finally {
       setSubmitting(false);
     }
   };
 
-  const getRoomCapacity = (r: any) => {
-    if (r.capacity) return r.capacity;
-    if (r.occupancyPrices?.length) return Math.max(...r.occupancyPrices.map((t: any) => t.members));
-    return 1;
-  };
-
-  const availableRooms = roomsList.filter((r) => r.tenants?.length < getRoomCapacity(r));
-
   return (
     <GlassModal 
       open={open} 
       onClose={onClose} 
-      title="Add New Tenant" 
-      description="Fill in the tenant details to assign them a room"
+      title="Edit Tenant" 
+      description="Update tenant information"
     >
       <div className="max-w-full sm:max-w-md mx-auto">
         <AnimatePresence mode="wait">
@@ -185,7 +128,7 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
               </motion.div>
               <div className="text-center">
                 <div className="text-xl font-bold text-foreground">Success!</div>
-                <div className="text-sm text-muted-foreground mt-1">The tenant has been added.</div>
+                <div className="text-sm text-muted-foreground mt-1">Tenant details have been updated.</div>
               </div>
             </motion.div>
           ) : (
@@ -197,38 +140,6 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
               onSubmit={submit} 
               className="space-y-5 py-2"
             >
-              <Field label="Assign Room" error={errors.room}>
-                <div className="relative">
-                  <select
-                    value={roomId} 
-                    onChange={(e) => setRoomId(e.target.value)}
-                    disabled={loadingRooms || submitting}
-                    className="h-12 w-full appearance-none rounded-xl border border-border bg-card/70 px-4 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-brand/10 transition-all disabled:opacity-50"
-                  >
-                    <option value="" disabled>Select a room</option>
-                    {loadingRooms ? (
-                      <option>Loading rooms...</option>
-                    ) : (
-                      (availableRooms.length ? availableRooms : roomsList).map((r) => {
-                        const cap = getRoomCapacity(r);
-                        const occ = r.tenants?.length || 0;
-                        const isFull = occ >= cap;
-                        return (
-                          <option key={r.id} value={r.id}>
-                            Room {r.number} · {r.buildingName} ({occ}/{cap} filled)
-                          </option>
-                        );
-                      })
-                    )}
-                  </select>
-                  <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground">
-                    <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </div>
-                </div>
-              </Field>
-
               <Field label="Full Name" error={errors.name}>
                 <IconInput 
                   icon={<User className="h-4 w-4" />}
@@ -329,18 +240,6 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
                 </Field>
               </div>
 
-              <Field label="Joining Date" optional>
-                <IconInput 
-                  icon={<Calendar className="h-4 w-4" />}
-                  value={joinedAt} 
-                  onChange={setJoinedAt}
-                  placeholder="DD/MM/YYYY"
-                  disabled={submitting}
-                />
-              </Field>
-
-
-
               <div className="flex gap-3 pt-4">
                 <button 
                   type="button" 
@@ -358,10 +257,10 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
                   {submitting ? (
                     <div className="flex items-center gap-2">
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>Adding...</span>
+                      <span>Saving...</span>
                     </div>
                   ) : (
-                    "Add Tenant"
+                    "Save Changes"
                   )}
                 </MagneticButton>
               </div>

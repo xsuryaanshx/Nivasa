@@ -415,21 +415,61 @@ async function updateRoom(
   await syncUnitEffectiveRent(id);
 }
 
-async function updateTenant(tenantId: string, updates: { occupancy_count?: number }) {
-  const patch: Record<string, unknown> = {};
-  if (updates.occupancy_count !== undefined) {
-    patch.occupancy_count = Math.max(1, Math.floor(Number(updates.occupancy_count)));
-  }
-  if (Object.keys(patch).length === 0) return;
+async function updateTenant(tenantId: string, updates: {
+  occupancy_count?: number;
+  name?: string;
+  phone?: string;
+  whatsapp_number?: string;
+  aadhar?: string;
+  depositAmount?: number;
+  depositMethod?: string;
+}) {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      for (const r of mockRooms) {
+        const t = r.tenants.find(x => x.id === tenantId);
+        if (t) {
+          if (updates.name !== undefined) t.name = updates.name;
+          if (updates.phone !== undefined) t.phone = updates.phone;
+          if (updates.whatsapp_number !== undefined) t.whatsapp_number = updates.whatsapp_number;
+          if (updates.aadhar !== undefined) t.aadhar = updates.aadhar;
+          if (updates.depositAmount !== undefined) t.depositAmount = updates.depositAmount;
+          if (updates.depositMethod !== undefined) t.depositMethod = updates.depositMethod as any;
+          if (updates.occupancy_count !== undefined) t.occupancy_count = updates.occupancy_count;
+          return;
+        }
+      }
+      return;
+    }
 
-  const { data: row, error } = await supabase
-    .from("tenants")
-    .update(patch)
-    .eq("id", tenantId)
-    .select("room_id")
-    .single();
-  if (error) throw error;
-  if (row?.room_id) await syncUnitEffectiveRent(row.room_id);
+    const patch: Record<string, unknown> = {};
+    if (updates.occupancy_count !== undefined) {
+      patch.occupancy_count = Math.max(1, Math.floor(Number(updates.occupancy_count)));
+    }
+    if (updates.name !== undefined) patch.name = updates.name;
+    if (updates.phone !== undefined) patch.phone = updates.phone;
+    if (updates.whatsapp_number !== undefined) patch.whatsapp_number = updates.whatsapp_number;
+    if (updates.aadhar !== undefined) patch.aadhar = updates.aadhar;
+    if (updates.depositAmount !== undefined) patch.deposit_amount = updates.depositAmount;
+    if (updates.depositMethod !== undefined) patch.deposit_method = updates.depositMethod;
+
+    if (Object.keys(patch).length === 0) return;
+
+    const { data: row, error } = await supabase
+      .from("tenants")
+      .update(patch)
+      .eq("id", tenantId)
+      .select("room_id")
+      .single();
+    if (error) throw error;
+    if (row?.room_id && patch.occupancy_count !== undefined) {
+      await syncUnitEffectiveRent(row.room_id);
+    }
+  } catch (error) {
+    console.error("Error in updateTenant:", error);
+    throw error;
+  }
 }
 
 async function addRoom(input: {
