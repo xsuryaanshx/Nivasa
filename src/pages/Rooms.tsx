@@ -58,20 +58,15 @@ export default function Rooms() {
       setTimeout(() => {
         const saved = sessionStorage.getItem('roomsScroll');
         if (saved) {
-          const appCover = document.querySelector('.app-cover');
-          if (appCover) {
-            appCover.scrollTop = parseInt(saved, 10);
-          }
+          window.scrollTo({ top: parseInt(saved, 10), behavior: 'instant' });
         }
       }, 50); // slight delay to ensure DOM layout is complete
 
-      const appCover = document.querySelector('.app-cover');
-      if (!appCover) return;
-      const handleScroll = (e: Event) => {
-        sessionStorage.setItem('roomsScroll', (e.target as HTMLDivElement).scrollTop.toString());
+      const handleScroll = () => {
+        sessionStorage.setItem('roomsScroll', window.scrollY.toString());
       };
-      appCover.addEventListener('scroll', handleScroll, { passive: true });
-      return () => appCover.removeEventListener('scroll', handleScroll);
+      window.addEventListener('scroll', handleScroll, { passive: true });
+      return () => window.removeEventListener('scroll', handleScroll);
     }
   }, [loading]);
 

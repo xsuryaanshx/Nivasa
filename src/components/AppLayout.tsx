@@ -62,7 +62,7 @@ function AppShell() {
   }, []);
 
   return (
-    <div className="relative h-[100dvh] w-full overflow-hidden bg-secondary/30">
+    <div className="relative min-h-[100dvh] w-full bg-secondary/30 flex">
       <MobileDrawerMenu
         open={mobileDrawerOpen}
         onOpenChange={setMobileDrawerOpen}
@@ -71,7 +71,7 @@ function AppShell() {
       
       <div 
         ref={scrollRef}
-        className="app-cover absolute w-full h-full left-0 top-0 z-10 flex min-w-0 flex-1 flex-col bg-background shadow-2xl overflow-y-auto border border-border/10 pb-[env(safe-area-inset-bottom)]"
+        className="app-cover flex min-w-0 flex-1 flex-col bg-background shadow-2xl pb-[env(safe-area-inset-bottom)]"
       >
         <div className="flex flex-1">
           <AnimatePresence initial={false}>

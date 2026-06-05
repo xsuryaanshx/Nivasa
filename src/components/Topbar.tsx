@@ -54,10 +54,7 @@ export function Topbar({ collapsed, onToggle, onOpenPalette, onOpenMobileDrawer 
           if (target.closest('button') || target.closest('input') || target.closest('a')) {
             return;
           }
-          const appCover = document.querySelector('.app-cover');
-          if (appCover) {
-            appCover.scrollTo({ top: 0, behavior: 'smooth' });
-          }
+          window.scrollTo({ top: 0, behavior: 'smooth' });
         }}
       >
         <div className="flex h-20 lg:h-16 items-center gap-3 px-5 lg:px-8">
