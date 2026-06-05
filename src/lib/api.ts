@@ -137,15 +137,15 @@ async function addBuilding(input: { name: string; address: string; total_rooms?:
       return b;
     }
 
+    const user_id = await requireAuthUserId();
     const { data, error } = await supabase
       .from('buildings')
-      .insert([{ name: input.name, address: input.address }])
+      .insert([{ name: input.name, address: input.address, user_id }])
       .select()
       .single();
     if (error) throw error;
 
     if (input.total_rooms && input.total_rooms > 0) {
-      const user_id = await requireAuthUserId();
       const unitsToInsert = Array.from({ length: input.total_rooms }).map((_, i) => ({
         building_id: data.id,
         name: `${i + 1}`,
@@ -539,6 +539,8 @@ async function addTenant(input: {
     const occ =
       input.occupancy_count != null ? Math.max(1, Math.floor(Number(input.occupancy_count))) : 1;
 
+    const user_id = await requireAuthUserId();
+
     // 2. Insert tenant with correct fields
     const payload = {
       name: input.name,
@@ -547,6 +549,7 @@ async function addTenant(input: {
       aadhar: input.aadhar,
       room_id: input.room_id,
       building_id: room.building_id,
+      user_id,
       joined_at: input.joined_at || new Date().toISOString(),
       occupancy_count: occ,
       deposit_amount: input.depositAmount || 0,
@@ -636,12 +639,14 @@ async function addPayment(input: any) {
       return p;
     }
 
+    const user_id = await requireAuthUserId();
     const { data, error } = await supabase
       .from('payments')
       .insert([{
         building_id: input.building_id,
         unit_id: input.room_id,
         tenant_id: input.tenant_id,
+        user_id,
         amount: input.amount,
         status: input.status.toLowerCase(),
         method: input.method.toLowerCase(),
