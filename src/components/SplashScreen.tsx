@@ -15,7 +15,7 @@ export const SplashScreen = ({ isReady, onFinished }: SplashScreenProps) => {
     // Optimized duration for 3 words (YOUR, PROPERTY, SIMPLIFIED)
     const timer = setTimeout(() => {
       setAnimationFinished(true);
-    }, 4500);
+    }, 2000);
 
     return () => clearTimeout(timer);
   }, []);
