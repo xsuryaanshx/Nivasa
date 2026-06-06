@@ -1,4 +1,3 @@
-import { nivasaApi } from "@/lib/api";
 /**
  * nivasaApi — central API facade.
  * Wired to Supabase backend.

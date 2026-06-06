@@ -1,5 +1,4 @@
 // Lightweight validation utilities for tenant data.
-import { rooms, type Tenant } from "./mockData";
 
 type Listener = () => void;
 const listeners = new Set<Listener>();
