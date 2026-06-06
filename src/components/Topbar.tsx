@@ -28,8 +28,8 @@ export function Topbar({ collapsed, onToggle, onOpenPalette, onOpenMobileDrawer 
     setMounted(true);
     const loadCount = async () => {
       try {
-        if (!api) return;
-        const rooms = await api.getRooms();
+        if (!nivasaApi) return;
+        const rooms = await nivasaApi.getRooms();
         const count = (rooms || []).filter(
           (r: any) => r.status === "vacant" || r.status === "pending",
         ).length;

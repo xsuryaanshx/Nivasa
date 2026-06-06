@@ -42,7 +42,7 @@ export function AddBuildingModal({ open, onClose, onSuccess }: Props) {
       setSubmitting(true);
       setError(null);
       
-      await api.addBuilding({
+      await nivasaApi.addBuilding({
         name: name.trim(),
         address: address.trim(),
         total_rooms: totalRooms !== "" ? rooms : undefined,

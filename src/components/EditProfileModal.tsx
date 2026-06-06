@@ -22,10 +22,10 @@ export function EditProfileModal({ open, onClose }: { open: boolean; onClose: ()
   const handleSave = async () => {
     try {
       setLoading(true);
-      if (api?.auth) {
-        const session = await api.auth.getSession();
+      if (nivasaApi?.auth) {
+        const session = await nivasaApi.auth.getSession();
         if (session?.user) {
-          await api.auth.updateProfile({ full_name: name });
+          await nivasaApi.auth.updateProfile({ full_name: name });
           toast.success("Profile updated successfully!");
           setTimeout(() => {
             window.location.reload();

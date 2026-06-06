@@ -116,8 +116,8 @@ export default function BuildingDetails() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      if (!api) return;
-      const buildingData = await api.getPropertyDetails(id);
+      if (!nivasaApi) return;
+      const buildingData = await nivasaApi.getPropertyDetails(id);
       setData(buildingData);
     } catch (error) {
       console.error("Error fetching building details:", error);
@@ -154,14 +154,14 @@ export default function BuildingDetails() {
         const base = parseFloat(occBase);
         const per = parseFloat(occPer);
         const maxM = parseInt(occMax, 10);
-        await api.addRoom({
+        await nivasaApi.addRoom({
           building_id: id,
           number: newRoom.number.trim(),
           rent: base,
           occupancy_prices: buildTiersFromBaseAndPerAdditional(base, per, maxM),
         });
       } else {
-        await api.addRoom({
+        await nivasaApi.addRoom({
           building_id: id,
           number: newRoom.number.trim(),
           rent: parseFloat(newRoom.rent),

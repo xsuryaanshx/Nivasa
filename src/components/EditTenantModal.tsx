@@ -75,7 +75,7 @@ export function EditTenantModal({ open, tenant, onClose, onUpdated }: Props) {
     try {
       setSubmitting(true);
       
-      await api.updateTenant(tenant.id, {
+      await nivasaApi.updateTenant(tenant.id, {
         name: name.trim(),
         phone: mobile.trim(),
         whatsapp_number: (sameAsMobile ? mobile : whatsapp).trim(),

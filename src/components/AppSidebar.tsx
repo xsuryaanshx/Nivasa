@@ -76,7 +76,7 @@ export function AppSidebar({ collapsed }: Props) {
       <div className="mt-2 px-3">
         <button
           onClick={() => {
-             if (api) api.auth.signOut().then(() => window.location.href = "/login");
+             if (nivasaApi) nivasaApi.auth.signOut().then(() => window.location.href = "/login");
           }}
           className={cn(
             "group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors",

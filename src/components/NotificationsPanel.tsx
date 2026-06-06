@@ -110,8 +110,8 @@ export function NotificationsPanel({ open, onClose }: Props) {
   const loadNotifications = async () => {
     setLoading(true);
     try {
-      if (api) {
-        const rooms = await api.getRooms();
+      if (nivasaApi) {
+        const rooms = await nivasaApi.getRooms();
         setNotifs(buildNotifications(rooms, t as any));
       }
     } catch {

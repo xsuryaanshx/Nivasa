@@ -32,11 +32,11 @@ export default function Dashboard() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      if (!api) return;
+      if (!nivasaApi) return;
 
       const [stats, recent] = await Promise.all([
-        api.getDashboardStats(),
-        api.getRecentPayments(8)
+        nivasaApi.getDashboardStats(),
+        nivasaApi.getRecentPayments(8)
       ]);
 
       setData({ stats, recent });
@@ -105,7 +105,7 @@ export default function Dashboard() {
                       const val = (document.getElementById('elec-rate-input') as HTMLInputElement).value;
                       if (!val) return;
                       try {
-                        await api.updateElectricityRate(parseFloat(val));
+                        await nivasaApi.updateElectricityRate(parseFloat(val));
                         toast.success("Global electricity rate updated");
                       } catch (e) {
                         toast.error("Failed to update rate");

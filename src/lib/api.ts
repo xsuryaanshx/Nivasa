@@ -1,4 +1,4 @@
-/** * nivasaApi — central API facade. * Wired to Supabase backend. */import { createClient } from "@supabase/supabase-js";import {
+/** * nivasaApi — central nivasaApi facade. * Wired to Supabase backend. */import { createClient } from "@supabase/supabase-js";import {
   buildings as mockBuildings,
   rooms as mockRooms,
   payments as mockPayments,

@@ -39,8 +39,8 @@ export default function Payments() {
   const fetchPayments = async () => {
     try {
       setLoading(true);
-      if (!api) return;
-      const data = await api.getRecentPayments(100); // Fetch more for the payments page
+      if (!nivasaApi) return;
+      const data = await nivasaApi.getRecentPayments(100); // Fetch more for the payments page
       setPaymentsList(data);
     } catch (error) {
       console.error("Error fetching payments:", error);

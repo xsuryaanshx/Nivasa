@@ -64,8 +64,8 @@ export function CinematicHero({
     let active = true;
     const checkFastBypass = async () => {
       try {
-        if (api) {
-          const session = await api.auth.getSession();
+        if (nivasaApi) {
+          const session = await nivasaApi.auth.getSession();
           if (session?.user && active) {
             navigate("/app", { replace: true });
             return true;
@@ -89,8 +89,8 @@ export function CinematicHero({
           // Check session while fading out
           let dest = "/login";
           try {
-            if (api) {
-              const session = await api.auth.getSession();
+            if (nivasaApi) {
+              const session = await nivasaApi.auth.getSession();
               if (session?.user) dest = "/app";
             }
           } catch (e) {}

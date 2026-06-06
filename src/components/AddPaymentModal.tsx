@@ -64,10 +64,10 @@ export function AddPaymentModal({ open, onClose, defaultRoomId, defaultTenantId 
   const fetchData = async () => {
     try {
       setLoadingData(true);
-      if (!api) return;
+      if (!nivasaApi) return;
       const [buildings, rooms] = await Promise.all([
-        api.getBuildings(),
-        api.getRooms(),
+        nivasaApi.getBuildings(),
+        nivasaApi.getRooms(),
       ]);
       setBuildingsList(buildings);
       setAllRooms(rooms);
@@ -145,7 +145,7 @@ export function AddPaymentModal({ open, onClose, defaultRoomId, defaultTenantId 
     try {
       setSubmitting(true);
       
-      await api.addPayment({
+      await nivasaApi.addPayment({
         building_id: buildingId,
         room_id: roomId,
         tenant_id: tenantId || selectedRoom?.tenants?.[0]?.id || null,

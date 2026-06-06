@@ -48,10 +48,10 @@ export default function Rooms() {
   const fetchRooms = async () => {
     try {
       setLoading(true);
-      if (!api) return;
+      if (!nivasaApi) return;
       const [data, payments] = await Promise.all([
-        api.getRooms(),
-        api.getRecentPayments(1000)
+        nivasaApi.getRooms(),
+        nivasaApi.getRecentPayments(1000)
       ]);
       setRoomsList(data);
       setPaymentsList(payments);

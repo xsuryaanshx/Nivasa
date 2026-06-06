@@ -59,8 +59,8 @@ export default function RoomDetails() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      if (!api || !id) return;
-      const data = await api.getRoomById(id);
+      if (!nivasaApi || !id) return;
+      const data = await nivasaApi.getRoomById(id);
       if (data) {
         setRoom(data);
         setStartReading(data.prevReading);
@@ -75,7 +75,7 @@ export default function RoomDetails() {
         setFlatIfClear(String(data.rent));
       }
       
-      const paymentsData = await api.getRecentPayments(100);
+      const paymentsData = await nivasaApi.getRecentPayments(100);
       setRoomPayments(paymentsData.filter((p: any) => p.roomId === id));
     } catch (error) {
       console.error("Error fetching room details:", error);
@@ -107,10 +107,10 @@ export default function RoomDetails() {
   const saveElectricityReading = async () => {
     try {
       setSavingElectricity(true);
-      if (!api || !room) throw new Error("API not loaded");
+      if (!nivasaApi || !room) throw new Error("nivasaApi not loaded");
       const now = new Date();
       const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-      await api.saveElectricityReading({
+      await nivasaApi.saveElectricityReading({
         room_number: "Room Name / Number",
         month,
         prev_reading: Number(startReading) || 0,
@@ -158,7 +158,7 @@ export default function RoomDetails() {
       return;
     }
     try {
-            await api.updateRoom(room.id, { number: val });
+            await nivasaApi.updateRoom(room.id, { number: val });
       toast.success("Room name updated");
       setIsEditingName(false);
       fetchData();
@@ -186,14 +186,14 @@ export default function RoomDetails() {
 
     try {
       setPricingSaving(true);
-      if (!api || !room) throw new Error("API not loaded");
+      if (!nivasaApi || !room) throw new Error("nivasaApi not loaded");
       if (normalized.length === 0) {
         const flat = parseFloat(flatIfClear);
-        await api.updateRoom(room.id, { occupancy_prices: null, rent_amount: flat });
+        await nivasaApi.updateRoom(room.id, { occupancy_prices: null, rent_amount: flat });
         setTierRows([]);
         toast.success("Room now uses a single monthly rent.");
       } else {
-        await api.updateRoom(room.id, { occupancy_prices: normalized });
+        await nivasaApi.updateRoom(room.id, { occupancy_prices: normalized });
         toast.success("Occupancy pricing saved");
       }
       fetchData();
@@ -214,7 +214,7 @@ export default function RoomDetails() {
     }
     try {
       setPricingSaving(true);
-            await api.updateRoom(room.id, { occupancy_prices: null, rent_amount: flat });
+            await nivasaApi.updateRoom(room.id, { occupancy_prices: null, rent_amount: flat });
       setTierRows([]);
       toast.success("Room now uses a single monthly rent.");
       fetchData();
@@ -265,7 +265,7 @@ export default function RoomDetails() {
 
     try {
       
-      await api.removeTenant(room.id, tenantId);
+      await nivasaApi.removeTenant(room.id, tenantId);
       toast.success("Tenant removed successfully");
       fetchData(); // Refresh data
       window.dispatchEvent(new CustomEvent("nivasa:refresh"));

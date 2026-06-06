@@ -43,8 +43,8 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
   const fetchRooms = async () => {
     try {
       setLoadingRooms(true);
-      if (!api) return;
-      const data = await api.getRooms();
+      if (!nivasaApi) return;
+      const data = await nivasaApi.getRooms();
       setRoomsList(data);
       if (!roomId && data.length > 0) {
         const vacant = data.find((r: any) => r.status === 'vacant');
@@ -115,7 +115,7 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
         }
       }
 
-      await api.addTenant({
+      await nivasaApi.addTenant({
         room_id: roomId,
         name: name.trim(),
         phone: mobile.trim(),

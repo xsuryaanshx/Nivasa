@@ -43,8 +43,8 @@ export function EditBuildingModal({ open, onClose, onSuccess, buildingData }: Pr
       setSubmitting(true);
       setError(null);
       
-      // Use updateBuilding from our api layer (also wired to api.supabase.from for direct calls)
-      await api.updateBuilding(buildingData.id, {
+      // Use updateBuilding from our nivasaApi layer (also wired to nivasaApi.supabase.from for direct calls)
+      await nivasaApi.updateBuilding(buildingData.id, {
         name: name.trim(),
         address: address.trim(),
         total_rooms: roomsCount,

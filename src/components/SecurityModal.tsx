@@ -75,10 +75,10 @@ export function SecurityModal({ open, onClose }: Props) {
 
     try {
       setSaving(true);
-      if (!api) throw new Error("API not ready");
+      if (!nivasaApi) throw new Error("nivasaApi not ready");
 
       // Supabase: updateUser with new password
-      const { error: updateError } = await api.supabase.auth.updateUser({
+      const { error: updateError } = await nivasaApi.supabase.auth.updateUser({
         password: newPassword,
       });
 

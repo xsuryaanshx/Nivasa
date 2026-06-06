@@ -25,7 +25,7 @@ export default function Register() {
     setLoading(true);
     try {
       
-      const { data, error } = await api.auth.signUp(email, pwd, fullName.trim());
+      const { data, error } = await nivasaApi.auth.signUp(email, pwd, fullName.trim());
       if (error) throw error;
 
       // Persist the name for the session

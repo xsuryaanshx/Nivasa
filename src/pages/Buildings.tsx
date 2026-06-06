@@ -32,8 +32,8 @@ export default function Buildings() {
   const fetchBuildings = async () => {
     try {
       setLoading(true);
-      if (!api) return;
-      const data = await api.getBuildings();
+      if (!nivasaApi) return;
+      const data = await nivasaApi.getBuildings();
       setBuildingsList(data);
     } catch (error) {
       console.error("Error fetching buildings:", error);
@@ -64,7 +64,7 @@ export default function Buildings() {
     if (!confirm(t("delete_confirm_building"))) return;
     
     try {
-      await api.deleteBuilding(id);
+      await nivasaApi.deleteBuilding(id);
       toast.success(t("building_deleted"));
       fetchBuildings();
       window.dispatchEvent(new CustomEvent("nivasa:refresh"));

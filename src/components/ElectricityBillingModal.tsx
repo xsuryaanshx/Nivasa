@@ -60,11 +60,11 @@ export function ElectricityBillingModal({ open, onClose, defaultRoomId, onSaved 
   const fetchData = async () => {
     try {
       setLoadingData(true);
-      if (!api) return;
+      if (!nivasaApi) return;
       const [buildings, rooms, globalRate] = await Promise.all([
-        api.getBuildings(),
-        api.getRooms(),
-        api.getElectricityRate()
+        nivasaApi.getBuildings(),
+        nivasaApi.getRooms(),
+        nivasaApi.getElectricityRate()
       ]);
       setBuildingsList(buildings);
       setAllRooms(rooms);
@@ -169,7 +169,7 @@ export function ElectricityBillingModal({ open, onClose, defaultRoomId, onSaved 
     try {
       setSubmitting(true);
       
-      await api.saveElectricityReading({
+      await nivasaApi.saveElectricityReading({
         room_id: roomId,
         month,
         prev_reading: prev,
