@@ -186,24 +186,7 @@ export function RoomCard({ room, index }: { room: Room; index: number }) {
               <CheckCircle2 className="h-3.5 w-3.5" /> Mark paid
             </QuickAction>
           )}
-          {primaryTenant && (
-            <QuickAction onClick={remind}>
-              <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
-            </QuickAction>
-          )}
-          {primaryTenant && (
-            <QuickAction onClick={(e) => {
-              stop(e);
-              const phone = primaryTenant?.phone;
-              if (phone) {
-                window.location.href = `tel:${phone}`;
-              } else {
-                toast.error("No phone number available");
-              }
-            }}>
-              <Phone className="h-3.5 w-3.5" /> Call
-            </QuickAction>
-          )}
+
           {!primaryTenant && (
             <QuickAction
               tone="info"
