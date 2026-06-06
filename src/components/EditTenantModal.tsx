@@ -21,6 +21,7 @@ function formatAadhar(v: string) {
 }
 
 export function EditTenantModal({ open, tenant, onClose, onUpdated }: Props) {
+  const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState("");
   const [mobile, setMobile] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
@@ -35,6 +36,7 @@ export function EditTenantModal({ open, tenant, onClose, onUpdated }: Props) {
 
   useEffect(() => {
     if (open && tenant) {
+      setIsEditing(false);
       setSuccess(false);
       setErrors({});
       setName(tenant.name || "");
@@ -105,8 +107,8 @@ export function EditTenantModal({ open, tenant, onClose, onUpdated }: Props) {
     <GlassModal 
       open={open} 
       onClose={onClose} 
-      title="Edit Tenant" 
-      description="Update tenant information"
+      title={isEditing ? "Edit Tenant" : "Tenant Profile"} 
+      description={isEditing ? "Update tenant information" : "Details and information"}
     >
       <div className="max-w-full sm:max-w-md mx-auto">
         <AnimatePresence mode="wait">
@@ -129,6 +131,64 @@ export function EditTenantModal({ open, tenant, onClose, onUpdated }: Props) {
               <div className="text-center">
                 <div className="text-xl font-bold text-foreground">Success!</div>
                 <div className="text-sm text-muted-foreground mt-1">Tenant details have been updated.</div>
+              </div>
+            </motion.div>
+          ) : !isEditing && tenant ? (
+            <motion.div
+              key="view"
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="space-y-4 py-2"
+            >
+              <div className="rounded-xl bg-secondary/50 p-4 space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-brand text-white font-semibold shadow-glow">
+                    {name.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase()}
+                  </div>
+                  <div>
+                    <div className="font-semibold text-lg">{tenant.name}</div>
+                    <div className="text-xs text-muted-foreground">Joined {new Date(tenant.joined_at || "").toLocaleDateString()}</div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 pt-2">
+                  <div>
+                    <div className="text-[10px] uppercase text-muted-foreground font-semibold mb-1">Mobile</div>
+                    <div className="text-sm font-medium">{tenant.phone}</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] uppercase text-muted-foreground font-semibold mb-1">WhatsApp</div>
+                    <div className="text-sm font-medium">{tenant.whatsapp_number || "-"}</div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <div className="text-[10px] uppercase text-muted-foreground font-semibold mb-1">Aadhar</div>
+                    <div className="text-sm font-medium">{tenant.aadhar ? formatAadhar(tenant.aadhar) : "-"}</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] uppercase text-muted-foreground font-semibold mb-1">Deposit</div>
+                    <div className="text-sm font-medium">₹{tenant.depositAmount || 0} ({tenant.depositMethod || "Cash"})</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button 
+                  type="button" 
+                  onClick={onClose}
+                  className="h-12 flex-1 rounded-xl border border-border bg-card/60 text-sm font-semibold transition-all hover:bg-secondary"
+                >
+                  Close
+                </button>
+                <MagneticButton 
+                  onClick={() => setIsEditing(true)}
+                  className="flex-1"
+                >
+                  Edit Details
+                </MagneticButton>
               </div>
             </motion.div>
           ) : (
@@ -186,7 +246,7 @@ export function EditTenantModal({ open, tenant, onClose, onUpdated }: Props) {
                         <CheckCircle2 className="h-3 w-3 text-white scale-0 peer-checked:scale-100 transition-transform" />
                       </div>
                     </div>
-                    <span className="text-[11px] font-medium text-muted-foreground group-hover:text-foreground transition-colors">
+                    <span className="text-[10px] font-medium text-muted-foreground group-hover:text-foreground transition-colors">
                       Same as mobile number
                     </span>
                   </label>
@@ -243,7 +303,7 @@ export function EditTenantModal({ open, tenant, onClose, onUpdated }: Props) {
               <div className="flex gap-3 pt-4">
                 <button 
                   type="button" 
-                  onClick={onClose}
+                  onClick={() => setIsEditing(false)}
                   disabled={submitting}
                   className="h-12 flex-1 rounded-xl border border-border bg-card/60 text-sm font-semibold transition-all hover:bg-secondary disabled:opacity-50"
                 >
