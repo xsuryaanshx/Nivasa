@@ -179,25 +179,32 @@ export function RoomCard({ room, index }: { room: Room; index: number }) {
           <StatusPill status={room.status} />
         </div>
 
-        <div className="relative mt-4 flex items-center gap-2.5">
-          {primaryTenant ? (
-            <>
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-brand text-[10px] font-semibold text-white shadow-glow">
-                {initials(primaryTenant.name)}
-              </div>
-              <div className="min-w-0">
-                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                  {room.tenants!.length > 5 
-                    ? `Tenant (+${room.tenants!.length - 1})` 
-                    : room.tenants!.length > 1 ? "Tenants" : "Tenant"}
+        <div className="relative mt-4 flex flex-col gap-2">
+          <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+            {room.tenants && room.tenants.length > 0 ? (room.tenants.length > 1 ? "Tenants" : "Tenant") : ""}
+          </div>
+          {room.tenants && room.tenants.length > 0 ? (
+            room.tenants.length > 5 ? (
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-brand text-[10px] font-semibold text-white shadow-glow">
+                  {initials(primaryTenant!.name)}
                 </div>
-                <div className="text-sm font-medium truncate">
-                  {room.tenants!.length > 5 
-                    ? primaryTenant.name 
-                    : room.tenants!.map(t => t.name).join(", ")}
+                <div className="min-w-0 text-sm font-medium truncate">
+                  {primaryTenant!.name} <span className="text-muted-foreground text-xs font-normal ml-1">(+{room.tenants.length - 1} more)</span>
                 </div>
               </div>
-            </>
+            ) : (
+              room.tenants.map(t => (
+                <div key={t.id} className="flex items-center gap-2.5">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-brand text-[10px] font-semibold text-white shadow-glow">
+                    {initials(t.name)}
+                  </div>
+                  <div className="min-w-0 text-sm font-medium truncate">
+                    {t.name}
+                  </div>
+                </div>
+              ))
+            )
           ) : (
             <div className="text-sm text-muted-foreground italic">— vacant —</div>
           )}
