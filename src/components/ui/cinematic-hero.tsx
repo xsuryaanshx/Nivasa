@@ -1,5 +1,6 @@
-import { nivasaApi } from "@/lib/api";
 "use client";
+
+import { nivasaApi } from "@/lib/api";
 
 import React, { useEffect, useRef } from "react";
 import { gsap } from "gsap";
