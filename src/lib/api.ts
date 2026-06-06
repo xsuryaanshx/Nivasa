@@ -487,10 +487,11 @@ async function getRooms(): Promise<Room[]> {
       .eq('user_id', user_id);
     if (error) throw error;
 
+    const unitIds = (units || []).map(u => u.id);
     const { data: tenants } = await supabase
       .from('tenants')
       .select('*')
-      .eq('user_id', user_id);
+      .in('room_id', unitIds.length > 0 ? unitIds : ['__none__']);
 
     const unitsWithTenants = (units || []).map(u => ({
       ...u,
@@ -523,8 +524,7 @@ async function getRoomById(id: string): Promise<Room | null> {
     const { data: tenants } = await supabase
       .from('tenants')
       .select('*')
-      .eq('room_id', id)
-      .eq('user_id', user_id);
+      .eq('room_id', id);
 
     const unitWithTenants = {
       ...unit,
@@ -625,11 +625,17 @@ async function updateTenant(tenantId: string, updates: {
     if (Object.keys(patch).length === 0) return;
 
     const user_id = await requireAuthUserId();
+    
+    // Authorize via unit
+    const { data: tenantCheck } = await supabase.from('tenants').select('room_id').eq('id', tenantId).single();
+    if (!tenantCheck) throw new Error("Tenant not found");
+    const { data: unitCheck } = await supabase.from('units').select('id').eq('id', tenantCheck.room_id).eq('user_id', user_id).single();
+    if (!unitCheck) throw new Error("Unauthorized");
+
     const { data: row, error } = await supabase
       .from("tenants")
       .update(patch)
       .eq("id", tenantId)
-      .eq("user_id", user_id)
       .select("room_id")
       .single();
     if (error) throw error;
@@ -796,11 +802,15 @@ async function removeTenant(roomId: string, tenantId: string) {
   try {
     // 1. Mark tenant as vacated
     const user_id = await requireAuthUserId();
+
+    // Authorize via unit
+    const { data: unitCheck } = await supabase.from('units').select('id').eq('id', roomId).eq('user_id', user_id).single();
+    if (!unitCheck) throw new Error("Unauthorized");
+
     const { error: tenantError } = await supabase
       .from('tenants')
       .update({ status: 'vacated', left_at: new Date().toISOString() })
-      .eq('id', tenantId)
-      .eq('user_id', user_id);
+      .eq('id', tenantId);
     
     if (tenantError) throw tenantError;
 
@@ -809,7 +819,6 @@ async function removeTenant(roomId: string, tenantId: string) {
       .from('tenants')
       .select('*', { count: 'exact', head: true })
       .eq('room_id', roomId)
-      .eq('user_id', user_id)
       .neq('status', 'vacated');
     
     if (count === 0) {
@@ -900,14 +909,17 @@ async function getRecentPayments(limit = 10) {
     }
 
     const user_id = await requireAuthUserId();
+    const { data: unitsAuth } = await supabase.from('units').select('id, buildings!inner(user_id)').eq('buildings.user_id', user_id);
+    const unitIds = (unitsAuth || []).map(u => u.id);
+
     const { data, error } = await supabase
       .from('payments')
       .select(`
-        *,
+        id, amount, paid_date, created_at, status, method, tenant_id, unit_id,
         units (name, buildings (name)),
         tenants!tenant_id (name, phone, whatsapp_number)
       `)
-      .eq('user_id', user_id)
+      .in('unit_id', unitIds.length > 0 ? unitIds : ['__none__'])
       .order('created_at', { ascending: false })
       .limit(limit);
     
@@ -997,10 +1009,13 @@ async function getDashboardStats() {
     if (!session) return mockStats();
 
     const user_id = await requireAuthUserId();
+    const { data: unitsAuth } = await supabase.from('units').select('id').eq('user_id', user_id);
+    const unitIds = (unitsAuth || []).map(u => u.id);
+
     const [buildings, units, payments] = await Promise.all([
       supabase.from('buildings').select('*', { count: 'exact', head: true }).eq('user_id', user_id),
       supabase.from('units').select('*').eq('user_id', user_id),
-      supabase.from('payments').select('amount, status, created_at').eq('user_id', user_id)
+      supabase.from('payments').select('amount, status, created_at').in('unit_id', unitIds.length > 0 ? unitIds : ['__none__'])
     ]);
 
     const totalBuildings = buildings.count || 0;
