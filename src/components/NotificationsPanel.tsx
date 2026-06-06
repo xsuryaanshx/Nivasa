@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createPortal } from "react-dom";
+import { useLanguage } from "./LanguageProvider";
 
 interface AppNotification {
   id: string;
@@ -23,7 +24,7 @@ interface AppNotification {
   read: boolean;
 }
 
-function buildNotifications(rooms: any[]): AppNotification[] {
+function buildNotifications(rooms: any[], t: (key: string) => string): AppNotification[] {
   const notifs: AppNotification[] = [];
   const now = new Date();
 
@@ -46,7 +47,7 @@ function buildNotifications(rooms: any[]): AppNotification[] {
       notifs.push({
         id: `vacant-${room.id}`,
         type: "vacant",
-        title: `Room ${room.number} is vacant`,
+        title: `Room ${room.number} is ${t("vacant").toLowerCase()}`,
         body: `${room.buildingName} · This room has no tenants assigned. Consider listing it.`,
         time: "Now",
         read: false,
@@ -102,6 +103,7 @@ interface Props {
 }
 
 export function NotificationsPanel({ open, onClose }: Props) {
+  const { t } = useLanguage();
   const [notifs, setNotifs] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -110,10 +112,10 @@ export function NotificationsPanel({ open, onClose }: Props) {
     try {
       if (api) {
         const rooms = await api.getRooms();
-        setNotifs(buildNotifications(rooms));
+        setNotifs(buildNotifications(rooms, t as any));
       }
     } catch {
-      setNotifs(buildNotifications([]));
+      setNotifs(buildNotifications([], t as any));
     } finally {
       setLoading(false);
     }

@@ -120,13 +120,6 @@ const APP_FEATURES = [
     color: "text-emerald-500",
     bg: "bg-emerald-500/10",
   },
-  {
-    icon: Globe,
-    label: "Multi-language",
-    desc: "Supports EN, HI, and more",
-    color: "text-cyan-400",
-    bg: "bg-cyan-500/10",
-  },
 ];
 
 const stagger = {
@@ -259,7 +252,7 @@ function LanguageRegionPanel({ open, onClose }: { open: boolean; onClose: () => 
                     <Globe className="h-4 w-4 text-cyan-400" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-foreground">Language & Region</p>
+                    <p className="text-sm font-semibold text-foreground">Language</p>
                     <p className="text-xs text-muted-foreground">Language preference</p>
                   </div>
                 </div>
@@ -362,7 +355,7 @@ export default function Profile() {
     },
     {
       icon: Globe,
-      label: "Language & Region",
+      label: "Language",
       desc: "Language preference",
       onClick: () => setLanguageOpen(true),
       accent: "text-cyan-400",
