@@ -1,6 +1,6 @@
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
-import { BellRing, Building2, CheckCircle2, ArrowUpRight, MessageCircle, Phone } from "lucide-react";
+import { BellRing, Building2, CheckCircle2, ArrowUpRight, MessageCircle, Phone, Edit2, Trash2 } from "lucide-react";
 import { useRef, type MouseEvent, useState } from "react";
 import { Sparkline } from "./Sparkline";
 import { StatusPill } from "./StatusPill";
@@ -53,69 +53,6 @@ export function RoomCard({ room, index }: { room: Room; index: number }) {
   };
 
   const [showActionSheet, setShowActionSheet] = useState(false);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const isLongPressedRef = useRef(false);
-  const startPosRef = useRef({ x: 0, y: 0 });
-  const [isPressing, setIsPressing] = useState(false);
-
-  const startPress = (clientX: number, clientY: number) => {
-    isLongPressedRef.current = false;
-    startPosRef.current = { x: clientX, y: clientY };
-    setIsPressing(true);
-
-    timerRef.current = setTimeout(() => {
-      isLongPressedRef.current = true;
-      setIsPressing(false);
-      if (navigator.vibrate) {
-        navigator.vibrate(60);
-      }
-      setShowActionSheet(true);
-    }, 600);
-  };
-
-  const endPress = () => {
-    setIsPressing(false);
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
-  };
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    const touch = e.touches[0];
-    startPress(touch.clientX, touch.clientY);
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    endPress();
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    const touch = e.touches[0];
-    const dx = Math.abs(touch.clientX - startPosRef.current.x);
-    const dy = Math.abs(touch.clientY - startPosRef.current.y);
-    if (dx > 10 || dy > 10) {
-      endPress();
-    }
-  };
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (e.button !== 0) return;
-    startPress(e.clientX, e.clientY);
-  };
-
-  const handleMouseUp = () => {
-    endPress();
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isPressing) return;
-    const dx = Math.abs(e.clientX - startPosRef.current.x);
-    const dy = Math.abs(e.clientY - startPosRef.current.y);
-    if (dx > 10 || dy > 10) {
-      endPress();
-    }
-  };
 
   return (
     <motion.div
@@ -126,26 +63,12 @@ export function RoomCard({ room, index }: { room: Room; index: number }) {
     >
       <motion.div
         ref={ref}
-        onMouseMove={(e) => { onMove(e); handleMouseMove(e); }}
-        onMouseLeave={() => { onLeave(); endPress(); }}
-        onMouseDown={handleMouseDown}
-        onMouseUp={handleMouseUp}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-        onTouchMove={handleTouchMove}
+        onMouseMove={onMove}
+        onMouseLeave={onLeave}
         onClick={(e) => {
-          if (isLongPressedRef.current) {
-            e.preventDefault();
-            e.stopPropagation();
-            isLongPressedRef.current = false;
-            return;
-          }
           navigate(`/app/rooms/${room.id}`);
         }}
         style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
-        animate={{
-          scale: isPressing ? 0.96 : 1,
-        }}
         whileHover={{ y: -4 }}
         transition={{ type: "spring", stiffness: 250, damping: 22 }}
         className="group relative cursor-pointer overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-soft transition-shadow duration-300 hover:shadow-elev"
@@ -176,7 +99,41 @@ export function RoomCard({ room, index }: { room: Room; index: number }) {
               <span className="text-2xl font-semibold tracking-tight tnum">{room.number}</span>
             </div>
           </div>
-          <StatusPill status={room.status} />
+          <div className="flex flex-col items-end gap-2">
+            <StatusPill status={room.status} />
+            <div className="flex items-center gap-1">
+              <button
+                 type="button"
+                 onClick={(e) => {
+                   e.stopPropagation();
+                   setShowActionSheet(true);
+                 }}
+                 className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+                 title="Edit Room"
+              >
+                 <Edit2 className="h-3.5 w-3.5" />
+              </button>
+              <button
+                 type="button"
+                 onClick={(e) => {
+                   e.stopPropagation();
+                   if (window.confirm(`Are you sure you want to delete Room ${room.number}?`)) {
+                     const api = (window as any).nivasaApi;
+                     api.deleteRoom(room.id).then(() => {
+                       toast.success("Room deleted");
+                       window.dispatchEvent(new CustomEvent("nivasa:refresh"));
+                     }).catch((err: any) => {
+                       toast.error(err.message || "Failed to delete room");
+                     });
+                   }
+                 }}
+                 className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
+                 title="Delete Room"
+              >
+                 <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
         </div>
 
         <div className="relative mt-4 flex flex-col gap-2">
