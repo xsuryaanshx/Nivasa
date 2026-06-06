@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { openWhatsApp } from "@/lib/whatsapp";
 import { RoomActionSheet } from "./RoomActionSheet";
 import { MarkPaidModal } from "./MarkPaidModal";
+import { useLanguage } from "./LanguageProvider";
 
 function initials(name: string) {
   return name.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase();
@@ -19,6 +20,7 @@ function initials(name: string) {
 export function RoomCard({ room, index, payments = [] }: { room: Room; index: number; payments?: any[] }) {
   const ref = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const primaryTenant = room.tenants?.[0];
   const moreTenantsCount = (room.tenants?.length || 0) - 1;
   // Mouse-track tilt + glow position
@@ -174,7 +176,7 @@ export function RoomCard({ room, index, payments = [] }: { room: Room; index: nu
               )})
             )
           ) : (
-            <div className="text-sm text-muted-foreground italic">— vacant —</div>
+            <div className="text-sm text-muted-foreground italic">— {t("vacant").toLowerCase()} —</div>
           )}
         </div>
 

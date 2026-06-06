@@ -10,6 +10,7 @@ import { type PaymentStatus } from "@/lib/mockData";
 import { useCurrency } from "@/lib/currency";
 import { cn, calculateTenantShare } from "@/lib/utils";
 import { toast } from "sonner";
+import { useLanguage } from "./LanguageProvider";
 
 type Method = "Bank" | "UPI" | "Cash";
 
@@ -34,6 +35,7 @@ interface Props {
 
 export function AddPaymentModal({ open, onClose, defaultRoomId, defaultTenantId }: Props) {
   const { currency } = useCurrency();
+  const { t } = useLanguage();
 
   // Building + Room cascade
   const [buildingsList, setBuildingsList] = useState<any[]>([]);
@@ -231,7 +233,7 @@ export function AddPaymentModal({ open, onClose, defaultRoomId, defaultTenantId 
                 ) : (
                   roomsList.map(r => (
                     <option key={r.id} value={r.id}>
-                      Room {r.number}{r.tenants?.length ? ` · ${r.tenants.map((t: any) => t.name).join(", ")}` : " · vacant"}
+                      Room {r.number}{r.tenants?.length ? ` · ${r.tenants.map((t: any) => t.name).join(", ")}` : ` · ${t("vacant").toLowerCase()}`}
                     </option>
                   ))
                 )}
