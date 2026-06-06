@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { openWhatsApp } from "@/lib/whatsapp";
 import { RoomActionSheet } from "./RoomActionSheet";
+import { MarkPaidModal } from "./MarkPaidModal";
 
 function initials(name: string) {
   return name.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase();
@@ -53,6 +54,7 @@ export function RoomCard({ room, index }: { room: Room; index: number }) {
   };
 
   const [showActionSheet, setShowActionSheet] = useState(false);
+  const [showMarkPaid, setShowMarkPaid] = useState(false);
 
   return (
     <motion.div
@@ -181,7 +183,14 @@ export function RoomCard({ room, index }: { room: Room; index: number }) {
           {primaryTenant && room.status !== "paid" && (
             <QuickAction
               tone="success"
-              onClick={(e) => { stop(e); toast.success("Marked as paid", { description: `Room ${room.number}` }); }}
+              onClick={(e) => { 
+                stop(e); 
+                if (room.tenants && room.tenants.length > 1) {
+                  setShowMarkPaid(true);
+                } else {
+                  toast.success("Marked as paid", { description: `Room ${room.number}` }); 
+                }
+              }}
             >
               <CheckCircle2 className="h-3.5 w-3.5" /> Mark paid
             </QuickAction>
@@ -207,6 +216,11 @@ export function RoomCard({ room, index }: { room: Room; index: number }) {
       <RoomActionSheet
         open={showActionSheet}
         onClose={() => setShowActionSheet(false)}
+        room={room}
+      />
+      <MarkPaidModal
+        open={showMarkPaid}
+        onClose={() => setShowMarkPaid(false)}
         room={room}
       />
     </motion.div>
