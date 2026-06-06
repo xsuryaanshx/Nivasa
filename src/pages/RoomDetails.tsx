@@ -21,7 +21,7 @@ import { subscribeTenants } from "@/lib/tenantStore";
 import { getTenantExpenses, getCustomExpenses } from "@/lib/expensesStore";
 import { useCurrency, formatMoney, formatNumeric } from "@/lib/currency";
 import { openWhatsApp } from "@/lib/whatsapp";
-import { cn } from "@/lib/utils";
+import { cn, calculateTenantShare, getTenantPaymentStatus } from "@/lib/utils";
 import { toast } from "sonner";
 
 function initials(name: string) {
@@ -50,6 +50,8 @@ export default function RoomDetails() {
   const [flatIfClear, setFlatIfClear] = useState("");
   const [isEditingName, setIsEditingName] = useState(false);
   const [editNameValue, setEditNameValue] = useState("");
+  const [roomPayments, setRoomPayments] = useState<any[]>([]);
+  const [paymentTenantId, setPaymentTenantId] = useState<string | undefined>();
 
   const { currency } = useCurrency();
 
@@ -72,6 +74,9 @@ export default function RoomDetails() {
         );
         setFlatIfClear(String(data.rent));
       }
+      
+      const paymentsData = await api.getRecentPayments(100);
+      setRoomPayments(paymentsData.filter((p: any) => p.roomId === id));
     } catch (error) {
       console.error("Error fetching room details:", error);
       toast.error("Failed to load room details");
@@ -124,8 +129,6 @@ export default function RoomDetails() {
       setSavingElectricity(false);
     }
   };
-
-  const roomPayments = useMemo(() => [], []); // Will be populated by recent payments in a real app or filtered from a larger set
 
   if (loading) {
     return (
@@ -358,13 +361,10 @@ export default function RoomDetails() {
             <MagneticButton variant="ghost" onClick={sendReminderAll}>
               <BellRing className="h-4 w-4" /> Send reminder
             </MagneticButton>
-            <MagneticButton variant="ghost" onClick={() => toast.success("Marked as paid")}>
-              <CheckCircle2 className="h-4 w-4" /> Mark paid
-            </MagneticButton>
             <MagneticButton variant="ghost" onClick={() => setElectricityOpen(true)}>
               <Zap className="h-4 w-4" /> Enter Reading
             </MagneticButton>
-            <MagneticButton onClick={() => setAddOpen(true)}>
+            <MagneticButton onClick={() => { setPaymentTenantId(undefined); setAddOpen(true); }}>
               <Plus className="h-4 w-4" /> Add payment
             </MagneticButton>
           </div>
@@ -382,8 +382,17 @@ export default function RoomDetails() {
           </div>
           {room.tenants && room.tenants.length > 0 ? (
             <div className="space-y-4">
-              {room.tenants.map((t) => (
-                <div key={t.id} className="rounded-xl bg-secondary/60 p-3 flex flex-col gap-3">
+              {room.tenants.map((t) => {
+                const status = getTenantPaymentStatus(t, roomPayments);
+                let bgClass = "bg-secondary/60";
+                if (status === "paid") bgClass = "bg-emerald-500/10 border border-emerald-500/20";
+                else if (status === "pending") bgClass = "bg-orange-500/10 border border-orange-500/20";
+                else if (status === "late") bgClass = "bg-red-500/10 border border-red-500/20";
+                
+                const tenantShare = calculateTenantShare(room);
+
+                return (
+                <div key={t.id} className={cn("rounded-xl p-3 flex flex-col gap-3 transition-colors", bgClass)}>
                   <div className="flex items-start justify-between gap-2">
                     <div 
                       className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer hover:opacity-80 transition-opacity"
@@ -393,7 +402,12 @@ export default function RoomDetails() {
                         {initials(t.name)}
                       </div>
                       <div className="min-w-0">
-                        <div className="text-sm font-semibold truncate" title={t.name}>{t.name}</div>
+                        <div className="text-sm font-semibold truncate flex items-center gap-2" title={t.name}>
+                          {t.name}
+                          {status === "paid" && <span className="inline-flex items-center rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">✅ Paid</span>}
+                          {status === "pending" && <span className="inline-flex items-center rounded-full bg-orange-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-orange-600 dark:text-orange-400">⚠️ Pending</span>}
+                          {status === "late" && <span className="inline-flex items-center rounded-full bg-red-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-red-600 dark:text-red-400">🔴 Overdue</span>}
+                        </div>
                         <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
                           <span className="flex items-center gap-1 truncate">
                             <Phone className="h-3 w-3 shrink-0" /> {t.phone}
@@ -442,6 +456,13 @@ export default function RoomDetails() {
                       className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-background/50 py-1.5 text-xs font-medium text-foreground hover:bg-secondary transition-colors"
                     >
                       <Send className="h-3.5 w-3.5" /> Invoice
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setPaymentTenantId(t.id); setAddOpen(true); }}
+                      className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-brand/10 text-brand py-1.5 text-xs font-semibold hover:bg-brand/20 transition-colors"
+                    >
+                      <CheckCircle2 className="h-3.5 w-3.5" /> Mark paid ({currency.symbol}{tenantShare.toFixed(0)})
                     </button>
                   </div>
                 </div>
@@ -704,7 +725,7 @@ export default function RoomDetails() {
         )}
       </div>
 
-      <AddPaymentModal open={addOpen} onClose={() => setAddOpen(false)} defaultRoomId={room.id} />
+      <AddPaymentModal open={addOpen} onClose={() => setAddOpen(false)} defaultRoomId={room.id} defaultTenantId={paymentTenantId} />
       <AddTenantModal open={tenantOpen} onClose={() => setTenantOpen(false)} defaultRoomId={room.id} />
       <EditTenantModal open={!!editingTenant} tenant={editingTenant} onClose={() => setEditingTenant(null)} onUpdated={fetchData} />
       <TenantExpensesModal open={!!expensesTenant} tenant={expensesTenant} onClose={() => setExpensesTenant(null)} />

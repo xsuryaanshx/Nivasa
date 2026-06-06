@@ -6,7 +6,7 @@ import { Sparkline } from "./Sparkline";
 import { StatusPill } from "./StatusPill";
 import { Money } from "./Money";
 import type { Room } from "@/lib/mockData";
-import { cn } from "@/lib/utils";
+import { cn, getTenantPaymentStatus } from "@/lib/utils";
 import { toast } from "sonner";
 import { openWhatsApp } from "@/lib/whatsapp";
 import { RoomActionSheet } from "./RoomActionSheet";
@@ -16,7 +16,7 @@ function initials(name: string) {
   return name.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase();
 }
 
-export function RoomCard({ room, index }: { room: Room; index: number }) {
+export function RoomCard({ room, index, payments = [] }: { room: Room; index: number; payments?: any[] }) {
   const ref = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const primaryTenant = room.tenants?.[0];
@@ -153,16 +153,25 @@ export function RoomCard({ room, index }: { room: Room; index: number }) {
                 </div>
               </div>
             ) : (
-              room.tenants.map(t => (
+              room.tenants.map(t => {
+                const status = getTenantPaymentStatus(t, payments);
+                let dotClass = "bg-emerald-500";
+                if (status === "pending") dotClass = "bg-orange-500";
+                if (status === "late") dotClass = "bg-red-500";
+
+                return (
                 <div key={t.id} className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-brand text-[10px] font-semibold text-white shadow-glow">
-                    {initials(t.name)}
+                  <div className="relative">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-brand text-[10px] font-semibold text-white shadow-glow">
+                      {initials(t.name)}
+                    </div>
+                    <div className={cn("absolute -bottom-1 -right-1 h-3 w-3 rounded-full border-2 border-card", dotClass)} />
                   </div>
                   <div className="min-w-0 text-sm font-medium truncate">
                     {t.name}
                   </div>
                 </div>
-              ))
+              )})
             )
           ) : (
             <div className="text-sm text-muted-foreground italic">— vacant —</div>

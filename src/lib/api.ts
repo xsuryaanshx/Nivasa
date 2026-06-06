@@ -97,9 +97,11 @@ async function getBuildings(): Promise<(Building & { occupancyRate: number; room
       }));
     }
 
+    const user_id = await requireAuthUserId();
     const { data, error } = await supabase
       .from('buildings')
-      .select('*, units(*)');
+      .select('*, units(*)')
+      .eq('user_id', user_id);
 
     if (error) throw error;
 
@@ -221,7 +223,8 @@ async function adjustBuildingRooms(buildingId: string, targetCount: number) {
   const { data: units, error: unitsError } = await supabase
     .from('units')
     .select('id, name, status')
-    .eq('building_id', buildingId);
+    .eq('building_id', buildingId)
+    .eq('user_id', user_id);
   
   if (unitsError) throw unitsError;
 
@@ -251,6 +254,7 @@ async function adjustBuildingRooms(buildingId: string, targetCount: number) {
       .from('tenants')
       .select('room_id, status')
       .eq('building_id', buildingId)
+      .eq('user_id', user_id)
       .neq('status', 'vacated');
     
     if (tenantsError) throw tenantsError;
@@ -375,17 +379,20 @@ async function getPropertyDetails(buildingId: string | undefined) {
       };
     }
 
+    const user_id = await requireAuthUserId();
     const { data: building, error: bError } = await supabase
       .from('buildings')
       .select('*, units(*)')
       .eq('id', buildingId)
+      .eq('user_id', user_id)
       .single();
     if (bError) throw bError;
 
     const { data: tenants, error: tError } = await supabase
       .from('tenants')
       .select('*')
-      .eq('building_id', buildingId);
+      .eq('building_id', buildingId)
+      .eq('user_id', user_id);
     
     if (tError) console.error("Error fetching tenants:", tError);
 
@@ -473,14 +480,17 @@ async function getRooms(): Promise<Room[]> {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return mockRooms;
 
+    const user_id = await requireAuthUserId();
     const { data: units, error } = await supabase
       .from('units')
-      .select('*, buildings(name)');
+      .select('*, buildings(name)')
+      .eq('user_id', user_id);
     if (error) throw error;
 
     const { data: tenants } = await supabase
       .from('tenants')
-      .select('*');
+      .select('*')
+      .eq('user_id', user_id);
 
     const unitsWithTenants = (units || []).map(u => ({
       ...u,
@@ -499,10 +509,12 @@ async function getRoomById(id: string): Promise<Room | null> {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return mockRooms.find(r => r.id === id) || null;
 
+    const user_id = await requireAuthUserId();
     const { data: unit, error } = await supabase
       .from('units')
       .select('*, buildings(name)')
       .eq('id', id)
+      .eq('user_id', user_id)
       .single();
     
     if (error) throw error;
@@ -511,7 +523,8 @@ async function getRoomById(id: string): Promise<Room | null> {
     const { data: tenants } = await supabase
       .from('tenants')
       .select('*')
-      .eq('room_id', id);
+      .eq('room_id', id)
+      .eq('user_id', user_id);
 
     const unitWithTenants = {
       ...unit,
@@ -564,7 +577,8 @@ async function updateRoom(
     const tiers = normalizeOccupancyTiers(updates.occupancy_prices);
     payload.occupancy_prices = tiersToJsonbPayload(tiers.length > 0 ? tiers : null);
   }
-  const { error } = await supabase.from("units").update(payload).eq("id", id);
+  const user_id = await requireAuthUserId();
+  const { error } = await supabase.from("units").update(payload).eq("id", id).eq("user_id", user_id);
   if (error) throw error;
   await syncUnitEffectiveRent(id);
 }
@@ -610,10 +624,12 @@ async function updateTenant(tenantId: string, updates: {
 
     if (Object.keys(patch).length === 0) return;
 
+    const user_id = await requireAuthUserId();
     const { data: row, error } = await supabase
       .from("tenants")
       .update(patch)
       .eq("id", tenantId)
+      .eq("user_id", user_id)
       .select("room_id")
       .single();
     if (error) throw error;
@@ -779,10 +795,12 @@ async function addTenant(input: {
 async function removeTenant(roomId: string, tenantId: string) {
   try {
     // 1. Mark tenant as vacated
+    const user_id = await requireAuthUserId();
     const { error: tenantError } = await supabase
       .from('tenants')
       .update({ status: 'vacated', left_at: new Date().toISOString() })
-      .eq('id', tenantId);
+      .eq('id', tenantId)
+      .eq('user_id', user_id);
     
     if (tenantError) throw tenantError;
 
@@ -791,6 +809,7 @@ async function removeTenant(roomId: string, tenantId: string) {
       .from('tenants')
       .select('*', { count: 'exact', head: true })
       .eq('room_id', roomId)
+      .eq('user_id', user_id)
       .neq('status', 'vacated');
     
     if (count === 0) {
@@ -880,6 +899,7 @@ async function getRecentPayments(limit = 10) {
       });
     }
 
+    const user_id = await requireAuthUserId();
     const { data, error } = await supabase
       .from('payments')
       .select(`
@@ -887,6 +907,7 @@ async function getRecentPayments(limit = 10) {
         units (name, buildings (name)),
         tenants!tenant_id (name, phone, whatsapp_number)
       `)
+      .eq('user_id', user_id)
       .order('created_at', { ascending: false })
       .limit(limit);
     
@@ -895,6 +916,7 @@ async function getRecentPayments(limit = 10) {
     return (data || []).map(p => ({
       id: p.id,
       roomId: p.unit_id,
+      tenantId: p.tenant_id,
       tenantName: p.tenants?.name || 'Unknown',
       tenantPhone: p.tenants?.phone,
       tenantWhatsapp: p.tenants?.whatsapp_number,
@@ -974,10 +996,11 @@ async function getDashboardStats() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return mockStats();
 
+    const user_id = await requireAuthUserId();
     const [buildings, units, payments] = await Promise.all([
-      supabase.from('buildings').select('*', { count: 'exact', head: true }),
-      supabase.from('units').select('*'),
-      supabase.from('payments').select('amount, status, created_at')
+      supabase.from('buildings').select('*', { count: 'exact', head: true }).eq('user_id', user_id),
+      supabase.from('units').select('*').eq('user_id', user_id),
+      supabase.from('payments').select('amount, status, created_at').eq('user_id', user_id)
     ]);
 
     const totalBuildings = buildings.count || 0;

@@ -38,6 +38,7 @@ export interface ElectricityReading {
 export interface Payment {
   id: string;
   roomId: string;
+  tenantId?: string;
   tenantName: string;
   amount: number;
   date: string;

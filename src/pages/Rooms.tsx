@@ -41,6 +41,7 @@ export default function Rooms() {
     setSearchParams(newParams);
   };
   const [roomsList, setRoomsList] = useState<any[]>([]);
+  const [paymentsList, setPaymentsList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchRooms = async () => {
@@ -48,8 +49,12 @@ export default function Rooms() {
       setLoading(true);
       const api = (window as any).nivasaApi;
       if (!api) return;
-      const data = await api.getRooms();
+      const [data, payments] = await Promise.all([
+        api.getRooms(),
+        api.getRecentPayments(1000)
+      ]);
       setRoomsList(data);
+      setPaymentsList(payments);
     } catch (error) {
       console.error("Error fetching rooms:", error);
     } finally {
@@ -173,7 +178,7 @@ export default function Rooms() {
         <EmptyState />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filtered.map((r, i) => <RoomCard key={r.id} room={r} index={i} />)}
+          {filtered.map((r, i) => <RoomCard key={r.id} room={r} index={i} payments={paymentsList} />)}
         </div>
       )}
     </div>

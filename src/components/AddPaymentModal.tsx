@@ -8,7 +8,7 @@ import { GlassModal } from "./GlassModal";
 import { MagneticButton } from "./MagneticButton";
 import { type PaymentStatus } from "@/lib/mockData";
 import { useCurrency } from "@/lib/currency";
-import { cn } from "@/lib/utils";
+import { cn, calculateTenantShare } from "@/lib/utils";
 import { toast } from "sonner";
 
 type Method = "Bank" | "UPI" | "Cash";
@@ -29,6 +29,7 @@ interface Props {
   open: boolean;
   onClose: () => void;
   defaultRoomId?: string;
+  defaultTenantId?: string;
 }
 
 export function AddPaymentModal({ open, onClose, defaultRoomId }: Props) {
@@ -42,6 +43,7 @@ export function AddPaymentModal({ open, onClose, defaultRoomId }: Props) {
 
   const [buildingId, setBuildingId] = useState<string>("");
   const [roomId, setRoomId]         = useState(defaultRoomId || "");
+  const [tenantId, setTenantId]     = useState(defaultTenantId || "");
 
   // Payment fields
   const [amount, setAmount]         = useState("");
@@ -113,7 +115,7 @@ export function AddPaymentModal({ open, onClose, defaultRoomId }: Props) {
   };
 
   const selectedRoom = allRooms.find(r => r.id === roomId);
-  const defaultAmount = selectedRoom ? selectedRoom.rent * currency.rate : 0;
+  const defaultAmount = selectedRoom ? calculateTenantShare(selectedRoom) * currency.rate : 0;
   const amountValue = Number(amount) || defaultAmount;
 
   // ── Submit ─────────────────────────────────────────────────────────────────
@@ -129,6 +131,10 @@ export function AddPaymentModal({ open, onClose, defaultRoomId }: Props) {
       setError("Please select a date");
       return;
     }
+    if (selectedRoom?.tenants?.length && !tenantId) {
+      setError("Please select a tenant");
+      return;
+    }
     if (amount && (Number.isNaN(Number(amount)) || Number(amount) <= 0)) {
       setError("Amount must be a positive number");
       return;
@@ -142,7 +148,7 @@ export function AddPaymentModal({ open, onClose, defaultRoomId }: Props) {
       await api.addPayment({
         building_id: buildingId,
         room_id: roomId,
-        tenant_id: selectedRoom?.tenants?.[0]?.id || null,
+        tenant_id: tenantId || selectedRoom?.tenants?.[0]?.id || null,
         amount: amountValue,
         method,
         status,
@@ -232,6 +238,25 @@ export function AddPaymentModal({ open, onClose, defaultRoomId }: Props) {
               </select>
             </div>
           </Field>
+
+          {/* Tenant selector */}
+          {selectedRoom?.tenants && selectedRoom.tenants.length > 0 && (
+            <Field label="Tenant">
+              <div className="relative">
+                <DoorOpen className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <select
+                  value={tenantId}
+                  onChange={e => setTenantId(e.target.value)}
+                  className="h-11 w-full appearance-none rounded-xl border border-border bg-card/70 pl-9 pr-3 text-sm outline-none focus:border-brand focus:shadow-[0_0_0_4px_hsl(var(--ring)/0.12)]"
+                >
+                  <option value="">Select a tenant</option>
+                  {selectedRoom.tenants.filter((t: any) => t.status !== 'vacated').map((t: any) => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
+                </select>
+              </div>
+            </Field>
+          )}
 
           {/* Amount */}
           <Field
