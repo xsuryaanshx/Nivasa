@@ -187,9 +187,15 @@ export function RoomCard({ room, index }: { room: Room; index: number }) {
               </div>
               <div className="min-w-0">
                 <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                  Tenant {moreTenantsCount > 0 ? `(+${moreTenantsCount})` : ""}
+                  {room.tenants!.length > 5 
+                    ? `Tenant (+${room.tenants!.length - 1})` 
+                    : room.tenants!.length > 1 ? "Tenants" : "Tenant"}
                 </div>
-                <div className="text-sm font-medium truncate">{primaryTenant.name}</div>
+                <div className="text-sm font-medium truncate">
+                  {room.tenants!.length > 5 
+                    ? primaryTenant.name 
+                    : room.tenants!.map(t => t.name).join(", ")}
+                </div>
               </div>
             </>
           ) : (
