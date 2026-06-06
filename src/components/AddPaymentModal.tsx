@@ -32,7 +32,7 @@ interface Props {
   defaultTenantId?: string;
 }
 
-export function AddPaymentModal({ open, onClose, defaultRoomId }: Props) {
+export function AddPaymentModal({ open, onClose, defaultRoomId, defaultTenantId }: Props) {
   const { currency } = useCurrency();
 
   // Building + Room cascade
