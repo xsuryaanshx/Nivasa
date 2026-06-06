@@ -586,7 +586,7 @@ export default function RoomDetails() {
                     next[idx] = { ...next[idx], members: e.target.value };
                     setTierRows(next);
                   }}
-                  className="h-10 rounded-xl border border-border bg-card px-3 text-sm tnum outline-none focus:border-brand"
+                  className="h-10 w-full min-w-0 rounded-xl border border-border bg-card px-3 text-sm tnum outline-none focus:border-brand"
                 />
                 <input
                   type="number" inputMode="decimal" step="any"
@@ -598,7 +598,7 @@ export default function RoomDetails() {
                     next[idx] = { ...next[idx], amount: e.target.value };
                     setTierRows(next);
                   }}
-                  className="h-10 rounded-xl border border-border bg-card px-3 text-sm tnum outline-none focus:border-brand"
+                  className="h-10 w-full min-w-0 rounded-xl border border-border bg-card px-3 text-sm tnum outline-none focus:border-brand"
                 />
                 <button
                   type="button"
@@ -636,7 +636,7 @@ export default function RoomDetails() {
                   type="number" inputMode="decimal" step="any"
                   value={flatIfClear}
                   onChange={(e) => setFlatIfClear(e.target.value)}
-                  className="h-9 rounded-lg border border-border bg-card px-2 text-sm tnum outline-none focus:border-brand"
+                  className="h-9 w-full min-w-0 rounded-lg border border-border bg-card px-2 text-sm tnum outline-none focus:border-brand"
                 />
               </label>
               <button
