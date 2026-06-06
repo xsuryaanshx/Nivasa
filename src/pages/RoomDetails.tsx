@@ -465,8 +465,9 @@ export default function RoomDetails() {
                       <CheckCircle2 className="h-3.5 w-3.5" /> Mark paid ({currency.symbol}{tenantShare.toFixed(0)})
                     </button>
                   </div>
-                </div>
-              ))}
+                  </div>
+                );
+              })}
             </div>
           ) : (
             <div className="text-sm text-muted-foreground">No tenants assigned.</div>
@@ -602,7 +603,7 @@ export default function RoomDetails() {
                   className="h-10 w-full min-w-0 rounded-xl border border-border bg-card px-3 text-sm tnum outline-none focus:border-brand"
                 />
                 <input
-                  type="number" inputMode="decimal" step="any"
+                  type="number" inputMode="decimal"
                   min={0}
                   step={100}
                   value={row.amount}
@@ -769,7 +770,7 @@ function NumberField({
       <div className="relative">
         {prefix && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground tnum">{prefix}</span>}
         <input
-          type="number" inputMode="decimal" step="any"
+          type="number" inputMode="decimal"
           value={value === 0 && String(value) === "0" ? "" : value === "" ? "" : Number.isFinite(Number(value)) ? value : ""}
           onChange={(e) => onChange(e.target.value === "" ? "" : Number(e.target.value))}
           step={step ?? 1} min={0}
