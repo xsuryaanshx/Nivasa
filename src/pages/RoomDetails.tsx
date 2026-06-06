@@ -16,7 +16,7 @@ import { EditTenantModal } from "@/components/EditTenantModal";
 import { ElectricityBillingModal } from "@/components/ElectricityBillingModal";
 import { TenantExpensesModal } from "@/components/TenantExpensesModal";
 import { Money } from "@/components/Money";
-import { type Room } from "@/lib/mockData";
+import { type Room } from "@/lib/types";
 import { normalizeOccupancyTiers, type OccupancyPriceTier } from "@/lib/rentByOccupancy";
 import { subscribeTenants } from "@/lib/tenantStore";
 import { getTenantExpenses, getCustomExpenses } from "@/lib/expensesStore";

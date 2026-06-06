@@ -5,7 +5,7 @@ import { useRef, type MouseEvent, useState } from "react";
 import { Sparkline } from "./Sparkline";
 import { StatusPill } from "./StatusPill";
 import { Money } from "./Money";
-import type { Room } from "@/lib/mockData";
+import type { Room } from "@/lib/types";
 import { cn, getTenantPaymentStatus } from "@/lib/utils";
 import { toast } from "sonner";
 import { openWhatsApp } from "@/lib/whatsapp";

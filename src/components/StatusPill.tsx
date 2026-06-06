@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import type { PaymentStatus } from "@/lib/mockData";
+import type { PaymentStatus } from "@/lib/types";
 
 const labels: Record<PaymentStatus, string> = { paid: "Paid", pending: "Pending", late: "Late" };
 

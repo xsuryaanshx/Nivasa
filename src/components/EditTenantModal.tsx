@@ -7,7 +7,7 @@ import { MagneticButton } from "./MagneticButton";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { isValidMobile, isValidAadhar } from "@/lib/tenantStore";
-import { type Tenant } from "@/lib/mockData";
+import { type Tenant } from "@/lib/types";
 
 interface Props {
   open: boolean;

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Edit2, Trash2, X, AlertTriangle, ArrowLeft, Save } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "./LanguageProvider";
-import { type Room } from "@/lib/mockData";
+import { type Room } from "@/lib/types";
 import { nivasaApi } from "@/lib/api";
 
 interface RoomActionSheetProps {

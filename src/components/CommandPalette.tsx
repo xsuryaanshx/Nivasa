@@ -8,7 +8,7 @@ import { forwardRef, useEffect, useMemo, useState, type ComponentPropsWithoutRef
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { useTheme } from "next-themes";
-import { rooms as mockRooms, buildings as mockBuildings } from "@/lib/mockData";
+import { useTheme } from "next-themes";
 
 import { toast } from "sonner";
 
@@ -23,8 +23,8 @@ export function CommandPalette({ open, onOpenChange, onShowHelp }: Props) {
   const [query, setQuery] = useState("");
   const { theme, setTheme } = useTheme();
 
-  const [roomsList, setRoomsList] = useState<any[]>(mockRooms);
-  const [buildingsList, setBuildingsList] = useState<any[]>(mockBuildings);
+  const [roomsList, setRoomsList] = useState<any[]>([]);
+  const [buildingsList, setBuildingsList] = useState<any[]>([]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -44,19 +44,17 @@ export function CommandPalette({ open, onOpenChange, onShowHelp }: Props) {
     if (open) {
       const fetchData = async () => {
         try {
-          if (api) {
-            const { data: { session } } = await api.supabase.auth.getSession();
-            if (session) {
-              const [fetchedRooms, fetchedBuildings] = await Promise.all([
-                api.getRooms(),
-                api.getBuildings()
-              ]);
-              setRoomsList(fetchedRooms || []);
-              setBuildingsList(fetchedBuildings || []);
-            } else {
-              setRoomsList(mockRooms);
-              setBuildingsList(mockBuildings);
-            }
+          const { data: { session } } = await nivasaApi.supabase.auth.getSession();
+          if (session) {
+            const [fetchedRooms, fetchedBuildings] = await Promise.all([
+              nivasaApi.getRooms(),
+              nivasaApi.getBuildings()
+            ]);
+            setRoomsList(fetchedRooms || []);
+            setBuildingsList(fetchedBuildings || []);
+          } else {
+            setRoomsList([]);
+            setBuildingsList([]);
           }
         } catch (error) {
           console.error("Error fetching data for command palette:", error);

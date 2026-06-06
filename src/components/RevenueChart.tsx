@@ -1,5 +1,12 @@
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { revenueSeries } from "@/lib/mockData";
+const revenueSeries = [
+  { month: "Nov", revenue: 784000 },
+  { month: "Dec", revenue: 812000 },
+  { month: "Jan", revenue: 846000 },
+  { month: "Feb", revenue: 861000 },
+  { month: "Mar", revenue: 889000 },
+  { month: "Apr", revenue: 928000 },
+];
 import { useCurrency, formatMoney } from "@/lib/currency";
 
 export function RevenueChart() {

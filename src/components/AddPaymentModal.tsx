@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { GlassModal } from "./GlassModal";
 import { MagneticButton } from "./MagneticButton";
-import { type PaymentStatus } from "@/lib/mockData";
+import { type PaymentStatus } from "@/lib/types";
 import { useCurrency } from "@/lib/currency";
 import { cn, calculateTenantShare } from "@/lib/utils";
 import { toast } from "sonner";

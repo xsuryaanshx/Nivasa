@@ -12,7 +12,7 @@ import { useLanguage } from "@/components/LanguageProvider";
 import { buildTiersFromBaseAndPerAdditional } from "@/lib/rentByOccupancy";
 import { cn } from "@/lib/utils";
 import { RoomActionSheet } from "@/components/RoomActionSheet";
-import type { Room } from "@/lib/mockData";
+import type { Room } from "@/lib/types";
 
 export default function BuildingDetails() {
   const { id } = useParams();

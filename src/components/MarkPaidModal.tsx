@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { type Room } from "@/lib/mockData";
+import { type Room } from "@/lib/types";
 import { nivasaApi } from "@/lib/api";
 
 interface MarkPaidModalProps {

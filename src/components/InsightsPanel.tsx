@@ -1,7 +1,13 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
-import { insights } from "@/lib/mockData";
+const insights: string[] = [
+  "3 tenants have pending payments for 5+ days",
+  "Room B-11 at Gokuldham Society has the highest electricity usage this month",
+  "Revenue increased by 12% compared to last quarter",
+  "Sunshine Apartments is 88% occupied — consider new listings",
+  "Average payment delay dropped to 1.4 days",
+];
 
 export function InsightsPanel() {
   const [i, setI] = useState(0);

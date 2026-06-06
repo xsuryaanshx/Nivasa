@@ -1,0 +1,63 @@
+import type { OccupancyPriceTier } from "./rentByOccupancy";
+
+export type PaymentStatus = "paid" | "pending" | "late";
+
+export interface Building {
+  id: string;
+  name: string;
+  address: string;
+  rooms: number;
+  occupied: number;
+  monthlyRevenue: number;
+  image?: string;
+}
+
+export interface Tenant {
+  id: string;
+  name: string;
+  phone: string;
+  whatsapp_number?: string;
+  aadhar?: string;
+  joined_at: string;
+  /** Number of people billed for rent (used with occupancy-based room pricing). */
+  occupancy_count?: number;
+  depositAmount?: number;
+  depositMethod?: "Cash" | "Bank" | "UPI";
+  status?: "active" | "vacated";
+  leftAt?: string;
+}
+
+export interface ElectricityReading {
+  month: string;
+  units: number;
+}
+
+export interface Payment {
+  id: string;
+  roomId: string;
+  tenantId?: string;
+  tenantName: string;
+  amount: number;
+  date: string;
+  status: PaymentStatus;
+  method: "Cash" | "Bank" | "UPI";
+  note?: string;
+}
+
+export interface Room {
+  id: string;
+  number: string;
+  buildingId: string;
+  buildingName: string;
+  rent: number;
+  /** When set, rent follows these tiers by tenant billing occupancy. */
+  occupancyPrices?: OccupancyPriceTier[] | null;
+  status: PaymentStatus;
+  tenants: Tenant[];
+  prevReading: number;
+  currReading: number;
+  ratePerUnit: number;
+  meterStartDate?: string;
+  history: ElectricityReading[];
+  pastTenants: Tenant[];
+}

@@ -4,7 +4,7 @@ import { StatusPill } from "./StatusPill";
 import { Money } from "./Money";
 import { useCurrency, formatMoney } from "@/lib/currency";
 import { useMemo } from "react";
-import type { Payment } from "@/lib/mockData";
+import type { Payment } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { openWhatsApp } from "@/lib/whatsapp";
 import { toast } from "sonner";

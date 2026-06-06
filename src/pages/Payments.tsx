@@ -7,7 +7,7 @@ import { MagneticButton } from "@/components/MagneticButton";
 import { PaymentTimeline } from "@/components/PaymentTimeline";
 import { AddPaymentModal } from "@/components/AddPaymentModal";
 import { Money } from "@/components/Money";
-import { type PaymentStatus } from "@/lib/mockData";
+import { type PaymentStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/components/LanguageProvider";
 

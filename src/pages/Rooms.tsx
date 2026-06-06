@@ -6,7 +6,7 @@ import { useLanguage } from "@/components/LanguageProvider";
 import { PageHeader } from "@/components/PageHeader";
 import { RoomCard } from "@/components/RoomCard";
 import { MagneticButton } from "@/components/MagneticButton";
-import { type PaymentStatus } from "@/lib/mockData";
+import { type PaymentStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const getFilters = (t: any): ({ key: PaymentStatus | "all"; label: string })[] => [
