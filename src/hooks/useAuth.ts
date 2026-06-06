@@ -1,8 +1,9 @@
 /**
  * useAuth — lightweight auth hook backed by nivasaApi.
- * Reads current session from the API facade.
+ * Uses direct import instead of window.nivasaApi global.
  */
 import { useEffect, useState } from "react";
+import { nivasaApi } from "@/lib/api";
 
 export interface AuthUser {
   id: string;
@@ -15,10 +16,8 @@ export interface AuthUser {
 }
 
 function buildUser(raw: { id: string; email: string; fullName: string }): AuthUser {
-  let full = raw.fullName || raw.email.split("@")[0];
-  if (full === "rohittiwary54") full = "Rohit Tiwary";
-  
-  const parts = full.trim().split(/\s+/);
+  const full = (raw.fullName || raw.email.split("@")[0] || "User").trim();
+  const parts = full.split(/\s+/);
   const initials = parts
     .slice(0, 2)
     .map((p) => p[0]?.toUpperCase() || "")
@@ -36,17 +35,13 @@ export function useAuth() {
   const [user, setUser] = useState<AuthUser | null>(null);
 
   useEffect(() => {
-    const api = (window as any).nivasaApi;
-    if (!api) return;
-    
     const checkSession = async () => {
-      const session = await api.auth.getSession();
+      const session = await nivasaApi.auth.getSession();
       if (session?.user) {
         const fullName = session.user.user_metadata?.full_name || session.user.email?.split("@")[0] || "User";
         setUser(buildUser({ id: session.user.id, email: session.user.email || "", fullName }));
       } else {
-        const storedName = localStorage.getItem("nivasa_user_name") || "User";
-        setUser(buildUser({ id: "demo", email: "demo@nivasa.app", fullName: storedName }));
+        setUser(null);
       }
     };
     
@@ -54,9 +49,7 @@ export function useAuth() {
   }, []);
 
   const signOut = async () => {
-    const api = (window as any).nivasaApi;
-    if (api) await api.auth.signOut();
-    localStorage.removeItem("nivasa_user_name");
+    await nivasaApi.auth.signOut();
     setUser(null);
     window.location.href = "/login";
   };

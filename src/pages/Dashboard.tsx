@@ -1,3 +1,4 @@
+import { nivasaApi } from "@/lib/api";
 import { Building2, IndianRupee, Home, ReceiptIndianRupee, Users, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -31,7 +32,6 @@ export default function Dashboard() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const api = (window as any).nivasaApi;
       if (!api) return;
 
       const [stats, recent] = await Promise.all([
@@ -105,7 +105,6 @@ export default function Dashboard() {
                       const val = (document.getElementById('elec-rate-input') as HTMLInputElement).value;
                       if (!val) return;
                       try {
-                        const api = (window as any).nivasaApi;
                         await api.updateElectricityRate(parseFloat(val));
                         toast.success("Global electricity rate updated");
                       } catch (e) {

@@ -20,6 +20,7 @@ import { AppLayout } from "./components/AppLayout.tsx";
 import { ThemeProvider } from "./components/ThemeProvider.tsx";
 import BuildingDetails from "./pages/BuildingDetails.tsx";
 import { SplashScreen } from "./components/SplashScreen.tsx";
+import { ProtectedRoute } from "./components/ProtectedRoute.tsx";
 
 const queryClient = new QueryClient();
 
@@ -80,15 +81,17 @@ const App = () => {
                 <Route path="/" element={<Index />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
-                <Route path="/app" element={<AppLayout />}>
-                  <Route index element={<Dashboard />} />
-                  <Route path="buildings" element={<Buildings />} />
-                  <Route path="buildings/:id" element={<BuildingDetails />} />
-                  <Route path="rooms" element={<Rooms />} />
-                  <Route path="rooms/:id" element={<RoomDetails />} />
-                  <Route path="payments" element={<Payments />} />
-                  <Route path="profile" element={<Profile />} />
-                  <Route path="expenses" element={<Expenses />} />
+                <Route path="/app" element={<ProtectedRoute />}>
+                  <Route element={<AppLayout />}>
+                    <Route index element={<Dashboard />} />
+                    <Route path="buildings" element={<Buildings />} />
+                    <Route path="buildings/:id" element={<BuildingDetails />} />
+                    <Route path="rooms" element={<Rooms />} />
+                    <Route path="rooms/:id" element={<RoomDetails />} />
+                    <Route path="payments" element={<Payments />} />
+                    <Route path="profile" element={<Profile />} />
+                    <Route path="expenses" element={<Expenses />} />
+                  </Route>
                 </Route>
                 <Route path="*" element={<NotFound />} />
               </Routes>

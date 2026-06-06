@@ -1,3 +1,4 @@
+import { nivasaApi } from "@/lib/api";
 import { Command } from "cmdk";
 import {
   ArrowRight, Building2, CheckCircle2, CornerDownLeft, Home, Keyboard,
@@ -43,7 +44,6 @@ export function CommandPalette({ open, onOpenChange, onShowHelp }: Props) {
     if (open) {
       const fetchData = async () => {
         try {
-          const api = (window as any).nivasaApi;
           if (api) {
             const { data: { session } } = await api.supabase.auth.getSession();
             if (session) {

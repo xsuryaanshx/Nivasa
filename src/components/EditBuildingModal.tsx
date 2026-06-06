@@ -1,3 +1,4 @@
+import { nivasaApi } from "@/lib/api";
 import { useState, useEffect } from "react";
 import { Building2, DoorOpen, MapPin, Save } from "lucide-react";
 import { GlassModal } from "./GlassModal";
@@ -41,9 +42,7 @@ export function EditBuildingModal({ open, onClose, onSuccess, buildingData }: Pr
     try {
       setSubmitting(true);
       setError(null);
-      const api = (window as any).nivasaApi;
-      if (!api) throw new Error("API not loaded");
-
+      
       // Use updateBuilding from our api layer (also wired to api.supabase.from for direct calls)
       await api.updateBuilding(buildingData.id, {
         name: name.trim(),

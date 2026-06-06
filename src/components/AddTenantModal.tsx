@@ -1,3 +1,4 @@
+import { nivasaApi } from "@/lib/api";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, IdCard, Phone, Smartphone, User, Loader2, Calendar, Banknote, CreditCard } from "lucide-react";
@@ -42,7 +43,6 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
   const fetchRooms = async () => {
     try {
       setLoadingRooms(true);
-      const api = (window as any).nivasaApi;
       if (!api) return;
       const data = await api.getRooms();
       setRoomsList(data);
@@ -104,9 +104,7 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
 
     try {
       setSubmitting(true);
-      const api = (window as any).nivasaApi;
-      if (!api) throw new Error("API not loaded");
-
+      
       let joinedIso = new Date().toISOString();
       if (joinedAt) {
         const parts = joinedAt.split("/");

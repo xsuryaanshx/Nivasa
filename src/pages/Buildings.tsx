@@ -1,3 +1,4 @@
+import { nivasaApi } from "@/lib/api";
 import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { Building2, MoreHorizontal, Plus, Eye, Edit, Trash2 } from "lucide-react";
@@ -31,7 +32,6 @@ export default function Buildings() {
   const fetchBuildings = async () => {
     try {
       setLoading(true);
-      const api = (window as any).nivasaApi;
       if (!api) return;
       const data = await api.getBuildings();
       setBuildingsList(data);
@@ -64,7 +64,6 @@ export default function Buildings() {
     if (!confirm(t("delete_confirm_building"))) return;
     
     try {
-      const api = (window as any).nivasaApi;
       await api.deleteBuilding(id);
       toast.success(t("building_deleted"));
       fetchBuildings();

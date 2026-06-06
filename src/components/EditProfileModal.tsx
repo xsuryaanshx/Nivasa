@@ -1,3 +1,4 @@
+import { nivasaApi } from "@/lib/api";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -21,7 +22,6 @@ export function EditProfileModal({ open, onClose }: { open: boolean; onClose: ()
   const handleSave = async () => {
     try {
       setLoading(true);
-      const api = (window as any).nivasaApi;
       if (api?.auth) {
         const session = await api.auth.getSession();
         if (session?.user) {

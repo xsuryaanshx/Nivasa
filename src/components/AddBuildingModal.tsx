@@ -1,3 +1,4 @@
+import { nivasaApi } from "@/lib/api";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Building2, CheckCircle2, DoorOpen, MapPin, Plus } from "lucide-react";
@@ -40,9 +41,7 @@ export function AddBuildingModal({ open, onClose, onSuccess }: Props) {
     try {
       setSubmitting(true);
       setError(null);
-      const api = (window as any).nivasaApi;
-      if (!api) throw new Error("API not loaded");
-
+      
       await api.addBuilding({
         name: name.trim(),
         address: address.trim(),

@@ -1,5 +1,4 @@
-// Lightweight in-memory tenant assignment store.
-// API_PLACEHOLDER: replace with Supabase mutations when wiring backend.
+// Lightweight validation utilities for tenant data.
 import { rooms, type Tenant } from "./mockData";
 
 type Listener = () => void;
@@ -11,30 +10,6 @@ export interface NewTenantInput {
   whatsapp_number?: string;
   aadhar: string;
   joined_at?: string;
-}
-
-export function assignTenantToRoom(roomId: string, input: NewTenantInput): Tenant {
-  const room = rooms.find((r) => r.id === roomId);
-  if (!room) throw new Error("Room not found");
-
-  const tenant: Tenant = {
-    id: `t_${Date.now().toString(36)}`,
-    name: input.name.trim(),
-    phone: input.mobile.trim(),
-    whatsapp_number: (input.whatsapp_number ?? input.mobile).trim(),
-    aadhar: input.aadhar.replace(/\s+/g, ""),
-    joined_at: input.joined_at ?? new Date().toISOString().slice(0, 10),
-  };
-
-  // Move existing tenant to past tenants if present.
-  if (room.tenant) room.pastTenants.unshift(room.tenant);
-  room.tenant = tenant;
-  if (room.status === "late" || room.status === "pending") {
-    // Fresh start: leave status as pending until first payment.
-    room.status = "pending";
-  }
-  listeners.forEach((fn) => fn());
-  return tenant;
 }
 
 export function subscribeTenants(fn: Listener) {
@@ -49,7 +24,14 @@ export function isValidAadhar(s: string) {
   return /^\d{12}$/.test(s.replace(/\s+/g, ""));
 }
 
-/** Loose mobile validation: at least 7 digits, allow +, spaces, dashes, parentheses, and dots. */
+/**
+ * Validate Indian mobile number.
+ * Accepts 10-digit numbers, optionally prefixed with +91 or 0.
+ * Examples: 9876543210, +919876543210, 09876543210
+ */
 export function isValidMobile(s: string) {
-  return /^[+]?[\d\s\-().]{7,}$/.test(s.trim());
+  const cleaned = s.replace(/[\s\-().]/g, "");
+  // Strip country code prefix if present
+  const normalized = cleaned.replace(/^\+91|^0/, "");
+  return /^[6-9]\d{9}$/.test(normalized);
 }

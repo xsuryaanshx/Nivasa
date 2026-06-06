@@ -1,3 +1,4 @@
+import { nivasaApi } from "@/lib/api";
 import { motion } from "framer-motion";
 import { ArrowRight, Eye, EyeOff, Sparkles, User } from "lucide-react";
 import { useState } from "react";
@@ -23,9 +24,7 @@ export default function Register() {
 
     setLoading(true);
     try {
-      const api = (window as any).nivasaApi;
-      if (!api) throw new Error("API not loaded");
-
+      
       const { data, error } = await api.auth.signUp(email, pwd, fullName.trim());
       if (error) throw error;
 

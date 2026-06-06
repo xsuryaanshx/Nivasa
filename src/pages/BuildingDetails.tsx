@@ -1,3 +1,4 @@
+import { nivasaApi } from "@/lib/api";
 import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -115,7 +116,6 @@ export default function BuildingDetails() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const api = (window as any).nivasaApi;
       if (!api) return;
       const buildingData = await api.getPropertyDetails(id);
       setData(buildingData);
@@ -150,8 +150,6 @@ export default function BuildingDetails() {
 
     try {
       setAddingRoom(true);
-      const api = (window as any).nivasaApi;
-
       if (useOccRent) {
         const base = parseFloat(occBase);
         const per = parseFloat(occPer);

@@ -1,3 +1,4 @@
+import { nivasaApi } from "@/lib/api";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import {
@@ -107,7 +108,6 @@ export function NotificationsPanel({ open, onClose }: Props) {
   const loadNotifications = async () => {
     setLoading(true);
     try {
-      const api = (window as any).nivasaApi;
       if (api) {
         const rooms = await api.getRooms();
         setNotifs(buildNotifications(rooms));

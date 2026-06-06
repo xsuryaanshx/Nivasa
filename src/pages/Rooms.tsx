@@ -1,3 +1,4 @@
+import { nivasaApi } from "@/lib/api";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Search, UserPlus } from "lucide-react";
@@ -47,7 +48,6 @@ export default function Rooms() {
   const fetchRooms = async () => {
     try {
       setLoading(true);
-      const api = (window as any).nivasaApi;
       if (!api) return;
       const [data, payments] = await Promise.all([
         api.getRooms(),

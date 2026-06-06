@@ -1,8 +1,9 @@
 import { motion } from "framer-motion";
-import { ArrowRight, Eye, EyeOff, Sparkles } from "lucide-react";
+import { ArrowRight, Eye, EyeOff } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { MagneticButton } from "@/components/MagneticButton";
+import { nivasaApi } from "@/lib/api";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -16,12 +17,9 @@ export default function Login() {
   useEffect(() => {
     const checkUser = async () => {
       try {
-        const api = (window as any).nivasaApi;
-        if (api) {
-          const session = await api.auth.getSession();
-          if (session?.user) {
-            navigate("/app", { replace: true });
-          }
+        const session = await nivasaApi.auth.getSession();
+        if (session?.user) {
+          navigate("/app", { replace: true });
         }
       } catch (e) {}
     };
@@ -35,9 +33,6 @@ export default function Login() {
     
     setLoading(true);
     try {
-      const api = (window as any).nivasaApi;
-      if (!api) throw new Error("API not loaded");
-      
       if (!rememberMe) {
         sessionStorage.setItem("nivasa_no_remember", "true");
         localStorage.setItem("nivasa_no_remember", "true");
@@ -46,13 +41,8 @@ export default function Login() {
         localStorage.removeItem("nivasa_no_remember");
       }
 
-      const { data, error } = await api.auth.signIn(user, pwd);
+      const { data, error } = await nivasaApi.auth.signIn(user, pwd);
       if (error) throw error;
-
-      // Persist session user name so Topbar reads it dynamically
-      if (data?.user?.fullName) {
-        localStorage.setItem("nivasa_user_name", data.user.fullName);
-      }
       
       navigate("/app");
     } catch (err: any) {
@@ -137,20 +127,6 @@ export default function Login() {
           <MagneticButton type="submit" className="mt-2 w-full" disabled={loading}>
             {loading ? "Signing in…" : <>Sign in <ArrowRight className="h-4 w-4" /></>}
           </MagneticButton>
-
-          <div className="relative my-2 flex items-center gap-3">
-            <div className="hairline flex-1" />
-            <span className="text-[11px] uppercase tracking-wider text-muted-foreground">or</span>
-            <div className="hairline flex-1" />
-          </div>
-
-          <button
-            type="button"
-            onClick={() => navigate("/app")}
-            className="h-11 w-full rounded-xl border border-border bg-card/60 text-sm font-medium transition-colors hover:bg-card"
-          >
-            Continue as demo
-          </button>
 
           <div className="mt-6 text-center text-xs text-muted-foreground">
             Don't have an account?{" "}

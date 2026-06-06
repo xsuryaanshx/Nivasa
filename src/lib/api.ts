@@ -1,3 +1,4 @@
+import { nivasaApi } from "@/lib/api";
 /**
  * nivasaApi — central API facade.
  * Wired to Supabase backend.
@@ -22,8 +23,8 @@ import {
   tiersToJsonbPayload,
 } from "./rentByOccupancy";
 
-const SUPABASE_URL = "https://ehmwvkxxoczoubbsjxvv.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVobXd2a3h4b2N6b3ViYnNqeHZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMzc5NjIsImV4cCI6MjA5MjcxMzk2Mn0._1thy8Nq3dsGBvEA8b_FPFbTbCyDk1fbwqxgUULDPG4";
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 
 const customStorage = {
   getItem: (key: string) => {
@@ -276,18 +277,20 @@ async function adjustBuildingRooms(buildingId: string, targetCount: number) {
   }
 }
 
-async function updateBuilding(id: string, updates: any) {
+async function updateBuilding(id: string, updates: { name?: string; address?: string; total_rooms?: number }) {
   try {
-    const payload = { ...updates };
-    const targetRooms = payload.total_rooms;
-    delete payload.total_rooms; // Not a column in the buildings table
+    // Whitelist allowed fields — never pass raw object to prevent user_id overwrite
+    const payload: Record<string, unknown> = {};
+    if (updates.name !== undefined) payload.name = updates.name;
+    if (updates.address !== undefined) payload.address = updates.address;
+    const targetRooms = updates.total_rooms;
 
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       const b = mockBuildings.find(x => x.id === id);
       if (b) {
-        if (payload.name !== undefined) b.name = payload.name;
-        if (payload.address !== undefined) b.address = payload.address;
+        if (payload.name !== undefined) b.name = payload.name as string;
+        if (payload.address !== undefined) b.address = payload.address as string;
       }
       if (targetRooms !== undefined) {
         await adjustBuildingRooms(id, targetRooms);
@@ -295,11 +298,13 @@ async function updateBuilding(id: string, updates: any) {
       return;
     }
 
+    const user_id = await requireAuthUserId();
     if (Object.keys(payload).length > 0) {
       const { error } = await supabase
         .from('buildings')
         .update(payload)
-        .eq('id', id);
+        .eq('id', id)
+        .eq('user_id', user_id);
       if (error) throw error;
     }
 
@@ -326,11 +331,12 @@ async function deleteRoom(id: string) {
       return true;
     }
 
-    // Supabase mode
-    await supabase.from('payments').delete().eq('unit_id', id);
-    await supabase.from('tenants').delete().eq('room_id', id);
+    // Supabase mode — enforce ownership
+    const user_id = await requireAuthUserId();
+    await supabase.from('payments').delete().eq('unit_id', id).eq('user_id', user_id);
+    await supabase.from('tenants').delete().eq('room_id', id).eq('user_id', user_id);
     
-    const { error } = await supabase.from('units').delete().eq('id', id);
+    const { error } = await supabase.from('units').delete().eq('id', id).eq('user_id', user_id);
     if (error) throw error;
     return true;
   } catch (error) {
@@ -342,12 +348,13 @@ async function deleteRoom(id: string) {
 
 async function deleteBuilding(id: string) {
   try {
-    // Delete related records first to avoid foreign key constraint errors
-    await supabase.from('payments').delete().eq('building_id', id);
-    await supabase.from('tenants').delete().eq('building_id', id);
-    await supabase.from('units').delete().eq('building_id', id);
+    const user_id = await requireAuthUserId();
+    // Enforce ownership on all cascaded deletes
+    await supabase.from('payments').delete().eq('building_id', id).eq('user_id', user_id);
+    await supabase.from('tenants').delete().eq('building_id', id).eq('user_id', user_id);
+    await supabase.from('units').delete().eq('building_id', id).eq('user_id', user_id);
 
-    const { error } = await supabase.from('buildings').delete().eq('id', id);
+    const { error } = await supabase.from('buildings').delete().eq('id', id).eq('user_id', user_id);
     if (error) throw error;
   } catch (error) {
     console.error("Error in deleteBuilding:", error);
@@ -538,12 +545,13 @@ async function getRoomById(id: string): Promise<Room | null> {
   }
 }
 
-async function syncUnitEffectiveRent(unitId: string) {
-  const { data: unit, error } = await supabase
+async function syncUnitEffectiveRent(unitId: string, user_id?: string) {
+  const query = supabase
     .from("units")
     .select("rent_amount, occupancy_prices, status")
-    .eq("id", unitId)
-    .single();
+    .eq("id", unitId);
+  if (user_id) query.eq("user_id", user_id);
+  const { data: unit, error } = await query.single();
   if (error || !unit) return;
 
   const { count, error: tError } = await supabase
@@ -559,7 +567,9 @@ async function syncUnitEffectiveRent(unitId: string) {
   const stored = Number(unit.rent_amount) || 0;
   const effective = computeRentFromTiers(tiers, stored, occ);
   if (Math.abs(stored - effective) < 0.005) return;
-  await supabase.from("units").update({ rent_amount: effective }).eq("id", unitId);
+  const updateQ = supabase.from("units").update({ rent_amount: effective }).eq("id", unitId);
+  if (user_id) updateQ.eq("user_id", user_id);
+  await updateQ;
 }
 
 async function updateRoom(
@@ -743,19 +753,19 @@ async function addTenant(input: {
       return null;
     }
 
-    // 1. Fetch building_id from the room automatically
+    // 1. Fetch building_id — also verify room belongs to this user
+    const user_id = await requireAuthUserId();
     const { data: room, error: roomError } = await supabase
       .from('units')
       .select('building_id')
       .eq('id', input.room_id)
+      .eq('user_id', user_id)
       .single();
     
-    if (roomError || !room) throw new Error("Room not found");
+    if (roomError || !room) throw new Error("Room not found or access denied");
 
     const occ =
       input.occupancy_count != null ? Math.max(1, Math.floor(Number(input.occupancy_count))) : 1;
-
-    const user_id = await requireAuthUserId();
 
     // 2. Insert tenant with correct fields
     const payload = {
@@ -810,7 +820,8 @@ async function removeTenant(roomId: string, tenantId: string) {
     const { error: tenantError } = await supabase
       .from('tenants')
       .update({ status: 'vacated', left_at: new Date().toISOString() })
-      .eq('id', tenantId);
+      .eq('id', tenantId)
+      .eq('room_id', roomId); // Extra ownership check: tenant must belong to this room
     
     if (tenantError) throw tenantError;
 
@@ -862,16 +873,31 @@ async function addPayment(input: any) {
     }
 
     const user_id = await requireAuthUserId();
+
+    // Verify the room belongs to this user before adding a payment
+    const { data: roomCheck } = await supabase
+      .from('units')
+      .select('id, building_id')
+      .eq('id', input.room_id)
+      .eq('user_id', user_id)
+      .single();
+    if (!roomCheck) throw new Error("Room not found or access denied");
+
+    // Validate status allowlist
+    const validStatuses = ['paid', 'pending', 'late'];
+    const statusNorm = (input.status || '').toLowerCase();
+    if (!validStatuses.includes(statusNorm)) throw new Error("Invalid payment status");
+
     const { data, error } = await supabase
       .from('payments')
       .insert([{
-        building_id: input.building_id,
+        building_id: input.building_id || roomCheck.building_id,
         unit_id: input.room_id,
         tenant_id: input.tenant_id,
         user_id,
         amount: input.amount,
-        status: input.status.toLowerCase(),
-        method: input.method.toLowerCase(),
+        status: statusNorm,
+        method: (input.method || 'cash').toLowerCase(),
         paid_date: input.date,
         reference_number: input.reference,
         note: input.note
@@ -880,9 +906,9 @@ async function addPayment(input: any) {
       .single();
     if (error) throw error;
 
-    // Update unit status if it was paid
-    if (input.status.toLowerCase() === 'paid') {
-      await supabase.from('units').update({ status: 'paid' }).eq('id', input.room_id);
+    // Update unit status if paid
+    if (statusNorm === 'paid') {
+      await supabase.from('units').update({ status: 'paid' }).eq('id', input.room_id).eq('user_id', user_id);
     }
 
     return data;
@@ -956,6 +982,7 @@ async function saveElectricityReading(input: {
   rate_per_unit: number;
 }) {
   try {
+    const user_id = await requireAuthUserId();
     const { error } = await supabase
       .from('units')
       .update({
@@ -963,11 +990,10 @@ async function saveElectricityReading(input: {
         curr_reading: input.curr_reading,
         rate_per_unit: input.rate_per_unit
       })
-      .eq('id', input.room_id);
+      .eq('id', input.room_id)
+      .eq('user_id', user_id);
     
     if (error) throw error;
-
-    // Optional: add to a history table if it exists
     return true;
   } catch (error) {
     console.error("Error in saveElectricityReading:", error);
@@ -1036,7 +1062,6 @@ async function getDashboardStats() {
   }
 }
 
-// ── Export ────────────────────────────────────────────────────────────────────
 export const nivasaApi = {
   auth,
   supabase,
@@ -1063,7 +1088,3 @@ export const nivasaApi = {
 };
 
 export type NivasaApi = typeof nivasaApi;
-
-declare global {
-  interface Window { nivasaApi: NivasaApi; }
-}

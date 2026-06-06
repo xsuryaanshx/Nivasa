@@ -1,3 +1,4 @@
+import { nivasaApi } from "@/lib/api";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, IdCard, Phone, Smartphone, User, Loader2, Banknote, CreditCard } from "lucide-react";
@@ -73,9 +74,7 @@ export function EditTenantModal({ open, tenant, onClose, onUpdated }: Props) {
 
     try {
       setSubmitting(true);
-      const api = (window as any).nivasaApi;
-      if (!api) throw new Error("API not loaded");
-
+      
       await api.updateTenant(tenant.id, {
         name: name.trim(),
         phone: mobile.trim(),

@@ -1,3 +1,4 @@
+import { nivasaApi } from "@/lib/api";
 import { Bell, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Search } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 import { useAuth } from "@/hooks/useAuth";
@@ -27,7 +28,6 @@ export function Topbar({ collapsed, onToggle, onOpenPalette, onOpenMobileDrawer 
     setMounted(true);
     const loadCount = async () => {
       try {
-        const api = (window as any).nivasaApi;
         if (!api) return;
         const rooms = await api.getRooms();
         const count = (rooms || []).filter(

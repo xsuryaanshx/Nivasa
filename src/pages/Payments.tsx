@@ -1,3 +1,4 @@
+import { nivasaApi } from "@/lib/api";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Plus, Search } from "lucide-react";
@@ -38,7 +39,6 @@ export default function Payments() {
   const fetchPayments = async () => {
     try {
       setLoading(true);
-      const api = (window as any).nivasaApi;
       if (!api) return;
       const data = await api.getRecentPayments(100); // Fetch more for the payments page
       setPaymentsList(data);

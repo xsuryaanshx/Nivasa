@@ -1,3 +1,4 @@
+import { nivasaApi } from "@/lib/api";
 "use client";
 
 import React, { useEffect, useRef } from "react";
@@ -63,7 +64,6 @@ export function CinematicHero({
     let active = true;
     const checkFastBypass = async () => {
       try {
-        const api = (window as any).nivasaApi;
         if (api) {
           const session = await api.auth.getSession();
           if (session?.user && active) {
@@ -89,7 +89,6 @@ export function CinematicHero({
           // Check session while fading out
           let dest = "/login";
           try {
-            const api = (window as any).nivasaApi;
             if (api) {
               const session = await api.auth.getSession();
               if (session?.user) dest = "/app";

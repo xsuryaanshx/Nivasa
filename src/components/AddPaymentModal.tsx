@@ -1,3 +1,4 @@
+import { nivasaApi } from "@/lib/api";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
@@ -61,7 +62,6 @@ export function AddPaymentModal({ open, onClose, defaultRoomId, defaultTenantId 
   const fetchData = async () => {
     try {
       setLoadingData(true);
-      const api = (window as any).nivasaApi;
       if (!api) return;
       const [buildings, rooms] = await Promise.all([
         api.getBuildings(),
@@ -142,9 +142,7 @@ export function AddPaymentModal({ open, onClose, defaultRoomId, defaultTenantId 
 
     try {
       setSubmitting(true);
-      const api = (window as any).nivasaApi;
-      if (!api) throw new Error("API not loaded");
-
+      
       await api.addPayment({
         building_id: buildingId,
         room_id: roomId,

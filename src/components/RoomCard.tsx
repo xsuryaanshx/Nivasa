@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { openWhatsApp } from "@/lib/whatsapp";
 import { RoomActionSheet } from "./RoomActionSheet";
 import { MarkPaidModal } from "./MarkPaidModal";
+import { nivasaApi } from "@/lib/api";
 
 function initials(name: string) {
   return name.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase();
@@ -119,9 +120,12 @@ export function RoomCard({ room, index, payments = [] }: { room: Room; index: nu
                  type="button"
                  onClick={(e) => {
                    e.stopPropagation();
-                   if (window.confirm(`Are you sure you want to delete Room ${room.number}?`)) {
-                     const api = (window as any).nivasaApi;
-                     api.deleteRoom(room.id).then(() => {
+                   const hasActiveTenants = room.tenants && room.tenants.length > 0;
+                   const msg = hasActiveTenants
+                     ? `Room ${room.number} has ${room.tenants!.length} active tenant(s). Deleting it will permanently remove all tenant records and payment history. Are you sure?`
+                     : `Are you sure you want to delete Room ${room.number}?`;
+                   if (window.confirm(msg)) {
+                     nivasaApi.deleteRoom(room.id).then(() => {
                        toast.success("Room deleted");
                        window.dispatchEvent(new CustomEvent("nivasa:refresh"));
                      }).catch((err: any) => {

@@ -1,3 +1,4 @@
+import { nivasaApi } from "@/lib/api";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft, BellRing, CheckCircle2, IdCard, MessageCircle, Phone, Plus, Save, Send, UserPlus, UserMinus, Zap, Calendar, Banknote, Edit2
@@ -58,7 +59,6 @@ export default function RoomDetails() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const api = (window as any).nivasaApi;
       if (!api || !id) return;
       const data = await api.getRoomById(id);
       if (data) {
@@ -107,7 +107,6 @@ export default function RoomDetails() {
   const saveElectricityReading = async () => {
     try {
       setSavingElectricity(true);
-      const api = (window as any).nivasaApi;
       if (!api || !room) throw new Error("API not loaded");
       const now = new Date();
       const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
@@ -159,9 +158,7 @@ export default function RoomDetails() {
       return;
     }
     try {
-      const api = (window as any).nivasaApi;
-      if (!api) throw new Error("API not loaded");
-      await api.updateRoom(room.id, { number: val });
+            await api.updateRoom(room.id, { number: val });
       toast.success("Room name updated");
       setIsEditingName(false);
       fetchData();
@@ -189,7 +186,6 @@ export default function RoomDetails() {
 
     try {
       setPricingSaving(true);
-      const api = (window as any).nivasaApi;
       if (!api || !room) throw new Error("API not loaded");
       if (normalized.length === 0) {
         const flat = parseFloat(flatIfClear);
@@ -218,9 +214,7 @@ export default function RoomDetails() {
     }
     try {
       setPricingSaving(true);
-      const api = (window as any).nivasaApi;
-      if (!api) throw new Error("API not loaded");
-      await api.updateRoom(room.id, { occupancy_prices: null, rent_amount: flat });
+            await api.updateRoom(room.id, { occupancy_prices: null, rent_amount: flat });
       setTierRows([]);
       toast.success("Room now uses a single monthly rent.");
       fetchData();
@@ -270,9 +264,7 @@ export default function RoomDetails() {
     if (!tenant || !window.confirm(`Are you sure you want to remove ${tenant.name}? This will free a bed.`)) return;
 
     try {
-      const api = (window as any).nivasaApi;
-      if (!api) throw new Error("API not loaded");
-
+      
       await api.removeTenant(room.id, tenantId);
       toast.success("Tenant removed successfully");
       fetchData(); // Refresh data

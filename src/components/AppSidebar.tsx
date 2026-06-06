@@ -1,3 +1,4 @@
+import { nivasaApi } from "@/lib/api";
 import { NavLink, useLocation } from "react-router-dom";
 import { Building2, Home, LayoutDashboard, ReceiptIndianRupee, Sparkles, UserCircle2, Zap, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -75,7 +76,6 @@ export function AppSidebar({ collapsed }: Props) {
       <div className="mt-2 px-3">
         <button
           onClick={() => {
-             const api = (window as any).nivasaApi;
              if (api) api.auth.signOut().then(() => window.location.href = "/login");
           }}
           className={cn(

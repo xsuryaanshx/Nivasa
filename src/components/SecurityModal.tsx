@@ -1,3 +1,4 @@
+import { nivasaApi } from "@/lib/api";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { X, Lock, Eye, EyeOff, ShieldCheck, AlertTriangle } from "lucide-react";
@@ -74,7 +75,6 @@ export function SecurityModal({ open, onClose }: Props) {
 
     try {
       setSaving(true);
-      const api = (window as any).nivasaApi;
       if (!api) throw new Error("API not ready");
 
       // Supabase: updateUser with new password

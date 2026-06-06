@@ -4,6 +4,7 @@ import { Edit2, Trash2, X, AlertTriangle, ArrowLeft, Save } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "./LanguageProvider";
 import { type Room } from "@/lib/mockData";
+import { nivasaApi } from "@/lib/api";
 
 interface RoomActionSheetProps {
   open: boolean;
@@ -35,10 +36,8 @@ export function RoomActionSheet({ open, onClose, room, onSuccess }: RoomActionSh
 
     try {
       setSubmitting(true);
-      const api = (window as any).nivasaApi;
-      if (!api) throw new Error("API not loaded");
 
-      await api.updateRoom(room.id, {
+      await nivasaApi.updateRoom(room.id, {
         number: editName.trim(),
         rent_amount: rentAmount,
       });
@@ -58,10 +57,8 @@ export function RoomActionSheet({ open, onClose, room, onSuccess }: RoomActionSh
   const handleDelete = async () => {
     try {
       setSubmitting(true);
-      const api = (window as any).nivasaApi;
-      if (!api) throw new Error("API not loaded");
 
-      await api.deleteRoom(room.id);
+      await nivasaApi.deleteRoom(room.id);
 
       toast.success(t("room_deleted"));
       onSuccess?.();
