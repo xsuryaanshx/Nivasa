@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
 import { NivasaLogo } from "./NivasaLogo";
 
@@ -24,7 +24,7 @@ export const SplashScreen = ({ isReady, onFinished }: SplashScreenProps) => {
     if (showLogo && isReady) {
       const timer = setTimeout(() => {
         setIsExiting(true);
-        setTimeout(onFinished, 1000);
+        setTimeout(onFinished, 800); // give enough time for the fade-out to finish
       }, 1000);
       return () => clearTimeout(timer);
     }
@@ -36,20 +36,19 @@ export const SplashScreen = ({ isReady, onFinished }: SplashScreenProps) => {
         animate={{
           opacity: isExiting ? 0 : 1,
           scale: isExiting ? 1.05 : 1,
-          filter: isExiting ? "blur(10px)" : "blur(0px)",
         }}
-        transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ duration: 0.8, ease: "easeInOut" }}
         className="flex flex-col items-center justify-center gap-1"
       >
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{
             opacity: showLogo ? 1 : 0,
-            y: showLogo ? 0 : 12,
+            y: showLogo ? 0 : 10,
           }}
-          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
         >
-          <NivasaLogo className="h-16 md:h-20 w-auto" />
+          <NivasaLogo className="h-28 sm:h-32 md:h-40 w-auto" />
         </motion.div>
       </motion.div>
     </div>
