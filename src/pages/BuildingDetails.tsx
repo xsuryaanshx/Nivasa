@@ -201,22 +201,37 @@ export default function BuildingDetails() {
       animate={{ opacity: 1, x: 0 }}
       className="pb-20"
     >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <button onClick={() => navigate("/app/buildings")} className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary/50 hover:bg-secondary transition-colors">
-            <ArrowLeft className="h-5 w-5" />
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center gap-3">
+          <button onClick={() => navigate("/app/buildings")} className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary/50 hover:bg-secondary transition-colors">
+            <ArrowLeft className="h-4 w-4" />
           </button>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-3">
-              {data.name}
-              <button
-                onClick={() => setIsEditingBuilding(true)}
-                className="text-xs font-normal text-muted-foreground hover:text-brand underline underline-offset-4"
-              >
-                {t("edit")}
-              </button>
-            </h1>
-            <p className="text-sm text-muted-foreground">{data.address}</p>
+          <div className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.15em]">
+            {t("rooms")} • {data.units.length} {t("total")}
+          </div>
+        </div>
+        
+        <div className="group">
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight flex items-center gap-3">
+            {data.name}
+            <button
+              onClick={() => setIsEditingBuilding(true)}
+              className="text-xs font-normal text-muted-foreground hover:text-brand underline underline-offset-4 opacity-0 transition-opacity group-hover:opacity-100"
+            >
+              {t("edit")}
+            </button>
+          </h1>
+          {data.address && <p className="text-sm text-muted-foreground mt-1">{data.address}</p>}
+          
+          <div className="flex items-center gap-5 mt-5 text-sm font-medium">
+            <div className="flex items-center gap-2">
+              <div className="w-2.5 h-2.5 rounded-full bg-green-500"></div>
+              <span className="text-foreground/90 tracking-wide">Occupied {data.occupied}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2.5 h-2.5 rounded-full bg-secondary-foreground/20"></div>
+              <span className="text-foreground/90 tracking-wide">Vacant {data.units.length - data.occupied}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -227,36 +242,6 @@ export default function BuildingDetails() {
         onSuccess={fetchData}
         buildingData={{ id: data.id, name: data.name, address: data.address, total_rooms: data.units?.length }}
       />
-
-      {/* Stats */}
-      <div className="mt-8 grid gap-4 md:grid-cols-4">
-        <div className="rounded-2xl border border-border bg-card p-5 shadow-soft">
-          <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
-            <DoorOpen className="h-3 w-3" /> {t("total_rooms")}
-          </div>
-          <div className="mt-1 text-2xl font-bold">{data.units.length}</div>
-        </div>
-        <div className="rounded-2xl border border-border bg-card p-5 shadow-soft">
-          <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
-            <Users className="h-3 w-3" /> {t("occupancy")}
-          </div>
-          <div className="mt-1 text-2xl font-bold">{Math.round(data.occupancyRate)}%</div>
-        </div>
-        <div className="rounded-2xl border border-border bg-card p-5 shadow-soft border-brand/20 bg-brand/[0.02]">
-          <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-brand/70">
-            <ReceiptIndianRupee className="h-3 w-3" /> {t("potential_revenue")}
-          </div>
-          <div className="mt-1 text-2xl font-bold text-brand">
-            <Money value={data.units.reduce((acc: number, u: any) => acc + (u.rent_amount || 0), 0)} />
-          </div>
-        </div>
-        <div className="rounded-2xl border border-border bg-card p-5 shadow-soft">
-          <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
-            <Users className="h-3 w-3" /> {t("active_tenants")}
-          </div>
-          <div className="mt-1 text-2xl font-bold">{data.tenants.length}</div>
-        </div>
-      </div>
 
       {/* Rooms list */}
       <div className="mt-8">
@@ -380,20 +365,11 @@ export default function BuildingDetails() {
           )}
         </AnimatePresence>
 
-        <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-secondary/30 text-muted-foreground uppercase text-[10px] tracking-wider">
-              <tr>
-                <th className="px-6 py-4 font-medium">{t("room")}</th>
-                <th className="px-6 py-4 font-medium">{t("status")}</th>
-                <th className="px-6 py-4 font-medium">{t("tenant")}</th>
-                <th className="px-6 py-4 font-medium text-right">{t("rent")}</th>
-                <th className="px-6 py-4 font-medium text-right">{t("actions")}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {data.units.map((room: any) => (
-                <tr
+        <div className="grid grid-cols-4 gap-3 sm:gap-4 mt-2">
+          {data.units.map((room: any) => {
+             const isOccupied = room.status === 'occupied';
+             return (
+               <div
                   key={room.id}
                   onMouseDown={(e) => handleMouseDown(room.id, e)}
                   onMouseUp={handleMouseUp}
@@ -411,63 +387,45 @@ export default function BuildingDetails() {
                     navigate(`/app/rooms/${room.id}`);
                   }}
                   className={cn(
-                    "transition-all duration-150 cursor-pointer select-none",
-                    pressingRoomId === room.id ? "bg-secondary/35 scale-[0.99]" : "hover:bg-secondary/10"
+                    "flex flex-col items-center justify-center p-3 sm:p-5 aspect-[4/5] rounded-[24px] cursor-pointer transition-all duration-200 select-none border-2",
+                    pressingRoomId === room.id && "scale-[0.97]",
+                    isOccupied 
+                      ? "bg-brand border-brand text-white shadow-sm hover:shadow-md hover:-translate-y-0.5" 
+                      : "border-dashed border-border/80 bg-transparent text-muted-foreground hover:border-border hover:bg-secondary/20"
                   )}
-                >
-                  <td className="px-6 py-4 font-semibold">{room.name}</td>
-                  <td className="px-6 py-4">
-                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-tight ${
-                      room.status === "occupied"
-                        ? "bg-green-500/10 text-green-500"
-                        : "bg-yellow-500/10 text-yellow-500"
-                    }`}>
-                      {room.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-muted-foreground">
-                    {room.tenants && room.tenants.length > 0 ? (
-                      <div className="flex items-center gap-2">
-                        <div className="h-6 w-6 rounded-full bg-secondary flex items-center justify-center text-[10px] font-bold">
-                          {room.tenants[0].name[0]}
-                        </div>
-                        {room.tenants[0].name}
-                        {room.tenants.length > 1 && <span className="text-[10px] opacity-70">(+{room.tenants.length - 1})</span>}
-                      </div>
-                    ) : (
-                      <span className="opacity-30">—</span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 font-medium text-right tabular-nums">
-                    <Money value={room.rent_amount} />
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); navigate(`/app/rooms/${room.id}`); }}
-                      className="text-muted-foreground hover:text-foreground"
-                    >
-                      <MoreHorizontal className="h-4 w-4" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {data.units.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="px-6 py-20 text-center">
-                    <div className="flex flex-col items-center justify-center text-muted-foreground">
-                      <DoorOpen className="h-10 w-10 opacity-10 mb-3" />
-                      <p className="text-sm italic">{t("no_rooms_added")}</p>
-                      <button onClick={() => setIsAddingRoom(true)} className="mt-3 text-xs text-brand hover:underline">
-                        {t("add_first_room")}
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+               >
+                  <DoorOpen className={cn("h-6 w-6 sm:h-7 sm:w-7 mb-1.5 sm:mb-2", isOccupied ? "opacity-90" : "opacity-40")} />
+                  <span className={cn("font-bold text-base sm:text-lg tracking-tight", !isOccupied && "text-foreground/70")}>{room.name || room.number}</span>
+                  <span className={cn("text-[9px] sm:text-[10px] font-medium tracking-wide mt-0.5", isOccupied ? "opacity-90" : "opacity-60")}>{isOccupied ? "Occupied" : "Vacant"}</span>
+               </div>
+             )
+          })}
         </div>
+
+        {data.units.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-20 text-muted-foreground rounded-3xl border border-dashed border-border mt-4">
+            <DoorOpen className="h-10 w-10 opacity-10 mb-3" />
+            <p className="text-sm italic">{t("no_rooms_added")}</p>
+            <button onClick={() => setIsAddingRoom(true)} className="mt-3 text-xs text-brand hover:underline font-medium">
+              {t("add_first_room")}
+            </button>
+          </div>
+        )}
+
+        {/* Occupancy Card */}
+        {data.units.length > 0 && (
+          <div className="mt-8 flex items-center justify-between rounded-[28px] bg-card p-6 shadow-sm border border-border/60">
+            <div className="flex-shrink-0">
+              <div className="text-[13px] font-medium text-muted-foreground mb-0.5">{t("occupancy")}</div>
+              <div className="text-3xl font-bold tracking-tight">{Math.round(data.occupancyRate)}%</div>
+            </div>
+            <div className="h-3 w-full ml-6 mr-1 bg-secondary rounded-full overflow-hidden flex">
+               <div className="bg-green-500 h-full rounded-full transition-all duration-1000 ease-out" style={{ width: `${data.occupancyRate}%` }} />
+            </div>
+          </div>
+        )}
       </div>
+
       {selectedRoomForSheet && (
         <RoomActionSheet
           open={!!selectedRoomForSheet}
