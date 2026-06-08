@@ -468,7 +468,9 @@ async function getTenants(): Promise<any[]> {
       
     if (error) throw error;
     
-    return (tenants || []).map((t) => {
+    const activeTenants = (tenants || []).filter(t => t.status !== "vacated");
+    
+    return activeTenants.map((t) => {
       const unit = units?.find(u => u.id === t.room_id);
       return {
         ...mapTenantFromRow(t),
