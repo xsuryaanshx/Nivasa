@@ -83,81 +83,74 @@ export function RoomCard({ room, index, payments = [] }: { room: Room; index: nu
           aria-hidden
           className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
           style={{
-            background: `radial-gradient(420px circle at ${glowX.get()} ${glowY.get()}, hsl(var(--accent-blue) / 0.18), transparent 50%)`,
+            background: `radial-gradient(420px circle at ${glowX.get()} ${glowY.get()}, hsl(var(--accent-blue) / 0.1), transparent 50%)`,
           }}
-        >
-          <motion.div
-            className="absolute inset-0"
-            style={{
-              background: "radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), hsl(var(--accent-blue) / 0.18), transparent 50%)",
-            }}
-          />
-        </motion.div>
+        />
 
-        <div className="relative flex items-start justify-between">
-          <div>
-            <div className="text-[11px] font-medium text-muted-foreground inline-flex items-center gap-1.5">
-              <Building2 className="h-3 w-3" /> {room.buildingName}
-            </div>
-            <div className="mt-1 flex items-baseline gap-2">
-              <span className="text-xs font-medium text-muted-foreground">Room</span>
-              <span className="text-2xl font-semibold tracking-tight tnum">{room.number}</span>
-            </div>
+        {/* Card Background Gradient - Deep Blue */}
+        <div className="absolute inset-0 bg-gradient-to-br from-background via-background/90 to-blue-900/10 pointer-events-none -z-10" />
+
+        {/* Header Row: Building Name & Actions */}
+        <div className="relative flex items-center justify-between mb-4">
+          <div className="text-[11px] font-medium text-muted-foreground inline-flex items-center gap-1.5 uppercase tracking-wider">
+            <Building2 className="h-3.5 w-3.5" /> {room.buildingName}
           </div>
-          <div className="flex flex-col items-end gap-2">
-            <StatusPill status={room.status} />
-            <div className="flex items-center gap-1">
-              <button
-                 type="button"
-                 onClick={(e) => {
-                   e.stopPropagation();
-                   setShowActionSheet(true);
-                 }}
-                 className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
-                 title="Edit Room"
-              >
-                 <Edit2 className="h-3.5 w-3.5" />
-              </button>
-              <button
-                 type="button"
-                 onClick={(e) => {
-                   e.stopPropagation();
-                   const hasActiveTenants = room.tenants && room.tenants.length > 0;
-                   const msg = hasActiveTenants
-                     ? `Room ${room.number} has ${room.tenants!.length} active tenant(s). Deleting it will permanently remove all tenant records and payment history. Are you sure?`
-                     : `Are you sure you want to delete Room ${room.number}?`;
-                   if (window.confirm(msg)) {
-                     nivasaApi.deleteRoom(room.id).then(() => {
-                       toast.success("Room deleted");
-                       window.dispatchEvent(new CustomEvent("nivasa:refresh"));
-                     }).catch((err: any) => {
-                       toast.error(err.message || "Failed to delete room");
-                     });
-                   }
-                 }}
-                 className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
-                 title="Delete Room"
-              >
-                 <Trash2 className="h-3.5 w-3.5" />
-              </button>
-            </div>
+          <div className="flex items-center gap-3">
+            <button
+               type="button"
+               onClick={(e) => {
+                 e.stopPropagation();
+                 setShowActionSheet(true);
+               }}
+               className="text-muted-foreground hover:text-foreground transition-colors"
+               title="Edit Room"
+            >
+               <Edit2 className="h-3.5 w-3.5" />
+            </button>
+            <button
+               type="button"
+               onClick={(e) => {
+                 e.stopPropagation();
+                 const hasActiveTenants = room.tenants && room.tenants.length > 0;
+                 const msg = hasActiveTenants
+                   ? `Room ${room.number} has ${room.tenants!.length} active tenant(s). Deleting it will permanently remove all tenant records and payment history. Are you sure?`
+                   : `Are you sure you want to delete Room ${room.number}?`;
+                 if (window.confirm(msg)) {
+                   nivasaApi.deleteRoom(room.id).then(() => {
+                     toast.success("Room deleted");
+                     window.dispatchEvent(new CustomEvent("nivasa:refresh"));
+                   }).catch((err: any) => {
+                     toast.error(err.message || "Failed to delete room");
+                   });
+                 }
+               }}
+               className="text-destructive/70 hover:text-destructive transition-colors"
+               title="Delete Room"
+            >
+               <Trash2 className="h-3.5 w-3.5" />
+            </button>
           </div>
         </div>
 
-        <div className="relative mt-4 flex flex-col gap-2">
-          <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
-            {room.tenants && room.tenants.length > 0 ? (room.tenants.length > 1 ? "Tenants" : "Tenant") : ""}
-          </div>
+        {/* Room Number Row */}
+        <div className="relative flex items-baseline gap-2 mb-6">
+          <span className="text-sm font-medium text-muted-foreground">Room</span>
+          <span className="text-3xl font-bold tracking-tight tnum">{room.number}</span>
+        </div>
+
+        {/* Tenants or Vacant Row */}
+        <div className="relative flex flex-col gap-2 mb-8">
           {room.tenants && room.tenants.length > 0 ? (
             room.tenants.length > 5 ? (
-              <div className="flex items-center gap-2.5">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-brand text-[10px] font-semibold text-white shadow-glow">
-                  {initials(primaryTenant!.name)}
+                <div className="flex items-center gap-3">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-brand text-[10px] font-bold text-white shadow-glow">
+                    {initials(primaryTenant!.name)}
+                  </div>
+                  <div className="min-w-0 text-sm font-medium truncate flex items-center gap-2">
+                    {primaryTenant!.name} <span className="text-muted-foreground text-xs font-normal">(+{room.tenants.length - 1} more)</span>
+                    <StatusPill status={room.status} />
+                  </div>
                 </div>
-                <div className="min-w-0 text-sm font-medium truncate">
-                  {primaryTenant!.name} <span className="text-muted-foreground text-xs font-normal ml-1">(+{room.tenants.length - 1} more)</span>
-                </div>
-              </div>
             ) : (
               room.tenants.map(t => {
                 const status = getTenantPaymentStatus(t, payments);
@@ -166,21 +159,20 @@ export function RoomCard({ room, index, payments = [] }: { room: Room; index: nu
                 if (status === "late") dotClass = "bg-red-500";
 
                 return (
-                <div key={t.id} className="flex items-center gap-2.5">
+                <div key={t.id} className="flex items-center gap-3">
                   <div className="relative">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-brand text-[10px] font-semibold text-white shadow-glow">
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-brand text-[10px] font-bold text-white shadow-glow">
                       {initials(t.name)}
                     </div>
-                    <div className={cn("absolute -bottom-1 -right-1 h-3 w-3 rounded-full border-2 border-card", dotClass)} />
                   </div>
-                  <div className="min-w-0 text-sm font-medium truncate">
+                  <div className="min-w-0 text-sm font-medium truncate flex items-center gap-2">
                     {t.name}
+                    <StatusPill status={room.status} />
                   </div>
                 </div>
               )})
             )
-          ) : (
-            <div className="text-sm text-muted-foreground italic">— {t("vacant").toLowerCase()} —</div>
+            <div className="text-sm text-muted-foreground italic">— vacant —</div>
           )}
         </div>
 
@@ -188,41 +180,45 @@ export function RoomCard({ room, index, payments = [] }: { room: Room; index: nu
           <Sparkline data={room.history} gradientId={`spark-${room.id}`} />
         </div>
 
-        <div className="relative mt-1 flex items-center justify-between text-[11px] text-muted-foreground">
+        {/* Electricity & Rent */}
+        <div className="relative mt-1 flex items-center justify-between text-[11px] text-muted-foreground mb-4">
           <span>Electricity · 6 mo</span>
           <span className="tnum"><Money value={room.rent} /> / mo</span>
         </div>
 
-        {/* Hover quick-actions */}
-        <div className="relative mt-4 flex flex-wrap items-center gap-1.5 opacity-0 translate-y-1 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0 focus-within:opacity-100 focus-within:translate-y-0">
-          {primaryTenant && room.status !== "paid" && (
-            <QuickAction
-              tone="success"
-              onClick={(e) => { 
-                stop(e); 
-                if (room.tenants && room.tenants.length > 1) {
-                  setShowMarkPaid(true);
-                } else {
-                  toast.success("Marked as paid", { description: `Room ${room.number}` }); 
-                }
-              }}
-            >
-              <CheckCircle2 className="h-3.5 w-3.5" /> Mark paid
-            </QuickAction>
-          )}
-
-          {!primaryTenant && (
-            <QuickAction
-              tone="info"
-              onClick={(e) => { stop(e); window.dispatchEvent(new CustomEvent("nivasa:add-tenant")); }}
-            >
-              <BellRing className="h-3.5 w-3.5" /> Add tenant
-            </QuickAction>
-          )}
+        {/* Bottom Actions */}
+        <div className="relative mt-2 flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            {!primaryTenant && (
+              <button
+                type="button"
+                onClick={(e) => { stop(e); window.dispatchEvent(new CustomEvent("nivasa:add-tenant")); }}
+                className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-[11px] font-medium text-foreground hover:bg-secondary transition-colors"
+              >
+                <BellRing className="h-3.5 w-3.5" /> Add tenant
+              </button>
+            )}
+            {primaryTenant && room.status !== "paid" && (
+              <button
+                type="button"
+                onClick={(e) => { 
+                  stop(e); 
+                  if (room.tenants && room.tenants.length > 1) {
+                    setShowMarkPaid(true);
+                  } else {
+                    toast.success("Marked as paid", { description: `Room ${room.number}` }); 
+                  }
+                }}
+                className="inline-flex items-center gap-1.5 rounded-full border border-status-paid/30 bg-status-paid/10 px-3 py-1.5 text-[11px] font-medium text-status-paid hover:bg-status-paid/20 transition-colors"
+              >
+                <CheckCircle2 className="h-3.5 w-3.5" /> Mark paid
+              </button>
+            )}
+          </div>
           <Link
             to={`/app/rooms/${room.id}`}
             onClick={(e) => e.stopPropagation()}
-            className="ml-auto inline-flex items-center gap-1 rounded-lg border border-transparent px-2 py-1 text-[11px] font-medium text-muted-foreground hover:border-border hover:bg-secondary hover:text-foreground"
+            className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors ml-auto"
           >
             Open <ArrowUpRight className="h-3 w-3" />
           </Link>
