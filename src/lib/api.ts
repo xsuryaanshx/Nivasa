@@ -450,19 +450,35 @@ async function getRoomById(id: string): Promise<any | null> {
 async function getTenants(): Promise<any[]> {
   try {
     const user_id = await requireAuthUserId();
+    
+    // First get all units for this user to ensure we only get their tenants
+    const { data: units, error: unitsError } = await supabase
+      .from("units")
+      .select("*, buildings(name)")
+      .eq("user_id", user_id);
+      
+    if (unitsError) throw unitsError;
+    const unitIds = (units || []).map((u) => u.id);
+    
+    // Then get all tenants in these units
     const { data: tenants, error } = await supabase
       .from("tenants")
-      .select("*, units(*, buildings(name))")
-      .eq("user_id", user_id);
+      .select("*")
+      .in("room_id", unitIds.length > 0 ? unitIds : ["__none__"]);
+      
     if (error) throw error;
-    return (tenants || []).map((t) => ({
-      ...mapTenantFromRow(t),
-      buildingName: t.units?.buildings?.name || "Unknown",
-      buildingId: t.units?.building_id,
-      roomId: t.room_id,
-      roomNumber: t.units?.name || t.units?.number || "Unknown",
-      roomRent: t.units?.rent_amount || 0,
-    }));
+    
+    return (tenants || []).map((t) => {
+      const unit = units?.find(u => u.id === t.room_id);
+      return {
+        ...mapTenantFromRow(t),
+        buildingName: unit?.buildings?.name || "Unknown",
+        buildingId: unit?.building_id,
+        roomId: t.room_id,
+        roomNumber: unit?.name || unit?.number || "Unknown",
+        roomRent: unit?.rent_amount || 0,
+      };
+    });
   } catch (error) {
     console.error("Error in getTenants:", error);
     throw error;
