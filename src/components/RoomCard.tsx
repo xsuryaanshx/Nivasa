@@ -172,6 +172,7 @@ export function RoomCard({ room, index, payments = [] }: { room: Room; index: nu
                 </div>
               )})
             )
+          ) : (
             <div className="text-sm text-muted-foreground italic">— vacant —</div>
           )}
         </div>
