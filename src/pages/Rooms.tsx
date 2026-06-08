@@ -1,7 +1,7 @@
 import { nivasaApi } from "@/lib/api";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Search, UserPlus } from "lucide-react";
+import { Search, UserPlus, DoorOpen } from "lucide-react";
 import { useLanguage } from "@/components/LanguageProvider";
 import { PageHeader } from "@/components/PageHeader";
 import { RoomCard } from "@/components/RoomCard";
@@ -177,8 +177,76 @@ export default function Rooms() {
       ) : filtered.length === 0 ? (
         <EmptyState />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filtered.map((r, i) => <RoomCard key={r.id} room={r} index={i} payments={paymentsList} />)}
+        <div className="flex flex-col gap-10">
+          {Object.entries(
+            filtered.reduce((acc, r) => {
+              const b = r.buildingName || "Unknown Property";
+              if (!acc[b]) acc[b] = [];
+              acc[b].push(r);
+              return acc;
+            }, {} as Record<string, any[]>)
+          ).map(([buildingName, rooms]: [string, any[]]) => {
+            const occupied = rooms.filter(r => r.status === "occupied").length;
+            const vacant = rooms.length - occupied;
+            const occRate = rooms.length > 0 ? (occupied / rooms.length) * 100 : 0;
+            
+            return (
+              <div key={buildingName} className="flex flex-col">
+                <div className="mb-4">
+                  <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-muted-foreground/80 mb-1">
+                    ROOMS &bull; {rooms.length} TOTAL
+                  </p>
+                  <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mb-3">
+                    {buildingName}
+                  </h2>
+                  <div className="flex items-center gap-4 text-sm font-medium">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 rounded-full bg-green-500"></div>
+                      <span className="text-foreground/90 tracking-wide">Occupied {occupied}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 rounded-full bg-secondary-foreground/20"></div>
+                      <span className="text-foreground/90 tracking-wide">Vacant {vacant}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-4 gap-3 sm:gap-4 mt-2">
+                  {rooms.map((room: any) => {
+                    const isOccupied = room.status === 'occupied';
+                    return (
+                      <div
+                        key={room.id}
+                        onClick={() => window.location.href = `/app/rooms/${room.id}`}
+                        className={cn(
+                          "flex flex-col items-center justify-center p-3 sm:p-5 aspect-[4/5] rounded-[24px] cursor-pointer transition-all duration-200 select-none border-2",
+                          isOccupied 
+                            ? "bg-brand border-brand text-white shadow-sm hover:shadow-md hover:-translate-y-0.5" 
+                            : "border-dashed border-border/80 bg-transparent text-muted-foreground hover:border-border hover:bg-secondary/20"
+                        )}
+                      >
+                        <DoorOpen className={cn("h-6 w-6 sm:h-7 sm:w-7 mb-1.5 sm:mb-2", isOccupied ? "opacity-90" : "opacity-40")} />
+                        <span className={cn("font-bold text-base sm:text-lg tracking-tight", !isOccupied && "text-foreground/70")}>{room.number}</span>
+                        <span className={cn("text-[9px] sm:text-[10px] font-medium tracking-wide mt-0.5", isOccupied ? "opacity-90" : "opacity-60")}>{isOccupied ? "Occupied" : "Vacant"}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {rooms.length > 0 && (
+                  <div className="mt-6 flex items-center justify-between rounded-[28px] bg-card p-6 shadow-sm border border-border/60">
+                    <div className="flex-shrink-0">
+                      <div className="text-[13px] font-medium text-muted-foreground mb-0.5">{t("occupancy")}</div>
+                      <div className="text-3xl font-bold tracking-tight">{Math.round(occRate)}%</div>
+                    </div>
+                    <div className="h-3 w-full ml-6 mr-1 bg-secondary rounded-full overflow-hidden flex">
+                       <div className="bg-green-500 h-full rounded-full transition-all duration-1000 ease-out" style={{ width: `${occRate}%` }} />
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
