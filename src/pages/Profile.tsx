@@ -136,6 +136,7 @@ const stagger = {
 // ── Theme Sub-panel ────────────────────────────────────────────────────────
 function ThemePanel({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { theme, setTheme } = useTheme();
+  const { t } = useLanguage();
 
   if (typeof document === "undefined") return null;
 
@@ -165,8 +166,8 @@ function ThemePanel({ open, onClose }: { open: boolean; onClose: () => void }) {
                     <Palette className="h-4 w-4 text-amber-400" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-foreground">Theme</p>
-                    <p className="text-xs text-muted-foreground">App appearance</p>
+                    <p className="text-sm font-semibold text-foreground">{t("theme")}</p>
+                    <p className="text-xs text-muted-foreground">{t("theme_subtitle")}</p>
                   </div>
                 </div>
                 <button
@@ -179,16 +180,16 @@ function ThemePanel({ open, onClose }: { open: boolean; onClose: () => void }) {
 
               <div className="p-6 space-y-2">
                 {[
-                  { id: "light", label: "Light", icon: Sun },
-                  { id: "dark", label: "Dark", icon: Moon },
-                  { id: "system", label: "System Default", icon: Monitor },
-                ].map((t) => {
-                  const active = theme === t.id;
-                  const Icon = t.icon;
+                  { id: "light", label: t("light"), icon: Sun },
+                  { id: "dark", label: t("dark"), icon: Moon },
+                  { id: "system", label: t("system_default"), icon: Monitor },
+                ].map((opt) => {
+                  const active = theme === opt.id;
+                  const Icon = opt.icon;
                   return (
                     <button
-                      key={t.id}
-                      onClick={() => setTheme(t.id)}
+                      key={opt.id}
+                      onClick={() => setTheme(opt.id)}
                       className={cn(
                         "flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left transition-all",
                         active
@@ -198,7 +199,7 @@ function ThemePanel({ open, onClose }: { open: boolean; onClose: () => void }) {
                     >
                       <div className="flex items-center gap-3">
                         <Icon className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm font-semibold text-foreground">{t.label}</span>
+                        <span className="text-sm font-semibold text-foreground">{opt.label}</span>
                       </div>
                       {active && <Check className="h-4 w-4 text-brand shrink-0" />}
                     </button>
@@ -221,7 +222,7 @@ const LANGUAGE_OPTIONS: { code: Language; label: string; native: string }[] = [
 ];
 
 function LanguageRegionPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { language, setLanguage } = useLanguage();
+  const { language, setLanguage, t } = useLanguage();
 
   if (typeof document === "undefined") return null;
 
@@ -252,8 +253,8 @@ function LanguageRegionPanel({ open, onClose }: { open: boolean; onClose: () => 
                     <Globe className="h-4 w-4 text-cyan-400" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-foreground">Language</p>
-                    <p className="text-xs text-muted-foreground">Language preference</p>
+                    <p className="text-sm font-semibold text-foreground">{t("language")}</p>
+                    <p className="text-xs text-muted-foreground">{t("language_subtitle")}</p>
                   </div>
                 </div>
                 <button
@@ -269,7 +270,7 @@ function LanguageRegionPanel({ open, onClose }: { open: boolean; onClose: () => 
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                     <Languages className="h-3.5 w-3.5" />
-                    Language
+                    {t("language")}
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     {LANGUAGE_OPTIONS.map((lang) => {
@@ -302,7 +303,7 @@ function LanguageRegionPanel({ open, onClose }: { open: boolean; onClose: () => 
                   onClick={onClose}
                   className="w-full rounded-xl bg-brand py-2.5 text-sm font-semibold text-white shadow-soft hover:opacity-90"
                 >
-                  Save & Close
+                  {t("save_and_close")}
                 </button>
               </div>
             </motion.div>
@@ -314,6 +315,37 @@ function LanguageRegionPanel({ open, onClose }: { open: boolean; onClose: () => 
   );
 }
 
+const FEATURE_KEY_MAP: Record<string, string> = {
+  "Up to 3 Buildings": "up_to_3_buildings",
+  "Up to 10 Rooms": "up_to_10_rooms",
+  "Basic Payment Tracking": "basic_payment_tracking",
+  "Dashboard Analytics": "dashboard_analytics_feat",
+  "Electricity Billing": "electricity_billing_feat",
+  "Advanced Reports": "advanced_reports",
+  "Multi-currency Support": "multi_currency_support",
+  "Priority Support": "priority_support",
+  "Unlimited Buildings": "unlimited_buildings",
+  "Unlimited Rooms": "unlimited_rooms",
+  "Advanced Payment Tracking": "advanced_payment_tracking",
+  "Full Dashboard Analytics": "full_dashboard_analytics",
+};
+
+const APP_FEATURE_KEY_MAP: Record<string, { label: string; desc: string }> = {
+  "Buildings": { label: "app_feat_buildings", desc: "app_feat_buildings_desc" },
+  "Rooms": { label: "app_feat_rooms", desc: "app_feat_rooms_desc" },
+  "Payments": { label: "app_feat_payments", desc: "app_feat_payments_desc" },
+  "Electricity": { label: "app_feat_electricity", desc: "app_feat_electricity_desc" },
+  "Analytics": { label: "app_feat_analytics", desc: "app_feat_analytics_desc" },
+  "Expenses": { label: "app_feat_expenses", desc: "app_feat_expenses_desc" },
+};
+
+const MENU_KEY_MAP: Record<string, { label: string; desc: string }> = {
+  "Notifications": { label: "notifications", desc: "notifications_desc" },
+  "Theme": { label: "theme", desc: "theme_desc" },
+  "Security": { label: "security", desc: "security_desc" },
+  "Language": { label: "language", desc: "language_desc" },
+};
+
 // ── Main Profile Page ─────────────────────────────────────────────────────────
 export default function Profile() {
   const { user, signOut } = useAuth();
@@ -324,6 +356,7 @@ export default function Profile() {
   const [languageOpen, setLanguageOpen] = useState(false);
   const [themeOpen, setThemeOpen] = useState(false);
   const [editProfileOpen, setEditProfileOpen] = useState(false);
+  const { t } = useLanguage();
 
   const plan = PLAN_FEATURES[currentPlan];
   const PlanIcon = plan.icon;
@@ -393,7 +426,7 @@ export default function Profile() {
               {/* Name & email */}
               <div className="min-w-0 flex-1">
                 <p className="truncate text-lg font-semibold text-foreground">
-                  {user?.fullName ?? "Loading…"}
+                  {user?.fullName ?? t("loading")}
                 </p>
                 <p className="truncate text-sm text-muted-foreground">
                   {user?.email ?? ""}
@@ -402,7 +435,7 @@ export default function Profile() {
                   className={`mt-1.5 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${plan.badgeColor}`}
                 >
                   <PlanIcon className="h-2.5 w-2.5" />
-                  {plan.badge}
+                  {t(plan.name === "Free" ? "free_plan" : "pro_plan").toUpperCase()}
                 </span>
               </div>
 
@@ -426,7 +459,7 @@ export default function Profile() {
         {/* ── Current Plan card ── */}
         <motion.div variants={stagger.item}>
           <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-            Current Plan
+            {t("current_plan")}
           </h2>
           <div className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${plan.color} p-[1px] shadow-float`}>
             <div className="rounded-[calc(1rem-1px)] bg-card px-5 py-5">
@@ -437,8 +470,12 @@ export default function Profile() {
                     <PlanIcon className="h-5 w-5 text-white" />
                   </div>
                   <div>
-                    <p className="font-semibold text-foreground">Nivasa {plan.name}</p>
-                    <p className="text-xs text-muted-foreground">{plan.price}</p>
+                    <p className="font-semibold text-foreground">
+                      Nivasa {plan.name === "Free" ? t("free_plan") : t("pro_plan")}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {plan.name === "Free" ? t("price_free") : t("price_pro")}
+                    </p>
                   </div>
                 </div>
                 {currentPlan === "free" && (
@@ -446,25 +483,28 @@ export default function Profile() {
                     className={`flex items-center gap-1.5 rounded-xl bg-gradient-to-br ${plan.color} px-3.5 py-2 text-xs font-semibold text-white shadow transition hover:opacity-90 active:scale-95`}
                   >
                     <Sparkles className="h-3.5 w-3.5" />
-                    Upgrade
+                    {t("upgrade")}
                   </button>
                 )}
               </div>
 
               {/* Feature checklist */}
               <ul className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                {plan.features.map((f) => (
-                  <li key={f.label} className="flex items-center gap-2 text-sm">
-                    {f.available ? (
-                      <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
-                    ) : (
-                      <Lock className="h-4 w-4 shrink-0 text-muted-foreground/40" />
-                    )}
-                    <span className={f.available ? "text-foreground" : "text-muted-foreground/50"}>
-                      {f.label}
-                    </span>
-                  </li>
-                ))}
+                {plan.features.map((f) => {
+                  const translationKey = FEATURE_KEY_MAP[f.label] as any;
+                  return (
+                    <li key={f.label} className="flex items-center gap-2 text-sm">
+                      {f.available ? (
+                        <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
+                      ) : (
+                        <Lock className="h-4 w-4 shrink-0 text-muted-foreground/40" />
+                      )}
+                      <span className={f.available ? "text-foreground" : "text-muted-foreground/50"}>
+                        {t(translationKey)}
+                      </span>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           </div>
@@ -473,11 +513,14 @@ export default function Profile() {
         {/* ── App Features ── */}
         <motion.div variants={stagger.item}>
           <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-            App Features
+            {t("app_features")}
           </h2>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {APP_FEATURES.map((feat) => {
               const Icon = feat.icon;
+              const mapping = APP_FEATURE_KEY_MAP[feat.label];
+              const transLabel = mapping ? t(mapping.label as any) : feat.label;
+              const transDesc = mapping ? t(mapping.desc as any) : feat.desc;
               return (
                 <button
                   key={feat.label}
@@ -498,8 +541,8 @@ export default function Profile() {
                   <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${feat.bg}`}>
                     <Icon className={`h-4 w-4 ${feat.color}`} />
                   </div>
-                  <p className="text-sm font-semibold text-foreground">{feat.label}</p>
-                  <p className="text-[11px] leading-snug text-muted-foreground">{feat.desc}</p>
+                  <p className="text-sm font-semibold text-foreground">{transLabel}</p>
+                  <p className="text-[11px] leading-snug text-muted-foreground">{transDesc}</p>
                 </button>
               );
             })}
@@ -509,11 +552,14 @@ export default function Profile() {
         {/* ── Settings quick-links ── */}
         <motion.div variants={stagger.item}>
           <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-            Settings
+            {t("settings")}
           </h2>
           <div className="overflow-hidden rounded-2xl border border-border/50 bg-card shadow-soft">
             {MENU_ITEMS.map((item, i) => {
               const Icon = item.icon;
+              const mapping = MENU_KEY_MAP[item.label];
+              const transLabel = mapping ? t(mapping.label as any) : item.label;
+              const transDesc = mapping ? t(mapping.desc as any) : item.desc;
               return (
                 <button
                   key={item.label}
@@ -526,8 +572,8 @@ export default function Profile() {
                     <Icon className={`h-4 w-4 ${item.accent}`} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground">{item.label}</p>
-                    <p className="text-xs text-muted-foreground">{item.desc}</p>
+                    <p className="text-sm font-medium text-foreground">{transLabel}</p>
+                    <p className="text-xs text-muted-foreground">{transDesc}</p>
                   </div>
                   <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/40" />
                 </button>
@@ -543,14 +589,14 @@ export default function Profile() {
             className="flex w-full items-center justify-center gap-2 rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3.5 text-sm font-medium text-destructive transition hover:bg-destructive/10 active:scale-[0.98]"
           >
             <LogOut className="h-4 w-4" />
-            Sign Out
+            {t("sign_out")}
           </button>
         </motion.div>
 
         {/* ── Version footer ── */}
         <motion.div variants={stagger.item}>
           <p className="text-center text-[10px] text-muted-foreground/40 tracking-widest uppercase">
-            Nivasa v1.0 · Built with ♥
+            {t("version_footer")}
           </p>
         </motion.div>
       </motion.div>

@@ -137,7 +137,6 @@ export function AddBuildingModal({ open, onClose, onSuccess }: Props) {
                 <input
                   id="building-total-rooms"
                   type="number"
-                  type="number"
                   inputMode="numeric"
                   min={0}
                   step={1}
