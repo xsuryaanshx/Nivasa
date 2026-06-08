@@ -447,6 +447,27 @@ async function getRoomById(id: string): Promise<any | null> {
     return null;
   }
 }
+async function getTenants(): Promise<any[]> {
+  try {
+    const user_id = await requireAuthUserId();
+    const { data: tenants, error } = await supabase
+      .from("tenants")
+      .select("*, units(*, buildings(name))")
+      .eq("user_id", user_id);
+    if (error) throw error;
+    return (tenants || []).map((t) => ({
+      ...mapTenantFromRow(t),
+      buildingName: t.units?.buildings?.name || "Unknown",
+      buildingId: t.units?.building_id,
+      roomId: t.room_id,
+      roomNumber: t.units?.name || t.units?.number || "Unknown",
+      roomRent: t.units?.rent_amount || 0,
+    }));
+  } catch (error) {
+    console.error("Error in getTenants:", error);
+    throw error;
+  }
+}
 async function syncUnitEffectiveRent(unitId: string, user_id?: string) {
   const query = supabase
     .from("units")
@@ -900,6 +921,7 @@ export const nivasaApi = {
   deleteBuilding,
   getPropertyDetails,
   getRooms,
+  getTenants,
   getRoomById,
   addRoom,
   addUnit,

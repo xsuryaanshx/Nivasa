@@ -11,6 +11,7 @@ import Login from "./pages/Login.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
 import Buildings from "./pages/Buildings.tsx";
 import Rooms from "./pages/Rooms.tsx";
+import Tenants from "./pages/Tenants.tsx";
 import RoomDetails from "./pages/RoomDetails.tsx";
 import Payments from "./pages/Payments.tsx";
 import Register from "./pages/Register.tsx";
@@ -86,7 +87,7 @@ const App = () => {
                     <Route index element={<Dashboard />} />
                     <Route path="buildings" element={<Buildings />} />
                     <Route path="buildings/:id" element={<BuildingDetails />} />
-                    <Route path="rooms" element={<Rooms />} />
+                    <Route path="tenants" element={<Tenants />} />
                     <Route path="rooms/:id" element={<RoomDetails />} />
                     <Route path="payments" element={<Payments />} />
                     <Route path="profile" element={<Profile />} />

@@ -13,7 +13,7 @@ export function AppSidebar({ collapsed }: Props) {
   const items = [
     { to: "/app", label: t("dashboard"), icon: LayoutDashboard, end: true },
     { to: "/app/buildings", label: t("buildings"), icon: Building2 },
-    { to: "/app/rooms", label: t("rooms"), icon: Home },
+    { to: "/app/tenants", label: t("tenants") || "Tenants", icon: UserCircle2 },
     { to: "/app/payments", label: t("payments"), icon: ReceiptIndianRupee },
     { to: "/app/profile", label: t("profile"), icon: UserCircle2 },
   ];

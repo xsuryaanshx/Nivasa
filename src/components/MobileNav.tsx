@@ -14,7 +14,7 @@ export function MobileNav() {
   const dockApps = useMemo(() => [
     { id: "/app", label: t('home'), icon: LayoutDashboard },
     { id: "/app/buildings", label: t('buildings'), icon: Building2 },
-    { id: "/app/rooms", label: t('rooms'), icon: Home },
+    { id: "/app/tenants", label: t('tenants') || "Tenants", icon: UserCircle2 },
     { id: "/app/payments", label: t('payments'), icon: ReceiptIndianRupee },
     { id: "/app/profile", label: t("profile"), icon: UserCircle2 },
   ], [t]);
