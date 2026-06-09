@@ -7,6 +7,9 @@ import { MagneticButton } from "./MagneticButton";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
+import { useSubscriptionData } from "@/hooks/useSubscriptionData";
+import { PremiumUpgradeModal } from "./PremiumUpgradeModal";
+
 interface Props {
   open: boolean;
   onClose: () => void;
@@ -14,12 +17,18 @@ interface Props {
 }
 
 export function AddBuildingModal({ open, onClose, onSuccess }: Props) {
+  const { usage, limits, canCreateProperty } = useSubscriptionData();
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
   const [totalRooms, setTotalRooms] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Upgrade Modal State
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [modalTitle, setModalTitle] = useState("");
+  const [modalMessage, setModalMessage] = useState("");
 
   const handleClose = () => {
     onClose();
@@ -36,6 +45,27 @@ export function AddBuildingModal({ open, onClose, onSuccess }: Props) {
     if (totalRooms !== "" && (isNaN(rooms) || rooms < 0)) {
       setError("Total rooms must be a positive integer");
       return;
+    }
+
+    // Gating Checks
+    const currentPropertiesCount = usage?.properties_count || 0;
+    const hasMultiProperty = !!limits?.features?.multi_property?.enabled;
+    if (!hasMultiProperty && currentPropertiesCount >= 1) {
+      setModalTitle("Manage Multiple Properties");
+      setModalMessage("Your current plan allows up to 1 property. Upgrade to Platinum to unlock multi-property management.");
+      setShowUpgradeModal(true);
+      return;
+    }
+
+    if (totalRooms !== "") {
+      const currentRoomsCount = usage?.rooms_count || 0;
+      const roomLimit = limits?.roomLimit ?? 10;
+      if (roomLimit !== -1 && currentRoomsCount + rooms > roomLimit) {
+        setModalTitle("Room Limit Reached");
+        setModalMessage(`Your current plan allows up to ${roomLimit} rooms. Adding this building with ${rooms} rooms would exceed your limit (current: ${currentRoomsCount}). Upgrade to Gold or Platinum to continue.`);
+        setShowUpgradeModal(true);
+        return;
+      }
     }
 
     try {
@@ -173,6 +203,12 @@ export function AddBuildingModal({ open, onClose, onSuccess }: Props) {
           </div>
         </form>
       )}
+      <PremiumUpgradeModal
+        open={showUpgradeModal}
+        onOpenChange={setShowUpgradeModal}
+        title={modalTitle}
+        message={modalMessage}
+      />
     </GlassModal>
   );
 }

@@ -22,6 +22,7 @@ import { ThemeProvider } from "./components/ThemeProvider.tsx";
 import BuildingDetails from "./pages/BuildingDetails.tsx";
 import { SplashScreen } from "./components/SplashScreen.tsx";
 import { ProtectedRoute } from "./components/ProtectedRoute.tsx";
+import SubscriptionPage from "./pages/Subscription.tsx";
 
 const queryClient = new QueryClient();
 
@@ -93,6 +94,7 @@ const App = () => {
                     <Route path="payments" element={<Payments />} />
                     <Route path="profile" element={<Profile />} />
                     <Route path="expenses" element={<Expenses />} />
+                    <Route path="subscription" element={<SubscriptionPage />} />
                   </Route>
                 </Route>
                 <Route path="*" element={<NotFound />} />

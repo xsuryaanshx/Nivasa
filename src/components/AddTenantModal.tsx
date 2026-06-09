@@ -7,6 +7,8 @@ import { MagneticButton } from "./MagneticButton";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { isValidMobile, isValidAadhar } from "@/lib/tenantStore";
+import { useSubscriptionData } from "@/hooks/useSubscriptionData";
+import { PremiumUpgradeModal } from "./PremiumUpgradeModal";
 
 interface Props {
   open: boolean;
@@ -21,6 +23,7 @@ function formatAadhar(v: string) {
 }
 
 export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Props) {
+  const { usage, limits } = useSubscriptionData();
   const [roomsList, setRoomsList] = useState<any[]>([]);
   const [loadingRooms, setLoadingRooms] = useState(false);
   const [roomId, setRoomId] = useState(defaultRoomId || "");
@@ -35,6 +38,11 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
     const d = new Date();
     return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
   });
+
+  // Upgrade Modal State
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [modalTitle, setModalTitle] = useState("");
+  const [modalMessage, setModalMessage] = useState("");
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -101,6 +109,16 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
+
+    // Subscription Limit Check
+    const currentTenantsCount = usage?.tenants_count || 0;
+    const tenantLimit = limits?.tenantLimit ?? 50;
+    if (tenantLimit !== -1 && currentTenantsCount >= tenantLimit) {
+      setModalTitle("Tenant Limit Reached");
+      setModalMessage(`Your current Silver plan allows up to ${tenantLimit} tenants. Upgrade to Gold or Platinum to continue.`);
+      setShowUpgradeModal(true);
+      return;
+    }
 
     try {
       setSubmitting(true);
@@ -367,6 +385,12 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
           )}
         </AnimatePresence>
       </div>
+      <PremiumUpgradeModal
+        open={showUpgradeModal}
+        onOpenChange={setShowUpgradeModal}
+        title={modalTitle}
+        message={modalMessage}
+      />
     </GlassModal>
   );
 }
