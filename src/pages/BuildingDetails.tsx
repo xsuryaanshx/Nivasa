@@ -366,7 +366,11 @@ export default function BuildingDetails() {
         </AnimatePresence>
 
         <div className="grid grid-cols-4 gap-3 sm:gap-4 mt-2">
-          {data.units.map((room: any) => {
+          {[...data.units].sort((a: any, b: any) => {
+            const numA = String(a.number || a.name || "");
+            const numB = String(b.number || b.name || "");
+            return numA.localeCompare(numB, undefined, { numeric: true, sensitivity: 'base' });
+          }).map((room: any) => {
              const isOccupied = room.status === 'occupied';
              return (
                <div
