@@ -70,15 +70,28 @@ const auth = {
     return data;
   },
 };
-/** Required for rows (e.g. `units.user_id`) scoped to the logged-in Supabase user. */ async function requireAuthUserId(): Promise<string> {
+async function requireAuthUserId(): Promise<string> {
+  // When offline, getUser() will fail because it makes a network call.
+  // We can safely fall back to reading the session from local storage.
+  if (!navigator.onLine) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user?.id) return session.user.id;
+  }
+
   const {
     data: { user },
     error,
   } = await supabase.auth.getUser();
-  if (error) throw error;
+  if (error) {
+    // If getUser fails (e.g., spotty connection but navigator.onLine is true)
+    // fallback to session just in case.
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user?.id) return session.user.id;
+    throw error;
+  }
   if (!user?.id) {
     throw new Error(
-      "Sign in is required. Your session may have expired — sign in again, then add the room.",
+      "Sign in is required. Your session may have expired — sign in again.",
     );
   }
   return user.id;
