@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { offlineSync } from "./offlineSync";
 import {
   type Building,
   type Room,
@@ -756,22 +757,227 @@ async function addPayment(input: any) {
     const statusNorm = (input.status || "").toLowerCase();
     if (!validStatuses.includes(statusNorm))
       throw new Error("Invalid payment status");
+    const payload = {
+      building_id: input.building_id || roomCheck.building_id,
+      unit_id: input.room_id,
+      tenant_id: input.tenant_id,
+      user_id,
+      amount: input.amount,
+      status: statusNorm,
+      method: (input.method || "cash").toLowerCase(),
+      paid_date: input.date,
+      reference_number: input.reference,
+      note: input.note,
+    };
+
+    if (!navigator.onLine) {
+      await offlineSync.addToQueue({
+        type: 'ADD_PAYMENT',
+        payload: input, // store original input to replay
+      });
+      console.log("Offline mode: Payment queued");
+      // Return a fake successful response with temp ID
+      return { id: "temp-" + Date.now(), ...payload };
+    }
+
     const { data, error } = await supabase
       .from("payments")
-      .insert([
-        {
-          building_id: input.building_id || roomCheck.building_id,
-          unit_id: input.room_id,
-          tenant_id: input.tenant_id,
-          user_id,
-          amount: input.amount,
-          status: statusNorm,
-          method: (input.method || "cash").toLowerCase(),
-          paid_date: input.date,
-          reference_number: input.reference,
-          note: input.note,
-        },
-      ])
+      .insert([payload])
+      .select()
+      .single();
+    if (error) throw error;
+    /* Update unit status if paid */
+    if (statusNorm === "paid") {
+      await supabase
+        .from("units")
+        .update({ status: "paid" })
+        .eq("id", input.room_id)
+        .eq("user_id", user_id);
+    }
+    return data;
+  } catch (error) {
+    console.error("Error in addPayment:", error);
+    throw error;
+  }
+}
+async function getRecentPayments(limit = 10) {
+  try {
+    const user_id = await requireAuthUserId();
+    const { data: unitsAuth } = await supabase
+      .from("units")
+      .select("id, buildings!inner(user_id)")
+      .eq("buildings.user_id", user_id);
+    const unitIds = (unitsAuth || []).map((u) => u.id);
+    const { data, error } = await supabase
+      .from("payments")
+      .select(
+        `        id, amount, paid_date, created_at, status, method, tenant_id, unit_id,        units (name, buildings (name)),        tenants!tenant_id (name, phone, whatsapp_number)      `,
+      )
+      .in("unit_id", unitIds.length > 0 ? unitIds : ["__none__"])
+      .order("created_at", { ascending: false })
+      .limit(limit);
+    if (error) throw error;
+    return (data || []).map((p) => ({
+      id: p.id,
+      roomId: p.unit_id,
+      tenantId: p.tenant_id,
+      tenantName: p.tenants?.name || "Unknown",
+      tenantPhone: p.tenants?.phone,
+      tenantWhatsapp: p.tenants?.whatsapp_number,
+      amount: p.amount,
+      date: p.paid_date || p.created_at,
+      status: p.status as any,
+      method: p.method.charAt(0).toUpperCase() + p.method.slice(1),
+      /* Capitalize for UI */
+      note: p.note,
+      reference: p.reference_number,
+      roomNumber: p.units?.name,
+      buildingName: p.units?.buildings?.name,
+    }));
+  } catch (error) {
+    console.error("Error in getRecentPayments:", error);
+    return [];
+  }
+}
+/* ── Electricity ─────────────────────────────────────────────────────────────── */
+async function saveElectricityReading(input: {
+  room_id: string;
+  month: string;
+  prev_reading: number;
+  curr_reading: number;
+  rate_per_unit: number;
+}) {
+  try {
+    const user_id = await requireAuthUserId();
+    const { error } = await supabase
+      .from("units")
+      .update({
+        prev_reading: input.prev_reading,
+        curr_reading: input.curr_reading,
+        rate_per_unit: input.rate_per_unit,
+      })
+      .eq("id", input.room_id)
+      .eq("user_id", user_id);
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error("Error in saveElectricityReading:", error);
+    throw error;
+  }
+}
+async function getElectricityRate(): Promise<number> {
+  try {
+    const { data, error } = await supabase
+      .from("settings")
+      .select("value")
+      .eq("key", "electricity_rate")
+      .single();
+    if (error || !data) return 0.18;
+    /* Default */
+    return parseFloat(data.value);
+  } catch (error) {
+    return 0.18;
+  }
+}
+async function updateElectricityRate(rate: number) {
+  try {
+    const { error } = await supabase
+      .from("settings")
+      .upsert(
+        { key: "electricity_rate", value: rate.toString() },
+        { onConflict: "key" },
+      );
+    if (error) throw error;
+  } catch (error) {
+    console.error("Error in updateElectricityRate:", error);
+    throw error;
+  }
+}
+/* ── Dashboard stats ─────────────────────────────────────────────────────────── */
+async function getDashboardStats() {
+  try {
+    const user_id = await requireAuthUserId();
+    const { data: unitsAuth } = await supabase
+      .from("units")
+      .select("id")
+      .eq("user_id", user_id);
+    const unitIds = (unitsAuth || []).map((u) => u.id);
+    const [buildings, units, payments] = await Promise.all([
+      supabase
+        .from("buildings")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user_id),
+      supabase.from("units").select("*").eq("user_id", user_id),
+      supabase
+        .from("payments")
+        .select("amount, status, created_at")
+        .in("unit_id", unitIds.length > 0 ? unitIds : ["__none__"]),
+    ]);
+    const totalBuildings = buildings.count || 0;
+    const totalRooms = units.data?.length || 0;
+    const occupied = units.data
+      ? units.data.filter((u: any) => u.status === "occupied").length
+      : 0;
+    const pending = payments.data
+      ? payments.data.filter((p: any) => p.status === "pending").length
+      : 0;
+    const thisMonth = new Date().getMonth();
+    const monthlyRevenue = (payments.data || [])
+      .filter(
+        (p: any) =>
+          p.status === "paid" &&
+          new Date(p.created_at).getMonth() === thisMonth,
+      )
+      .reduce((sum, p) => sum + p.amount, 0);
+    return { totalBuildings, totalRooms, occupied, pending, monthlyRevenue };
+  } catch (error) {
+    console.error("Error in getDashboardStats:", error);
+    return {
+      totalBuildings: 0,
+      totalRooms: 0,
+      occupied: 0,
+async function addPayment(input: any) {
+  try {
+    const user_id = await requireAuthUserId();
+    /* Verify the room belongs to this user before adding a payment */
+    const { data: roomCheck } = await supabase
+      .from("units")
+      .select("id, building_id")
+      .eq("id", input.room_id)
+      .eq("user_id", user_id)
+      .single();
+    if (!roomCheck) throw new Error("Room not found or access denied");
+    /* Validate status allowlist */
+    const validStatuses = ["paid", "pending", "late"];
+    const statusNorm = (input.status || "").toLowerCase();
+    if (!validStatuses.includes(statusNorm))
+      throw new Error("Invalid payment status");
+    const payload = {
+      building_id: input.building_id || roomCheck.building_id,
+      unit_id: input.room_id,
+      tenant_id: input.tenant_id,
+      user_id,
+      amount: input.amount,
+      status: statusNorm,
+      method: (input.method || "cash").toLowerCase(),
+      paid_date: input.date,
+      reference_number: input.reference,
+      note: input.note,
+    };
+
+    if (!navigator.onLine) {
+      await offlineSync.addToQueue({
+        type: 'ADD_PAYMENT',
+        payload: input, // store original input to replay
+      });
+      console.log("Offline mode: Payment queued");
+      // Return a fake successful response with temp ID
+      return { id: "temp-" + Date.now(), ...payload };
+    }
+
+    const { data, error } = await supabase
+      .from("payments")
+      .insert([payload])
       .select()
       .single();
     if (error) throw error;
@@ -930,6 +1136,15 @@ async function getDashboardStats() {
     };
   }
 }
+async function syncPendingPayments() {
+  const count = await offlineSync.syncNow(async (mutation) => {
+    if (mutation.type === 'ADD_PAYMENT') {
+      await addPayment(mutation.payload);
+    }
+  });
+  return count;
+}
+
 export const nivasaApi = {
   auth,
   supabase,
@@ -954,5 +1169,6 @@ export const nivasaApi = {
   getElectricityRate,
   updateElectricityRate,
   getDashboardStats,
+  syncPendingPayments,
 };
 export type NivasaApi = typeof nivasaApi;

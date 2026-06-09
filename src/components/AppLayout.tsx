@@ -11,7 +11,10 @@ import { ShortcutsHelp } from "./ShortcutsHelp";
 import { MobileNav } from "./MobileNav";
 import { ElectricityBillingModal } from "./ElectricityBillingModal";
 import { MobileDrawerMenu } from "./MobileDrawerMenu";
-import { LanguageProvider } from "./LanguageProvider";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { syncPendingPayments } from "@/lib/api";
+import { WifiOff } from "lucide-react";
+import { toast } from "sonner";
 
 function AppShell() {
   const [collapsed, setCollapsed] = useState(false);
@@ -22,6 +25,22 @@ function AppShell() {
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const location = useLocation();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const isOnline = useOnlineStatus();
+  const wasOffline = useRef(!navigator.onLine);
+
+  useEffect(() => {
+    if (isOnline && wasOffline.current) {
+      wasOffline.current = false;
+      syncPendingPayments().then(count => {
+        if (count > 0) {
+          toast.success(`Internet restored. Synced ${count} pending payments!`);
+          window.dispatchEvent(new CustomEvent("nivasa:refresh"));
+        }
+      });
+    } else if (!isOnline) {
+      wasOffline.current = true;
+    }
+  }, [isOnline]);
 
   useEffect(() => {
     const currentPath = location.pathname;
@@ -60,8 +79,15 @@ function AppShell() {
   }, []);
 
   return (
-    <div className="relative min-h-[100dvh] w-full bg-secondary/30 flex">
-      <MobileDrawerMenu
+    <div className="relative min-h-[100dvh] w-full bg-secondary/30 flex flex-col">
+      {!isOnline && (
+        <div className="bg-orange-500 text-white text-xs font-medium py-1.5 px-4 flex items-center justify-center gap-2 z-50">
+          <WifiOff className="h-3.5 w-3.5" />
+          You are offline. Changes will sync when internet is restored.
+        </div>
+      )}
+      <div className="flex-1 flex w-full relative">
+        <MobileDrawerMenu
         open={mobileDrawerOpen}
         onOpenChange={setMobileDrawerOpen}
         onOpenPalette={() => setPaletteOpen(true)}
