@@ -345,3 +345,17 @@ CREATE POLICY "feature_overrides_all_admin" ON public.feature_overrides
   FOR ALL TO authenticated
   USING ((auth.jwt() -> 'user_metadata' ->> 'is_admin')::boolean = true)
   WITH CHECK ((auth.jwt() -> 'user_metadata' ->> 'is_admin')::boolean = true);
+
+-- 7. Heal orphaned user_id fields on existing tables (buildings, tenants, payments)
+-- Derive user_id from units/rooms to satisfy RLS policies.
+UPDATE public.buildings b
+SET user_id = (SELECT u.user_id FROM public.units u WHERE u.building_id = b.id AND u.user_id IS NOT NULL LIMIT 1)
+WHERE b.user_id IS NULL;
+
+UPDATE public.tenants t
+SET user_id = (SELECT u.user_id FROM public.units u WHERE u.id = t.room_id AND u.user_id IS NOT NULL LIMIT 1)
+WHERE t.user_id IS NULL;
+
+UPDATE public.payments p
+SET user_id = (SELECT u.user_id FROM public.units u WHERE u.id = p.unit_id AND u.user_id IS NOT NULL LIMIT 1)
+WHERE p.user_id IS NULL;

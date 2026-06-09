@@ -81,7 +81,7 @@ export default function Dashboard() {
         <StatCard label={t('buildings')}        value={s.totalBuildings} icon={Building2} delta="+1"  trend="up"   delay={0.00} onClick={() => navigate("/app/buildings")} />
         <StatCard label={t('rooms')}            value={s.totalRooms}     icon={Home}      delta="+2"  trend="up"   delay={0.05} onClick={() => navigate("/app/rooms")} />
         <StatCard label={t('occupancy')}         value={s.occupied}       icon={Users}     delta="92%" trend="flat" delay={0.10} onClick={() => navigate("/app/rooms?status=occupied")} />
-        <StatCard label={t('pending_payments')} value={s.pending}        icon={ReceiptIndianRupee}   delta="-1"  trend="up"   delay={0.15} onClick={() => navigate("/app/payments?status=pending")} />
+        <StatCard label={t('pending_payments')} value={s.pending}        icon={ReceiptIndianRupee}   delta="-1"  trend="up"   delay={0.15} onClick={() => navigate("/app/rooms?status=pending")} />
         <StatCard label={t('monthly_revenue')}  value={s.monthlyRevenue} icon={IndianRupee} money delta="+12%" trend="up" delay={0.20} onClick={() => navigate("/app/payments?status=paid")} />
       </div>
 

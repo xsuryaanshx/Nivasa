@@ -26,30 +26,13 @@
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="manifest" href="/manifest.json" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-    <script type="module" crossorigin src="/assets/index-Bw56fu-e.js"></script>
+    <script type="module" crossorigin src="/assets/index-SKnHiz6Q.js"></script>
     <link rel="stylesheet" crossorigin href="/assets/index-B9EQgnc3.css">
-  <link rel="manifest" href="/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/registerSW.js"></script></head>
+  <link rel="manifest" href="/manifest.webmanifest"></head>
 
   <body>
     <div id="root"></div>
     <!-- Supabase CDN -->
-    <script>
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then((registrations) => {
-          for (let registration of registrations) {
-            registration.unregister().then((success) => {
-              if (success) console.log('Old service worker unregistered');
-            });
-          }
-        });
-      }
-      if ('caches' in window) {
-        caches.keys().then((names) => {
-          for (let name of names) {
-            caches.delete(name);
-          }
-        });
-      }
-    </script>
+
   </body>
 </html>

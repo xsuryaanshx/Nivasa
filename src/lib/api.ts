@@ -899,10 +899,10 @@ async function getDashboardStats() {
     const totalBuildings = buildings.count || 0;
     const totalRooms = units.data?.length || 0;
     const occupied = units.data
-      ? units.data.filter((u: any) => u.status === "occupied").length
+      ? units.data.filter((u: any) => u.status !== "vacant").length
       : 0;
-    const pending = payments.data
-      ? payments.data.filter((p: any) => p.status === "pending").length
+    const pending = units.data
+      ? units.data.filter((u: any) => u.status === "pending" || u.status === "late").length
       : 0;
     const thisMonth = new Date().getMonth();
     const monthlyRevenue = (payments.data || [])
