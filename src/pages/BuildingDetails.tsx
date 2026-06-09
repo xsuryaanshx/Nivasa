@@ -13,11 +13,14 @@ import { buildTiersFromBaseAndPerAdditional } from "@/lib/rentByOccupancy";
 import { cn } from "@/lib/utils";
 import { RoomActionSheet } from "@/components/RoomActionSheet";
 import type { Room } from "@/lib/types";
+import { useSubscriptionData } from "@/hooks/useSubscriptionData";
+import { PremiumUpgradeModal } from "@/components/PremiumUpgradeModal";
 
 export default function BuildingDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { usage, limits } = useSubscriptionData();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isAddingRoom, setIsAddingRoom] = useState(false);
@@ -28,6 +31,11 @@ export default function BuildingDetails() {
   const [occPer, setOccPer] = useState("");
   const [occMax, setOccMax] = useState("4");
   const [addingRoom, setAddingRoom] = useState(false);
+
+  // Upgrade Modal State
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [modalTitle, setModalTitle] = useState("");
+  const [modalMessage, setModalMessage] = useState("");
 
   // Long press for room table rows
   const [selectedRoomForSheet, setSelectedRoomForSheet] = useState<Room | null>(null);
@@ -136,6 +144,16 @@ export default function BuildingDetails() {
 
   const handleAddRoom = async () => {
     if (!newRoom.number.trim()) return toast.error("Room number is required");
+
+    // Subscription Limit Check
+    const currentRoomsCount = usage?.rooms_count || 0;
+    const roomLimit = limits?.roomLimit ?? 10;
+    if (roomLimit !== -1 && currentRoomsCount >= roomLimit) {
+      setModalTitle("Room Limit Reached");
+      setModalMessage(`Your current Silver plan allows up to ${roomLimit} rooms. Upgrade to Gold or Platinum to continue.`);
+      setShowUpgradeModal(true);
+      return;
+    }
 
     if (useOccRent) {
       const base = parseFloat(occBase);
@@ -438,6 +456,12 @@ export default function BuildingDetails() {
           onSuccess={fetchData}
         />
       )}
+      <PremiumUpgradeModal
+        open={showUpgradeModal}
+        onOpenChange={setShowUpgradeModal}
+        title={modalTitle}
+        message={modalMessage}
+      />
     </motion.div>
   );
 }

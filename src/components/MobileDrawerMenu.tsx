@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { MoreVertical, Search, X, Moon, Sun, LogOut, Settings, Languages } from "lucide-react";
+import { MoreVertical, Search, X, Moon, Sun, LogOut, Settings, Languages, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "next-themes";
 import { useLanguage } from "./LanguageProvider";
@@ -110,6 +110,14 @@ export function MobileDrawerMenu({ open, onOpenChange, onOpenPalette }: MobileDr
                 onClick={() => {
                   close();
                   navigate("/app/profile");
+                }}
+              />
+              <MenuItem
+                icon={Sparkles}
+                label={t("subscription") || "Subscription"}
+                onClick={() => {
+                  close();
+                  navigate("/app/subscription");
                 }}
               />
               <MenuItem icon={LogOut} label={t("logout")} onClick={signOut} className="text-destructive" />

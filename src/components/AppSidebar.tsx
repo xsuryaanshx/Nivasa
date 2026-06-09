@@ -15,6 +15,7 @@ export function AppSidebar({ collapsed }: Props) {
     { to: "/app/buildings", label: t("buildings"), icon: Building2 },
     { to: "/app/tenants", label: t("tenants") || "Tenants", icon: UserCircle2 },
     { to: "/app/payments", label: t("payments"), icon: ReceiptIndianRupee },
+    { to: "/app/subscription", label: t("subscription") || "Subscription", icon: Sparkles },
     { to: "/app/profile", label: t("profile"), icon: UserCircle2 },
   ];
 
