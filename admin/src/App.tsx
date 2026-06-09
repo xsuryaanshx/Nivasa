@@ -93,7 +93,6 @@ export default function App() {
   };
 
   useEffect(() => {
-    // Check active session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session) {
@@ -103,7 +102,6 @@ export default function App() {
       }
     });
 
-    // Listen to auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (session) {
@@ -154,37 +152,32 @@ export default function App() {
   const fetchDashboardData = async () => {
     setDbLoading(true);
     try {
-      // 1. Fetch Subscriptions
       const { data: subsData, error: subsError } = await supabase
         .from("subscriptions")
         .select("*");
       if (subsError) throw subsError;
 
-      // 2. Fetch User Usages
       const { data: usagesData, error: usagesError } = await supabase
         .from("user_usage")
         .select("*");
       if (usagesError) throw usagesError;
 
-      // 3. Fetch Buildings (Global list)
       const { data: buildingsData, error: bError } = await supabase
         .from("buildings")
         .select("*");
       if (bError) console.error("Error fetching buildings:", bError);
 
-      // 4. Fetch Rooms (Global list)
       const { data: roomsData, error: rError } = await supabase
         .from("units")
         .select("*");
       if (rError) console.error("Error fetching rooms:", rError);
 
-      // 5. Fetch Tenants (Global list)
       const { data: tenantsData, error: tError } = await supabase
         .from("tenants")
         .select("*");
       if (tError) console.error("Error fetching tenants:", tError);
 
-      // 6. Retrieve Landlord profiles details securely
+      // Retrieve Landlord profile details securely
       let usersDetailsMap: Record<string, { email: string; full_name: string }> = {};
       try {
         const { data: rpcUsers, error: rpcError } = await supabase.rpc("get_admin_users_list");
@@ -197,7 +190,7 @@ export default function App() {
         console.warn("RPC function get_admin_users_list not available, using fallback mapping.");
       }
 
-      // Map statistics
+      // Aggregate stats
       const totalRooms = usagesData?.reduce((acc, curr) => acc + (curr.rooms_count || 0), 0) || 0;
       const activeSubs = subsData?.filter(s => s.status === "active").length || 0;
       const pausedSubs = subsData?.filter(s => s.status === "paused").length || 0;
@@ -206,12 +199,7 @@ export default function App() {
       const mappedUsers = (subsData || []).map((sub: any) => {
         const plan = PLANS.find(p => p.id === sub.plan_id) || PLANS[0];
         const usage = usagesData?.find(u => u.user_id === sub.user_id) || { rooms_count: 0, tenants_count: 0, properties_count: 0 };
-        
-        // Resolve landlord name: check usersDetailsMap or fallback to raw_user_meta_data if possible
-        const details = usersDetailsMap[sub.user_id] || { 
-          email: "—", 
-          full_name: "Demo Landlord" 
-        };
+        const details = usersDetailsMap[sub.user_id] || { email: "—", full_name: "Demo Landlord" };
 
         if (sub.status === "active") {
           revenue += plan.price;
@@ -243,7 +231,6 @@ export default function App() {
         estimatedRevenue: revenue
       });
 
-      // Map buildings, rooms, tenants with landlord details
       const resolveLandlordName = (userId: string) => {
         const found = mappedUsers.find(u => u.user_id === userId);
         return found ? found.fullName : "Demo Landlord";
@@ -275,7 +262,7 @@ export default function App() {
       }
 
     } catch (err) {
-      console.error("Error fetching dashboard data:", err);
+      console.error("Error fetching data:", err);
     } finally {
       setDbLoading(false);
     }
@@ -298,7 +285,7 @@ export default function App() {
 
       if (error) throw error;
 
-      // Log subscription event
+      // Log event
       await supabase.from("subscription_events").insert({
         user_id: userId,
         subscription_id: subId,
@@ -312,7 +299,6 @@ export default function App() {
 
       await fetchDashboardData();
       
-      // Update selected landlord detail if open
       if (selectedLandlord && selectedLandlord.user_id === userId) {
         const nextPlan = PLANS.find(p => p.id === targetPlanId)!;
         setSelectedLandlord((prev: any) => ({
@@ -344,7 +330,6 @@ export default function App() {
 
       if (error) throw error;
 
-      // Log event
       await supabase.from("subscription_events").insert({
         user_id: userId,
         subscription_id: subId,
@@ -356,7 +341,6 @@ export default function App() {
 
       await fetchDashboardData();
 
-      // Update selected landlord detail if open
       if (selectedLandlord && selectedLandlord.user_id === userId) {
         setSelectedLandlord((prev: any) => ({
           ...prev,
@@ -364,13 +348,13 @@ export default function App() {
         }));
       }
     } catch (err) {
-      console.error("Error toggling pause:", err);
+      console.error("Error toggling status:", err);
     } finally {
       setActionLoading(null);
     }
   };
 
-  // Load landlord payment logs when selecting profile
+  // Load landlord payment logs
   const handleViewLandlordProfile = async (landlord: any) => {
     setSelectedLandlord(landlord);
     setLoadingPayments(true);
@@ -384,7 +368,7 @@ export default function App() {
       if (error) throw error;
       setLandlordPayments(data || []);
     } catch (e) {
-      console.error("Error fetching landlord payments:", e);
+      console.error("Error fetching payments:", e);
     } finally {
       setLoadingPayments(false);
     }
@@ -427,7 +411,7 @@ export default function App() {
   const planStats = PLANS.map(p => ({
     name: p.displayName,
     count: users.filter(u => u.planName === p.name).length,
-    color: p.name === "platinum" ? "#6366f1" : p.name === "gold" ? "#fbbf24" : "#64748b"
+    color: p.name === "platinum" ? "#6366f1" : p.name === "gold" ? "#fbbf24" : "#94a3b8"
   }));
 
   if (loading) {
@@ -441,8 +425,7 @@ export default function App() {
   // Admin login screen
   if (!session || !isAdmin) {
     return (
-      <div className="relative flex min-h-screen items-center justify-center p-4">
-        {/* Glow circles */}
+      <div className="relative flex min-h-screen items-center justify-center p-4 bg-slate-950">
         <div className="absolute top-1/4 left-1/4 h-72 w-72 rounded-full bg-indigo-500/10 blur-3xl" />
         <div className="absolute bottom-1/4 right-1/4 h-72 w-72 rounded-full bg-pink-500/10 blur-3xl" />
 
@@ -450,17 +433,17 @@ export default function App() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="w-full max-w-md overflow-hidden rounded-2xl glass-panel p-8 shadow-2xl relative z-10"
+          className="w-full max-w-md overflow-hidden rounded-2xl border border-white/10 bg-slate-900/60 backdrop-blur-xl p-8 shadow-2xl relative z-10"
         >
           <div className="flex flex-col items-center mb-8">
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-500/10 border border-indigo-500/20 mb-4 shadow-lg shadow-indigo-500/5">
-              <Shield className="h-7 w-7 text-indigo-400" />
+              <Shield className="h-7 w-7 text-indigo-450" />
             </div>
             <h1 className="text-2xl font-bold tracking-tight text-white">Nivasa Control Tower</h1>
             <p className="text-sm text-slate-400 mt-1">Super-Admin Authentication</p>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-5">
+          <form onSubmit={handleLogin} className="space-y-5 text-white">
             <div>
               <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Admin Email</label>
               <input 
@@ -469,7 +452,7 @@ export default function App() {
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder="admin@nivasa.app"
-                className="w-full rounded-xl px-4 py-3 text-sm glass-input"
+                className="w-full rounded-xl px-4 py-3 text-sm bg-slate-900 border border-white/10 text-white focus:border-indigo-500 focus:outline-none"
               />
             </div>
 
@@ -481,7 +464,7 @@ export default function App() {
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder="••••••••••••"
-                className="w-full rounded-xl px-4 py-3 text-sm glass-input"
+                className="w-full rounded-xl px-4 py-3 text-sm bg-slate-900 border border-white/10 text-white focus:border-indigo-500 focus:outline-none"
               />
             </div>
 
@@ -520,45 +503,42 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen pb-12 transition-colors duration-300 bg-white dark:bg-zinc-955 text-slate-900 dark:text-zinc-100">
+    <div className="min-h-screen pb-12 transition-colors duration-300 bg-slate-50 dark:bg-zinc-950 text-slate-900 dark:text-zinc-100">
       
       {/* Navigation bar */}
       <header className="sticky top-0 z-40 border-b border-slate-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-500/10 border border-indigo-500/20">
-              <Shield className="h-4.5 w-4.5 text-indigo-500 dark:text-indigo-400" />
+              <Shield className="h-4.5 w-4.5 text-indigo-600 dark:text-indigo-400" />
             </div>
             <div>
-              <span className="font-bold tracking-wide">NIVASA</span>
-              <span className="text-[10px] font-semibold text-indigo-500 dark:text-indigo-400 bg-indigo-500/10 border border-indigo-500/25 px-1.5 py-0.5 rounded ml-2 uppercase tracking-widest">Control Tower</span>
+              <span className="font-bold tracking-wide text-slate-900 dark:text-white">NIVASA</span>
+              <span className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-450 bg-indigo-500/10 border border-indigo-500/25 px-1.5 py-0.5 rounded ml-2 uppercase tracking-widest">Control Tower</span>
             </div>
           </div>
 
           <div className="flex items-center gap-4">
-            {/* Theme switcher */}
             <button 
               onClick={toggleTheme}
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-zinc-850 bg-slate-100 dark:bg-zinc-900 text-slate-600 dark:text-zinc-400 hover:opacity-80 transition active:scale-95"
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 transition active:scale-95"
             >
-              {theme === "dark" ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-indigo-600" />}
+              {theme === "dark" ? <Sun className="h-4 w-4 text-amber-450" /> : <Moon className="h-4 w-4 text-indigo-650" />}
             </button>
 
-            {/* Refresh */}
             <button 
               onClick={fetchDashboardData}
               disabled={dbLoading}
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-zinc-850 bg-slate-100 dark:bg-zinc-900 text-slate-600 dark:text-zinc-400 hover:opacity-80 transition active:scale-95"
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 transition active:scale-95"
             >
-              <RefreshCw className={`h-4 w-4 ${dbLoading ? "animate-spin text-indigo-500" : ""}`} />
+              <RefreshCw className={`h-4 w-4 ${dbLoading ? "animate-spin text-indigo-600" : ""}`} />
             </button>
 
             <div className="h-8 w-px bg-slate-200 dark:bg-zinc-800" />
 
-            {/* Logout */}
             <button 
               onClick={handleSignOut}
-              className="flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/5 px-4.5 py-2 text-xs font-semibold text-red-500 dark:text-red-400 hover:bg-red-500/10 transition active:scale-95"
+              className="flex items-center gap-2 rounded-xl border border-red-500/25 bg-red-500/5 px-4.5 py-2 text-xs font-semibold text-red-650 dark:text-red-400 hover:bg-red-500/10 transition active:scale-95"
             >
               <LogOut className="h-3.5 w-3.5" />
               Lock
@@ -585,13 +565,13 @@ export default function App() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
-                className="rounded-2xl border border-slate-200 dark:border-zinc-850 bg-slate-50/50 dark:bg-zinc-900/60 p-6 shadow-sm relative overflow-hidden"
+                className="rounded-2xl border border-slate-200 dark:border-zinc-850 bg-white dark:bg-zinc-900 p-6 shadow-sm relative overflow-hidden"
               >
                 <div className={`absolute -right-6 -top-6 h-20 w-20 rounded-full bg-gradient-to-br ${card.color} opacity-10 blur-xl`} />
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-semibold text-slate-500 dark:text-zinc-400">{card.label}</span>
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-200/50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700">
-                    <Icon className="h-4.5 w-4.5 text-slate-600 dark:text-zinc-300" />
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700">
+                    <Icon className="h-4.5 w-4.5 text-slate-650 dark:text-zinc-300" />
                   </div>
                 </div>
                 <div className="mt-4">
@@ -623,7 +603,7 @@ export default function App() {
                   }}
                   className={`flex items-center gap-2 px-4 py-3 border-b-2 text-sm font-semibold transition-all ${
                     active 
-                      ? "border-indigo-500 text-indigo-600 dark:text-indigo-400" 
+                      ? "border-indigo-500 text-indigo-650 dark:text-indigo-400" 
                       : "border-transparent text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
                   }`}
                 >
@@ -635,7 +615,6 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-3 pb-2">
-            {/* Search Input */}
             <div className="relative">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <input 
@@ -643,7 +622,7 @@ export default function App() {
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder={`Search ${activeTab}...`}
-                className="rounded-xl pl-10 pr-4 py-2 text-xs border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 w-48 focus:w-60 focus:outline-none focus:border-indigo-500 text-slate-800 dark:text-white transition-all"
+                className="rounded-xl pl-10 pr-4 py-2 text-xs border border-slate-200 dark:border-zinc-850 bg-white dark:bg-zinc-900 w-48 focus:w-60 focus:outline-none focus:border-indigo-500 text-slate-800 dark:text-white transition-all"
               />
             </div>
 
@@ -651,7 +630,7 @@ export default function App() {
               <select 
                 value={planFilter}
                 onChange={e => setPlanFilter(e.target.value)}
-                className="rounded-xl px-3 py-2 text-xs border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-slate-800 dark:text-white focus:border-indigo-500 focus:outline-none"
+                className="rounded-xl px-3 py-2 text-xs border border-slate-200 dark:border-zinc-850 bg-white dark:bg-zinc-900 text-slate-850 dark:text-white focus:border-indigo-500 focus:outline-none"
               >
                 <option value="all">All Plans</option>
                 <option value="silver">Silver</option>
@@ -675,16 +654,16 @@ export default function App() {
               <div className="space-y-8">
                 {/* Analytics Charts */}
                 <section className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                  <div className="lg:col-span-2 rounded-2xl border border-slate-200 dark:border-zinc-850 bg-slate-50/50 dark:bg-zinc-900/60 p-6 shadow-sm">
+                  <div className="lg:col-span-2 rounded-2xl border border-slate-200 dark:border-zinc-850 bg-white dark:bg-zinc-900 p-6 shadow-sm">
                     <div className="flex items-center justify-between mb-6">
                       <div>
                         <h2 className="text-base font-bold flex items-center gap-2">
                           <TrendingUp className="h-4 w-4 text-indigo-500" />
                           Monthly Recurring Revenue (MRR)
                         </h2>
-                        <p className="text-xs text-slate-400 mt-0.5">Estimated growth trajectory</p>
+                        <p className="text-xs text-slate-400 mt-0.5 font-medium">Estimated growth trajectory</p>
                       </div>
-                      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full">
+                      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-450 bg-emerald-500/10 px-2.5 py-1 rounded-full">
                         <ArrowUpRight className="h-3.5 w-3.5" />
                         Live Estimate
                       </span>
@@ -699,10 +678,10 @@ export default function App() {
                               <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
                             </linearGradient>
                           </defs>
-                          <XAxis dataKey="name" stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} />
-                          <YAxis stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} />
+                          <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
+                          <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
                           <Tooltip 
-                            contentStyle={{ background: theme === "dark" ? "#0f172a" : "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "8px", color: theme === "dark" ? "white" : "black" }} 
+                            contentStyle={{ background: theme === "dark" ? "#18181b" : "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "8px", color: theme === "dark" ? "white" : "black" }} 
                           />
                           <Area type="monotone" dataKey="revenue" stroke="#6366f1" strokeWidth={2} fillOpacity={1} fill="url(#colorRevenue)" />
                         </AreaChart>
@@ -710,18 +689,18 @@ export default function App() {
                     </div>
                   </div>
 
-                  <div className="rounded-2xl border border-slate-200 dark:border-zinc-850 bg-slate-50/50 dark:bg-zinc-900/60 p-6 shadow-sm">
+                  <div className="rounded-2xl border border-slate-200 dark:border-zinc-850 bg-white dark:bg-zinc-900 p-6 shadow-sm">
                     <h2 className="text-base font-bold mb-1">Plan Distribution</h2>
                     <p className="text-xs text-slate-400 mb-6 font-medium">Proportion of Silver, Gold, Platinum plans</p>
 
                     <div className="h-48 flex items-center justify-center">
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={planStats}>
-                          <XAxis dataKey="name" stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} />
-                          <YAxis stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} />
+                          <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
+                          <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
                           <Tooltip 
                             cursor={{ fill: 'rgba(99,102,241,0.04)' }}
-                            contentStyle={{ background: theme === "dark" ? "#0f172a" : "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "8px", color: theme === "dark" ? "white" : "black" }} 
+                            contentStyle={{ background: theme === "dark" ? "#18181b" : "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "8px", color: theme === "dark" ? "white" : "black" }} 
                           />
                           <Bar dataKey="count" radius={[4, 4, 0, 0]}>
                             {planStats.map((entry, index) => (
@@ -747,7 +726,7 @@ export default function App() {
                 </section>
 
                 {/* Landlords Accounts Table */}
-                <section className="rounded-2xl border border-slate-200 dark:border-zinc-850 bg-slate-50/50 dark:bg-zinc-900/60 overflow-hidden shadow-sm">
+                <section className="rounded-2xl border border-slate-200 dark:border-zinc-850 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                       <thead>
@@ -773,17 +752,16 @@ export default function App() {
                             return (
                               <tr key={u.id} className="hover:bg-slate-100/20 dark:hover:bg-zinc-900/20 transition">
                                 <td 
-                                  className="px-6 py-4 cursor-pointer"
+                                  className="px-6 py-4 cursor-pointer font-medium"
                                   onClick={() => handleViewLandlordProfile(u)}
                                 >
-                                  <div className="font-bold hover:underline flex items-center gap-1.5">
+                                  <div className="font-bold text-slate-900 dark:text-white hover:underline flex items-center gap-1.5">
                                     {u.fullName}
-                                    <ArrowUpRight className="h-3.5 w-3.5 text-slate-400" />
+                                    <ArrowUpRight className="h-3.5 w-3.5 text-slate-450" />
                                   </div>
-                                  <div className="text-xs text-slate-400 mt-0.5">{u.email}</div>
+                                  <div className="text-xs text-slate-400 dark:text-zinc-500 mt-0.5">{u.email}</div>
                                 </td>
                                 <td className="px-6 py-4">
-                                  {/* Plan Selection Dropdown */}
                                   <div className="relative inline-flex">
                                     <select
                                       value={u.planId}
@@ -806,14 +784,14 @@ export default function App() {
                                 </td>
                                 <td className="px-6 py-4">
                                   <span className={`inline-flex items-center gap-1 text-xs font-semibold ${
-                                    isPaused ? "text-amber-500" : "text-emerald-500"
+                                    isPaused ? "text-amber-550" : "text-emerald-550"
                                   }`}>
                                     <span className={`h-1.5 w-1.5 rounded-full ${isPaused ? "bg-amber-500" : "bg-emerald-500"}`} />
                                     {u.status.toUpperCase()}
                                   </span>
                                 </td>
                                 <td className="px-6 py-4 text-center">
-                                  <div className="flex items-center justify-center gap-4 text-xs font-medium">
+                                  <div className="flex items-center justify-center gap-4 text-xs font-semibold">
                                     <div>
                                       <span className="font-bold">{u.propertiesCount}</span>
                                       <span className="text-slate-400 ml-1">Properties</span>
@@ -825,15 +803,14 @@ export default function App() {
                                     </div>
                                   </div>
                                 </td>
-                                <td className="px-6 py-4 text-slate-400 text-xs">{u.startDate}</td>
+                                <td className="px-6 py-4 text-slate-450 text-xs">{u.startDate}</td>
                                 <td className="px-6 py-4 text-right">
-                                  {/* Pause / Resume Button */}
                                   <button
                                     onClick={() => handleTogglePause(u.user_id, u.id, u.status)}
                                     disabled={actionLoading === u.id}
                                     className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold transition active:scale-95 disabled:opacity-50 ${
                                       isPaused 
-                                        ? "border-emerald-500/20 bg-emerald-500/5 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
+                                        ? "border-emerald-500/20 bg-emerald-500/5 text-emerald-600 dark:text-emerald-450 hover:bg-emerald-500/10"
                                         : "border-amber-500/20 bg-amber-500/5 text-amber-500 hover:bg-amber-500/10"
                                     }`}
                                   >
@@ -865,7 +842,7 @@ export default function App() {
 
             {/* Properties Tab */}
             {activeTab === "buildings" && (
-              <section className="rounded-2xl border border-slate-200 dark:border-zinc-850 bg-slate-50/50 dark:bg-zinc-900/60 overflow-hidden shadow-sm">
+              <section className="rounded-2xl border border-slate-200 dark:border-zinc-850 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead>
@@ -887,9 +864,9 @@ export default function App() {
                         filteredBuildings.map(b => (
                           <tr key={b.id} className="hover:bg-slate-100/20 dark:hover:bg-zinc-900/20 transition">
                             <td className="px-6 py-4 font-bold text-slate-900 dark:text-white">{b.name}</td>
-                            <td className="px-6 py-4 text-slate-500 dark:text-zinc-400">{b.address || "—"}</td>
+                            <td className="px-6 py-4 text-slate-500 dark:text-zinc-405">{b.address || "—"}</td>
                             <td className="px-6 py-4 font-medium text-slate-700 dark:text-zinc-300">{b.landlordName}</td>
-                            <td className="px-6 py-4 text-center font-bold">{b.roomsCount} Rooms</td>
+                            <td className="px-6 py-4 text-center font-bold text-slate-900 dark:text-white">{b.roomsCount} Rooms</td>
                           </tr>
                         ))
                       )}
@@ -901,7 +878,7 @@ export default function App() {
 
             {/* Rooms Tab */}
             {activeTab === "rooms" && (
-              <section className="rounded-2xl border border-slate-200 dark:border-zinc-850 bg-slate-50/50 dark:bg-zinc-900/60 overflow-hidden shadow-sm">
+              <section className="rounded-2xl border border-slate-200 dark:border-zinc-850 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead>
@@ -926,12 +903,12 @@ export default function App() {
                             <td className="px-6 py-4 font-bold text-slate-900 dark:text-white">Room {r.name}</td>
                             <td className="px-6 py-4 text-slate-500 dark:text-zinc-400">{r.buildingName}</td>
                             <td className="px-6 py-4 font-medium text-slate-700 dark:text-zinc-300">{r.landlordName}</td>
-                            <td className="px-6 py-4 font-semibold text-indigo-600 dark:text-indigo-400">₹{r.rent_amount}</td>
+                            <td className="px-6 py-4 font-semibold text-indigo-650 dark:text-indigo-400">₹{r.rent_amount}</td>
                             <td className="px-6 py-4">
                               <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold border ${
                                 r.status === "occupied"
                                   ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
-                                  : "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20"
+                                  : "bg-slate-500/10 text-slate-600 dark:text-slate-450 border-slate-500/20"
                               }`}>
                                 {r.status}
                               </span>
@@ -947,7 +924,7 @@ export default function App() {
 
             {/* Tenants Tab */}
             {activeTab === "tenants" && (
-              <section className="rounded-2xl border border-slate-200 dark:border-zinc-850 bg-slate-50/50 dark:bg-zinc-900/60 overflow-hidden shadow-sm">
+              <section className="rounded-2xl border border-slate-200 dark:border-zinc-850 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead>
@@ -1000,7 +977,6 @@ export default function App() {
       <AnimatePresence>
         {selectedLandlord && (
           <>
-            {/* Backdrop */}
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 0.5 }}
@@ -1009,7 +985,6 @@ export default function App() {
               onClick={() => setSelectedLandlord(null)}
             />
 
-            {/* Slide-over Container */}
             <motion.div 
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
@@ -1017,7 +992,6 @@ export default function App() {
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
               className="fixed inset-y-0 right-0 z-50 w-full max-w-lg bg-white dark:bg-zinc-900 border-l border-slate-200 dark:border-zinc-800 shadow-2xl flex flex-col"
             >
-              {/* Header */}
               <div className="p-6 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-500">
@@ -1036,10 +1010,8 @@ export default function App() {
                 </button>
               </div>
 
-              {/* Scrollable details */}
               <div className="flex-1 overflow-y-auto p-6 space-y-6">
                 
-                {/* Profile Overview Card */}
                 <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950 p-5 space-y-4">
                   <div className="flex items-start justify-between">
                     <div>
@@ -1057,7 +1029,7 @@ export default function App() {
                             ? "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20" 
                             : selectedLandlord.planName === "gold"
                             ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
-                            : "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20"
+                            : "bg-slate-500/10 text-slate-655 dark:text-slate-400 border-slate-500/20"
                         }`}
                       >
                         {PLANS.map(p => (
@@ -1085,7 +1057,6 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Landlord metrics */}
                 <div className="grid grid-cols-3 gap-3">
                   {[
                     { label: "Properties", value: selectedLandlord.propertiesCount, icon: Building2 },
@@ -1103,7 +1074,6 @@ export default function App() {
                   })}
                 </div>
 
-                {/* Landlord Payment Log */}
                 <div className="space-y-3">
                   <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     <CreditCard className="h-4 w-4 text-indigo-500" />
@@ -1123,7 +1093,7 @@ export default function App() {
                       {landlordPayments.map((p: any) => {
                         const isPaid = p.status === "paid";
                         return (
-                          <div key={p.id} className="border border-slate-200 dark:border-zinc-800 p-3 rounded-xl flex items-center justify-between text-xs hover:bg-slate-50 dark:hover:bg-zinc-955 transition">
+                          <div key={p.id} className="border border-slate-200 dark:border-zinc-800 p-3 rounded-xl flex items-center justify-between text-xs hover:bg-slate-50 dark:hover:bg-zinc-950 transition">
                             <div>
                               <span className="font-bold block text-slate-900 dark:text-white">
                                 Room {p.units?.name || "—"} ({p.buildings?.name || "Property"})
@@ -1134,7 +1104,7 @@ export default function App() {
                             </div>
 
                             <div className="text-right">
-                              <span className="font-bold block text-indigo-600 dark:text-indigo-400">₹{p.amount}</span>
+                              <span className="font-bold block text-indigo-650 dark:text-indigo-400">₹{p.amount}</span>
                               <span className={`inline-flex items-center gap-0.5 font-semibold text-[10px] uppercase ${
                                 isPaid ? "text-emerald-500" : "text-amber-500"
                               }`}>
@@ -1150,7 +1120,6 @@ export default function App() {
 
               </div>
 
-              {/* Footer actions */}
               <div className="p-6 border-t border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950 flex items-center justify-between gap-3">
                 <button
                   onClick={() => handleTogglePause(selectedLandlord.user_id, selectedLandlord.id, selectedLandlord.status)}
