@@ -923,6 +923,7 @@ async function getDashboardStats() {
       monthlyRevenue: 0,
     };
   }
+}
 
 export const nivasaApi = {
   auth,
