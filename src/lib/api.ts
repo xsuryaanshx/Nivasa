@@ -941,7 +941,7 @@ async function getDashboardStats() {
     };
   }
 }
-async function syncPendingPayments() {
+export async function syncPendingPayments() {
   const count = await offlineSync.syncNow(async (mutation) => {
     if (mutation.type === 'ADD_PAYMENT') {
       await addPayment(mutation.payload);
