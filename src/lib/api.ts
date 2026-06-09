@@ -1,5 +1,4 @@
 import { createClient } from "@supabase/supabase-js";
-import { offlineSync } from "./offlineSync";
 import {
   type Building,
   type Room,
@@ -763,15 +762,6 @@ async function addPayment(input: any) {
       note: input.note,
     };
 
-    if (!navigator.onLine) {
-      await offlineSync.addToQueue({
-        type: 'ADD_PAYMENT',
-        payload: input, // store original input to replay
-      });
-      console.log("Offline mode: Payment queued");
-      // Return a fake successful response with temp ID
-      return { id: "temp-" + Date.now(), ...payload };
-    }
 
     const { data, error } = await supabase
       .from("payments")
@@ -933,15 +923,6 @@ async function getDashboardStats() {
       monthlyRevenue: 0,
     };
   }
-}
-export async function syncPendingPayments() {
-  const count = await offlineSync.syncNow(async (mutation) => {
-    if (mutation.type === 'ADD_PAYMENT') {
-      await addPayment(mutation.payload);
-    }
-  });
-  return count;
-}
 
 export const nivasaApi = {
   auth,
@@ -967,6 +948,5 @@ export const nivasaApi = {
   getElectricityRate,
   updateElectricityRate,
   getDashboardStats,
-  syncPendingPayments,
 };
 export type NivasaApi = typeof nivasaApi;
