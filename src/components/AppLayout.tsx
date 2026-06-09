@@ -152,6 +152,7 @@ function AppShell() {
 
         </div>
       </div>
+      </div>
       <MobileNav />
     </div>
   );
