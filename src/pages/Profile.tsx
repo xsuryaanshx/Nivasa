@@ -442,14 +442,14 @@ export default function Profile() {
           <div className="relative overflow-hidden rounded-2xl border border-border/50 bg-card p-6 shadow-soft">
             {/* Decorative gradient blob */}
             <div
-              className={`pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-gradient-to-br ${plan.color} opacity-10 blur-3xl`}
+              className={`pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-gradient-to-br ${getPlanColor(activePlanName)} opacity-10 blur-3xl`}
             />
 
             <div className="flex items-center gap-4">
               {/* Avatar */}
-              <div className={`relative flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${plan.color} text-2xl font-bold text-white shadow-lg`}>
+              <div className={`relative flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${getPlanColor(activePlanName)} text-2xl font-bold text-white shadow-lg`}>
                 {user?.initials ?? "??"}
-                {currentPlan === "pro" && (
+                {(activePlanName === "gold" || activePlanName === "platinum") && (
                   <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-amber-400 shadow">
                     <Crown className="h-3 w-3 text-amber-900" />
                   </span>
