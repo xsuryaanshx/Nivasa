@@ -13,42 +13,19 @@ export default function SubscriptionPage() {
   const { user } = useAuth();
   const { subscription, usage, limits, refetch, isLoading } = useSubscriptionData();
 
-  const handleSelectPlan = async (planKey: string) => {
+  const handleSelectPlan = (planKey: string) => {
     if (!user) return;
 
-    let targetPlanId = "";
-    if (planKey === "silver") targetPlanId = "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d";
-    else if (planKey === "gold") targetPlanId = "b2c3d4e5-f6a7-8b9c-0d1e-2f3a4b5c6d7e";
-    else if (planKey === "platinum") targetPlanId = "c3d4e5f6-a7b8-9c0d-1e2f-3a4b5c6d7e8f";
-
-    try {
-      // Future checkout session generation or manual upgrade
-      // Since payments are not yet integrated, we perform a direct status/plan update on Supabase
-      const { error } = await supabase
-        .from("subscriptions")
-        .update({
-          plan_id: targetPlanId,
-          status: "active",
-          updated_at: new Date().toISOString(),
-          expiry_date: planKey === "platinum" ? null : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        })
-        .eq("user_id", user.id);
-
-      if (error) throw error;
-
-      // Log event
-      await supabase.from("subscription_events").insert({
-        user_id: user.id,
-        event_type: "upgraded",
-        metadata: { target_plan: planKey, updated_at: new Date().toISOString() },
-      });
-
-      toast.success(`Successfully switched to ${planKey.charAt(0).toUpperCase() + planKey.slice(1)} Plan!`);
-      refetch();
-    } catch (e: any) {
-      console.error(e);
-      toast.error("Failed to upgrade subscription. Please try again.");
-    }
+    const email = user.email || "";
+    const currentPlan = subscription?.plans?.display_name || "Silver";
+    const requestedPlan = planKey.charAt(0).toUpperCase() + planKey.slice(1);
+    
+    const message = `Hi Nivasa Support,\n\nI would like to change my Nivasa subscription plan.\n\nAccount Email: ${email}\nCurrent Plan: ${currentPlan}\nRequested Plan: ${requestedPlan}`;
+    
+    // Support WhatsApp phone number
+    const supportPhone = "919876543210";
+    const url = `https://wa.me/${supportPhone}?text=${encodeURIComponent(message)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
   };
 
   const getPercentage = (count: number, limit: number) => {
@@ -301,7 +278,11 @@ export default function SubscriptionPage() {
                   variant={isActive ? "outline" : plan.popular ? "default" : "secondary"}
                   className="w-full font-bold shadow-sm py-5.5"
                 >
-                  {isActive ? "Currently Active" : `Get ${plan.name}`}
+                  {isActive
+                    ? "Currently Active"
+                    : plan.key === "platinum"
+                    ? "Contact Sales"
+                    : "Contact Support"}
                 </Button>
               </CardFooter>
             </Card>
