@@ -19,7 +19,10 @@ export default defineConfig(({ mode }) => ({
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: 'autoUpdate',
+      injectRegister: 'auto',
       workbox: {
+        clientsClaim: true,
+        skipWaiting: true,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/[a-z0-9]+\.supabase\.co\/rest\/v1\/.*/i,
@@ -30,7 +33,7 @@ export default defineConfig(({ mode }) => ({
                 maxEntries: 100,
                 maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
               },
-              networkTimeoutSeconds: 5, // Fallback to cache if network is too slow
+              networkTimeoutSeconds: 5,
               cacheableResponse: {
                 statuses: [0, 200]
               }
