@@ -11,6 +11,7 @@ import { ShortcutsHelp } from "./ShortcutsHelp";
 import { MobileNav } from "./MobileNav";
 import { ElectricityBillingModal } from "./ElectricityBillingModal";
 import { MobileDrawerMenu } from "./MobileDrawerMenu";
+import { LanguageProvider } from "./LanguageProvider";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { syncPendingPayments } from "@/lib/api";
 import { WifiOff } from "lucide-react";
