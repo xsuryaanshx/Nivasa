@@ -1,5 +1,12 @@
 -- 1. Create tables
 
+DROP TABLE IF EXISTS public.feature_overrides CASCADE;
+DROP TABLE IF EXISTS public.subscription_events CASCADE;
+DROP TABLE IF EXISTS public.user_usage CASCADE;
+DROP TABLE IF EXISTS public.subscriptions CASCADE;
+DROP TABLE IF EXISTS public.plan_features CASCADE;
+DROP TABLE IF EXISTS public.plans CASCADE;
+
 -- plans
 CREATE TABLE IF NOT EXISTS public.plans (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -201,14 +208,14 @@ CREATE OR REPLACE TRIGGER sync_buildings_usage
 CREATE OR REPLACE FUNCTION public.handle_new_user_setup()
 RETURNS TRIGGER AS $$
 DECLARE
-  silver_plan_id UUID := 'a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d';
+  platinum_plan_id UUID := 'c3d4e5f6-a7b8-9c0d-1e2f-3a4b5c6d7e8f';
 BEGIN
   -- Insert default user_usage entry
   INSERT INTO public.user_usage (user_id, rooms_count, tenants_count, properties_count, staff_count)
   VALUES (NEW.id, 0, 0, 0, 0)
   ON CONFLICT (user_id) DO NOTHING;
 
-  -- Insert default Silver trial subscription (14 days)
+  -- Insert default Platinum active subscription
   INSERT INTO public.subscriptions (
     user_id,
     plan_id,
@@ -220,11 +227,11 @@ BEGIN
     subscription_source
   ) VALUES (
     NEW.id,
-    silver_plan_id,
-    'trial',
+    platinum_plan_id,
+    'active',
     'monthly',
     now(),
-    now() + interval '14 days',
+    NULL, -- Platinum lifetime/no expiry default
     'manual',
     'web'
   );
@@ -239,7 +246,7 @@ BEGIN
     NEW.id,
     NULL,
     'subscription_created',
-    jsonb_build_object('plan_id', silver_plan_id, 'status', 'trial', 'reason', 'automatic_signup_trial')
+    jsonb_build_object('plan_id', platinum_plan_id, 'status', 'active', 'reason', 'automatic_signup_platinum')
   );
 
   RETURN NEW;
@@ -273,11 +280,11 @@ INSERT INTO public.subscriptions (
 )
 SELECT 
   id,
-  'a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d',
-  'trial',
+  'c3d4e5f6-a7b8-9c0d-1e2f-3a4b5c6d7e8f',
+  'active',
   'monthly',
   now(),
-  now() + interval '14 days',
+  NULL,
   'manual',
   'web'
 FROM auth.users

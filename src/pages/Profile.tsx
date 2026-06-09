@@ -37,6 +37,7 @@ import { useLanguage } from "@/components/LanguageProvider";
 import { cn } from "@/lib/utils";
 import type { Language } from "@/lib/translations";
 import { createPortal } from "react-dom";
+import { useSubscriptionData } from "@/hooks/useSubscriptionData";
 
 const PLAN_FEATURES = {
   free: {
@@ -350,7 +351,7 @@ const MENU_KEY_MAP: Record<string, { label: string; desc: string }> = {
 export default function Profile() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
-  const [currentPlan] = useState<"free" | "pro">("free");
+  const { subscription, limits } = useSubscriptionData();
   const [securityOpen, setSecurityOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [languageOpen, setLanguageOpen] = useState(false);
@@ -358,8 +359,40 @@ export default function Profile() {
   const [editProfileOpen, setEditProfileOpen] = useState(false);
   const { t } = useLanguage();
 
-  const plan = PLAN_FEATURES[currentPlan];
-  const PlanIcon = plan.icon;
+  const activePlanName = subscription?.plans?.plan_name || "silver";
+  const displayPlanName = subscription?.plans?.display_name || "Silver";
+  const displayPrice = subscription?.plans?.monthly_price 
+    ? `₹${subscription.plans.monthly_price} / month`
+    : activePlanName === "platinum" ? "₹1199 / month" : activePlanName === "gold" ? "₹899 / month" : "₹499 / month";
+
+  const getPlanColor = (pName: string) => {
+    if (pName === "platinum") return "from-violet-600 to-indigo-600";
+    if (pName === "gold") return "from-amber-500 to-yellow-600";
+    return "from-slate-500 to-slate-600";
+  };
+
+  const getPlanBadgeColor = (pName: string) => {
+    if (pName === "platinum") return "bg-violet-500/20 text-violet-400 border-violet-500/30";
+    if (pName === "gold") return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
+    return "bg-slate-500/20 text-slate-400 border-slate-500/30";
+  };
+
+  const PlanIcon = activePlanName === "platinum" ? Crown : activePlanName === "gold" ? Zap : Star;
+
+  // Resolve dynamic features list
+  const featuresList = Object.entries(limits.features).map(([key, feat]) => {
+    let label = key.replace(/_/g, " ");
+    label = label.charAt(0).toUpperCase() + label.slice(1);
+    if (key === "room_limit") {
+      label = `Room Limit: ${feat.value}`;
+    } else if (key === "tenant_limit") {
+      label = `Tenant Limit: ${feat.value}`;
+    }
+    return {
+      label,
+      enabled: feat.enabled && feat.value !== "false",
+    };
+  });
 
   const MENU_ITEMS = [
     {
@@ -432,10 +465,10 @@ export default function Profile() {
                   {user?.email ?? ""}
                 </p>
                 <span
-                  className={`mt-1.5 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${plan.badgeColor}`}
+                  className={`mt-1.5 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${getPlanBadgeColor(activePlanName)}`}
                 >
                   <PlanIcon className="h-2.5 w-2.5" />
-                  {t(plan.name === "Free" ? "free_plan" : "pro_plan").toUpperCase()}
+                  {displayPlanName.toUpperCase()}
                 </span>
               </div>
 
@@ -461,46 +494,44 @@ export default function Profile() {
           <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
             {t("current_plan")}
           </h2>
-          <div className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${plan.color} p-[1px] shadow-float`}>
+          <div className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${getPlanColor(activePlanName)} p-[1px] shadow-float`}>
             <div className="rounded-[calc(1rem-1px)] bg-card px-5 py-5">
               {/* Plan header */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className={`flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${plan.color} shadow`}>
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${getPlanColor(activePlanName)} shadow`}>
                     <PlanIcon className="h-5 w-5 text-white" />
                   </div>
                   <div>
                     <p className="font-semibold text-foreground">
-                      Nivasa {plan.name === "Free" ? t("free_plan") : t("pro_plan")}
+                      Nivasa {displayPlanName}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {plan.name === "Free" ? t("price_free") : t("price_pro")}
+                      {displayPrice}
                     </p>
                   </div>
                 </div>
-                {currentPlan === "free" && (
-                  <button
-                    className={`flex items-center gap-1.5 rounded-xl bg-gradient-to-br ${plan.color} px-3.5 py-2 text-xs font-semibold text-white shadow transition hover:opacity-90 active:scale-95`}
-                  >
-                    <Sparkles className="h-3.5 w-3.5" />
-                    {t("upgrade")}
-                  </button>
-                )}
+                <button
+                  onClick={() => navigate("/app/subscription")}
+                  className="flex items-center gap-1.5 rounded-xl bg-gradient-to-br from-brand to-violet-600 px-3.5 py-2 text-xs font-semibold text-white shadow transition hover:opacity-90 active:scale-95"
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Manage Plan
+                </button>
               </div>
 
               {/* Feature checklist */}
               <ul className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                {plan.features.map((f) => {
-                  const translationKey = FEATURE_KEY_MAP[f.label] as any;
+                {featuresList.map((f) => {
                   return (
-                    <li key={f.label} className="flex items-center gap-2 text-sm">
-                      {f.available ? (
+                    <li key={f.label} className="flex items-center gap-2 text-xs">
+                      {f.enabled ? (
                         <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
                       ) : (
                         <Lock className="h-4 w-4 shrink-0 text-muted-foreground/40" />
                       )}
-                      <span className={f.available ? "text-foreground" : "text-muted-foreground/50"}>
-                        {t(translationKey)}
+                      <span className={f.enabled ? "text-foreground" : "text-muted-foreground/50"}>
+                        {f.label}
                       </span>
                     </li>
                   );
