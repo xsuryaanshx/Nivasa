@@ -877,7 +877,7 @@ export default function App() {
                       </tbody>
                     </table>
                   </div>
-                </section>
+                </motion.section>
               </div>
             )}
 
