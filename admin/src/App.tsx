@@ -447,7 +447,7 @@ export default function App() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="w-full max-w-md overflow-hidden rounded-2xl border border-white/10 bg-slate-900/60 backdrop-blur-xl p-8 shadow-2xl relative z-10"
+          className="w-full max-w-md overflow-hidden rounded-2xl border border-white/10 bg-slate-900/60 backdrop-blur-xl p-6 sm:p-8 shadow-2xl relative z-10"
         >
           <div className="flex flex-col items-center mb-8">
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-500/10 border border-indigo-500/20 mb-4 shadow-lg shadow-indigo-500/5">
@@ -528,7 +528,7 @@ export default function App() {
             </div>
             <div>
               <span className="font-bold tracking-wide text-slate-900 dark:text-white">NIVASA</span>
-              <span className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-450 bg-indigo-500/10 border border-indigo-500/25 px-1.5 py-0.5 rounded ml-2 uppercase tracking-widest">Control Tower</span>
+              <span className="hidden sm:inline-block text-[10px] font-semibold text-indigo-600 dark:text-indigo-450 bg-indigo-500/10 border border-indigo-500/25 px-1.5 py-0.5 rounded ml-2 uppercase tracking-widest">Control Tower</span>
             </div>
           </div>
 
@@ -565,21 +565,32 @@ export default function App() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 space-y-8">
         
         {/* Metric Cards Grid */}
-        <section className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <motion.section 
+          initial="hidden"
+          animate="visible"
+          variants={{
+            hidden: { opacity: 0 },
+            visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+          }}
+          className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4"
+        >
           {[
             { label: "Total Landlords", value: stats.totalUsers, icon: Users, color: "from-blue-500 to-indigo-500", text: "Verified managers" },
             { label: "Active Subscriptions", value: stats.activeSubs, icon: Check, color: "from-emerald-500 to-teal-500", text: `${stats.pausedSubs} paused` },
             { label: "Managed Rooms", value: stats.totalRooms, icon: Home, color: "from-amber-500 to-orange-500", text: "Across properties" },
             { label: "Estimated Revenue", value: `₹${stats.estimatedRevenue}`, icon: IndianRupee, color: "from-pink-500 to-rose-500", text: "Monthly MRR projection" }
-          ].map((card, i) => {
+          ].map((card) => {
             const Icon = card.icon;
             return (
               <motion.div 
                 key={card.label}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-                className="rounded-2xl border border-slate-200 dark:border-zinc-850 bg-white dark:bg-zinc-900 p-6 shadow-sm relative overflow-hidden"
+                variants={{
+                  hidden: { opacity: 0, y: 20 },
+                  visible: { opacity: 1, y: 0 }
+                }}
+                whileHover={{ scale: 1.02, translateY: -2 }}
+                whileTap={{ scale: 0.98 }}
+                className="rounded-2xl border border-slate-200 dark:border-zinc-850 bg-white dark:bg-zinc-900 p-6 shadow-sm relative overflow-hidden transition-shadow hover:shadow-md cursor-default"
               >
                 <div className={`absolute -right-6 -top-6 h-20 w-20 rounded-full bg-gradient-to-br ${card.color} opacity-10 blur-xl`} />
                 <div className="flex items-center justify-between">
@@ -595,11 +606,11 @@ export default function App() {
               </motion.div>
             );
           })}
-        </section>
+        </motion.section>
 
         {/* Global Navigation Tabs */}
-        <div className="border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between gap-4 overflow-x-auto">
-          <div className="flex gap-2">
+        <div className="border-b border-slate-200 dark:border-zinc-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 overflow-x-auto no-scrollbar">
+          <div className="flex gap-2 min-w-max pb-2 sm:pb-0 pt-1">
             {[
               { id: "overview", label: "Overview", icon: TrendingUp },
               { id: "buildings", label: "Properties", icon: Building2 },
@@ -628,15 +639,15 @@ export default function App() {
             })}
           </div>
 
-          <div className="flex items-center gap-3 pb-2">
-            <div className="relative">
+          <div className="flex items-center gap-3 pb-2 w-full sm:w-auto">
+            <div className="relative flex-1 sm:flex-none">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <input 
                 type="text"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder={`Search ${activeTab}...`}
-                className="rounded-xl pl-10 pr-4 py-2 text-xs border border-slate-200 dark:border-zinc-850 bg-white dark:bg-zinc-900 w-48 focus:w-60 focus:outline-none focus:border-indigo-500 text-slate-800 dark:text-white transition-all"
+                className="rounded-xl pl-10 pr-4 py-2 text-xs border border-slate-200 dark:border-zinc-850 bg-white dark:bg-zinc-900 w-full sm:w-48 sm:focus:w-60 focus:outline-none focus:border-indigo-500 text-slate-800 dark:text-white transition-all"
               />
             </div>
 
@@ -667,8 +678,16 @@ export default function App() {
             {activeTab === "overview" && (
               <div className="space-y-8">
                 {/* Analytics Charts */}
-                <section className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                  <div className="lg:col-span-2 rounded-2xl border border-slate-200 dark:border-zinc-850 bg-white dark:bg-zinc-900 p-6 shadow-sm">
+                <motion.section 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  className="grid grid-cols-1 gap-6 lg:grid-cols-3"
+                >
+                  <motion.div 
+                    whileHover={{ scale: 1.01 }}
+                    className="lg:col-span-2 rounded-2xl border border-slate-200 dark:border-zinc-850 bg-white dark:bg-zinc-900 p-6 shadow-sm transition-shadow hover:shadow-md"
+                  >
                     <div className="flex items-center justify-between mb-6">
                       <div>
                         <h2 className="text-base font-bold flex items-center gap-2">
@@ -701,9 +720,12 @@ export default function App() {
                         </AreaChart>
                       </ResponsiveContainer>
                     </div>
-                  </div>
+                  </motion.div>
 
-                  <div className="rounded-2xl border border-slate-200 dark:border-zinc-850 bg-white dark:bg-zinc-900 p-6 shadow-sm">
+                  <motion.div 
+                    whileHover={{ scale: 1.01 }}
+                    className="rounded-2xl border border-slate-200 dark:border-zinc-850 bg-white dark:bg-zinc-900 p-6 shadow-sm transition-shadow hover:shadow-md"
+                  >
                     <h2 className="text-base font-bold mb-1">Plan Distribution</h2>
                     <p className="text-xs text-slate-400 mb-6 font-medium">Proportion of Silver, Gold, Platinum plans</p>
 
@@ -736,12 +758,17 @@ export default function App() {
                         </div>
                       ))}
                     </div>
-                  </div>
-                </section>
+                  </motion.div>
+                </motion.section>
 
                 {/* Landlords Accounts Table */}
-                <section className="rounded-2xl border border-slate-200 dark:border-zinc-850 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm">
-                  <div className="overflow-x-auto">
+                <motion.section 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="rounded-2xl border border-slate-200 dark:border-zinc-850 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm"
+                >
+                  <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-zinc-700">
                     <table className="w-full text-left border-collapse">
                       <thead>
                         <tr className="border-b border-slate-200 dark:border-zinc-800 bg-slate-100/50 dark:bg-zinc-900/50 text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
@@ -856,8 +883,13 @@ export default function App() {
 
             {/* Properties Tab */}
             {activeTab === "buildings" && (
-              <section className="rounded-2xl border border-slate-200 dark:border-zinc-850 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm">
-                <div className="overflow-x-auto">
+              <motion.section 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="rounded-2xl border border-slate-200 dark:border-zinc-850 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm"
+              >
+                <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-zinc-700">
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="border-b border-slate-200 dark:border-zinc-800 bg-slate-100/50 dark:bg-zinc-900/50 text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
@@ -887,13 +919,18 @@ export default function App() {
                     </tbody>
                   </table>
                 </div>
-              </section>
+              </motion.section>
             )}
 
             {/* Rooms Tab */}
             {activeTab === "rooms" && (
-              <section className="rounded-2xl border border-slate-200 dark:border-zinc-850 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm">
-                <div className="overflow-x-auto">
+              <motion.section 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="rounded-2xl border border-slate-200 dark:border-zinc-850 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm"
+              >
+                <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-zinc-700">
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="border-b border-slate-200 dark:border-zinc-800 bg-slate-100/50 dark:bg-zinc-900/50 text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
@@ -933,13 +970,18 @@ export default function App() {
                     </tbody>
                   </table>
                 </div>
-              </section>
+              </motion.section>
             )}
 
             {/* Tenants Tab */}
             {activeTab === "tenants" && (
-              <section className="rounded-2xl border border-slate-200 dark:border-zinc-850 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm">
-                <div className="overflow-x-auto">
+              <motion.section 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="rounded-2xl border border-slate-200 dark:border-zinc-850 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm"
+              >
+                <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-zinc-700">
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="border-b border-slate-200 dark:border-zinc-800 bg-slate-100/50 dark:bg-zinc-900/50 text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
@@ -981,7 +1023,7 @@ export default function App() {
                     </tbody>
                   </table>
                 </div>
-              </section>
+              </motion.section>
             )}
           </motion.div>
         </AnimatePresence>
