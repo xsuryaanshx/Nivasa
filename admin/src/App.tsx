@@ -181,13 +181,16 @@ export default function App() {
       let usersDetailsMap: Record<string, { email: string; full_name: string }> = {};
       try {
         const { data: rpcUsers, error: rpcError } = await supabase.rpc("get_admin_users_list");
+        if (rpcError) {
+          console.error("Error calling get_admin_users_list:", rpcError);
+        }
         if (!rpcError && rpcUsers) {
           rpcUsers.forEach((u: any) => {
             usersDetailsMap[u.id] = { email: u.email, full_name: u.full_name };
           });
         }
       } catch (e) {
-        console.warn("RPC function get_admin_users_list not available, using fallback mapping.");
+        console.warn("RPC function get_admin_users_list not available, using fallback mapping.", e);
       }
 
       // Aggregate stats
@@ -199,7 +202,18 @@ export default function App() {
       const mappedUsers = (subsData || []).map((sub: any) => {
         const plan = PLANS.find(p => p.id === sub.plan_id) || PLANS[0];
         const usage = usagesData?.find(u => u.user_id === sub.user_id) || { rooms_count: 0, tenants_count: 0, properties_count: 0 };
-        const details = usersDetailsMap[sub.user_id] || { email: "—", full_name: "Demo Landlord" };
+        
+        const isCurrentUser = session?.user && sub.user_id === session.user.id;
+        const currentUserName = session?.user?.user_metadata?.full_name || session?.user?.email?.split("@")[0] || "Super Admin";
+        const currentUserEmail = session?.user?.email || "—";
+
+        const details = usersDetailsMap[sub.user_id] || (isCurrentUser ? {
+          email: currentUserEmail,
+          full_name: currentUserName
+        } : {
+          email: "—",
+          full_name: `Landlord (${sub.user_id.slice(0, 8)})`
+        });
 
         if (sub.status === "active") {
           revenue += plan.price;
@@ -233,7 +247,7 @@ export default function App() {
 
       const resolveLandlordName = (userId: string) => {
         const found = mappedUsers.find(u => u.user_id === userId);
-        return found ? found.fullName : "Demo Landlord";
+        return found ? found.fullName : `Landlord (${userId.slice(0, 8)})`;
       };
 
       if (buildingsData) {
