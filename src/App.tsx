@@ -23,6 +23,7 @@ import BuildingDetails from "./pages/BuildingDetails.tsx";
 import { SplashScreen } from "./components/SplashScreen.tsx";
 import { ProtectedRoute } from "./components/ProtectedRoute.tsx";
 import SubscriptionPage from "./pages/Subscription.tsx";
+import ConfirmedEmail from "./pages/ConfirmedEmail.tsx";
 
 const queryClient = new QueryClient();
 
@@ -83,6 +84,7 @@ const App = () => {
                 <Route path="/" element={<Index />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
+                <Route path="/confirmed" element={<ConfirmedEmail />} />
                 <Route path="/app" element={<ProtectedRoute />}>
                   <Route element={<AppLayout />}>
                     <Route index element={<Dashboard />} />
