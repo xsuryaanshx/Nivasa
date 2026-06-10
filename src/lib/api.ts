@@ -51,6 +51,7 @@ const auth = {
       email,
       password,
       options: {
+        emailRedirectTo: `${window.location.origin}/confirmed`,
         data: {
           full_name: fullName,
           selected_plan: selectedPlan,
