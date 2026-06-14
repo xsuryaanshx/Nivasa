@@ -28,8 +28,9 @@ import {
   Users,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { nivasaApi } from "@/lib/api";
 import { useTheme } from "next-themes";
 import { SecurityModal } from "@/components/SecurityModal";
 import { EditProfileModal } from "@/components/EditProfileModal";
@@ -325,6 +326,99 @@ function LanguageRegionPanel({ open, onClose }: { open: boolean; onClose: () => 
   );
 }
 
+// ── Rent Collection Settings Modal ────────────────────────────────────────────────────────
+function RentSettingsModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { t } = useLanguage();
+  const [dateStr, setDateStr] = useState<string>("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      nivasaApi.getUserSettings().then(res => {
+        if (res && res.rent_collection_date) {
+          setDateStr(res.rent_collection_date.toString());
+        } else {
+          setDateStr("");
+        }
+      });
+    }
+  }, [open]);
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      const val = parseInt(dateStr, 10);
+      const rent_collection_date = isNaN(val) ? null : val;
+      if (rent_collection_date !== null && (rent_collection_date < 1 || rent_collection_date > 31)) {
+        return; // invalid date
+      }
+      await nivasaApi.updateUserSettings({ rent_collection_date });
+      onClose();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm"
+            onClick={onClose}
+          />
+          <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="w-full max-w-sm overflow-hidden rounded-3xl border border-border bg-card shadow-2xl"
+            >
+              <div className="flex items-center justify-between border-b border-border/50 px-5 py-4">
+                <h2 className="text-sm font-semibold tracking-tight">Rent Settings</h2>
+                <button
+                  onClick={onClose}
+                  className="rounded-full p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="p-5 space-y-4">
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground">Fixed Rent Collection Date (Optional)</label>
+                  <p className="text-xs text-muted-foreground mb-2">If set, this date will be appended to generated invoices.</p>
+                  <input
+                    type="number"
+                    min="1"
+                    max="31"
+                    placeholder="e.g. 5"
+                    value={dateStr}
+                    onChange={e => setDateStr(e.target.value)}
+                    className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm focus:border-brand focus:ring-1 focus:ring-brand outline-none"
+                  />
+                </div>
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="w-full rounded-xl bg-brand py-2.5 text-sm font-semibold text-white shadow-soft hover:opacity-90"
+                >
+                  {saving ? "Saving..." : t("save_and_close")}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
+
 const FEATURE_KEY_MAP: Record<string, string> = {
   "Up to 3 Buildings": "up_to_3_buildings",
   "Up to 10 Rooms": "up_to_10_rooms",
@@ -355,6 +449,7 @@ const MENU_KEY_MAP: Record<string, { label: string; desc: string }> = {
   "Theme": { label: "theme", desc: "theme_desc" },
   "Security": { label: "security", desc: "security_desc" },
   "Language": { label: "language", desc: "language_desc" },
+  "Rent Date": { label: "rent_date" as any, desc: "rent_date_desc" as any },
 };
 
 // ── Main Profile Page ─────────────────────────────────────────────────────────
@@ -366,6 +461,7 @@ export default function Profile() {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [languageOpen, setLanguageOpen] = useState(false);
   const [themeOpen, setThemeOpen] = useState(false);
+  const [rentDateOpen, setRentDateOpen] = useState(false);
   const [staffOpen, setStaffOpen] = useState(false);
   const [editProfileOpen, setEditProfileOpen] = useState(false);
   const { t } = useLanguage();
@@ -445,6 +541,14 @@ export default function Profile() {
       onClick: () => setStaffOpen(true),
       accent: "text-violet-400",
       bg: "bg-violet-500/10",
+    },
+    {
+      icon: Calendar,
+      label: "Rent Date",
+      desc: "Fixed monthly rent collection date",
+      onClick: () => setRentDateOpen(true),
+      accent: "text-emerald-400",
+      bg: "bg-emerald-500/10",
     },
   ];
 
@@ -605,6 +709,7 @@ export default function Profile() {
       <StaffManagementPanel open={staffOpen} onClose={() => setStaffOpen(false)} />
       <ThemePanel open={themeOpen} onClose={() => setThemeOpen(false)} />
       <LanguageRegionPanel open={languageOpen} onClose={() => setLanguageOpen(false)} />
+      <RentSettingsModal open={rentDateOpen} onClose={() => setRentDateOpen(false)} />
     </>
   );
 }

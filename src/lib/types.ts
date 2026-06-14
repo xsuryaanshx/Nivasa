@@ -69,3 +69,22 @@ export interface Staff {
   phone?: string;
   allocatedBuildings: string[]; // Array of building IDs
 }
+
+export interface Invoice {
+  id: string;
+  user_id: string;
+  tenant_id: string;
+  room_id: string;
+  month_year: string;
+  base_rent: number;
+  electricity_cost: number;
+  add_ons: { name: string; cost: number }[];
+  previous_dues: number;
+  total_due: number;
+  created_at: string;
+}
+
+export interface UserSettings {
+  user_id: string;
+  rent_collection_date: number | null;
+}

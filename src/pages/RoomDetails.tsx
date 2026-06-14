@@ -15,6 +15,8 @@ import { AddTenantModal } from "@/components/AddTenantModal";
 import { EditTenantModal } from "@/components/EditTenantModal";
 import { ElectricityBillingModal } from "@/components/ElectricityBillingModal";
 import { TenantExpensesModal } from "@/components/TenantExpensesModal";
+import { InvoiceGeneratorModal } from "@/components/InvoiceGeneratorModal";
+import { PastInvoicesModal } from "@/components/PastInvoicesModal";
 import { Money } from "@/components/Money";
 import { type Room } from "@/lib/types";
 import { buildTiersFromBaseAndPerAdditional, normalizeOccupancyTiers, type OccupancyPriceTier } from "@/lib/rentByOccupancy";
@@ -45,6 +47,8 @@ export default function RoomDetails() {
   const [editingTenant, setEditingTenant] = useState<any>(null);
   const [electricityOpen, setElectricityOpen] = useState(false);
   const [expensesTenant, setExpensesTenant] = useState<any>(null);
+  const [invoiceTenant, setInvoiceTenant] = useState<any>(null);
+  const [pastInvoicesRoomId, setPastInvoicesRoomId] = useState<string | null>(null);
   const [savingElectricity, setSavingElectricity] = useState(false);
   const [rentAmount, setRentAmount] = useState("");
   const [rentType, setRentType] = useState<"total" | "per_person">("total");
@@ -206,17 +210,6 @@ export default function RoomDetails() {
 
   const usagePct = Math.min(100, Math.round((used / 250) * 100));
 
-  // Legacy buildInvoiceMessage removed – per-tenant invoice uses buildInvoiceMessageForTenant
-  const sendInvoiceToTenant = (tenant: any) => {
-    const phone = tenant.whatsapp_number || tenant.phone;
-    if (!phone) {
-      toast.error("No contact number on file");
-      return;
-    }
-    const ok = openWhatsApp(phone, buildInvoiceMessageForTenant(tenant));
-    if (ok) toast.success("Invoice opened in WhatsApp", { description: `${tenant.name} · ${phone}` });
-  };
-
   const sendReminderAll = () => {
   if (!room.tenants || room.tenants.length === 0) {
     toast.error("No tenants to send reminder");
@@ -356,6 +349,9 @@ export default function RoomDetails() {
             <MagneticButton variant="ghost" onClick={sendReminderAll}>
               <BellRing className="h-4 w-4" /> Send reminder
             </MagneticButton>
+            <MagneticButton variant="ghost" onClick={() => setPastInvoicesRoomId(room.id)}>
+              <FileText className="h-4 w-4" /> Past Invoices
+            </MagneticButton>
             <MagneticButton variant="ghost" onClick={() => setElectricityOpen(true)}>
               <Zap className="h-4 w-4" /> Enter Reading
             </MagneticButton>
@@ -468,7 +464,7 @@ export default function RoomDetails() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => sendInvoiceToTenant(t)}
+                      onClick={() => setInvoiceTenant(t)}
                       className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-background/50 py-1.5 text-xs font-medium text-foreground hover:bg-secondary transition-colors"
                     >
                       <Send className="h-3.5 w-3.5" /> Invoice
@@ -686,6 +682,19 @@ export default function RoomDetails() {
       <AddTenantModal open={tenantOpen} onClose={() => setTenantOpen(false)} defaultRoomId={room.id} />
       <EditTenantModal open={!!editingTenant} tenant={editingTenant} onClose={() => setEditingTenant(null)} onUpdated={fetchData} />
       <TenantExpensesModal open={!!expensesTenant} tenant={expensesTenant} onClose={() => setExpensesTenant(null)} />
+      <InvoiceGeneratorModal 
+        open={!!invoiceTenant} 
+        tenant={invoiceTenant} 
+        room={room} 
+        roomPayments={roomPayments}
+        electricityCost={cost}
+        onClose={() => setInvoiceTenant(null)} 
+      />
+      <PastInvoicesModal
+        open={!!pastInvoicesRoomId}
+        roomId={pastInvoicesRoomId || undefined}
+        onClose={() => setPastInvoicesRoomId(null)}
+      />
       <ElectricityBillingModal
         open={electricityOpen}
         onClose={() => setElectricityOpen(false)}
