@@ -85,42 +85,7 @@ export default function Dashboard() {
         <StatCard label={t('monthly_revenue')}  value={s.monthlyRevenue} icon={IndianRupee} money delta="+12%" trend="up" delay={0.20} onClick={() => navigate("/app/payments?status=paid")} />
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <div className="rounded-2xl border border-border bg-card p-6 shadow-soft h-full">
-            <h3 className="text-sm font-semibold mb-4">{t("global_settings")}</h3>
-            <div className="space-y-4 max-w-xs">
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground">{t("electricity_rate")}</label>
-                <div className="flex gap-2">
-                  <input
-                    type="number" inputMode="decimal"
-                    step="0.01"
-                    placeholder="0.18"
-                    id="elec-rate-input"
-                    className="flex-1 rounded-xl border border-border bg-background px-4 py-2 text-sm focus:border-brand focus:ring-1 focus:ring-brand outline-none"
-                  />
-                  <button
-                    onClick={async () => {
-                      const val = (document.getElementById('elec-rate-input') as HTMLInputElement).value;
-                      if (!val) return;
-                      try {
-                        await nivasaApi.updateElectricityRate(parseFloat(val));
-                        toast.success("Global electricity rate updated");
-                      } catch (e) {
-                        toast.error("Failed to update rate");
-                      }
-                    }}
-                    className="rounded-xl bg-brand px-4 py-2 text-xs font-semibold text-white shadow-glow hover:bg-brand/90"
-                  >
-                    {t("save")}
-                  </button>
-                </div>
-                <p className="text-[10px] text-muted-foreground">{t("electricity_rate_hint")}</p>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div className="mt-6">
         <div className="rounded-2xl border border-border bg-card p-6 shadow-soft flex flex-col items-center justify-center text-center">
           <div className="h-12 w-12 rounded-full bg-secondary/50 flex items-center justify-center mb-3">
             <ReceiptIndianRupee className="h-6 w-6 text-muted-foreground" />
