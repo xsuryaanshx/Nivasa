@@ -7,6 +7,7 @@ import { MagneticButton } from "@/components/MagneticButton";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { AddStaffModal } from "@/components/AddStaffModal";
 
 function initials(name: string) {
   if (!name) return "??";
@@ -20,6 +21,7 @@ export default function Staff() {
   const [roleFilter, setRoleFilter] = useState("all");
   const [staffList, setStaffList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isAddOpen, setIsAddOpen] = useState(false);
 
   const fetchStaff = async () => {
     try {
@@ -36,6 +38,9 @@ export default function Staff() {
 
   useEffect(() => {
     fetchStaff();
+    const handleRefresh = () => fetchStaff();
+    window.addEventListener("nivasa:refresh", handleRefresh);
+    return () => window.removeEventListener("nivasa:refresh", handleRefresh);
   }, []);
 
   const roles = useMemo(() => {
@@ -59,7 +64,7 @@ export default function Staff() {
         title={"Staff Management"}
         subtitle={"Manage your property staff, maids, security, and monitor their attendance and payments."}
         action={
-          <MagneticButton onClick={() => window.dispatchEvent(new CustomEvent("nivasa:add-staff"))}>
+          <MagneticButton onClick={() => setIsAddOpen(true)}>
             <UserPlus className="h-4 w-4" /> Add Staff
           </MagneticButton>
         }
@@ -102,6 +107,8 @@ export default function Staff() {
           ))}
         </div>
       )}
+
+      <AddStaffModal open={isAddOpen} onClose={() => setIsAddOpen(false)} onSuccess={fetchStaff} />
     </div>
   );
 }
