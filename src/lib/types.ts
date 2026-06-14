@@ -61,3 +61,11 @@ export interface Room {
   history: ElectricityReading[];
   pastTenants: Tenant[];
 }
+
+export interface Staff {
+  id: string;
+  name: string;
+  role: string;
+  phone?: string;
+  allocatedBuildings: string[]; // Array of building IDs
+}

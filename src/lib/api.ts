@@ -925,6 +925,90 @@ async function getDashboardStats() {
   }
 }
 
+/* ── Staff ───────────────────────────────────────────────────────────────────── */
+async function getStaff(): Promise<any[]> {
+  try {
+    const user_id = await requireAuthUserId();
+    const { data, error } = await supabase
+      .from("staff")
+      .select("*, staff_allocations(building_id)")
+      .eq("user_id", user_id);
+    if (error) throw error;
+    return (data || []).map((s: any) => ({
+      id: s.id,
+      name: s.name,
+      role: s.role,
+      phone: s.phone,
+      allocatedBuildings: s.staff_allocations ? s.staff_allocations.map((a: any) => a.building_id) : [],
+    }));
+  } catch (error) {
+    console.error("Error in getStaff:", error);
+    throw error;
+  }
+}
+
+async function addStaff(input: { name: string; role: string; phone?: string; allocatedBuildings: string[] }) {
+  try {
+    const user_id = await requireAuthUserId();
+    const { data: staff, error: staffError } = await supabase
+      .from("staff")
+      .insert([{ name: input.name, role: input.role, phone: input.phone, user_id }])
+      .select()
+      .single();
+    if (staffError) throw staffError;
+
+    if (input.allocatedBuildings && input.allocatedBuildings.length > 0) {
+      const allocations = input.allocatedBuildings.map(bid => ({ staff_id: staff.id, building_id: bid }));
+      const { error: allocError } = await supabase.from("staff_allocations").insert(allocations);
+      if (allocError) console.error("Error inserting allocations:", allocError);
+    }
+    return staff;
+  } catch (error) {
+    console.error("Error in addStaff:", error);
+    throw error;
+  }
+}
+
+async function updateStaff(id: string, updates: { name?: string; role?: string; phone?: string; allocatedBuildings?: string[] }) {
+  try {
+    const user_id = await requireAuthUserId();
+    const payload: any = {};
+    if (updates.name !== undefined) payload.name = updates.name;
+    if (updates.role !== undefined) payload.role = updates.role;
+    if (updates.phone !== undefined) payload.phone = updates.phone;
+
+    if (Object.keys(payload).length > 0) {
+      const { error } = await supabase.from("staff").update(payload).eq("id", id).eq("user_id", user_id);
+      if (error) throw error;
+    }
+
+    if (updates.allocatedBuildings !== undefined) {
+      const { error: delError } = await supabase.from("staff_allocations").delete().eq("staff_id", id);
+      if (delError) throw delError;
+
+      if (updates.allocatedBuildings.length > 0) {
+        const allocations = updates.allocatedBuildings.map(bid => ({ staff_id: id, building_id: bid }));
+        const { error: allocError } = await supabase.from("staff_allocations").insert(allocations);
+        if (allocError) throw allocError;
+      }
+    }
+  } catch (error) {
+    console.error("Error in updateStaff:", error);
+    throw error;
+  }
+}
+
+async function removeStaff(id: string) {
+  try {
+    const user_id = await requireAuthUserId();
+    const { error } = await supabase.from("staff").delete().eq("id", id).eq("user_id", user_id);
+    if (error) throw error;
+  } catch (error) {
+    console.error("Error in removeStaff:", error);
+    throw error;
+  }
+}
+
 export const nivasaApi = {
   auth,
   supabase,
@@ -949,5 +1033,9 @@ export const nivasaApi = {
   getElectricityRate,
   updateElectricityRate,
   getDashboardStats,
+  getStaff,
+  addStaff,
+  updateStaff,
+  removeStaff,
 };
 export type NivasaApi = typeof nivasaApi;

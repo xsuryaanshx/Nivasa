@@ -25,6 +25,7 @@ import {
   Monitor,
   Palette,
   Banknote,
+  Users,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
@@ -33,6 +34,7 @@ import { useTheme } from "next-themes";
 import { SecurityModal } from "@/components/SecurityModal";
 import { EditProfileModal } from "@/components/EditProfileModal";
 import { NotificationsPanel } from "@/components/NotificationsPanel";
+import { StaffManagementPanel } from "@/components/StaffManagementPanel";
 import { useLanguage } from "@/components/LanguageProvider";
 import { cn } from "@/lib/utils";
 import type { Language } from "@/lib/translations";
@@ -356,6 +358,7 @@ export default function Profile() {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [languageOpen, setLanguageOpen] = useState(false);
   const [themeOpen, setThemeOpen] = useState(false);
+  const [staffOpen, setStaffOpen] = useState(false);
   const [editProfileOpen, setEditProfileOpen] = useState(false);
   const { t } = useLanguage();
 
@@ -426,6 +429,14 @@ export default function Profile() {
       onClick: () => setLanguageOpen(true),
       accent: "text-cyan-400",
       bg: "bg-cyan-500/10",
+    },
+    {
+      icon: Users,
+      label: "Staff Management",
+      desc: "Manage maids, guards, etc.",
+      onClick: () => setStaffOpen(true),
+      accent: "text-violet-400",
+      bg: "bg-violet-500/10",
     },
   ];
 
@@ -636,6 +647,7 @@ export default function Profile() {
       <EditProfileModal open={editProfileOpen} onClose={() => setEditProfileOpen(false)} />
       <SecurityModal open={securityOpen} onClose={() => setSecurityOpen(false)} />
       <NotificationsPanel open={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
+      <StaffManagementPanel open={staffOpen} onClose={() => setStaffOpen(false)} />
       <ThemePanel open={themeOpen} onClose={() => setThemeOpen(false)} />
       <LanguageRegionPanel open={languageOpen} onClose={() => setLanguageOpen(false)} />
     </>
