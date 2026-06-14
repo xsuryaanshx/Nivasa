@@ -17,7 +17,7 @@ export function AddStaffModal({ open, onClose, onSuccess }: Props) {
     role: "Maid",
     phone: "",
     monthly_salary: "",
-    joined_at: new Date().toISOString().split("T")[0],
+    join_date: new Date().toISOString().split("T")[0],
     status: "active",
   });
 
@@ -58,7 +58,7 @@ export function AddStaffModal({ open, onClose, onSuccess }: Props) {
         role: "Maid",
         phone: "",
         monthly_salary: "",
-        joined_at: new Date().toISOString().split("T")[0],
+        join_date: new Date().toISOString().split("T")[0],
         status: "active",
       });
       window.dispatchEvent(new CustomEvent("nivasa:refresh"));
@@ -184,8 +184,8 @@ export function AddStaffModal({ open, onClose, onSuccess }: Props) {
                   <Calendar className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <input
                     type="date"
-                    name="joined_at"
-                    value={formData.joined_at}
+                    name="join_date"
+                    value={formData.join_date}
                     onChange={handleChange}
                     className="h-11 w-full rounded-xl border border-border bg-background pl-10 pr-4 text-sm outline-none transition-colors focus:border-brand focus:ring-1 focus:ring-brand"
                   />
