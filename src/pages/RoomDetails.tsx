@@ -351,13 +351,26 @@ export default function RoomDetails() {
           {room.tenants && room.tenants.length > 0 ? (
             <div className="space-y-4">
               {room.tenants.map((t) => {
-                const status = getTenantPaymentStatus(t, roomPayments);
-                let bgClass = "bg-secondary/60";
-                if (status === "paid") bgClass = "bg-emerald-500/10 border border-emerald-500/20";
-                else if (status === "pending") bgClass = "bg-orange-500/10 border border-orange-500/20";
-                else if (status === "late") bgClass = "bg-red-500/10 border border-red-500/20";
+                const currentMonth = new Date().toISOString().slice(0, 7);
+                const tenantPaymentsThisMonth = roomPayments.filter(p => p.tenantId === t.id && String(p.date).startsWith(currentMonth) && p.status === "paid");
+                const totalPaidThisMonth = tenantPaymentsThisMonth.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
                 
                 const tenantShare = calculateTenantShare(room);
+                const remainingAmount = Math.max(0, tenantShare - totalPaidThisMonth);
+                
+                let displayStatus = getTenantPaymentStatus(t, roomPayments);
+                let bgClass = "bg-secondary/60";
+                
+                if (totalPaidThisMonth >= tenantShare) {
+                  displayStatus = "paid";
+                  bgClass = "bg-emerald-500/10 border border-emerald-500/20";
+                } else if (totalPaidThisMonth > 0) {
+                  displayStatus = "partial";
+                  bgClass = "bg-blue-500/10 border border-blue-500/20";
+                } else {
+                  if (displayStatus === "late") bgClass = "bg-red-500/10 border border-red-500/20";
+                  else bgClass = "bg-orange-500/10 border border-orange-500/20";
+                }
 
                 return (
                 <div key={t.id} className={cn("rounded-xl p-3 flex flex-col gap-3 transition-colors", bgClass)}>
@@ -372,11 +385,19 @@ export default function RoomDetails() {
                       <div className="min-w-0">
                         <div className="text-sm font-semibold truncate flex items-center gap-2" title={t.name}>
                           {t.name}
-                          {status === "paid" && <span className="inline-flex items-center rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">✅ Paid</span>}
-                          {status === "pending" && <span className="inline-flex items-center rounded-full bg-orange-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-orange-600 dark:text-orange-400">⚠️ Pending</span>}
-                          {status === "late" && <span className="inline-flex items-center rounded-full bg-red-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-red-600 dark:text-red-400">🔴 Overdue</span>}
+                          {displayStatus === "paid" && <span className="inline-flex items-center rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">✅ Paid in Full</span>}
+                          {displayStatus === "partial" && <span className="inline-flex items-center rounded-full bg-blue-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-blue-600 dark:text-blue-400">⏳ Partial</span>}
+                          {displayStatus === "pending" && <span className="inline-flex items-center rounded-full bg-orange-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-orange-600 dark:text-orange-400">⚠️ Pending</span>}
+                          {displayStatus === "late" && <span className="inline-flex items-center rounded-full bg-red-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-red-600 dark:text-red-400">🔴 Overdue</span>}
                         </div>
-                        <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+                        <div className="mt-1 flex flex-wrap items-center gap-3 text-xs font-medium">
+                           <div className="text-muted-foreground">Share: <span className="text-foreground">{formatMoney(tenantShare, currency, { decimals: 0 })}</span></div>
+                           <div className="text-emerald-600 dark:text-emerald-500">Paid: <span className="font-semibold">{formatMoney(totalPaidThisMonth, currency, { decimals: 0 })}</span></div>
+                           {remainingAmount > 0 && (
+                             <div className="text-red-600 dark:text-red-500">Remaining: <span className="font-bold">{formatMoney(remainingAmount, currency, { decimals: 0 })}</span></div>
+                           )}
+                        </div>
+                        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
                           <span className="flex items-center gap-1 truncate">
                             <Phone className="h-3 w-3 shrink-0" /> {t.phone}
                           </span>
@@ -430,7 +451,7 @@ export default function RoomDetails() {
                       onClick={() => { setPaymentTenantId(t.id); setAddOpen(true); }}
                       className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-brand/10 text-brand py-1.5 text-xs font-semibold hover:bg-brand/20 transition-colors"
                     >
-                      <CheckCircle2 className="h-3.5 w-3.5" /> Mark paid ({currency.symbol}{tenantShare.toFixed(0)})
+                      <CheckCircle2 className="h-3.5 w-3.5" /> Pay ({currency.symbol}{remainingAmount.toFixed(0)})
                     </button>
                   </div>
                   </div>
