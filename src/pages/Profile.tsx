@@ -508,78 +508,45 @@ export default function Profile() {
           </div>
         </motion.div>
 
-        {/* ── Current Plan card ── */}
+        {/* ── App Features ── */}
         <motion.div variants={stagger.item}>
           <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-            {t("current_plan")}
+            {t("app_features")}
           </h2>
-          <div className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${getPlanColor(activePlanName)} p-[1px] shadow-float`}>
-            <div className="rounded-[calc(1rem-1px)] bg-card px-5 py-5">
-              {/* Plan header */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={`flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${getPlanColor(activePlanName)} shadow`}>
-                    <PlanIcon className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-foreground">
-                      Nivasa {displayPlanName}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {displayPrice}
-                    </p>
-                  </div>
-                </div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {APP_FEATURES.map((feat) => {
+              const Icon = feat.icon;
+              const mapping = APP_FEATURE_KEY_MAP[feat.label];
+              const transLabel = mapping ? t(mapping.label as any) : feat.label;
+              const transDesc = mapping ? t(mapping.desc as any) : feat.desc;
+              return (
                 <button
-                  onClick={() => navigate("/app/subscription")}
-                  className="flex items-center gap-1.5 rounded-xl bg-gradient-to-br from-brand to-violet-600 px-3.5 py-2 text-xs font-semibold text-white shadow transition hover:opacity-90 active:scale-95"
+                  key={feat.label}
+                  onClick={() => {
+                    const scroller = document.querySelector('.app-cover');
+                    if (scroller) scroller.scrollTop = 0;
+                    
+                    if (feat.label === "Buildings") navigate("/app/buildings");
+                    else if (feat.label === "Rooms") navigate("/app/rooms");
+                    else if (feat.label === "Payments") navigate("/app/payments");
+                    else if (feat.label === "Expenses") navigate("/app/expenses");
+                    else if (feat.label === "Staff") navigate("/app/staff");
+                    else if (feat.label === "Analytics") navigate("/app");
+                    else if (feat.label === "Electricity") window.dispatchEvent(new CustomEvent("nivasa:add-electricity")); 
+                    else if (feat.label === "Multi-language") setLanguageOpen(true);
+                  }}
+                  className="flex flex-col gap-2 rounded-2xl border border-border/50 bg-card p-4 shadow-soft transition hover:border-border hover:bg-secondary/50 active:scale-[0.97] text-left"
                 >
-                  <Sparkles className="h-3.5 w-3.5" />
-                  Manage Plan
+                  <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${feat.bg}`}>
+                    <Icon className={`h-4 w-4 ${feat.color}`} />
+                  </div>
+                  <p className="text-sm font-semibold text-foreground">{transLabel}</p>
+                  <p className="text-[11px] leading-snug text-muted-foreground">{transDesc}</p>
                 </button>
-              </div>
-
-              {/* App Features Grid */}
-              <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {APP_FEATURES.map((feat) => {
-                  const Icon = feat.icon;
-                  const mapping = APP_FEATURE_KEY_MAP[feat.label];
-                  const transLabel = mapping ? t(mapping.label as any) : feat.label;
-                  const transDesc = mapping ? t(mapping.desc as any) : feat.desc;
-                  return (
-                    <button
-                      key={feat.label}
-                      onClick={() => {
-                        const scroller = document.querySelector('.app-cover');
-                        if (scroller) scroller.scrollTop = 0;
-                        
-                        if (feat.label === "Buildings") navigate("/app/buildings");
-                        else if (feat.label === "Rooms") navigate("/app/rooms");
-                        else if (feat.label === "Payments") navigate("/app/payments");
-                        else if (feat.label === "Expenses") navigate("/app/expenses");
-                        else if (feat.label === "Staff") navigate("/app/staff");
-                        else if (feat.label === "Analytics") navigate("/app");
-                        else if (feat.label === "Electricity") window.dispatchEvent(new CustomEvent("nivasa:add-electricity")); 
-                        else if (feat.label === "Multi-language") setLanguageOpen(true);
-                      }}
-                      className="flex flex-col gap-2 rounded-2xl border border-border/50 bg-background/50 p-4 shadow-sm transition hover:border-border hover:bg-secondary/50 active:scale-[0.97] text-left"
-                    >
-                      <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${feat.bg}`}>
-                        <Icon className={`h-4 w-4 ${feat.color}`} />
-                      </div>
-                      <p className="text-sm font-semibold text-foreground">{transLabel}</p>
-                      <p className="text-[11px] leading-snug text-muted-foreground">{transDesc}</p>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+              );
+            })}
           </div>
-        </motion.div>
-
-
-
-        {/* ── Settings quick-links ── */}
+        </motion.div>        {/* ── Settings quick-links ── */}
         <motion.div variants={stagger.item}>
           <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
             {t("settings")}
