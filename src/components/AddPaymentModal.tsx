@@ -103,10 +103,11 @@ export function AddPaymentModal({ open, onClose, defaultRoomId, defaultTenantId 
       setError(null);
       setAmount(""); setNote(""); setReference("");
       setMethod("Bank"); setStatus("paid");
+      setTenantId(defaultTenantId || "");
       setDate(new Date().toISOString().slice(0, 10));
       fetchData();
     }
-  }, [open]);
+  }, [open, defaultTenantId]);
 
   // Cascade rooms when building changes
   const handleBuildingChange = (bId: string) => {
