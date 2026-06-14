@@ -1,7 +1,7 @@
 'use client';
 
 import { useNavigate, useLocation } from "react-router-dom";
-import { Building2, Home, LayoutDashboard, ReceiptIndianRupee, UserCircle2, Briefcase } from "lucide-react";
+import { Building2, LayoutDashboard, ReceiptIndianRupee, Users, User } from "lucide-react";
 import { InteractiveMenu } from "./ui/modern-mobile-menu";
 import { useMemo } from "react";
 import { useLanguage } from "./LanguageProvider";
@@ -10,13 +10,12 @@ export function MobileNav() {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useLanguage();
-  
   const dockApps = useMemo(() => [
-    { id: "/app", label: t('home'), icon: LayoutDashboard },
-    { id: "/app/buildings", label: t('buildings'), icon: Building2 },
-    { id: "/app/tenants", label: t('tenants') || "Tenants", icon: UserCircle2 },
-    { id: "/app/payments", label: t('payments'), icon: ReceiptIndianRupee },
-    { id: "/app/staff", label: "Staff", icon: Briefcase },
+    { id: "/app", label: t('home') || "Home", icon: LayoutDashboard },
+    { id: "/app/buildings", label: t('buildings') || "Buildings", icon: Building2 },
+    { id: "/app/tenants", label: t('tenants') || "Tenants", icon: Users },
+    { id: "/app/payments", label: t('payments') || "Payments", icon: ReceiptIndianRupee },
+    { id: "/app/profile", label: t('profile') || "Profile", icon: User },
   ], [t]);
 
   const handleAppClick = (index: number, id: string) => {
