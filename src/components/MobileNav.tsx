@@ -17,7 +17,6 @@ export function MobileNav() {
     { id: "/app/tenants", label: t('tenants') || "Tenants", icon: UserCircle2 },
     { id: "/app/payments", label: t('payments'), icon: ReceiptIndianRupee },
     { id: "/app/staff", label: "Staff", icon: Briefcase },
-    { id: "/app/profile", label: t("profile"), icon: UserCircle2 },
   ], [t]);
 
   const handleAppClick = (index: number, id: string) => {
