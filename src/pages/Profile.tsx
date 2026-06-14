@@ -539,66 +539,45 @@ export default function Profile() {
                 </button>
               </div>
 
-              {/* Feature checklist */}
-              <ul className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                {featuresList.map((f) => {
+              {/* App Features Grid */}
+              <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {APP_FEATURES.map((feat) => {
+                  const Icon = feat.icon;
+                  const mapping = APP_FEATURE_KEY_MAP[feat.label];
+                  const transLabel = mapping ? t(mapping.label as any) : feat.label;
+                  const transDesc = mapping ? t(mapping.desc as any) : feat.desc;
                   return (
-                    <li key={f.label} className="flex items-center gap-2 text-xs">
-                      {f.enabled ? (
-                        <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
-                      ) : (
-                        <Lock className="h-4 w-4 shrink-0 text-muted-foreground/40" />
-                      )}
-                      <span className={f.enabled ? "text-foreground" : "text-muted-foreground/50"}>
-                        {f.label}
-                      </span>
-                    </li>
+                    <button
+                      key={feat.label}
+                      onClick={() => {
+                        const scroller = document.querySelector('.app-cover');
+                        if (scroller) scroller.scrollTop = 0;
+                        
+                        if (feat.label === "Buildings") navigate("/app/buildings");
+                        else if (feat.label === "Rooms") navigate("/app/rooms");
+                        else if (feat.label === "Payments") navigate("/app/payments");
+                        else if (feat.label === "Expenses") navigate("/app/expenses");
+                        else if (feat.label === "Staff") navigate("/app/staff");
+                        else if (feat.label === "Analytics") navigate("/app");
+                        else if (feat.label === "Electricity") window.dispatchEvent(new CustomEvent("nivasa:add-electricity")); 
+                        else if (feat.label === "Multi-language") setLanguageOpen(true);
+                      }}
+                      className="flex flex-col gap-2 rounded-2xl border border-border/50 bg-background/50 p-4 shadow-sm transition hover:border-border hover:bg-secondary/50 active:scale-[0.97] text-left"
+                    >
+                      <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${feat.bg}`}>
+                        <Icon className={`h-4 w-4 ${feat.color}`} />
+                      </div>
+                      <p className="text-sm font-semibold text-foreground">{transLabel}</p>
+                      <p className="text-[11px] leading-snug text-muted-foreground">{transDesc}</p>
+                    </button>
                   );
                 })}
-              </ul>
+              </div>
             </div>
           </div>
         </motion.div>
 
-        {/* ── App Features ── */}
-        <motion.div variants={stagger.item}>
-          <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-            {t("app_features")}
-          </h2>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {APP_FEATURES.map((feat) => {
-              const Icon = feat.icon;
-              const mapping = APP_FEATURE_KEY_MAP[feat.label];
-              const transLabel = mapping ? t(mapping.label as any) : feat.label;
-              const transDesc = mapping ? t(mapping.desc as any) : feat.desc;
-              return (
-                <button
-                  key={feat.label}
-                  onClick={() => {
-                    const scroller = document.querySelector('.app-cover');
-                    if (scroller) scroller.scrollTop = 0;
-                    
-                    if (feat.label === "Buildings") navigate("/app/buildings");
-                    else if (feat.label === "Rooms") navigate("/app/rooms");
-                    else if (feat.label === "Payments") navigate("/app/payments");
-                    else if (feat.label === "Expenses") navigate("/app/expenses");
-                    else if (feat.label === "Staff") navigate("/app/staff");
-                    else if (feat.label === "Analytics") navigate("/app");
-                    else if (feat.label === "Electricity") window.dispatchEvent(new CustomEvent("nivasa:add-electricity")); 
-                    else if (feat.label === "Multi-language") setLanguageOpen(true);
-                  }}
-                  className="flex flex-col gap-2 rounded-2xl border border-border/50 bg-card p-4 shadow-soft transition hover:border-border hover:bg-secondary/50 active:scale-[0.97] text-left"
-                >
-                  <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${feat.bg}`}>
-                    <Icon className={`h-4 w-4 ${feat.color}`} />
-                  </div>
-                  <p className="text-sm font-semibold text-foreground">{transLabel}</p>
-                  <p className="text-[11px] leading-snug text-muted-foreground">{transDesc}</p>
-                </button>
-              );
-            })}
-          </div>
-        </motion.div>
+
 
         {/* ── Settings quick-links ── */}
         <motion.div variants={stagger.item}>
