@@ -53,6 +53,9 @@ export default function Register() {
       const { data, error } = await nivasaApi.auth.signUp(email, pwd, fullName.trim(), selectedPlan);
       if (error) throw error;
 
+      // Force sign out immediately after sign up to prevent auto-login
+      await nivasaApi.auth.signOut();
+
       // Persist the name for the session
       localStorage.setItem("nivasa_user_name", fullName.trim());
 
