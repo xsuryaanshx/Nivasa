@@ -1,7 +1,7 @@
 import { nivasaApi } from "@/lib/api";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, IdCard, Phone, Smartphone, User, Loader2, Calendar, Banknote, CreditCard } from "lucide-react";
+import { CheckCircle2, IdCard, Phone, Smartphone, User, Loader2, Calendar, Banknote, CreditCard, FileText } from "lucide-react";
 import { GlassModal } from "./GlassModal";
 import { MagneticButton } from "./MagneticButton";
 import { cn } from "@/lib/utils";
@@ -38,6 +38,7 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
     const d = new Date();
     return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
   });
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   // Upgrade Modal State
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -82,6 +83,7 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
       setDepositMethod("Cash");
       const d = new Date();
       setJoinedAt(`${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`);
+      setSelectedFile(null);
 
     }
   }, [open, defaultRoomId]);
@@ -133,6 +135,25 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
         }
       }
 
+      let document_url = undefined;
+      if (selectedFile) {
+        if (selectedFile.size > 5 * 1024 * 1024) {
+          throw new Error("Document is too large. Max size is 5MB.");
+        }
+        const fileExt = selectedFile.name.split('.').pop();
+        const fileName = `tenant_${Math.random()}.${fileExt}`;
+        const filePath = `tenants/${fileName}`;
+        const { error: uploadError } = await nivasaApi.supabase.storage
+          .from('documents')
+          .upload(filePath, selectedFile);
+        if (uploadError) throw new Error("Document upload failed: " + uploadError.message);
+        
+        const { data: { publicUrl } } = nivasaApi.supabase.storage
+          .from('documents')
+          .getPublicUrl(filePath);
+        document_url = publicUrl;
+      }
+
       await nivasaApi.addTenant({
         room_id: roomId,
         name: name.trim(),
@@ -143,6 +164,7 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
         occupancy_count: 1,
         depositAmount: depositAmount ? Number(depositAmount) : 0,
         depositMethod: depositMethod,
+        document_url,
       });
 
       setSuccess(true);
@@ -308,6 +330,30 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
                   maxLength={14}
                   disabled={submitting}
                 />
+              </Field>
+
+              <Field label="ID Document" optional>
+                <div className="relative flex items-center justify-center rounded-xl border border-dashed border-border bg-card/70 p-4 transition-colors hover:bg-secondary/50">
+                  <input
+                    type="file"
+                    accept="image/*,application/pdf"
+                    capture="environment"
+                    disabled={submitting}
+                    onChange={e => setSelectedFile(e.target.files?.[0] || null)}
+                    className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0 disabled:opacity-0 disabled:cursor-not-allowed"
+                  />
+                  <div className="flex flex-col items-center gap-1.5 text-center">
+                    <FileText className="h-6 w-6 text-muted-foreground" />
+                    {selectedFile ? (
+                      <p className="text-xs font-medium text-brand truncate max-w-[200px]">{selectedFile.name}</p>
+                    ) : (
+                      <>
+                        <p className="text-xs font-medium">Click to browse or take a photo</p>
+                        <p className="text-[10px] text-muted-foreground">Supports PDF and Images (Max 5MB)</p>
+                      </>
+                    )}
+                  </div>
+                </div>
               </Field>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

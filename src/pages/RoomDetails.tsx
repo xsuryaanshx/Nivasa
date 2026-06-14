@@ -425,6 +425,15 @@ export default function RoomDetails() {
                             <Phone className="h-3 w-3 shrink-0" /> {t.phone}
                           </span>
                           {t.joined_at && <span className="flex items-center gap-1 shrink-0"><Calendar className="h-3 w-3" /> Joined: {new Date(t.joined_at).toLocaleDateString()}</span>}
+                          {t.document_url ? (
+                            <a href={t.document_url} target="_blank" rel="noreferrer" className="flex items-center gap-1 shrink-0 text-brand hover:underline">
+                              <FileText className="h-3 w-3" /> ID Document
+                            </a>
+                          ) : (
+                            <span className="flex items-center gap-1 shrink-0 text-muted-foreground/60" title="No ID Document">
+                              <FileText className="h-3 w-3" /> No Document
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>

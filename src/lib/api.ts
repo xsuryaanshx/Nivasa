@@ -367,6 +367,7 @@ function mapTenantFromRow(t: any): any {
     depositMethod: t.deposit_method,
     status: t.status,
     leftAt: t.left_at,
+    document_url: t.document_url,
   };
 }
 function mapUnitToRoom(u: any): any {
@@ -547,6 +548,7 @@ async function updateTenant(
     aadhar?: string;
     depositAmount?: number;
     depositMethod?: string;
+    document_url?: string;
   },
 ) {
   try {
@@ -566,6 +568,8 @@ async function updateTenant(
       patch.deposit_amount = updates.depositAmount;
     if (updates.depositMethod !== undefined)
       patch.deposit_method = updates.depositMethod;
+    if (updates.document_url !== undefined)
+      patch.document_url = updates.document_url;
     if (Object.keys(patch).length === 0) return;
     const user_id = await requireAuthUserId();
     /* Authorize via unit */
@@ -649,6 +653,7 @@ async function addTenant(input: {
   occupancy_count?: number;
   depositAmount?: number;
   depositMethod?: string;
+  document_url?: string;
 }) {
   try {
     /* 1. Fetch building_id ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â also verify room belongs to this user */
@@ -677,6 +682,7 @@ async function addTenant(input: {
       occupancy_count: occ,
       deposit_amount: input.depositAmount || 0,
       deposit_method: input.depositMethod || "Cash",
+      document_url: input.document_url || null,
       status: "active",
     };
     const { data: tenant, error: tenantError } = await supabase

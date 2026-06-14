@@ -25,6 +25,7 @@ export interface Tenant {
   depositMethod?: "Cash" | "Bank" | "UPI";
   status?: "active" | "vacated";
   leftAt?: string;
+  document_url?: string;
 }
 
 export interface ElectricityReading {
