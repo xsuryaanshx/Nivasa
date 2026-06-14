@@ -1,6 +1,6 @@
 import { nivasaApi } from "@/lib/api";
 import { NavLink, useLocation } from "react-router-dom";
-import { Building2, Home, LayoutDashboard, ReceiptIndianRupee, Sparkles, UserCircle2, Zap, LogOut } from "lucide-react";
+import { Building2, Home, LayoutDashboard, ReceiptIndianRupee, Sparkles, UserCircle2, Zap, LogOut, Briefcase } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "./LanguageProvider";
 import { NivasaLogo } from "./NivasaLogo";
@@ -15,6 +15,7 @@ export function AppSidebar({ collapsed }: Props) {
     { to: "/app/buildings", label: t("buildings"), icon: Building2 },
     { to: "/app/tenants", label: t("tenants") || "Tenants", icon: UserCircle2 },
     { to: "/app/payments", label: t("payments"), icon: ReceiptIndianRupee },
+    { to: "/app/staff", label: "Staff", icon: Briefcase },
     { to: "/app/subscription", label: t("subscription") || "Subscription", icon: Sparkles },
     { to: "/app/profile", label: t("profile"), icon: UserCircle2 },
   ];

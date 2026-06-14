@@ -931,6 +931,180 @@ async function getDashboardStats() {
   }
 }
 
+/* ── Staff Management ──────────────────────────────────────────────────────────── */
+async function getStaff() {
+  try {
+    const user_id = await requireAuthUserId();
+    const { data, error } = await supabase
+      .from("staff")
+      .select("*, buildings(name)")
+      .eq("user_id", user_id)
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error("Error in getStaff:", error);
+    throw error;
+  }
+}
+
+async function getStaffById(id: string) {
+  try {
+    const user_id = await requireAuthUserId();
+    const { data, error } = await supabase
+      .from("staff")
+      .select("*, buildings(name)")
+      .eq("id", id)
+      .eq("user_id", user_id)
+      .single();
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error("Error in getStaffById:", error);
+    throw error;
+  }
+}
+
+async function addStaff(input: any) {
+  try {
+    const user_id = await requireAuthUserId();
+    const payload = {
+      ...input,
+      user_id,
+    };
+    const { data, error } = await supabase
+      .from("staff")
+      .insert([payload])
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error("Error in addStaff:", error);
+    throw error;
+  }
+}
+
+async function updateStaff(id: string, updates: any) {
+  try {
+    const user_id = await requireAuthUserId();
+    const { error } = await supabase
+      .from("staff")
+      .update(updates)
+      .eq("id", id)
+      .eq("user_id", user_id);
+    if (error) throw error;
+  } catch (error) {
+    console.error("Error in updateStaff:", error);
+    throw error;
+  }
+}
+
+async function removeStaff(id: string) {
+  try {
+    const user_id = await requireAuthUserId();
+    const { error } = await supabase
+      .from("staff")
+      .delete()
+      .eq("id", id)
+      .eq("user_id", user_id);
+    if (error) throw error;
+  } catch (error) {
+    console.error("Error in removeStaff:", error);
+    throw error;
+  }
+}
+
+async function getStaffPayments(staffId: string) {
+  try {
+    const { data, error } = await supabase
+      .from("staff_payments")
+      .select("*")
+      .eq("staff_id", staffId)
+      .order("payment_date", { ascending: false });
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error("Error in getStaffPayments:", error);
+    throw error;
+  }
+}
+
+async function addStaffPayment(input: any) {
+  try {
+    const { data, error } = await supabase
+      .from("staff_payments")
+      .insert([input])
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error("Error in addStaffPayment:", error);
+    throw error;
+  }
+}
+
+async function getStaffAttendance(staffId: string) {
+  try {
+    const { data, error } = await supabase
+      .from("staff_attendance")
+      .select("*")
+      .eq("staff_id", staffId)
+      .order("date", { ascending: false });
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error("Error in getStaffAttendance:", error);
+    throw error;
+  }
+}
+
+async function addStaffAttendance(input: any) {
+  try {
+    const { data, error } = await supabase
+      .from("staff_attendance")
+      .insert([input])
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error("Error in addStaffAttendance:", error);
+    throw error;
+  }
+}
+
+async function getStaffDocuments(staffId: string) {
+  try {
+    const { data, error } = await supabase
+      .from("staff_documents")
+      .select("*")
+      .eq("staff_id", staffId)
+      .order("uploaded_at", { ascending: false });
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error("Error in getStaffDocuments:", error);
+    throw error;
+  }
+}
+
+async function addStaffDocument(input: any) {
+  try {
+    const { data, error } = await supabase
+      .from("staff_documents")
+      .insert([input])
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error("Error in addStaffDocument:", error);
+    throw error;
+  }
+}
+
 export const nivasaApi = {
   auth,
   supabase,
@@ -955,5 +1129,16 @@ export const nivasaApi = {
   getElectricityRate,
   updateElectricityRate,
   getDashboardStats,
+  getStaff,
+  getStaffById,
+  addStaff,
+  updateStaff,
+  removeStaff,
+  getStaffPayments,
+  addStaffPayment,
+  getStaffAttendance,
+  addStaffAttendance,
+  getStaffDocuments,
+  addStaffDocument,
 };
 export type NivasaApi = typeof nivasaApi;
