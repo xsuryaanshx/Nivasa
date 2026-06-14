@@ -337,7 +337,6 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
                   <input
                     type="file"
                     accept="image/*,application/pdf"
-                    capture="environment"
                     disabled={submitting}
                     onChange={e => setSelectedFile(e.target.files?.[0] || null)}
                     className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0 disabled:opacity-0 disabled:cursor-not-allowed"

@@ -114,7 +114,6 @@ export function UploadStaffDocumentModal({
                     type="file"
                     required
                     accept="image/*,application/pdf"
-                    capture="environment"
                     onChange={e => setSelectedFile(e.target.files?.[0] || null)}
                     className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
                   />
