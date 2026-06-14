@@ -46,11 +46,17 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
 });
 /* ── Auth ────────────────────────────────────────────────────────────────────── */
 const auth = {
-  signUp: async (email: string, password: string, fullName: string) => {
+  signUp: async (email: string, password: string, fullName: string, selectedPlan: string) => {
     return await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: fullName } },
+      options: {
+        emailRedirectTo: `${window.location.origin}/confirmed`,
+        data: {
+          full_name: fullName,
+          selected_plan: selectedPlan,
+        },
+      },
     });
   },
   signIn: async (email: string, password: string) => {
@@ -925,12 +931,18 @@ async function getDashboardStats() {
   }
 }
 
+<<<<<<< HEAD
 /* ── Staff ───────────────────────────────────────────────────────────────────── */
 async function getStaff(): Promise<any[]> {
+=======
+/* ── Staff Management ──────────────────────────────────────────────────────────── */
+async function getStaff() {
+>>>>>>> e8aa59ef1ab1a5d6b479836595ec285b0df51c79
   try {
     const user_id = await requireAuthUserId();
     const { data, error } = await supabase
       .from("staff")
+<<<<<<< HEAD
       .select("*, staff_allocations(building_id)")
       .eq("user_id", user_id);
     if (error) throw error;
@@ -941,12 +953,20 @@ async function getStaff(): Promise<any[]> {
       phone: s.phone,
       allocatedBuildings: s.staff_allocations ? s.staff_allocations.map((a: any) => a.building_id) : [],
     }));
+=======
+      .select("*, buildings(name)")
+      .eq("user_id", user_id)
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    return data || [];
+>>>>>>> e8aa59ef1ab1a5d6b479836595ec285b0df51c79
   } catch (error) {
     console.error("Error in getStaff:", error);
     throw error;
   }
 }
 
+<<<<<<< HEAD
 async function addStaff(input: { name: string; role: string; phone?: string; allocatedBuildings: string[] }) {
   try {
     const user_id = await requireAuthUserId();
@@ -963,12 +983,46 @@ async function addStaff(input: { name: string; role: string; phone?: string; all
       if (allocError) console.error("Error inserting allocations:", allocError);
     }
     return staff;
+=======
+async function getStaffById(id: string) {
+  try {
+    const user_id = await requireAuthUserId();
+    const { data, error } = await supabase
+      .from("staff")
+      .select("*, buildings(name)")
+      .eq("id", id)
+      .eq("user_id", user_id)
+      .single();
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error("Error in getStaffById:", error);
+    throw error;
+  }
+}
+
+async function addStaff(input: any) {
+  try {
+    const user_id = await requireAuthUserId();
+    const payload = {
+      ...input,
+      user_id,
+    };
+    const { data, error } = await supabase
+      .from("staff")
+      .insert([payload])
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+>>>>>>> e8aa59ef1ab1a5d6b479836595ec285b0df51c79
   } catch (error) {
     console.error("Error in addStaff:", error);
     throw error;
   }
 }
 
+<<<<<<< HEAD
 async function updateStaff(id: string, updates: { name?: string; role?: string; phone?: string; allocatedBuildings?: string[] }) {
   try {
     const user_id = await requireAuthUserId();
@@ -992,6 +1046,17 @@ async function updateStaff(id: string, updates: { name?: string; role?: string; 
         if (allocError) throw allocError;
       }
     }
+=======
+async function updateStaff(id: string, updates: any) {
+  try {
+    const user_id = await requireAuthUserId();
+    const { error } = await supabase
+      .from("staff")
+      .update(updates)
+      .eq("id", id)
+      .eq("user_id", user_id);
+    if (error) throw error;
+>>>>>>> e8aa59ef1ab1a5d6b479836595ec285b0df51c79
   } catch (error) {
     console.error("Error in updateStaff:", error);
     throw error;
@@ -1001,7 +1066,15 @@ async function updateStaff(id: string, updates: { name?: string; role?: string; 
 async function removeStaff(id: string) {
   try {
     const user_id = await requireAuthUserId();
+<<<<<<< HEAD
     const { error } = await supabase.from("staff").delete().eq("id", id).eq("user_id", user_id);
+=======
+    const { error } = await supabase
+      .from("staff")
+      .delete()
+      .eq("id", id)
+      .eq("user_id", user_id);
+>>>>>>> e8aa59ef1ab1a5d6b479836595ec285b0df51c79
     if (error) throw error;
   } catch (error) {
     console.error("Error in removeStaff:", error);
@@ -1009,6 +1082,99 @@ async function removeStaff(id: string) {
   }
 }
 
+<<<<<<< HEAD
+=======
+async function getStaffPayments(staffId: string) {
+  try {
+    const { data, error } = await supabase
+      .from("staff_payments")
+      .select("*")
+      .eq("staff_id", staffId)
+      .order("payment_date", { ascending: false });
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error("Error in getStaffPayments:", error);
+    throw error;
+  }
+}
+
+async function addStaffPayment(input: any) {
+  try {
+    const { data, error } = await supabase
+      .from("staff_payments")
+      .insert([input])
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error("Error in addStaffPayment:", error);
+    throw error;
+  }
+}
+
+async function getStaffAttendance(staffId: string) {
+  try {
+    const { data, error } = await supabase
+      .from("staff_attendance")
+      .select("*")
+      .eq("staff_id", staffId)
+      .order("date", { ascending: false });
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error("Error in getStaffAttendance:", error);
+    throw error;
+  }
+}
+
+async function addStaffAttendance(input: any) {
+  try {
+    const { data, error } = await supabase
+      .from("staff_attendance")
+      .insert([input])
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error("Error in addStaffAttendance:", error);
+    throw error;
+  }
+}
+
+async function getStaffDocuments(staffId: string) {
+  try {
+    const { data, error } = await supabase
+      .from("staff_documents")
+      .select("*")
+      .eq("staff_id", staffId)
+      .order("uploaded_at", { ascending: false });
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error("Error in getStaffDocuments:", error);
+    throw error;
+  }
+}
+
+async function addStaffDocument(input: any) {
+  try {
+    const { data, error } = await supabase
+      .from("staff_documents")
+      .insert([input])
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error("Error in addStaffDocument:", error);
+    throw error;
+  }
+}
+
+>>>>>>> e8aa59ef1ab1a5d6b479836595ec285b0df51c79
 export const nivasaApi = {
   auth,
   supabase,
@@ -1034,8 +1200,21 @@ export const nivasaApi = {
   updateElectricityRate,
   getDashboardStats,
   getStaff,
+<<<<<<< HEAD
   addStaff,
   updateStaff,
   removeStaff,
+=======
+  getStaffById,
+  addStaff,
+  updateStaff,
+  removeStaff,
+  getStaffPayments,
+  addStaffPayment,
+  getStaffAttendance,
+  addStaffAttendance,
+  getStaffDocuments,
+  addStaffDocument,
+>>>>>>> e8aa59ef1ab1a5d6b479836595ec285b0df51c79
 };
 export type NivasaApi = typeof nivasaApi;

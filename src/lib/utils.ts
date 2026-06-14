@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import type { Room, Tenant, PaymentStatus } from "./types";
+import { computeRentFromTiers } from "./rentByOccupancy";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -9,7 +10,8 @@ export function cn(...inputs: ClassValue[]) {
 export function calculateTenantShare(room: Room): number {
   const activeTenants = room.tenants?.filter(t => t.status !== "vacated")?.length || 1;
   const occupants = Math.max(1, activeTenants);
-  return room.rent / occupants;
+  const totalRent = computeRentFromTiers(room.occupancyPrices, room.rent, occupants);
+  return totalRent / occupants;
 }
 
 export function getTenantPaymentStatus(tenant: Tenant, roomPayments: any[]): PaymentStatus {

@@ -25,11 +25,7 @@ export default function BuildingDetails() {
   const [loading, setLoading] = useState(true);
   const [isAddingRoom, setIsAddingRoom] = useState(false);
   const [isEditingBuilding, setIsEditingBuilding] = useState(false);
-  const [newRoom, setNewRoom] = useState({ number: "", rent: "" });
-  const [useOccRent, setUseOccRent] = useState(false);
-  const [occBase, setOccBase] = useState("");
-  const [occPer, setOccPer] = useState("");
-  const [occMax, setOccMax] = useState("4");
+  const [newRoom, setNewRoom] = useState({ number: "", rent: "", rentType: "total" as "total" | "per_person" });
   const [addingRoom, setAddingRoom] = useState(false);
 
   // Upgrade Modal State
@@ -155,44 +151,30 @@ export default function BuildingDetails() {
       return;
     }
 
-    if (useOccRent) {
-      const base = parseFloat(occBase);
-      const per = parseFloat(occPer);
-      const maxM = parseInt(occMax, 10);
-      if (isNaN(base) || base <= 0) return toast.error("Enter a valid base rent for one occupant");
-      if (isNaN(per) || per < 0) return toast.error("Enter a valid amount for each additional occupant (0 is ok)");
-      if (isNaN(maxM) || maxM < 2 || maxM > 24) return toast.error("Max occupants must be between 2 and 24");
-    } else {
-      if (!newRoom.rent || isNaN(parseFloat(newRoom.rent))) return toast.error("Valid rent amount is required");
-    }
+    if (!newRoom.rent || isNaN(parseFloat(newRoom.rent))) return toast.error("Valid rent amount is required");
 
     try {
       setAddingRoom(true);
-      if (useOccRent) {
-        const base = parseFloat(occBase);
-        const per = parseFloat(occPer);
-        const maxM = parseInt(occMax, 10);
+      const rentAmt = parseFloat(newRoom.rent);
+      
+      if (newRoom.rentType === "per_person") {
         await nivasaApi.addRoom({
           building_id: id,
           number: newRoom.number.trim(),
-          rent: base,
-          occupancy_prices: buildTiersFromBaseAndPerAdditional(base, per, maxM),
+          rent: rentAmt,
+          occupancy_prices: buildTiersFromBaseAndPerAdditional(rentAmt, rentAmt, 10), // Generate up to 10 occupants
         });
       } else {
         await nivasaApi.addRoom({
           building_id: id,
           number: newRoom.number.trim(),
-          rent: parseFloat(newRoom.rent),
+          rent: rentAmt,
         });
       }
 
       toast.success("Room added successfully");
       setIsAddingRoom(false);
-      setNewRoom({ number: "", rent: "" });
-      setUseOccRent(false);
-      setOccBase("");
-      setOccPer("");
-      setOccMax("4");
+      setNewRoom({ number: "", rent: "", rentType: "total" });
       fetchData();
       window.dispatchEvent(new CustomEvent("nivasa:refresh"));
     } catch (error) {
@@ -278,20 +260,7 @@ export default function BuildingDetails() {
               exit={{ height: 0, opacity: 0 }}
               className="mb-6 overflow-hidden rounded-2xl border border-brand/20 bg-brand/[0.02] p-6"
             >
-              <label className="mb-4 flex cursor-pointer items-start gap-3 rounded-xl border border-border bg-background/60 p-3">
-                <input
-                  type="checkbox"
-                  checked={useOccRent}
-                  onChange={(e) => setUseOccRent(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 rounded border-border"
-                />
-                <span>
-                  <span className="text-sm font-medium">{t("occupancy_based_rent")}</span>
-                  <span className="mt-0.5 block text-xs text-muted-foreground">{t("occupancy_based_rent_hint")}</span>
-                </span>
-              </label>
-
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <div className="grid gap-4 md:grid-cols-3">
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-muted-foreground">{t("room_number")}</label>
                   <input
@@ -303,55 +272,30 @@ export default function BuildingDetails() {
                   />
                 </div>
 
-                {!useOccRent ? (
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-muted-foreground">{t("monthly_rent")}</label>
-                    <input
-                      type="number" inputMode="decimal" step="any"
-                      placeholder="0.00"
-                      value={newRoom.rent}
-                      onChange={(e) => setNewRoom({ ...newRoom, rent: e.target.value })}
-                      className="w-full rounded-xl border border-border bg-background px-4 py-2 text-sm focus:border-brand focus:ring-1 focus:ring-brand outline-none"
-                    />
-                  </div>
-                ) : (
-                  <>
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-medium text-muted-foreground">{t("rent_one_occupant")}</label>
-                      <input
-                        type="number" inputMode="decimal" step="any"
-                        placeholder="0.00"
-                        value={occBase}
-                        onChange={(e) => setOccBase(e.target.value)}
-                        className="w-full rounded-xl border border-border bg-background px-4 py-2 text-sm focus:border-brand focus:ring-1 focus:ring-brand outline-none"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-medium text-muted-foreground">{t("per_additional_occupant")}</label>
-                      <input
-                        type="number" inputMode="decimal" step="any"
-                        placeholder="0.00"
-                        value={occPer}
-                        onChange={(e) => setOccPer(e.target.value)}
-                        className="w-full rounded-xl border border-border bg-background px-4 py-2 text-sm focus:border-brand focus:ring-1 focus:ring-brand outline-none"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-medium text-muted-foreground">{t("max_occupants_tiers")}</label>
-                      <input
-                        type="number" inputMode="decimal" step="any"
-                        min={2}
-                        max={24}
-                        placeholder="4"
-                        value={occMax}
-                        onChange={(e) => setOccMax(e.target.value)}
-                        className="w-full rounded-xl border border-border bg-background px-4 py-2 text-sm focus:border-brand focus:ring-1 focus:ring-brand outline-none"
-                      />
-                    </div>
-                  </>
-                )}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">Rent Amount</label>
+                  <input
+                    type="number" inputMode="decimal" step="any"
+                    placeholder="0.00"
+                    value={newRoom.rent}
+                    onChange={(e) => setNewRoom({ ...newRoom, rent: e.target.value })}
+                    className="w-full rounded-xl border border-border bg-background px-4 py-2 text-sm focus:border-brand focus:ring-1 focus:ring-brand outline-none"
+                  />
+                </div>
 
-                <div className="flex items-end md:col-span-2 lg:col-span-1">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">Rent Type</label>
+                  <select
+                    value={newRoom.rentType}
+                    onChange={(e) => setNewRoom({ ...newRoom, rentType: e.target.value as "total" | "per_person" })}
+                    className="w-full rounded-xl border border-border bg-background px-4 py-2 text-sm focus:border-brand focus:ring-1 focus:ring-brand outline-none appearance-none"
+                  >
+                    <option value="total">Total Rent</option>
+                    <option value="per_person">Per Person</option>
+                  </select>
+                </div>
+
+                <div className="flex items-end md:col-span-3 lg:col-span-1">
                   <button
                     onClick={handleAddRoom}
                     disabled={addingRoom}
@@ -361,24 +305,6 @@ export default function BuildingDetails() {
                   </button>
                 </div>
               </div>
-
-              {useOccRent && occBase && !isNaN(parseFloat(occBase)) && (
-                <div className="mt-4 rounded-xl border border-dashed border-border bg-background/40 px-4 py-3 text-xs text-muted-foreground">
-                  <span className="font-medium text-foreground">{t("generated_preview")}: </span>
-                  {buildTiersFromBaseAndPerAdditional(
-                    parseFloat(occBase),
-                    parseFloat(occPer) || 0,
-                    Math.min(24, Math.max(2, parseInt(occMax, 10) || 4)),
-                  )
-                    .slice(0, 6)
-                    .map((tier) => (
-                      <span key={tier.members} className="ml-2 inline-block whitespace-nowrap">
-                        {tier.members} {t("people")}: <span className="tnum font-medium text-foreground">{tier.amount}</span>
-                      </span>
-                    ))}
-                  <span className="mt-1 block text-[11px]">{t("configure_later_in_room")}</span>
-                </div>
-              )}
             </motion.div>
           )}
         </AnimatePresence>

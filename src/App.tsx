@@ -23,6 +23,9 @@ import BuildingDetails from "./pages/BuildingDetails.tsx";
 import { SplashScreen } from "./components/SplashScreen.tsx";
 import { ProtectedRoute } from "./components/ProtectedRoute.tsx";
 import SubscriptionPage from "./pages/Subscription.tsx";
+import ConfirmedEmail from "./pages/ConfirmedEmail.tsx";
+import Staff from "./pages/Staff.tsx";
+import StaffDetails from "./pages/StaffDetails.tsx";
 
 const queryClient = new QueryClient();
 
@@ -83,6 +86,7 @@ const App = () => {
                 <Route path="/" element={<Index />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
+                <Route path="/confirmed" element={<ConfirmedEmail />} />
                 <Route path="/app" element={<ProtectedRoute />}>
                   <Route element={<AppLayout />}>
                     <Route index element={<Dashboard />} />
@@ -92,6 +96,8 @@ const App = () => {
                     <Route path="rooms" element={<Rooms />} />
                     <Route path="rooms/:id" element={<RoomDetails />} />
                     <Route path="payments" element={<Payments />} />
+                    <Route path="staff" element={<Staff />} />
+                    <Route path="staff/:id" element={<StaffDetails />} />
                     <Route path="profile" element={<Profile />} />
                     <Route path="expenses" element={<Expenses />} />
                     <Route path="subscription" element={<SubscriptionPage />} />
