@@ -151,14 +151,14 @@ export default function StaffDetails() {
         <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-bold flex items-center gap-2">
-              <Clock className="h-5 w-5 text-blue-500" /> Attendance
+              <Clock className="h-5 w-5 text-blue-500" /> Absences & Leaves
             </h2>
             <MagneticButton size="sm" onClick={() => setIsAttendanceModalOpen(true)}>
               <Plus className="h-4 w-4" /> Mark
             </MagneticButton>
           </div>
           {attendance.length === 0 ? (
-            <div className="text-center py-6 text-sm text-muted-foreground">No attendance recorded.</div>
+            <div className="text-center py-6 text-sm text-muted-foreground">No absences recorded.</div>
           ) : (
             <div className="space-y-4">
               {attendance.map(a => (
