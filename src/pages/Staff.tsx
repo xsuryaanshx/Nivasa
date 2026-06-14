@@ -103,7 +103,7 @@ export default function Staff() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filtered.map((staff, i) => (
-             <StaffCard key={staff.id} staff={staff} index={i} onClick={() => navigate(`/staff/${staff.id}`)} />
+             <StaffCard key={staff.id} staff={staff} index={i} onClick={() => navigate(`/app/staff/${staff.id}`)} />
           ))}
         </div>
       )}

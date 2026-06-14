@@ -53,7 +53,7 @@ export default function StaffDetails() {
     return (
       <div className="p-8 text-center">
         <h2 className="text-xl font-bold mb-2">Staff Not Found</h2>
-        <button onClick={() => navigate("/staff")} className="text-brand hover:underline">
+        <button onClick={() => navigate("/app/staff")} className="text-brand hover:underline">
           Go back to Staff list
         </button>
       </div>
@@ -63,7 +63,7 @@ export default function StaffDetails() {
   return (
     <div className="max-w-4xl mx-auto pb-12">
       <button 
-        onClick={() => navigate("/staff")}
+        onClick={() => navigate("/app/staff")}
         className="mb-6 flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
       >
         <ArrowLeft className="h-4 w-4" /> Back to Staff
