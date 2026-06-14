@@ -123,6 +123,13 @@ const APP_FEATURES = [
     color: "text-emerald-500",
     bg: "bg-emerald-500/10",
   },
+  {
+    icon: Users,
+    label: "Staff",
+    desc: "Manage staff & salary",
+    color: "text-cyan-500",
+    bg: "bg-cyan-500/10",
+  },
 ];
 
 const stagger = {
@@ -340,6 +347,7 @@ const APP_FEATURE_KEY_MAP: Record<string, { label: string; desc: string }> = {
   "Electricity": { label: "app_feat_electricity", desc: "app_feat_electricity_desc" },
   "Analytics": { label: "app_feat_analytics", desc: "app_feat_analytics_desc" },
   "Expenses": { label: "app_feat_expenses", desc: "app_feat_expenses_desc" },
+  "Staff": { label: "app_feat_staff", desc: "app_feat_staff_desc" },
 };
 
 const MENU_KEY_MAP: Record<string, { label: string; desc: string }> = {
@@ -574,6 +582,7 @@ export default function Profile() {
                     else if (feat.label === "Rooms") navigate("/app/rooms");
                     else if (feat.label === "Payments") navigate("/app/payments");
                     else if (feat.label === "Expenses") navigate("/app/expenses");
+                    else if (feat.label === "Staff") navigate("/app/staff");
                     else if (feat.label === "Analytics") navigate("/app");
                     else if (feat.label === "Electricity") window.dispatchEvent(new CustomEvent("nivasa:add-electricity")); 
                     else if (feat.label === "Multi-language") setLanguageOpen(true);
