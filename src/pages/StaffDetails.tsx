@@ -9,6 +9,8 @@ import { PageHeader } from "@/components/PageHeader";
 import { MagneticButton } from "@/components/MagneticButton";
 import { cn } from "@/lib/utils";
 import { MarkAttendanceModal } from "@/components/MarkAttendanceModal";
+import { RecordStaffPaymentModal } from "@/components/RecordStaffPaymentModal";
+import { UploadStaffDocumentModal } from "@/components/UploadStaffDocumentModal";
 
 export default function StaffDetails() {
   const { id } = useParams();
@@ -19,6 +21,8 @@ export default function StaffDetails() {
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAttendanceModalOpen, setIsAttendanceModalOpen] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isDocumentModalOpen, setIsDocumentModalOpen] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -126,7 +130,7 @@ export default function StaffDetails() {
             <h2 className="text-lg font-bold flex items-center gap-2">
               <IndianRupee className="h-5 w-5 text-emerald-500" /> Payment History
             </h2>
-            <MagneticButton size="sm">
+            <MagneticButton size="sm" onClick={() => setIsPaymentModalOpen(true)}>
               <Plus className="h-4 w-4" /> Record
             </MagneticButton>
           </div>
@@ -184,8 +188,8 @@ export default function StaffDetails() {
             <h2 className="text-lg font-bold flex items-center gap-2">
               <FileText className="h-5 w-5 text-purple-500" /> Documents
             </h2>
-            <MagneticButton size="sm">
-              <Plus className="h-4 w-4" /> Upload
+            <MagneticButton size="sm" onClick={() => setIsDocumentModalOpen(true)}>
+              <Plus className="h-4 w-4" /> Add Link
             </MagneticButton>
           </div>
           {documents.length === 0 ? (
@@ -209,6 +213,20 @@ export default function StaffDetails() {
       <MarkAttendanceModal
         open={isAttendanceModalOpen}
         onClose={() => setIsAttendanceModalOpen(false)}
+        staffId={id!}
+        onSuccess={fetchData}
+      />
+      
+      <RecordStaffPaymentModal
+        open={isPaymentModalOpen}
+        onClose={() => setIsPaymentModalOpen(false)}
+        staffId={id!}
+        onSuccess={fetchData}
+      />
+
+      <UploadStaffDocumentModal
+        open={isDocumentModalOpen}
+        onClose={() => setIsDocumentModalOpen(false)}
         staffId={id!}
         onSuccess={fetchData}
       />
