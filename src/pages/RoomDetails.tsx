@@ -259,6 +259,32 @@ export default function RoomDetails() {
     const globalExpenses = getCustomExpenses();
     const activeExpenses = globalExpenses.filter(e => activeExpenseIds.includes(e.id));
     
+    // Calculate previous dues dynamically
+    let previousDues = 0;
+    if (tenant.joined_at) {
+      const joinedDate = new Date(tenant.joined_at);
+      const now = new Date();
+      const startOfCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      
+      // If joined before current month
+      if (joinedDate < startOfCurrentMonth) {
+        const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        
+        // Check if there is any "paid" payment for the previous month
+        const paidPreviousMonth = roomPayments.some(p => {
+          if (p.tenantId !== tenant.id) return false;
+          if (p.status !== "paid") return false;
+          const pDate = new Date(p.date);
+          return pDate.getFullYear() === prevMonth.getFullYear() && pDate.getMonth() === prevMonth.getMonth();
+        });
+
+        if (!paidPreviousMonth) {
+          // Add the base rent as previous dues
+          previousDues = calculateTenantShare(room!, tenant);
+        }
+      }
+    }
+
     let totalAddons = 0;
     const addonLines: string[] = [];
     if (activeExpenses.length > 0) {
@@ -269,7 +295,7 @@ export default function RoomDetails() {
       });
     }
 
-    const finalTotal = totalDue + totalAddons;
+    const finalTotal = totalDue + totalAddons + previousDues;
 
     return [
       `*Nivasa · Invoice — ${monthLabel}*`,
@@ -282,6 +308,7 @@ export default function RoomDetails() {
       `• Rate / unit: ${currency.symbol}${formatNumeric(pricePerUnit, currency, 2)}`,
       `• Electricity total: ${formatMoney(cost, currency, { decimals: 2 })}`,
       ...addonLines,
+      ...(previousDues > 0 ? [` `, `*Previous Dues:* ${formatMoney(previousDues, currency, { decimals: 0 })} (Unpaid from last month)`] : []),
       ``,
       `*Total due: ${formatMoney(finalTotal, currency, { decimals: 2 })}*`,
       ``,
