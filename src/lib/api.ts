@@ -44,7 +44,7 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     detectSessionInUrl: true,
   },
 });
-/* ── Auth ────────────────────────────────────────────────────────────────────── */
+/* â”€â”€ Auth â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const auth = {
   signUp: async (email: string, password: string, fullName: string, selectedPlan: string) => {
     return await supabase.auth.signUp({
@@ -79,9 +79,9 @@ async function requireAuthUserId(): Promise<string> {
   const { data: { session } } = await supabase.auth.getSession();
   if (session?.user?.id) return session.user.id;
   
-  throw new Error("Sign in is required. Your session may have expired — sign in again.");
+  throw new Error("Sign in is required. Your session may have expired â€” sign in again.");
 }
-/* ── Buildings ───────────────────────────────────────────────────────────────── */
+/* â”€â”€ Buildings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 async function getBuildings(): Promise<
   (any & { occupancyRate: number; rooms: number })[]
 > {
@@ -214,7 +214,7 @@ async function updateBuilding(
   updates: { name?: string; address?: string; total_rooms?: number },
 ) {
   try {
-    /* Whitelist allowed fields — never pass raw object to prevent user_id overwrite */
+    /* Whitelist allowed fields â€” never pass raw object to prevent user_id overwrite */
     const payload: Record<string, unknown> = {};
     if (updates.name !== undefined) payload.name = updates.name;
     if (updates.address !== undefined) payload.address = updates.address;
@@ -238,7 +238,7 @@ async function updateBuilding(
 }
 async function deleteRoom(id: string) {
   try {
-    /* Supabase mode — enforce ownership */
+    /* Supabase mode â€” enforce ownership */
     const user_id = await requireAuthUserId();
     await supabase
       .from("payments")
@@ -352,7 +352,7 @@ async function getPropertyDetails(buildingId: string | undefined) {
     throw error;
   }
 }
-/* ── Rooms (Units) ───────────────────────────────────────────────────────────── */
+/* â”€â”€ Rooms (Units) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 function mapTenantFromRow(t: any): any {
   return {
     id: t.id,
@@ -638,7 +638,7 @@ async function addUnit(input: any) {
     occupancy_prices: input.occupancy_prices,
   });
 }
-/* ── Tenants ─────────────────────────────────────────────────────────────────── */
+/* â”€â”€ Tenants â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 async function addTenant(input: {
   room_id: string;
   name: string;
@@ -651,7 +651,7 @@ async function addTenant(input: {
   depositMethod?: string;
 }) {
   try {
-    /* 1. Fetch building_id — also verify room belongs to this user */
+    /* 1. Fetch building_id â€” also verify room belongs to this user */
     const user_id = await requireAuthUserId();
     const { data: room, error: roomError } = await supabase
       .from("units")
@@ -738,7 +738,7 @@ async function removeTenant(roomId: string, tenantId: string) {
     throw error;
   }
 }
-/* ── Payments ────────────────────────────────────────────────────────────────── */
+/* â”€â”€ Payments â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 async function addPayment(input: any) {
   try {
     const user_id = await requireAuthUserId();
@@ -828,7 +828,7 @@ async function getRecentPayments(limit = 10) {
     return [];
   }
 }
-/* ── Electricity ─────────────────────────────────────────────────────────────── */
+/* â”€â”€ Electricity â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 async function saveElectricityReading(input: {
   room_id: string;
   month: string;
@@ -882,7 +882,7 @@ async function updateElectricityRate(rate: number) {
     throw error;
   }
 }
-/* ── Dashboard stats ─────────────────────────────────────────────────────────── */
+/* â”€â”€ Dashboard stats â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 async function getDashboardStats() {
   try {
     const user_id = await requireAuthUserId();
@@ -931,18 +931,12 @@ async function getDashboardStats() {
   }
 }
 
-<<<<<<< HEAD
-/* ── Staff ───────────────────────────────────────────────────────────────────── */
+/* â”€â”€ Staff â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 async function getStaff(): Promise<any[]> {
-=======
-/* ── Staff Management ──────────────────────────────────────────────────────────── */
-async function getStaff() {
->>>>>>> e8aa59ef1ab1a5d6b479836595ec285b0df51c79
   try {
     const user_id = await requireAuthUserId();
     const { data, error } = await supabase
       .from("staff")
-<<<<<<< HEAD
       .select("*, staff_allocations(building_id)")
       .eq("user_id", user_id);
     if (error) throw error;
@@ -953,37 +947,12 @@ async function getStaff() {
       phone: s.phone,
       allocatedBuildings: s.staff_allocations ? s.staff_allocations.map((a: any) => a.building_id) : [],
     }));
-=======
-      .select("*, buildings(name)")
-      .eq("user_id", user_id)
-      .order("created_at", { ascending: false });
-    if (error) throw error;
-    return data || [];
->>>>>>> e8aa59ef1ab1a5d6b479836595ec285b0df51c79
   } catch (error) {
     console.error("Error in getStaff:", error);
     throw error;
   }
 }
 
-<<<<<<< HEAD
-async function addStaff(input: { name: string; role: string; phone?: string; allocatedBuildings: string[] }) {
-  try {
-    const user_id = await requireAuthUserId();
-    const { data: staff, error: staffError } = await supabase
-      .from("staff")
-      .insert([{ name: input.name, role: input.role, phone: input.phone, user_id }])
-      .select()
-      .single();
-    if (staffError) throw staffError;
-
-    if (input.allocatedBuildings && input.allocatedBuildings.length > 0) {
-      const allocations = input.allocatedBuildings.map(bid => ({ staff_id: staff.id, building_id: bid }));
-      const { error: allocError } = await supabase.from("staff_allocations").insert(allocations);
-      if (allocError) console.error("Error inserting allocations:", allocError);
-    }
-    return staff;
-=======
 async function getStaffById(id: string) {
   try {
     const user_id = await requireAuthUserId();
@@ -1001,28 +970,28 @@ async function getStaffById(id: string) {
   }
 }
 
-async function addStaff(input: any) {
+async function addStaff(input: { name: string; role: string; phone?: string; allocatedBuildings: string[] }) {
   try {
     const user_id = await requireAuthUserId();
-    const payload = {
-      ...input,
-      user_id,
-    };
-    const { data, error } = await supabase
+    const { data: staff, error: staffError } = await supabase
       .from("staff")
-      .insert([payload])
+      .insert([{ name: input.name, role: input.role, phone: input.phone, user_id }])
       .select()
       .single();
-    if (error) throw error;
-    return data;
->>>>>>> e8aa59ef1ab1a5d6b479836595ec285b0df51c79
+    if (staffError) throw staffError;
+
+    if (input.allocatedBuildings && input.allocatedBuildings.length > 0) {
+      const allocations = input.allocatedBuildings.map(bid => ({ staff_id: staff.id, building_id: bid }));
+      const { error: allocError } = await supabase.from("staff_allocations").insert(allocations);
+      if (allocError) console.error("Error inserting allocations:", allocError);
+    }
+    return staff;
   } catch (error) {
     console.error("Error in addStaff:", error);
     throw error;
   }
 }
 
-<<<<<<< HEAD
 async function updateStaff(id: string, updates: { name?: string; role?: string; phone?: string; allocatedBuildings?: string[] }) {
   try {
     const user_id = await requireAuthUserId();
@@ -1046,17 +1015,6 @@ async function updateStaff(id: string, updates: { name?: string; role?: string; 
         if (allocError) throw allocError;
       }
     }
-=======
-async function updateStaff(id: string, updates: any) {
-  try {
-    const user_id = await requireAuthUserId();
-    const { error } = await supabase
-      .from("staff")
-      .update(updates)
-      .eq("id", id)
-      .eq("user_id", user_id);
-    if (error) throw error;
->>>>>>> e8aa59ef1ab1a5d6b479836595ec285b0df51c79
   } catch (error) {
     console.error("Error in updateStaff:", error);
     throw error;
@@ -1066,15 +1024,7 @@ async function updateStaff(id: string, updates: any) {
 async function removeStaff(id: string) {
   try {
     const user_id = await requireAuthUserId();
-<<<<<<< HEAD
     const { error } = await supabase.from("staff").delete().eq("id", id).eq("user_id", user_id);
-=======
-    const { error } = await supabase
-      .from("staff")
-      .delete()
-      .eq("id", id)
-      .eq("user_id", user_id);
->>>>>>> e8aa59ef1ab1a5d6b479836595ec285b0df51c79
     if (error) throw error;
   } catch (error) {
     console.error("Error in removeStaff:", error);
@@ -1082,8 +1032,6 @@ async function removeStaff(id: string) {
   }
 }
 
-<<<<<<< HEAD
-=======
 async function getStaffPayments(staffId: string) {
   try {
     const { data, error } = await supabase
@@ -1174,7 +1122,6 @@ async function addStaffDocument(input: any) {
   }
 }
 
->>>>>>> e8aa59ef1ab1a5d6b479836595ec285b0df51c79
 export const nivasaApi = {
   auth,
   supabase,
@@ -1200,11 +1147,6 @@ export const nivasaApi = {
   updateElectricityRate,
   getDashboardStats,
   getStaff,
-<<<<<<< HEAD
-  addStaff,
-  updateStaff,
-  removeStaff,
-=======
   getStaffById,
   addStaff,
   updateStaff,
@@ -1215,6 +1157,5 @@ export const nivasaApi = {
   addStaffAttendance,
   getStaffDocuments,
   addStaffDocument,
->>>>>>> e8aa59ef1ab1a5d6b479836595ec285b0df51c79
 };
 export type NivasaApi = typeof nivasaApi;
