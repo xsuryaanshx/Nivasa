@@ -23,12 +23,12 @@ export default function ConfirmedEmail() {
           Email Confirmed!
         </h1>
         <p className="mb-8 text-sm text-muted-foreground leading-relaxed">
-          Your email address has been successfully verified. Please log in to access your workspace.
+          Your email address has been successfully verified. You are now logged in and ready to manage your workspace.
         </p>
 
-        <Link to="/login" className="block w-full">
+        <Link to="/app" className="block w-full">
           <MagneticButton className="w-full">
-            Go to Login <ArrowRight className="ml-2 h-4 w-4" />
+            Go to Dashboard <ArrowRight className="ml-2 h-4 w-4" />
           </MagneticButton>
         </Link>
       </motion.div>
