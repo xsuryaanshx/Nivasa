@@ -17,7 +17,7 @@ import { ElectricityBillingModal } from "@/components/ElectricityBillingModal";
 import { TenantExpensesModal } from "@/components/TenantExpensesModal";
 import { Money } from "@/components/Money";
 import { type Room } from "@/lib/types";
-import { normalizeOccupancyTiers, type OccupancyPriceTier } from "@/lib/rentByOccupancy";
+import { buildTiersFromBaseAndPerAdditional, normalizeOccupancyTiers, type OccupancyPriceTier } from "@/lib/rentByOccupancy";
 import { subscribeTenants } from "@/lib/tenantStore";
 import { getTenantExpenses, getCustomExpenses } from "@/lib/expensesStore";
 import { useCurrency, formatMoney, formatNumeric } from "@/lib/currency";
@@ -46,9 +46,8 @@ export default function RoomDetails() {
   const [electricityOpen, setElectricityOpen] = useState(false);
   const [expensesTenant, setExpensesTenant] = useState<any>(null);
   const [savingElectricity, setSavingElectricity] = useState(false);
-  const [tierRows, setTierRows] = useState<{ members: string; amount: string }[]>([]);
-  const [pricingSaving, setPricingSaving] = useState(false);
-  const [flatIfClear, setFlatIfClear] = useState("");
+  const [rentAmount, setRentAmount] = useState("");
+  const [rentType, setRentType] = useState<"total" | "per_person">("total");
   const [isEditingName, setIsEditingName] = useState(false);
   const [editNameValue, setEditNameValue] = useState("");
   const [roomPayments, setRoomPayments] = useState<any[]>([]);
@@ -67,12 +66,14 @@ export default function RoomDetails() {
         setEndReading(data.currReading);
         setPricePerUnit(data.ratePerUnit);
         const tiers = data.occupancyPrices?.length ? data.occupancyPrices : [];
-        setTierRows(
-          tiers.length
-            ? tiers.map((t: OccupancyPriceTier) => ({ members: String(t.members), amount: String(t.amount) }))
-            : [],
-        );
-        setFlatIfClear(String(data.rent));
+        if (tiers.length > 0) {
+          // Check if it's a simple per-person pattern
+          setRentType("per_person");
+          setRentAmount(String(tiers[0].amount));
+        } else {
+          setRentType("total");
+          setRentAmount(String(data.rent));
+        }
       }
       
       const paymentsData = await nivasaApi.getRecentPayments(100);
@@ -168,59 +169,33 @@ export default function RoomDetails() {
     }
   };
 
-  const saveOccupancyPricing = async () => {
-    const parsed: OccupancyPriceTier[] = tierRows
-      .map((r) => ({
-        members: parseInt(r.members, 10),
-        amount: parseFloat(r.amount),
-      }))
-      .filter((t) => t.members >= 1 && Number.isFinite(t.amount) && t.amount >= 0);
-    const normalized = normalizeOccupancyTiers(parsed);
-    if (normalized.length === 0) {
-      const flat = parseFloat(flatIfClear);
-      if (!Number.isFinite(flat) || flat < 0) {
-        toast.error("Enter a valid flat monthly rent, or add at least one tier.");
-        return;
-      }
-    }
-
-    try {
-      setPricingSaving(true);
-      if (!nivasaApi || !room) throw new Error("nivasaApi not loaded");
-      if (normalized.length === 0) {
-        const flat = parseFloat(flatIfClear);
-        await nivasaApi.updateRoom(room.id, { occupancy_prices: null, rent_amount: flat });
-        setTierRows([]);
-        toast.success("Room now uses a single monthly rent.");
-      } else {
-        await nivasaApi.updateRoom(room.id, { occupancy_prices: normalized });
-        toast.success("Occupancy pricing saved");
-      }
-      fetchData();
-      window.dispatchEvent(new CustomEvent("nivasa:refresh"));
-    } catch (err: any) {
-      toast.error(err.message || "Failed to save pricing");
-    } finally {
-      setPricingSaving(false);
-    }
-  };
-
-  const clearOccupancyPricingToFlat = async () => {
+  const handleSaveRentConfig = async () => {
     if (!room) return;
-    const flat = parseFloat(flatIfClear);
-    if (!Number.isFinite(flat) || flat < 0) {
-      toast.error("Enter a valid flat monthly rent.");
+    const amt = parseFloat(rentAmount);
+    if (!Number.isFinite(amt) || amt < 0) {
+      toast.error("Enter a valid rent amount.");
       return;
     }
+    
     try {
       setPricingSaving(true);
-            await nivasaApi.updateRoom(room.id, { occupancy_prices: null, rent_amount: flat });
-      setTierRows([]);
-      toast.success("Room now uses a single monthly rent.");
+      if (rentType === "per_person") {
+        await nivasaApi.updateRoom(room.id, { 
+          rent_amount: amt,
+          occupancy_prices: buildTiersFromBaseAndPerAdditional(amt, amt, 10) 
+        });
+        toast.success("Rent configured per person");
+      } else {
+        await nivasaApi.updateRoom(room.id, { 
+          rent_amount: amt, 
+          occupancy_prices: null 
+        });
+        toast.success("Total monthly rent saved");
+      }
       fetchData();
       window.dispatchEvent(new CustomEvent("nivasa:refresh"));
     } catch (err: any) {
-      toast.error(err.message || "Failed to update");
+      toast.error(err.message || "Failed to save rent configuration");
     } finally {
       setPricingSaving(false);
     }
@@ -555,107 +530,47 @@ export default function RoomDetails() {
       </div>
 
       <div className="mt-4 rounded-2xl border border-border bg-card p-5 shadow-soft">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <div className="text-sm font-semibold tracking-tight">Rent by occupancy</div>
-            <div className="mt-0.5 text-xs text-muted-foreground">
-              Set total monthly rent for 1 person, 2 people, and so on. The active tenant&apos;s billing occupancy
-              selects which row applies.
-            </div>
-          </div>
-          {tierRows.length === 0 && (
-            <button
-              type="button"
-              onClick={() => setTierRows([{ members: "1", amount: String(room.rent) }])}
-              className="shrink-0 rounded-xl border border-border bg-secondary/60 px-3 py-1.5 text-xs font-medium hover:bg-secondary"
-            >
-              Configure tiers
-            </button>
-          )}
+        <div className="text-sm font-semibold tracking-tight">Rent Configuration</div>
+        <div className="mt-0.5 text-xs text-muted-foreground mb-4">
+          Set the rent amount and choose whether it applies to the entire room or per person.
         </div>
 
-        {tierRows.length > 0 && (
-          <div className="mt-4 space-y-3">
-            <div className="grid grid-cols-[1fr_1fr_auto] gap-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              <span>Occupants</span>
-              <span>Total rent / month</span>
-              <span className="w-8" />
-            </div>
-            {tierRows.map((row, idx) => (
-              <div key={idx} className="grid grid-cols-[1fr_1fr_auto] gap-2">
-                <input
-                  type="number" inputMode="decimal" step="any"
-                  min={1}
-                  value={row.members}
-                  onChange={(e) => {
-                    const next = [...tierRows];
-                    next[idx] = { ...next[idx], members: e.target.value };
-                    setTierRows(next);
-                  }}
-                  className="h-10 w-full min-w-0 rounded-xl border border-border bg-card px-3 text-sm tnum outline-none focus:border-brand"
-                />
-                <input
-                  type="number" inputMode="decimal"
-                  min={0}
-                  step={100}
-                  value={row.amount}
-                  onChange={(e) => {
-                    const next = [...tierRows];
-                    next[idx] = { ...next[idx], amount: e.target.value };
-                    setTierRows(next);
-                  }}
-                  className="h-10 w-full min-w-0 rounded-xl border border-border bg-card px-3 text-sm tnum outline-none focus:border-brand"
-                />
-                <button
-                  type="button"
-                  onClick={() => setTierRows(tierRows.filter((_, i) => i !== idx))}
-                  className="h-10 rounded-xl border border-border text-xs text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                >
-                  ×
-                </button>
-              </div>
-            ))}
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setTierRows([...tierRows, { members: String(tierRows.length + 1), amount: "" }])}
-                className="inline-flex items-center gap-1 rounded-xl border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-secondary"
-              >
-                <Plus className="h-3.5 w-3.5" /> Add tier
-              </button>
-              <button
-                type="button"
-                onClick={saveOccupancyPricing}
-                disabled={pricingSaving}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-brand px-3.5 py-2 text-xs font-semibold text-white shadow-soft hover:opacity-90 disabled:opacity-50"
-              >
-                <Save className="h-3.5 w-3.5" />
-                {pricingSaving ? "Saving…" : "Save pricing"}
-              </button>
-            </div>
-            <div className="flex flex-wrap items-end gap-3 rounded-xl border border-dashed border-border bg-secondary/30 p-3">
-              <label className="flex min-w-[180px] flex-1 flex-col gap-1">
-                <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                  Flat rent if removing all tiers
-                </span>
-                <input
-                  type="number" inputMode="decimal" step="any"
-                  value={flatIfClear}
-                  onChange={(e) => setFlatIfClear(e.target.value)}
-                  className="h-9 w-full min-w-0 rounded-lg border border-border bg-card px-2 text-sm tnum outline-none focus:border-brand"
-                />
-              </label>
-              <button
-                type="button"
-                onClick={() => void clearOccupancyPricingToFlat()}
-                disabled={pricingSaving}
-                className="text-xs font-medium text-muted-foreground underline decoration-dotted underline-offset-4 hover:text-foreground disabled:opacity-50"
-              >
-                Remove occupancy pricing (use flat rent)
-              </button>
-            </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 items-end">
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">Rent Amount</label>
+            <input
+              type="number" inputMode="decimal" step="any"
+              placeholder="0.00"
+              value={rentAmount}
+              onChange={(e) => setRentAmount(e.target.value)}
+              className="w-full rounded-xl border border-border bg-background px-4 py-2 text-sm focus:border-brand focus:ring-1 focus:ring-brand outline-none"
+            />
           </div>
-        )}
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">Rent Type</label>
+            <select
+              value={rentType}
+              onChange={(e) => setRentType(e.target.value as "total" | "per_person")}
+              className="w-full rounded-xl border border-border bg-background px-4 py-2 text-sm focus:border-brand focus:ring-1 focus:ring-brand outline-none appearance-none"
+            >
+              <option value="total">Total Rent</option>
+              <option value="per_person">Per Person</option>
+            </select>
+          </div>
+
+          <div>
+            <button
+              type="button"
+              onClick={handleSaveRentConfig}
+              disabled={pricingSaving}
+              className="h-[38px] w-full inline-flex items-center justify-center gap-1.5 rounded-xl bg-brand px-3.5 py-2 text-xs font-semibold text-white shadow-soft hover:opacity-90 disabled:opacity-50"
+            >
+              <Save className="h-3.5 w-3.5" />
+              {pricingSaving ? "Saving…" : "Save configuration"}
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Quick stats row */}
