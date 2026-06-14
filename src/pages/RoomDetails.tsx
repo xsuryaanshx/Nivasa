@@ -48,6 +48,7 @@ export default function RoomDetails() {
   const [savingElectricity, setSavingElectricity] = useState(false);
   const [rentAmount, setRentAmount] = useState("");
   const [rentType, setRentType] = useState<"total" | "per_person">("total");
+  const [pricingSaving, setPricingSaving] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editNameValue, setEditNameValue] = useState("");
   const [roomPayments, setRoomPayments] = useState<any[]>([]);
