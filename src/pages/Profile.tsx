@@ -26,6 +26,7 @@ import {
   Palette,
   Banknote,
   Users,
+  Calendar,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
