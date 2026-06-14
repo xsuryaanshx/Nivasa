@@ -125,6 +125,12 @@ export function Topbar({ collapsed, onToggle, onOpenPalette, onOpenMobileDrawer 
                 <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-brand" />
               )}
             </button>
+            <button
+              onClick={onOpenMobileDrawer}
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-foreground text-[10px] font-semibold text-background"
+            >
+              {user?.initials || "U"}
+            </button>
           </div>
         </div>
       </header>
