@@ -8,6 +8,7 @@ import {
 import { PageHeader } from "@/components/PageHeader";
 import { MagneticButton } from "@/components/MagneticButton";
 import { cn } from "@/lib/utils";
+import { MarkAttendanceModal } from "@/components/MarkAttendanceModal";
 
 export default function StaffDetails() {
   const { id } = useParams();
@@ -17,6 +18,7 @@ export default function StaffDetails() {
   const [attendance, setAttendance] = useState<any[]>([]);
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isAttendanceModalOpen, setIsAttendanceModalOpen] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -151,7 +153,7 @@ export default function StaffDetails() {
             <h2 className="text-lg font-bold flex items-center gap-2">
               <Clock className="h-5 w-5 text-blue-500" /> Attendance
             </h2>
-            <MagneticButton size="sm">
+            <MagneticButton size="sm" onClick={() => setIsAttendanceModalOpen(true)}>
               <Plus className="h-4 w-4" /> Mark
             </MagneticButton>
           </div>
@@ -203,6 +205,13 @@ export default function StaffDetails() {
           )}
         </div>
       </div>
+
+      <MarkAttendanceModal
+        open={isAttendanceModalOpen}
+        onClose={() => setIsAttendanceModalOpen(false)}
+        staffId={id!}
+        onSuccess={fetchData}
+      />
     </div>
   );
 }
