@@ -189,7 +189,7 @@ export default function StaffDetails() {
               <FileText className="h-5 w-5 text-purple-500" /> Documents
             </h2>
             <MagneticButton size="sm" onClick={() => setIsDocumentModalOpen(true)}>
-              <Plus className="h-4 w-4" /> Add Link
+              <Plus className="h-4 w-4" /> Upload
             </MagneticButton>
           </div>
           {documents.length === 0 ? (

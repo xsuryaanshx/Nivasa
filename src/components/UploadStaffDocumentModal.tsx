@@ -18,19 +18,48 @@ export function UploadStaffDocumentModal({
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     document_type: "",
-    document_url: ""
   });
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   if (!open) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedFile) {
+      toast.error("Please select a file to upload");
+      return;
+    }
+    
+    // 5MB file size limit (5 * 1024 * 1024 bytes)
+    if (selectedFile.size > 5 * 1024 * 1024) {
+      toast.error("File is too large. Please upload a file smaller than 5MB.");
+      return;
+    }
+    
     try {
       setLoading(true);
+
+      // Upload file to Supabase storage
+      const fileExt = selectedFile.name.split('.').pop();
+      const fileName = `${staffId}_${Math.random()}.${fileExt}`;
+      const filePath = `staff/${fileName}`;
+
+      const { data: uploadData, error: uploadError } = await nivasaApi.supabase.storage
+        .from('documents')
+        .upload(filePath, selectedFile);
+
+      if (uploadError) {
+        throw new Error("Storage upload failed. Please ensure you have created a 'documents' bucket in Supabase and made it public. Details: " + uploadError.message);
+      }
+
+      const { data: { publicUrl } } = nivasaApi.supabase.storage
+        .from('documents')
+        .getPublicUrl(filePath);
+
       await nivasaApi.addStaffDocument({
         staff_id: staffId,
         document_type: formData.document_type,
-        document_url: formData.document_url
+        document_url: publicUrl
       });
       toast.success("Document added successfully");
       onSuccess();
@@ -79,21 +108,28 @@ export function UploadStaffDocumentModal({
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Document URL</label>
-                <div className="relative">
-                  <LinkIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <label className="text-sm font-medium">Upload File</label>
+                <div className="relative flex items-center justify-center rounded-xl border border-dashed border-border bg-background p-6 transition-colors hover:bg-secondary/50">
                   <input
-                    type="url"
+                    type="file"
                     required
-                    value={formData.document_url}
-                    onChange={e => setFormData(prev => ({ ...prev, document_url: e.target.value }))}
-                    className="w-full rounded-xl border border-border bg-background py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-brand"
-                    placeholder="https://drive.google.com/..."
+                    accept="image/*,application/pdf"
+                    capture="environment"
+                    onChange={e => setSelectedFile(e.target.files?.[0] || null)}
+                    className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
                   />
+                  <div className="flex flex-col items-center gap-2 text-center">
+                    <FileText className="h-8 w-8 text-muted-foreground" />
+                    {selectedFile ? (
+                      <p className="text-sm font-medium text-brand">{selectedFile.name}</p>
+                    ) : (
+                      <>
+                        <p className="text-sm font-medium">Click to browse or take a photo</p>
+                        <p className="text-xs text-muted-foreground">Supports PDF and Images</p>
+                      </>
+                    )}
+                  </div>
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Paste a link to Google Drive, Dropbox, or any other online storage.
-                </p>
               </div>
             </div>
 
