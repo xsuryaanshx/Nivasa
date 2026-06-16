@@ -53,9 +53,10 @@ interface CSVTenantRow {
 
 // Pure TypeScript CSV parser
 function parseCSV(text: string): Record<string, string>[] {
-  const lines: string[] = [];
-  let currentLine = "";
+  const results: string[][] = [];
+  let currentVal = "";
   let inQuotes = false;
+  let currentRow: string[] = [];
   
   for (let i = 0; i < text.length; i++) {
     const char = text[i];
@@ -63,78 +64,66 @@ function parseCSV(text: string): Record<string, string>[] {
     
     if (char === '"') {
       if (inQuotes && nextChar === '"') {
-        currentLine += '"';
-        i++; // skip next quote
+        currentVal += '"';
+        i++; // skip next double quote
       } else {
         inQuotes = !inQuotes;
       }
+    } else if (char === ',') {
+      if (inQuotes) {
+        currentVal += char;
+      } else {
+        currentRow.push(currentVal);
+        currentVal = "";
+      }
     } else if (char === '\n' || char === '\r') {
       if (inQuotes) {
-        currentLine += char;
+        currentVal += char;
       } else {
         if (char === '\r' && nextChar === '\n') {
           i++; // skip \n
         }
-        lines.push(currentLine);
-        currentLine = "";
+        currentRow.push(currentVal);
+        currentVal = "";
+        
+        if (currentRow.length > 0 && (currentRow.length > 1 || currentRow[0].trim() !== "")) {
+          results.push(currentRow);
+        }
+        currentRow = [];
       }
     } else {
-      currentLine += char;
+      currentVal += char;
     }
   }
-  if (currentLine) {
-    lines.push(currentLine);
+  
+  // Push the final value and row if there's any left
+  if (currentVal || currentRow.length > 0) {
+    currentRow.push(currentVal);
+    if (currentRow.length > 0 && (currentRow.length > 1 || currentRow[0].trim() !== "")) {
+      results.push(currentRow);
+    }
   }
   
-  if (lines.length < 2) return [];
+  if (results.length < 2) return [];
   
-  const headers = splitCSVLine(lines[0]).map(h => h.trim().toLowerCase().replace(/[\s_]+/g, ''));
-  const results: Record<string, string>[] = [];
+  const headers = results[0].map(h => h.trim().toLowerCase().replace(/[\s_]+/g, ''));
+  const mappedRows: Record<string, string>[] = [];
   
-  for (let i = 1; i < lines.length; i++) {
-    if (!lines[i].trim()) continue;
-    const values = splitCSVLine(lines[i]);
+  for (let i = 1; i < results.length; i++) {
+    const values = results[i];
+    // Skip completely empty lines
+    if (values.length === 1 && values[0].trim() === "") continue;
+    
     const row: Record<string, string> = {};
     headers.forEach((header, index) => {
       if (header) {
         row[header] = (values[index] || "").trim();
       }
     });
-    results.push(row);
+    mappedRows.push(row);
   }
   
-  return results;
-}
-
-function splitCSVLine(line: string): string[] {
-  const result: string[] = [];
-  let current = "";
-  let inQuotes = false;
-  
-  for (let i = 0; i < line.length; i++) {
-    const char = line[i];
-    const nextChar = line[i + 1];
-    
-    if (char === '"') {
-      if (inQuotes && nextChar === '"') {
-        current += '"';
-        i++;
-      } else {
-        inQuotes = !inQuotes;
-      }
-    } else if (char === ',') {
-      if (inQuotes) {
-        current += char;
-      } else {
-        result.push(current);
-        current = "";
-      }
-    } else {
-      current += char;
-    }
-  }
-  result.push(current);
-  return result;
+  return mappedRows;
 }
 
 function normalizeRow(row: Record<string, string>): CSVTenantRow {
