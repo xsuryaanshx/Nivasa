@@ -11,7 +11,7 @@
     "logout": "Logout"
   },
   "common": {
-    "search": "Search anything...",
+    "search": "Search...",
     "add_building": "Add Building",
     "add_tenant": "Add Tenant",
     "occupied": "Occupied",

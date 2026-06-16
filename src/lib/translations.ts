@@ -9,7 +9,7 @@ export const translations = {
     payments: "Payments",
     electricity: "Electric",
     home: "Home",
-    search: "Search anything...",
+    search: "Search...",
     logout: "Logout",
     settings: "Settings",
     theme: "Theme",
@@ -154,6 +154,8 @@ export const translations = {
     sign_out: "Sign Out",
     loading: "Loading...",
     version_footer: "Nivasa v1.0 · Built with ♥",
+    rent_date: "Billing Cycle",
+    rent_date_desc: "Fixed monthly rent collection date",
   },
   hi: {
     dashboard: "डैशबोर्ड",
@@ -162,7 +164,7 @@ export const translations = {
     payments: "भुगतान",
     electricity: "बिजली",
     home: "होम",
-    search: "कुछ भी खोजें...",
+    search: "खोजें...",
     logout: "लॉगआउट",
     settings: "सेटिंग्स",
     theme: "थीम",
@@ -307,5 +309,7 @@ export const translations = {
     sign_out: "साइन आउट",
     loading: "लोड हो रहा है...",
     version_footer: "निवास v1.0 · ♥ के साथ निर्मित",
+    rent_date: "बिलिंग चक्र",
+    rent_date_desc: "निश्चित मासिक किराया संग्रह तिथि",
   }
 };

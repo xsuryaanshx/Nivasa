@@ -11,7 +11,7 @@
     "logout": "लॉगआउट"
   },
   "common": {
-    "search": "कुछ भी खोजें...",
+    "search": "खोजें...",
     "add_building": "इमारत जोड़ें",
     "add_tenant": "किरायेदार जोड़ें",
     "occupied": "भरा",

@@ -381,7 +381,7 @@ function RentSettingsModal({ open, onClose }: { open: boolean; onClose: () => vo
               className="w-full max-w-sm overflow-hidden rounded-3xl border border-border bg-card shadow-2xl"
             >
               <div className="flex items-center justify-between border-b border-border/50 px-5 py-4">
-                <h2 className="text-sm font-semibold tracking-tight">Rent Settings</h2>
+                <h2 className="text-sm font-semibold tracking-tight">Billing Cycle</h2>
                 <button
                   onClick={onClose}
                   className="rounded-full p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground"
@@ -392,8 +392,8 @@ function RentSettingsModal({ open, onClose }: { open: boolean; onClose: () => vo
 
               <div className="p-5 space-y-4">
                 <div>
-                  <label className="text-xs font-medium text-muted-foreground">Fixed Rent Collection Date (Optional)</label>
-                  <p className="text-xs text-muted-foreground mb-2">If set, this date will be appended to generated invoices.</p>
+                  <label className="text-xs font-medium text-muted-foreground">Billing Day of Month (Optional)</label>
+                  <p className="text-xs text-muted-foreground mb-2">Specify a fixed day of the month for rent collection. This will be automatically added to invoices.</p>
                   <input
                     type="number"
                     min="1"
