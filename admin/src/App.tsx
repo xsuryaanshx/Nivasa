@@ -21,7 +21,8 @@ import {
   Home,
   UserCheck,
   CreditCard,
-  ChevronsUpDown
+  ChevronsUpDown,
+  Upload
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from "recharts";
@@ -33,6 +34,161 @@ const PLANS = [
   { id: "b2c3d4e5-f6a7-8b9c-0d1e-2f3a4b5c6d7e", name: "gold", displayName: "Gold", price: 899 },
   { id: "c3d4e5f6-a7b8-9c0d-1e2f-3a4b5c6d7e8f", name: "platinum", displayName: "Platinum", price: 1199 }
 ];
+
+interface CSVTenantRow {
+  building_name: string;
+  building_address: string;
+  room_number: string;
+  rent_amount: number;
+  tenant_name: string;
+  tenant_phone: string;
+  whatsapp_number: string;
+  aadhar: string;
+  joined_at: string;
+  occupancy_count: number;
+  deposit_amount: number;
+  deposit_method: string;
+  errors?: string[];
+}
+
+// Pure TypeScript CSV parser
+function parseCSV(text: string): Record<string, string>[] {
+  const lines: string[] = [];
+  let currentLine = "";
+  let inQuotes = false;
+  
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    const nextChar = text[i + 1];
+    
+    if (char === '"') {
+      if (inQuotes && nextChar === '"') {
+        currentLine += '"';
+        i++; // skip next quote
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === '\n' || char === '\r') {
+      if (inQuotes) {
+        currentLine += char;
+      } else {
+        if (char === '\r' && nextChar === '\n') {
+          i++; // skip \n
+        }
+        lines.push(currentLine);
+        currentLine = "";
+      }
+    } else {
+      currentLine += char;
+    }
+  }
+  if (currentLine) {
+    lines.push(currentLine);
+  }
+  
+  if (lines.length < 2) return [];
+  
+  const headers = splitCSVLine(lines[0]).map(h => h.trim().toLowerCase().replace(/[\s_]+/g, ''));
+  const results: Record<string, string>[] = [];
+  
+  for (let i = 1; i < lines.length; i++) {
+    if (!lines[i].trim()) continue;
+    const values = splitCSVLine(lines[i]);
+    const row: Record<string, string> = {};
+    headers.forEach((header, index) => {
+      if (header) {
+        row[header] = (values[index] || "").trim();
+      }
+    });
+    results.push(row);
+  }
+  
+  return results;
+}
+
+function splitCSVLine(line: string): string[] {
+  const result: string[] = [];
+  let current = "";
+  let inQuotes = false;
+  
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    const nextChar = line[i + 1];
+    
+    if (char === '"') {
+      if (inQuotes && nextChar === '"') {
+        current += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === ',') {
+      if (inQuotes) {
+        current += char;
+      } else {
+        result.push(current);
+        current = "";
+      }
+    } else {
+      current += char;
+    }
+  }
+  result.push(current);
+  return result;
+}
+
+function normalizeRow(row: Record<string, string>): CSVTenantRow {
+  const getVal = (keys: string[]): string => {
+    for (const key of keys) {
+      if (row[key] !== undefined) return row[key];
+    }
+    return "";
+  };
+
+  const building_name = getVal(["buildingname", "propertyname", "building", "property"]);
+  const building_address = getVal(["buildingaddress", "propertyaddress", "address"]);
+  const room_number = getVal(["roomnumber", "roomname", "unitname", "room", "number", "unit"]);
+  const rent_amount = parseFloat(getVal(["rentamount", "rent"])) || 0;
+  const tenant_name = getVal(["tenantname", "name", "tenant"]);
+  const tenant_phone = getVal(["tenantphone", "phone", "mobile"]);
+  const whatsapp_number = getVal(["whatsappnumber", "whatsapp"]) || tenant_phone;
+  const aadhar = getVal(["aadhar", "aadharcard", "aadharnumber"]);
+  const joined_at = getVal(["joinedat", "joiningdate", "startdate", "date", "joined"]) || new Date().toISOString().split('T')[0];
+  const occupancy_count = parseInt(getVal(["occupancycount", "occupancy"]), 10) || 1;
+  const deposit_amount = parseFloat(getVal(["depositamount", "deposit"])) || 0;
+  const deposit_method = getVal(["depositmethod", "method"]) || "Cash";
+
+  return {
+    building_name,
+    building_address,
+    room_number,
+    rent_amount,
+    tenant_name,
+    tenant_phone,
+    whatsapp_number,
+    aadhar,
+    joined_at,
+    occupancy_count,
+    deposit_amount,
+    deposit_method
+  };
+}
+
+function validateTenantRow(tenant: CSVTenantRow): string[] {
+  const errors: string[] = [];
+  if (!tenant.building_name) errors.push(`Property/Building name is missing.`);
+  if (!tenant.room_number) errors.push(`Room/Unit number is missing.`);
+  if (!tenant.tenant_name) errors.push(`Tenant name is missing.`);
+  if (!tenant.tenant_phone) {
+    errors.push(`Tenant phone is missing.`);
+  } else {
+    const cleanPhone = tenant.tenant_phone.replace(/[-+\s()]/g, "");
+    if (!/^\d{10,15}$/.test(cleanPhone)) {
+      errors.push(`Phone number '${tenant.tenant_phone}' must be 10-15 digits.`);
+    }
+  }
+  return errors;
+}
 
 export default function App() {
   const [session, setSession] = useState<any>(null);
@@ -68,6 +224,14 @@ export default function App() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [planFilter, setPlanFilter] = useState("all");
+
+  // Bulk Import state
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [parsedTenants, setParsedTenants] = useState<CSVTenantRow[]>([]);
+  const [importStep, setImportStep] = useState<1 | 2 | 3>(1);
+  const [importProgress, setImportProgress] = useState(0);
+  const [importingStatus, setImportingStatus] = useState("");
+  const [importResults, setImportResults] = useState<{ successCount: number; failedCount: number; errors: string[] } | null>(null);
 
   // Load and apply theme
   useEffect(() => {
@@ -386,6 +550,204 @@ export default function App() {
     } finally {
       setLoadingPayments(false);
     }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    processCSVFile(file);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.name.endsWith('.csv')) {
+      processCSVFile(file);
+    }
+  };
+
+  const processCSVFile = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      if (!text) return;
+      try {
+        const rawRows = parseCSV(text);
+        const normalized = rawRows.map(normalizeRow);
+        
+        // Validate each row
+        const validated = normalized.map((row) => {
+          const rowErrors = validateTenantRow(row);
+          return {
+            ...row,
+            errors: rowErrors
+          };
+        });
+        
+        setParsedTenants(validated);
+        setImportStep(2);
+      } catch (err: any) {
+        alert("Error parsing CSV: " + err.message);
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleImportData = async (landlordUserId: string) => {
+    setImportStep(3);
+    setImportProgress(0);
+    setImportingStatus("Preparing import...");
+    
+    const validRows = parsedTenants.filter(t => !t.errors || t.errors.length === 0);
+    const total = validRows.length;
+    
+    if (total === 0) {
+      setImportResults({ successCount: 0, failedCount: 0, errors: ["No valid tenants to import"] });
+      return;
+    }
+    
+    let successCount = 0;
+    let failedCount = 0;
+    const errors: string[] = [];
+    
+    const buildingMap: Record<string, string> = {};
+    const roomMap: Record<string, string> = {};
+
+    for (let i = 0; i < total; i++) {
+      const tenant = validRows[i];
+      const rowNum = i + 1;
+      
+      setImportProgress(Math.round((i / total) * 100));
+      setImportingStatus(`Importing tenant ${rowNum} of ${total}: ${tenant.tenant_name}...`);
+
+      try {
+        // 1. Resolve Building ID
+        const bNameKey = tenant.building_name.trim().toLowerCase();
+        let buildingId = buildingMap[bNameKey];
+        
+        if (!buildingId) {
+          const { data: existingB, error: findBError } = await supabase
+            .from("buildings")
+            .select("id")
+            .eq("name", tenant.building_name.trim())
+            .eq("user_id", landlordUserId)
+            .maybeSingle();
+            
+          if (findBError) throw new Error(`Failed to query building: ${findBError.message}`);
+          
+          if (existingB) {
+            buildingId = existingB.id;
+          } else {
+            const { data: newB, error: createBError } = await supabase
+              .from("buildings")
+              .insert({
+                name: tenant.building_name.trim(),
+                address: tenant.building_address || "",
+                user_id: landlordUserId
+              })
+              .select("id")
+              .single();
+              
+            if (createBError) throw new Error(`Failed to create building: ${createBError.message}`);
+            buildingId = newB.id;
+          }
+          buildingMap[bNameKey] = buildingId;
+        }
+
+        // 2. Resolve Room (Unit) ID
+        const rKey = `${buildingId}-${tenant.room_number.trim().toLowerCase()}`;
+        let roomId = roomMap[rKey];
+        
+        if (!roomId) {
+          const { data: existingR, error: findRError } = await supabase
+            .from("units")
+            .select("id")
+            .eq("building_id", buildingId)
+            .eq("name", tenant.room_number.trim())
+            .eq("user_id", landlordUserId)
+            .maybeSingle();
+            
+          if (findRError) throw new Error(`Failed to query room: ${findRError.message}`);
+          
+          if (existingR) {
+            roomId = existingR.id;
+            const { error: updateRError } = await supabase
+              .from("units")
+              .update({
+                status: "occupied",
+                rent_amount: tenant.rent_amount
+              })
+              .eq("id", roomId);
+              
+            if (updateRError) throw new Error(`Failed to update room: ${updateRError.message}`);
+          } else {
+            const { data: newR, error: createRError } = await supabase
+              .from("units")
+              .insert({
+                building_id: buildingId,
+                name: tenant.room_number.trim(),
+                rent_amount: tenant.rent_amount,
+                status: "occupied",
+                user_id: landlordUserId
+              })
+              .select("id")
+              .single();
+              
+            if (createRError) throw new Error(`Failed to create room: ${createRError.message}`);
+            roomId = newR.id;
+          }
+          roomMap[rKey] = roomId;
+        }
+
+        // 3. Create Tenant
+        const { error: createTenantError } = await supabase
+          .from("tenants")
+          .insert({
+            name: tenant.tenant_name.trim(),
+            phone: tenant.tenant_phone.trim(),
+            whatsapp_number: (tenant.whatsapp_number || tenant.tenant_phone).trim(),
+            aadhar: tenant.aadhar ? tenant.aadhar.trim() : null,
+            room_id: roomId,
+            building_id: buildingId,
+            user_id: landlordUserId,
+            joined_at: tenant.joined_at || new Date().toISOString(),
+            occupancy_count: tenant.occupancy_count || 1,
+            deposit_amount: tenant.deposit_amount || 0,
+            deposit_method: tenant.deposit_method || "Cash",
+            status: "active"
+          });
+          
+        if (createTenantError) throw new Error(`Failed to insert tenant: ${createTenantError.message}`);
+
+        successCount++;
+      } catch (err: any) {
+        console.error(`Error importing tenant ${tenant.tenant_name}:`, err);
+        failedCount++;
+        errors.push(`Tenant "${tenant.tenant_name}": ${err.message || err}`);
+      }
+    }
+    
+    // Also count the skipped invalid rows in the failed count
+    const invalidCount = parsedTenants.length - total;
+    if (invalidCount > 0) {
+      failedCount += invalidCount;
+      parsedTenants.forEach((t, i) => {
+        if (t.errors && t.errors.length > 0) {
+          errors.push(`Row ${i + 1} (${t.tenant_name || "Unknown"}): Skipped due to validation errors (${t.errors.join(", ")})`);
+        }
+      });
+    }
+
+    setImportProgress(100);
+    setImportingStatus("Import completed!");
+    setImportResults({
+      successCount,
+      failedCount,
+      errors
+    });
+    
+    // Refresh the dashboard data
+    await fetchDashboardData();
   };
 
   // Filtered Lists
@@ -1130,6 +1492,27 @@ export default function App() {
                   })}
                 </div>
 
+                <div className="border border-indigo-500/20 bg-indigo-500/5 p-4.5 rounded-2xl space-y-3">
+                  <div>
+                    <h4 className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Tenant Data Management</h4>
+                    <p className="text-[11px] text-slate-500 dark:text-zinc-400 mt-1">
+                      Bulk-import tenant records from a CSV file directly into this landlord's profile. New properties and rooms will be generated automatically.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setImportStep(1);
+                      setParsedTenants([]);
+                      setImportResults(null);
+                      setIsImportModalOpen(true);
+                    }}
+                    className="w-full flex items-center justify-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white py-2.5 text-xs font-semibold shadow-md shadow-indigo-600/10 hover:shadow-lg transition active:scale-95 cursor-pointer"
+                  >
+                    <Upload className="h-3.5 w-3.5" />
+                    Bulk Import Tenants
+                  </button>
+                </div>
+
                 <div className="space-y-3">
                   <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     <CreditCard className="h-4 w-4 text-indigo-500" />
@@ -1182,7 +1565,7 @@ export default function App() {
                   disabled={actionLoading === selectedLandlord.id}
                   className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl border py-2.5 text-xs font-semibold transition active:scale-95 disabled:opacity-50 ${
                     selectedLandlord.status === "paused" 
-                      ? "border-emerald-500/20 bg-emerald-500/5 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
+                      ? "border-emerald-500/20 bg-emerald-500/5 text-emerald-600 dark:text-emerald-450 hover:bg-emerald-500/10"
                       : "border-amber-500/20 bg-amber-500/5 text-amber-500 hover:bg-amber-500/10"
                   }`}
                 >
@@ -1212,6 +1595,344 @@ export default function App() {
           </>
         )}
       </AnimatePresence>
+
+      {/* Bulk Import Tenants Modal */}
+      {isImportModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl flex flex-col max-h-[85vh] text-slate-900 dark:text-zinc-100"
+          >
+            {/* Modal Header */}
+            <div className="p-5 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between bg-slate-50/50 dark:bg-zinc-900/50">
+              <div className="flex items-center gap-2">
+                <Upload className="h-5 w-5 text-indigo-500" />
+                <div>
+                  <h3 className="font-bold text-slate-900 dark:text-white">Bulk Import Tenants</h3>
+                  <p className="text-xs text-slate-400">Target Landlord: {selectedLandlord?.fullName}</p>
+                </div>
+              </div>
+              {importStep !== 3 && (
+                <button
+                  onClick={() => setIsImportModalOpen(false)}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-500 hover:text-slate-800 dark:hover:text-white cursor-pointer"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+
+            {/* Modal Body */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              
+              {/* Step 1: Upload Instructions & Dropzone */}
+              {importStep === 1 && (
+                <div className="space-y-6">
+                  <div className="text-xs text-slate-500 dark:text-zinc-400 space-y-2">
+                    <p className="font-semibold text-slate-700 dark:text-zinc-300">CSV Data Format Instructions:</p>
+                    <p>Make sure your CSV contains the following headers. Other names (like "property" or "address") will be auto-normalized.</p>
+                    <div className="overflow-x-auto border border-slate-200 dark:border-zinc-800 rounded-lg max-h-40">
+                      <table className="w-full text-left text-[11px] border-collapse">
+                        <thead>
+                          <tr className="bg-slate-100/50 dark:bg-zinc-900/50 border-b border-slate-200 dark:border-zinc-800">
+                            <th className="p-2 font-bold">Column Header</th>
+                            <th className="p-2 font-bold">Type</th>
+                            <th className="p-2 font-bold">Status</th>
+                            <th className="p-2 font-bold">Example</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-200 dark:divide-zinc-800 font-mono">
+                          <tr>
+                            <td className="p-2 font-bold text-indigo-600 dark:text-indigo-400">building_name</td>
+                            <td className="p-2 text-slate-400">Text</td>
+                            <td className="p-2 text-amber-600">Required</td>
+                            <td className="p-2 text-slate-400">Gokul Dham</td>
+                          </tr>
+                          <tr>
+                            <td className="p-2 font-bold text-indigo-600 dark:text-indigo-400">room_number</td>
+                            <td className="p-2 text-slate-400">Text/No.</td>
+                            <td className="p-2 text-amber-600">Required</td>
+                            <td className="p-2 text-slate-400">101</td>
+                          </tr>
+                          <tr>
+                            <td className="p-2 font-bold text-indigo-600 dark:text-indigo-400">tenant_name</td>
+                            <td className="p-2 text-slate-400">Text</td>
+                            <td className="p-2 text-amber-600">Required</td>
+                            <td className="p-2 text-slate-400">Jethalal Gada</td>
+                          </tr>
+                          <tr>
+                            <td className="p-2 font-bold text-indigo-600 dark:text-indigo-400">tenant_phone</td>
+                            <td className="p-2 text-slate-400">Text/No.</td>
+                            <td className="p-2 text-amber-600">Required</td>
+                            <td className="p-2 text-slate-400">9876543210</td>
+                          </tr>
+                          <tr>
+                            <td className="p-2">rent_amount</td>
+                            <td className="p-2 text-slate-400">Number</td>
+                            <td className="p-2 text-slate-400">Optional</td>
+                            <td className="p-2 text-slate-400">15000</td>
+                          </tr>
+                          <tr>
+                            <td className="p-2">whatsapp_number</td>
+                            <td className="p-2 text-slate-400">Number</td>
+                            <td className="p-2 text-slate-400">Optional</td>
+                            <td className="p-2 text-slate-400">9876543210</td>
+                          </tr>
+                          <tr>
+                            <td className="p-2">aadhar</td>
+                            <td className="p-2 text-slate-400">Number</td>
+                            <td className="p-2 text-slate-400">Optional</td>
+                            <td className="p-2 text-slate-400">123456789012</td>
+                          </tr>
+                          <tr>
+                            <td className="p-2">joined_at</td>
+                            <td className="p-2 text-slate-400">YYYY-MM-DD</td>
+                            <td className="p-2 text-slate-400">Optional</td>
+                            <td className="p-2 text-slate-400">2026-06-01</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-700 dark:text-zinc-300">Sample CSV Content Template:</span>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(
+                            `building_name,building_address,room_number,rent_amount,tenant_name,tenant_phone,whatsapp_number,aadhar,joined_at,occupancy_count,deposit_amount,deposit_method\nGokul Dham,"Powai, Mumbai",101,15000,Jethalal Gada,9876543210,9876543210,123456789012,2026-06-01,1,30000,UPI\nGokul Dham,"Powai, Mumbai",102,12000,Daya Gada,9876543211,9876543211,,2026-06-05,2,24000,Cash`
+                          );
+                        }}
+                        className="text-[10px] text-indigo-500 hover:underline cursor-pointer"
+                      >
+                        Copy Template
+                      </button>
+                    </div>
+                    <pre className="p-3 bg-slate-50 dark:bg-zinc-950 rounded-xl border border-slate-200 dark:border-zinc-800 text-[10px] font-mono overflow-x-auto text-slate-500 dark:text-zinc-400 select-all">
+{`building_name,building_address,room_number,rent_amount,tenant_name,tenant_phone,whatsapp_number,aadhar,joined_at,occupancy_count,deposit_amount,deposit_method
+Gokul Dham,"Powai, Mumbai",101,15000,Jethalal Gada,9876543210,9876543210,123456789012,2026-06-01,1,30000,UPI
+Gokul Dham,"Powai, Mumbai",102,12000,Daya Gada,9876543211,9876543211,,2026-06-05,2,24000,Cash`}
+                    </pre>
+                  </div>
+
+                  <div 
+                    onDragOver={e => e.preventDefault()}
+                    onDrop={handleDrop}
+                    className="border-2 border-dashed border-slate-200 dark:border-zinc-800 hover:border-indigo-500 dark:hover:border-indigo-500 transition rounded-2xl p-8 text-center cursor-pointer relative group bg-slate-50/20 dark:bg-zinc-900/10"
+                    onClick={() => document.getElementById("csv-file-input")?.click()}
+                  >
+                    <input 
+                      type="file" 
+                      id="csv-file-input" 
+                      accept=".csv" 
+                      className="hidden" 
+                      onChange={handleFileChange}
+                    />
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="h-12 w-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-500 group-hover:scale-105 transition duration-300">
+                        <Upload className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-slate-700 dark:text-zinc-200">Drag & drop your CSV file here</p>
+                        <p className="text-xs text-slate-400 mt-1">or click to browse from files</p>
+                      </div>
+                      <span className="text-[10px] text-indigo-500 dark:text-indigo-400 font-semibold bg-indigo-500/10 border border-indigo-500/25 px-2 py-0.5 rounded-full uppercase tracking-wider">Accepts CSV only</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 2: Preview & Validation */}
+              {importStep === 2 && (
+                <div className="space-y-5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-900 dark:text-white">Data Validation Preview</h4>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        Parsed {parsedTenants.length} rows. Please review below before committing.
+                      </p>
+                    </div>
+                    <div className="text-xs font-semibold">
+                      <span className="text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-md">
+                        {parsedTenants.filter(t => !t.errors || t.errors.length === 0).length} Valid
+                      </span>
+                      {parsedTenants.filter(t => t.errors && t.errors.length > 0).length > 0 && (
+                        <span className="text-red-500 bg-red-500/10 px-2 py-1 rounded-md ml-2">
+                          {parsedTenants.filter(t => t.errors && t.errors.length > 0).length} Invalid
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {parsedTenants.filter(t => t.errors && t.errors.length > 0).length > 0 && (
+                    <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-600 dark:text-amber-450">
+                      <AlertTriangle className="h-4.5 w-4.5 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="font-bold block">Some rows have validation issues.</span>
+                        <span className="mt-1 block">You can proceed with the import, but invalid rows will be skipped automatically. Please correct any critical errors before proceeding.</span>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="border border-slate-200 dark:border-zinc-800 rounded-xl overflow-hidden max-h-72 overflow-y-auto">
+                    <table className="w-full text-left text-xs border-collapse font-sans">
+                      <thead>
+                        <tr className="bg-slate-50 dark:bg-zinc-950 border-b border-slate-200 dark:border-zinc-800 text-[10px] uppercase font-bold text-slate-500">
+                          <th className="p-3">Row</th>
+                          <th className="p-3">Tenant / Phone</th>
+                          <th className="p-3">Property / Room</th>
+                          <th className="p-3">Rent</th>
+                          <th className="p-3">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200 dark:divide-zinc-800 text-slate-905 dark:text-zinc-100">
+                        {parsedTenants.map((row, idx) => {
+                          const hasErrors = row.errors && row.errors.length > 0;
+                          return (
+                            <tr key={idx} className={`hover:bg-slate-50/50 dark:hover:bg-zinc-950/50 ${hasErrors ? 'bg-red-500/5' : ''}`}>
+                              <td className="p-3 font-mono font-bold text-slate-400">{idx + 1}</td>
+                              <td className="p-3 font-sans">
+                                <span className="font-bold text-slate-900 dark:text-white block">{row.tenant_name || "—"}</span>
+                                <span className="text-[10px] text-slate-450 dark:text-zinc-400 block mt-0.5">{row.tenant_phone || "—"}</span>
+                              </td>
+                              <td className="p-3 font-sans">
+                                <span className="font-semibold block text-slate-900 dark:text-white">{row.building_name || "—"}</span>
+                                <span className="text-[10px] text-slate-450 dark:text-zinc-400 block mt-0.5">Room {row.room_number || "—"}</span>
+                              </td>
+                              <td className="p-3 font-mono">₹{row.rent_amount}</td>
+                              <td className="p-3">
+                                {hasErrors ? (
+                                  <div className="group relative inline-block">
+                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-red-500 bg-red-500/10 px-1.5 py-0.5 rounded cursor-help">
+                                      <AlertTriangle className="h-3 w-3" />
+                                      Error
+                                    </span>
+                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 scale-0 group-hover:scale-100 bg-slate-900 text-white p-2 rounded-lg text-[10px] shadow-xl z-20 transition duration-150">
+                                      {row.errors?.map((e: string, i: number) => (
+                                        <div key={i}>{e}</div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                                    <Check className="h-3 w-3" />
+                                    Ready
+                                  </span>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 3: Progress & Success */}
+              {importStep === 3 && (
+                <div className="flex flex-col items-center py-8 text-center space-y-6">
+                  {!importResults ? (
+                    <>
+                      <RefreshCw className="h-12 w-12 animate-spin text-indigo-500" />
+                      <div className="space-y-2">
+                        <h4 className="font-bold text-lg text-slate-900 dark:text-white">Importing Tenant Records...</h4>
+                        <p className="text-xs text-slate-400">{importingStatus}</p>
+                      </div>
+                      <div className="w-full max-w-xs bg-slate-100 dark:bg-zinc-800 h-2 rounded-full overflow-hidden">
+                        <div 
+                          className="bg-indigo-600 h-full rounded-full transition-all duration-300"
+                          style={{ width: `${importProgress}%` }}
+                        />
+                      </div>
+                      <span className="text-xs font-mono font-bold text-indigo-500">{importProgress}% Completed</span>
+                    </>
+                  ) : (
+                    <>
+                      {importResults.failedCount === 0 ? (
+                        <div className="h-16 w-16 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center text-emerald-500">
+                          <Check className="h-8 w-8" />
+                        </div>
+                      ) : (
+                        <div className="h-16 w-16 bg-amber-500/10 border border-amber-500/20 rounded-full flex items-center justify-center text-amber-500">
+                          <AlertTriangle className="h-8 w-8" />
+                        </div>
+                      )}
+
+                      <div className="space-y-2">
+                        <h4 className="font-bold text-lg text-slate-900 dark:text-white">Bulk Import Finished</h4>
+                        <p className="text-xs text-slate-400 text-center">
+                          Successfully imported <span className="font-bold text-emerald-500">{importResults.successCount}</span> tenants.
+                          {importResults.failedCount > 0 && (
+                            <> Failed/skipped <span className="font-bold text-red-500">{importResults.failedCount}</span> rows.</>
+                          )}
+                        </p>
+                      </div>
+
+                      {importResults.errors.length > 0 && (
+                        <div className="w-full text-left space-y-2 border border-slate-200 dark:border-zinc-800 rounded-xl p-4 bg-slate-50 dark:bg-zinc-950 max-h-48 overflow-y-auto">
+                          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Errors / Skipped rows summary:</span>
+                          <div className="space-y-1 text-xs font-mono text-red-500 dark:text-red-400">
+                            {importResults.errors.map((err, i) => (
+                              <div key={i} className="flex gap-2">
+                                <span className="shrink-0">•</span>
+                                <span>{err}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-5 border-t border-slate-200 dark:border-zinc-800 flex justify-end gap-3 bg-slate-50/50 dark:bg-zinc-900/50">
+              {importStep === 1 && (
+                <button
+                  onClick={() => setIsImportModalOpen(false)}
+                  className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-xs font-semibold text-slate-700 dark:text-zinc-300 transition active:scale-95 cursor-pointer"
+                >
+                  Cancel
+                </button>
+              )}
+
+              {importStep === 2 && (
+                <>
+                  <button
+                    onClick={() => setImportStep(1)}
+                    className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-xs font-semibold text-slate-700 dark:text-zinc-300 transition active:scale-95 cursor-pointer"
+                  >
+                    Back to Upload
+                  </button>
+                  <button
+                    onClick={() => handleImportData(selectedLandlord.user_id)}
+                    disabled={parsedTenants.filter(t => !t.errors || t.errors.length === 0).length === 0}
+                    className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/15 transition active:scale-95 cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
+                  >
+                    Import Valid Records ({parsedTenants.filter(t => !t.errors || t.errors.length === 0).length})
+                  </button>
+                </>
+              )}
+
+              {importStep === 3 && importResults && (
+                <button
+                  onClick={() => setIsImportModalOpen(false)}
+                  className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/15 transition active:scale-95 cursor-pointer"
+                >
+                  Close Importer
+                </button>
+              )}
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }

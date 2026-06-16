@@ -1,0 +1,41 @@
+building_name,building_address,room_number,rent_amount,tenant_name,tenant_phone,whatsapp_number,aadhar,joined_at,occupancy_count,deposit_amount,deposit_method
+
+Gokul Dham,"Powai, Mumbai",101,15050,Jethalal Gada,9876543210,9876543210,123456789012,2026-06-01,1,30000,UPI
+
+Gokul Dham,"Powai, Mumbai",102,12000,Daya Gada,9876543211,9876543211,,2026-06-05,2,24000,Cash
+
+Shanti Nivas,"Bandra, Mumbai",303,20000,Babita Iyer,9999888877,9999888877,987654321098,2026-05-15,1,40000,Bank
+
+Sai Residency,"Vijay Nagar, Indore",201,8500,Rahul Sharma,9876501234,9876501234,456789123456,2026-04-12,1,17000,UPI
+
+Sai Residency,"Vijay Nagar, Indore",202,9000,Priya Verma,9876501235,9876501235,567891234567,2026-05-18,2,18000,Cash
+
+Krishna Heights,"Palasia, Indore",301,11000,Amit Patel,9876501236,9876501236,678912345678,2026-03-21,1,22000,Bank
+
+Krishna Heights,"Palasia, Indore",302,11500,Sneha Joshi,9876501237,9876501237,,2026-06-03,2,23000,UPI
+
+Green Valley,"Bhanwar Kuan, Indore",103,7500,Vikram Singh,9876501238,9876501238,789123456789,2026-02-10,1,15000,Cash
+
+Green Valley,"Bhanwar Kuan, Indore",104,8000,Pooja Gupta,9876501239,9876501239,891234567891,2026-01-28,3,16000,Bank
+
+Sunrise Apartments,"Scheme No. 54, Indore",401,14000,Karan Mehta,9876501240,9876501240,912345678912,2026-06-07,1,28000,UPI
+
+Sunrise Apartments,"Scheme No. 54, Indore",402,14500,Neha Agarwal,9876501241,9876501241,,2026-05-09,2,29000,Cash
+
+Royal Enclave,"MR 10 Road, Indore",105,9500,Rohan Jain,9876501242,9876501242,234567891234,2026-04-01,1,19000,Bank
+
+Royal Enclave,"MR 10 Road, Indore",106,9800,Anjali Mishra,9876501243,9876501243,345678912345,2026-03-16,2,19600,UPI
+
+Lake View Residency,"Khandwa Road, Indore",501,18000,Sachin Yadav,9876501244,9876501244,456789123789,2026-06-10,1,36000,Bank
+
+Lake View Residency,"Khandwa Road, Indore",502,17500,Ritika Saxena,9876501245,9876501245,,2026-05-25,2,35000,Cash
+
+Shree Palace,"Sudama Nagar, Indore",203,7000,Deepak Tiwari,9876501246,9876501246,567891234678,2026-04-19,1,14000,UPI
+
+Shree Palace,"Sudama Nagar, Indore",204,7200,Meena Choudhary,9876501247,9876501247,678912345789,2026-03-30,2,14400,Cash
+
+Mangal Residency,"Rau, Indore",601,10500,Nitin Dubey,9876501248,9876501248,,2026-02-22,1,21000,Bank
+
+Mangal Residency,"Rau, Indore",602,10800,Kavita Soni,9876501249,9876501249,789123456890,2026-06-02,3,21600,UPI
+
+Anand Villa,"Bhawarkuan, Indore",701,13000,Arjun Chauhan,9876501250,9876501250,891234567901,2026-01-15,1,26000,Cash
