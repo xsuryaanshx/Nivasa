@@ -132,6 +132,13 @@ const APP_FEATURES = [
     color: "text-cyan-500",
     bg: "bg-cyan-500/10",
   },
+  {
+    icon: Calendar,
+    label: "Billing Cycle",
+    desc: "Rent collection date",
+    color: "text-emerald-400",
+    bg: "bg-emerald-500/10",
+  },
 ];
 
 const stagger = {
@@ -535,22 +542,6 @@ export default function Profile() {
       accent: "text-cyan-400",
       bg: "bg-cyan-500/10",
     },
-    {
-      icon: Users,
-      label: "Staff Management",
-      desc: "Manage maids, guards, etc.",
-      onClick: () => setStaffOpen(true),
-      accent: "text-violet-400",
-      bg: "bg-violet-500/10",
-    },
-    {
-      icon: Calendar,
-      label: "Rent Date",
-      desc: "Fixed monthly rent collection date",
-      onClick: () => setRentDateOpen(true),
-      accent: "text-emerald-400",
-      bg: "bg-emerald-500/10",
-    },
   ];
 
   return (
@@ -635,7 +626,8 @@ export default function Profile() {
                     else if (feat.label === "Rooms") navigate("/app/rooms");
                     else if (feat.label === "Payments") navigate("/app/payments");
                     else if (feat.label === "Expenses") navigate("/app/expenses");
-                    else if (feat.label === "Staff") navigate("/app/staff");
+                    else if (feat.label === "Staff") setStaffOpen(true);
+                    else if (feat.label === "Billing Cycle") setRentDateOpen(true);
                     else if (feat.label === "Analytics") navigate("/app");
                     else if (feat.label === "Electricity") window.dispatchEvent(new CustomEvent("nivasa:add-electricity")); 
                     else if (feat.label === "Multi-language") setLanguageOpen(true);
