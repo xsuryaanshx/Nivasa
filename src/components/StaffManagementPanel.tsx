@@ -27,6 +27,7 @@ export function StaffManagementPanel({ open, onClose }: Props) {
 
   const [name, setName] = useState("");
   const [role, setRole] = useState("Maid");
+  const [customRole, setCustomRole] = useState("");
   const [phone, setPhone] = useState("");
   const [allocatedBuildings, setAllocatedBuildings] = useState<string[]>([]);
 
@@ -54,18 +55,22 @@ export function StaffManagementPanel({ open, onClose }: Props) {
 
   const handleSave = async () => {
     if (!name.trim()) return toast.error("Name is required");
+    const finalRole = role === "Others" ? customRole.trim() : role;
+    if (!finalRole) return toast.error("Role is required");
+
     try {
       if (editingStaff) {
-        await nivasaApi.updateStaff(editingStaff.id, { name, role, phone, allocatedBuildings });
+        await nivasaApi.updateStaff(editingStaff.id, { name, role: finalRole, phone, allocatedBuildings });
         toast.success("Staff updated");
       } else {
-        await nivasaApi.addStaff({ name, role, phone, allocatedBuildings });
+        await nivasaApi.addStaff({ name, role: finalRole, phone, allocatedBuildings });
         toast.success("Staff added");
       }
       setIsAdding(false);
       setEditingStaff(null);
       setName("");
       setRole("Maid");
+      setCustomRole("");
       setPhone("");
       setAllocatedBuildings([]);
       fetchData();
@@ -94,7 +99,13 @@ export function StaffManagementPanel({ open, onClose }: Props) {
   const openEdit = (s: Staff) => {
     setEditingStaff(s);
     setName(s.name);
-    setRole(s.role);
+    if (["Maid", "Security", "Manager", "Maintenance"].includes(s.role)) {
+      setRole(s.role);
+      setCustomRole("");
+    } else {
+      setRole("Others");
+      setCustomRole(s.role);
+    }
     setPhone(s.phone || "");
     setAllocatedBuildings(s.allocatedBuildings);
     setIsAdding(true);
@@ -105,6 +116,7 @@ export function StaffManagementPanel({ open, onClose }: Props) {
     setEditingStaff(null);
     setName("");
     setRole("Maid");
+    setCustomRole("");
     setPhone("");
     setAllocatedBuildings([]);
   };
@@ -183,8 +195,21 @@ export function StaffManagementPanel({ open, onClose }: Props) {
                           <option value="Security">Security Guard</option>
                           <option value="Manager">Manager</option>
                           <option value="Maintenance">Maintenance</option>
+                          <option value="Others">Others</option>
                         </select>
                       </div>
+                      {role === "Others" && (
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-medium text-muted-foreground">Custom Role</label>
+                          <input
+                            type="text"
+                            value={customRole}
+                            onChange={(e) => setCustomRole(e.target.value)}
+                            className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand"
+                            placeholder="e.g. Driver"
+                          />
+                        </div>
+                      )}
                       <div className="space-y-1.5">
                         <label className="text-xs font-medium text-muted-foreground">Phone (Optional)</label>
                         <input
