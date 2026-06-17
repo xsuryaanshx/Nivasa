@@ -49,6 +49,7 @@ export default function Maintenance() {
     status: "pending",
     priority: "medium",
     property_id: "",
+    unit_id: "none",
     cost: 0,
     category: "maintenance",
   });
@@ -69,6 +70,13 @@ export default function Maintenance() {
     queryKey: ["buildings"],
     queryFn: nivasaApi.getBuildings,
   });
+
+  const { data: rooms } = useQuery({
+    queryKey: ["rooms"],
+    queryFn: nivasaApi.getRooms,
+  });
+
+  const availableRooms = rooms?.filter((r) => r.buildingId === newRequest.property_id) || [];
 
   const addMutation = useMutation({
     mutationFn: (request: Partial<MaintenanceRequest>) =>
@@ -112,7 +120,11 @@ export default function Maintenance() {
       toast.error("Title and Property are required");
       return;
     }
-    addMutation.mutate(newRequest);
+    const payload = { ...newRequest };
+    if (payload.unit_id === "none") {
+      delete payload.unit_id;
+    }
+    addMutation.mutate(payload);
   };
 
   const handleStatusChange = (id: string, newStatus: string) => {
@@ -136,7 +148,7 @@ export default function Maintenance() {
           <DialogTrigger asChild>
             <Button className="gap-2">
               <Plus className="h-4 w-4" />
-              New Request
+              Add Expense
             </Button>
           </DialogTrigger>
           <DialogContent>
@@ -148,7 +160,7 @@ export default function Maintenance() {
                 <label className="text-sm font-medium">Property *</label>
                 <Select
                   value={newRequest.property_id}
-                  onValueChange={(val) => setNewRequest({ ...newRequest, property_id: val })}
+                  onValueChange={(val) => setNewRequest({ ...newRequest, property_id: val, unit_id: "none" })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select a building" />
@@ -162,6 +174,28 @@ export default function Maintenance() {
                   </SelectContent>
                 </Select>
               </div>
+
+              {newRequest.property_id && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Room (Optional)</label>
+                  <Select
+                    value={newRequest.unit_id}
+                    onValueChange={(val) => setNewRequest({ ...newRequest, unit_id: val })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a room" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No specific room</SelectItem>
+                      {availableRooms.map((r) => (
+                        <SelectItem key={r.id} value={r.id}>
+                          {r.number}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">Title *</label>
@@ -232,7 +266,7 @@ export default function Maintenance() {
               </div>
 
               <Button type="submit" className="w-full" disabled={addMutation.isPending}>
-                {addMutation.isPending ? "Adding..." : "Add Request"}
+                {addMutation.isPending ? "Adding..." : "Add Expense"}
               </Button>
             </form>
           </DialogContent>

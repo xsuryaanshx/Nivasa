@@ -56,6 +56,7 @@ export default function RoomDetails() {
   const [isEditingName, setIsEditingName] = useState(false);
   const [editNameValue, setEditNameValue] = useState("");
   const [roomPayments, setRoomPayments] = useState<any[]>([]);
+  const [roomExpenses, setRoomExpenses] = useState<any[]>([]);
   const [paymentTenantId, setPaymentTenantId] = useState<string | undefined>();
 
   const { currency } = useCurrency();
@@ -81,8 +82,12 @@ export default function RoomDetails() {
         }
       }
       
-      const paymentsData = await nivasaApi.getRecentPayments(100);
+      const [paymentsData, expensesData] = await Promise.all([
+        nivasaApi.getRecentPayments(100),
+        nivasaApi.getMaintenanceRequests()
+      ]);
       setRoomPayments(paymentsData.filter((p: any) => p.roomId === id));
+      setRoomExpenses(expensesData.filter((e: any) => e.unit_id === id));
     } catch (error) {
       console.error("Error fetching room details:", error);
       toast.error("Failed to load room details");
@@ -660,6 +665,36 @@ export default function RoomDetails() {
           <div className="mt-4">
             <PaymentTimeline payments={roomPayments} />
           </div>
+        </div>
+      </div>
+
+      {/* Room Expenses / Maintenance */}
+      <div className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-soft">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-sm font-semibold tracking-tight">Room Expenses & Maintenance</div>
+            <div className="text-xs text-muted-foreground">Logged facility costs and maintenance requests</div>
+          </div>
+          <MagneticButton variant="ghost" onClick={() => navigate("/app/maintenance")}>
+            <Wrench className="h-4 w-4" /> Manage
+          </MagneticButton>
+        </div>
+        <div className="mt-4">
+          {roomExpenses.length === 0 ? (
+            <div className="text-sm text-muted-foreground py-4 text-center border-dashed border rounded-xl border-border">No expenses logged for this room.</div>
+          ) : (
+            <div className="space-y-3">
+              {roomExpenses.map((exp: any) => (
+                <div key={exp.id} className="flex items-center justify-between border-b border-border/50 pb-3 last:border-0 last:pb-0">
+                  <div>
+                    <div className="font-medium text-sm">{exp.title}</div>
+                    <div className="text-xs text-muted-foreground capitalize">{exp.category || 'maintenance'} • {exp.status.replace("_", " ")}</div>
+                  </div>
+                  <div className="font-semibold text-sm">{formatMoney(exp.cost || 0, currency, { decimals: 0 })}</div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
