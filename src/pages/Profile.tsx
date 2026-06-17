@@ -450,6 +450,7 @@ const APP_FEATURE_KEY_MAP: Record<string, { label: string; desc: string }> = {
   "Analytics": { label: "app_feat_analytics", desc: "app_feat_analytics_desc" },
   "Expenses": { label: "app_feat_expenses", desc: "app_feat_expenses_desc" },
   "Staff": { label: "app_feat_staff", desc: "app_feat_staff_desc" },
+  "Billing Cycle": { label: "app_feat_billing_cycle", desc: "app_feat_billing_cycle_desc" },
 };
 
 const MENU_KEY_MAP: Record<string, { label: string; desc: string }> = {
