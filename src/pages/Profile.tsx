@@ -28,6 +28,7 @@ import {
   Users,
   Calendar,
   TrendingUp,
+  Wrench,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
@@ -515,9 +516,17 @@ export default function Profile() {
 
   const MENU_ITEMS = [
     {
+      icon: Wrench,
+      label: "Expense Register",
+      desc: "Log maintenance & facility costs",
+      onClick: () => navigate("/app/maintenance"),
+      accent: "text-rose-500",
+      bg: "bg-rose-500/10",
+    },
+    {
       icon: TrendingUp,
       label: "Profit",
-      desc: "Net profit & expenses register",
+      desc: "Net profit summary",
       onClick: () => setProfitOpen(true),
       accent: "text-emerald-500",
       bg: "bg-emerald-500/10",
