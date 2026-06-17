@@ -76,6 +76,24 @@ export function SecurityModal({ open, onClose }: Props) {
     try {
       setSaving(true);
       if (!nivasaApi) throw new Error("nivasaApi not ready");
+      
+      if (!currentPassword) {
+        throw new Error("Current password is required.");
+      }
+
+      // Get current user email to verify current password
+      const { data: { session } } = await nivasaApi.supabase.auth.getSession();
+      if (!session?.user?.email) throw new Error("No active session");
+
+      // Verify current password
+      const { error: verifyError } = await nivasaApi.supabase.auth.signInWithPassword({
+        email: session.user.email,
+        password: currentPassword,
+      });
+
+      if (verifyError) {
+        throw new Error("Current password is incorrect.");
+      }
 
       // Supabase: updateUser with new password
       const { error: updateError } = await nivasaApi.supabase.auth.updateUser({
@@ -141,6 +159,29 @@ export function SecurityModal({ open, onClose }: Props) {
 
               {/* Form */}
               <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                {/* Current password */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">
+                    Current password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showCurrent ? "text" : "password"}
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      placeholder="Enter current password"
+                      className="h-11 w-full rounded-xl border border-border bg-secondary/40 px-3.5 pr-10 text-sm outline-none transition focus:border-brand focus:shadow-[0_0_0_3px_hsl(var(--ring)/0.15)]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowCurrent((v) => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showCurrent ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+
                 {/* New password */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-muted-foreground">
@@ -248,7 +289,7 @@ export function SecurityModal({ open, onClose }: Props) {
                   </button>
                   <button
                     type="submit"
-                    disabled={saving || !newPassword || newPassword !== confirmPassword}
+                    disabled={saving || !currentPassword || !newPassword || newPassword !== confirmPassword}
                     className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand py-2.5 text-sm font-semibold text-white shadow-soft hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {saving ? (
