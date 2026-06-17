@@ -1,7 +1,7 @@
 import { nivasaApi } from "@/lib/api";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
-  ArrowLeft, BellRing, CheckCircle2, IdCard, MessageCircle, Phone, Plus, Save, Send, UserPlus, UserMinus, Zap, Calendar, Banknote, Edit2, FileText
+  ArrowLeft, BellRing, CheckCircle2, IdCard, MessageCircle, Phone, Plus, Save, Send, UserPlus, UserMinus, Zap, Calendar, Banknote, Edit2, FileText, Wrench
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
@@ -354,6 +354,9 @@ export default function RoomDetails() {
             </MagneticButton>
             <MagneticButton variant="ghost" onClick={() => setElectricityOpen(true)}>
               <Zap className="h-4 w-4" /> Enter Reading
+            </MagneticButton>
+            <MagneticButton variant="ghost" onClick={() => navigate("/app/maintenance")}>
+              <Wrench className="h-4 w-4" /> Maintenance
             </MagneticButton>
             <MagneticButton onClick={() => { setPaymentTenantId(undefined); setAddOpen(true); }}>
               <Plus className="h-4 w-4" /> Add payment

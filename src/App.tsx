@@ -26,6 +26,7 @@ import SubscriptionPage from "./pages/Subscription.tsx";
 import ConfirmedEmail from "./pages/ConfirmedEmail.tsx";
 import Staff from "./pages/Staff.tsx";
 import StaffDetails from "./pages/StaffDetails.tsx";
+import Maintenance from "./pages/Maintenance.tsx";
 
 const queryClient = new QueryClient();
 
@@ -100,6 +101,7 @@ const App = () => {
                     <Route path="staff/:id" element={<StaffDetails />} />
                     <Route path="profile" element={<Profile />} />
                     <Route path="expenses" element={<Expenses />} />
+                    <Route path="maintenance" element={<Maintenance />} />
                     <Route path="subscription" element={<SubscriptionPage />} />
                   </Route>
                 </Route>

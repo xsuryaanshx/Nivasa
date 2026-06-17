@@ -89,3 +89,16 @@ export interface UserSettings {
   user_id: string;
   rent_collection_date: number | null;
 }
+
+export interface MaintenanceRequest {
+  id: string;
+  user_id: string;
+  property_id: string;
+  unit_id?: string;
+  title: string;
+  description?: string;
+  status: "pending" | "in_progress" | "resolved";
+  priority: "low" | "medium" | "high" | "critical";
+  created_at: string;
+  updated_at: string;
+}

@@ -5,6 +5,7 @@ import {
   type Payment,
   type PaymentStatus,
   type Tenant,
+  type MaintenanceRequest,
 } from "./types";
 import {
   type OccupancyPriceTier,
@@ -1190,6 +1191,75 @@ async function createInvoice(invoice: any) {
     throw error;
   }
 }
+
+/* ─────────────────────────────────────────────────────────────
+ * Maintenance Requests
+ * ───────────────────────────────────────────────────────────── */
+async function getMaintenanceRequests(): Promise<MaintenanceRequest[]> {
+  try {
+    const user_id = await requireAuthUserId();
+    const { data, error } = await supabase
+      .from("maintenance_requests")
+      .select("*")
+      .eq("user_id", user_id)
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    return data as MaintenanceRequest[];
+  } catch (error) {
+    console.error("Error in getMaintenanceRequests:", error);
+    throw error;
+  }
+}
+
+async function addMaintenanceRequest(request: Partial<MaintenanceRequest>): Promise<MaintenanceRequest> {
+  try {
+    const user_id = await requireAuthUserId();
+    const { data, error } = await supabase
+      .from("maintenance_requests")
+      .insert([{ user_id, ...request }])
+      .select()
+      .single();
+    if (error) throw error;
+    return data as MaintenanceRequest;
+  } catch (error) {
+    console.error("Error in addMaintenanceRequest:", error);
+    throw error;
+  }
+}
+
+async function updateMaintenanceRequest(id: string, updates: Partial<MaintenanceRequest>): Promise<MaintenanceRequest> {
+  try {
+    const user_id = await requireAuthUserId();
+    const { data, error } = await supabase
+      .from("maintenance_requests")
+      .update(updates)
+      .eq("id", id)
+      .eq("user_id", user_id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data as MaintenanceRequest;
+  } catch (error) {
+    console.error("Error in updateMaintenanceRequest:", error);
+    throw error;
+  }
+}
+
+async function deleteMaintenanceRequest(id: string): Promise<void> {
+  try {
+    const user_id = await requireAuthUserId();
+    const { error } = await supabase
+      .from("maintenance_requests")
+      .delete()
+      .eq("id", id)
+      .eq("user_id", user_id);
+    if (error) throw error;
+  } catch (error) {
+    console.error("Error in deleteMaintenanceRequest:", error);
+    throw error;
+  }
+}
+
 export const nivasaApi = {
   getUserSettings,
   updateUserSettings,
@@ -1229,5 +1299,9 @@ export const nivasaApi = {
   addStaffAttendance,
   getStaffDocuments,
   addStaffDocument,
+  getMaintenanceRequests,
+  addMaintenanceRequest,
+  updateMaintenanceRequest,
+  deleteMaintenanceRequest,
 };
 export type NivasaApi = typeof nivasaApi;
