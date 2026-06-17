@@ -27,6 +27,7 @@ import {
   Banknote,
   Users,
   Calendar,
+  TrendingUp,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
@@ -34,6 +35,7 @@ import { useNavigate } from "react-router-dom";
 import { nivasaApi } from "@/lib/api";
 import { useTheme } from "next-themes";
 import { SecurityModal } from "@/components/SecurityModal";
+import { ProfitPanel } from "@/components/ProfitPanel";
 import { EditProfileModal } from "@/components/EditProfileModal";
 import { NotificationsPanel } from "@/components/NotificationsPanel";
 import { StaffManagementPanel } from "@/components/StaffManagementPanel";
@@ -472,6 +474,7 @@ export default function Profile() {
   const [themeOpen, setThemeOpen] = useState(false);
   const [rentDateOpen, setRentDateOpen] = useState(false);
   const [staffOpen, setStaffOpen] = useState(false);
+  const [profitOpen, setProfitOpen] = useState(false);
   const [editProfileOpen, setEditProfileOpen] = useState(false);
   const { t } = useLanguage();
 
@@ -511,6 +514,14 @@ export default function Profile() {
   });
 
   const MENU_ITEMS = [
+    {
+      icon: TrendingUp,
+      label: "Profit",
+      desc: "Net profit & expenses register",
+      onClick: () => setProfitOpen(true),
+      accent: "text-emerald-500",
+      bg: "bg-emerald-500/10",
+    },
     {
       icon: Bell,
       label: "Notifications",
@@ -704,6 +715,7 @@ export default function Profile() {
       <ThemePanel open={themeOpen} onClose={() => setThemeOpen(false)} />
       <LanguageRegionPanel open={languageOpen} onClose={() => setLanguageOpen(false)} />
       <RentSettingsModal open={rentDateOpen} onClose={() => setRentDateOpen(false)} />
+      <ProfitPanel open={profitOpen} onClose={() => setProfitOpen(false)} />
     </>
   );
 }

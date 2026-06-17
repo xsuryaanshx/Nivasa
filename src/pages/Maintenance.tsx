@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { useCurrency, formatMoney } from "@/lib/currency";
 
 const statusColors = {
   pending: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
@@ -41,13 +42,23 @@ const priorityColors = {
 export default function Maintenance() {
   const queryClient = useQueryClient();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const { currency } = useCurrency();
   const [newRequest, setNewRequest] = useState<Partial<MaintenanceRequest>>({
     title: "",
     description: "",
     status: "pending",
     priority: "medium",
     property_id: "",
+    cost: 0,
+    category: "maintenance",
   });
+
+  const categoryColors = {
+    maintenance: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
+    facility: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
+    utility: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400",
+    other: "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-400",
+  };
 
   const { data: requests, isLoading } = useQuery({
     queryKey: ["maintenance"],
@@ -71,8 +82,10 @@ export default function Maintenance() {
         status: "pending",
         priority: "medium",
         property_id: "",
+        cost: 0,
+        category: "maintenance",
       });
-      toast.success("Maintenance request added");
+      toast.success("Expense added");
     },
     onError: (error) => {
       toast.error("Failed to add request");
@@ -115,8 +128,8 @@ export default function Maintenance() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Maintenance</h1>
-          <p className="text-muted-foreground">Track and manage service requests.</p>
+          <h1 className="text-3xl font-bold tracking-tight">Expense Register</h1>
+          <p className="text-muted-foreground">Track and manage service requests and facility expenses.</p>
         </div>
 
         <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
@@ -128,7 +141,7 @@ export default function Maintenance() {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Add Maintenance Request</DialogTitle>
+              <DialogTitle>Add Expense / Request</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4 pt-4">
               <div className="space-y-2">
@@ -166,6 +179,36 @@ export default function Maintenance() {
                   value={newRequest.description}
                   onChange={(e) => setNewRequest({ ...newRequest, description: e.target.value })}
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Category</label>
+                  <Select
+                    value={newRequest.category}
+                    onValueChange={(val) => setNewRequest({ ...newRequest, category: val as any })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="maintenance">Maintenance</SelectItem>
+                      <SelectItem value="facility">Facility (WiFi, etc.)</SelectItem>
+                      <SelectItem value="utility">Utility</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Cost ({currency.symbol})</label>
+                  <Input
+                    type="number"
+                    min="0"
+                    value={newRequest.cost}
+                    onChange={(e) => setNewRequest({ ...newRequest, cost: Number(e.target.value) })}
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -225,8 +268,16 @@ export default function Maintenance() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="text-sm text-muted-foreground flex items-center gap-1">
+                  <div className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
                     {building?.name || "Unknown Property"}
+                  </div>
+                  <div className="mt-2 flex items-center justify-between">
+                    <Badge variant="outline" className={`capitalize ${categoryColors[(request.category || "maintenance") as keyof typeof categoryColors]}`}>
+                      {request.category || "Maintenance"}
+                    </Badge>
+                    <span className="font-semibold text-foreground">
+                      {formatMoney(request.cost || 0, currency, { decimals: 0 })}
+                    </span>
                   </div>
                 </CardHeader>
                 <CardContent>

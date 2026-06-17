@@ -37,6 +37,15 @@ CREATE POLICY "Landlords can delete their own maintenance requests"
   ON maintenance_requests FOR DELETE
   USING (auth.uid() = user_id);
 
+-- Create handle_updated_at function if it doesn't exist
+CREATE OR REPLACE FUNCTION handle_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 -- Create a trigger to automatically update the updated_at timestamp
 CREATE TRIGGER handle_maintenance_requests_updated_at
   BEFORE UPDATE ON maintenance_requests

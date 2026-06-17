@@ -1260,6 +1260,33 @@ async function deleteMaintenanceRequest(id: string): Promise<void> {
   }
 }
 
+async function getProfitStats() {
+  try {
+    const user_id = await requireAuthUserId();
+    const { data: unitsAuth } = await supabase.from("units").select("id").eq("user_id", user_id);
+    const unitIds = (unitsAuth || []).map((u) => u.id);
+    
+    const [payments, expenses] = await Promise.all([
+      supabase.from("payments").select("amount, created_at").eq("status", "paid").in("unit_id", unitIds.length > 0 ? unitIds : ["__none__"]),
+      supabase.from("maintenance_requests").select("cost, created_at").eq("user_id", user_id)
+    ]);
+
+    const totalRevenue = (payments.data || []).reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+    const totalExpenses = (expenses.data || []).reduce((sum, e) => sum + (Number(e.cost) || 0), 0);
+
+    return {
+      totalRevenue,
+      totalExpenses,
+      netProfit: totalRevenue - totalExpenses,
+      payments: payments.data || [],
+      expenses: expenses.data || []
+    };
+  } catch (error) {
+    console.error("Error in getProfitStats:", error);
+    return { totalRevenue: 0, totalExpenses: 0, netProfit: 0, payments: [], expenses: [] };
+  }
+}
+
 export const nivasaApi = {
   getUserSettings,
   updateUserSettings,
@@ -1303,5 +1330,6 @@ export const nivasaApi = {
   addMaintenanceRequest,
   updateMaintenanceRequest,
   deleteMaintenanceRequest,
+  getProfitStats,
 };
 export type NivasaApi = typeof nivasaApi;

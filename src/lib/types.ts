@@ -99,6 +99,8 @@ export interface MaintenanceRequest {
   description?: string;
   status: "pending" | "in_progress" | "resolved";
   priority: "low" | "medium" | "high" | "critical";
+  cost: number;
+  category: "maintenance" | "facility" | "utility" | "other";
   created_at: string;
   updated_at: string;
 }
