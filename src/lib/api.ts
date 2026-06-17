@@ -943,11 +943,15 @@ async function getStaff() {
     const user_id = await requireAuthUserId();
     const { data, error } = await supabase
       .from("staff")
-      .select("*, buildings(name)")
+      .select("*, staff_allocations(building_id)")
       .eq("user_id", user_id)
       .order("created_at", { ascending: false });
     if (error) throw error;
-    return data || [];
+    
+    return (data || []).map((s: any) => ({
+      ...s,
+      allocatedBuildings: s.staff_allocations ? s.staff_allocations.map((a: any) => a.building_id) : []
+    }));
   } catch (error) {
     console.error("Error in getStaff:", error);
     throw error;
@@ -959,12 +963,15 @@ async function getStaffById(id: string) {
     const user_id = await requireAuthUserId();
     const { data, error } = await supabase
       .from("staff")
-      .select("*, buildings(name)")
+      .select("*, staff_allocations(building_id)")
       .eq("id", id)
       .eq("user_id", user_id)
       .single();
     if (error) throw error;
-    return data;
+    return {
+      ...data,
+      allocatedBuildings: data.staff_allocations ? data.staff_allocations.map((a: any) => a.building_id) : []
+    };
   } catch (error) {
     console.error("Error in getStaffById:", error);
     throw error;
@@ -974,9 +981,12 @@ async function getStaffById(id: string) {
 async function addStaff(input: any) {
   try {
     const user_id = await requireAuthUserId();
+    const { allocatedBuildings, ...rest } = input;
     const payload = {
-      ...input,
+      ...rest,
       user_id,
+      join_date: rest.join_date || new Date().toISOString().split('T')[0],
+      building_id: allocatedBuildings && allocatedBuildings.length > 0 ? allocatedBuildings[0] : null
     };
     const { data, error } = await supabase
       .from("staff")
@@ -984,6 +994,16 @@ async function addStaff(input: any) {
       .select()
       .single();
     if (error) throw error;
+
+    if (allocatedBuildings && allocatedBuildings.length > 0) {
+      const allocations = allocatedBuildings.map((bId: string) => ({
+        staff_id: data.id,
+        building_id: bId
+      }));
+      const { error: allocError } = await supabase.from('staff_allocations').insert(allocations);
+      if (allocError) console.error("Error inserting staff allocations", allocError);
+    }
+
     return data;
   } catch (error) {
     console.error("Error in addStaff:", error);
@@ -994,12 +1014,32 @@ async function addStaff(input: any) {
 async function updateStaff(id: string, updates: any) {
   try {
     const user_id = await requireAuthUserId();
-    const { error } = await supabase
-      .from("staff")
-      .update(updates)
-      .eq("id", id)
-      .eq("user_id", user_id);
-    if (error) throw error;
+    const { allocatedBuildings, ...rest } = updates;
+    
+    if (Object.keys(rest).length > 0) {
+      if (allocatedBuildings && allocatedBuildings.length > 0) {
+        rest.building_id = allocatedBuildings[0];
+      } else if (allocatedBuildings && allocatedBuildings.length === 0) {
+        rest.building_id = null;
+      }
+      const { error } = await supabase
+        .from("staff")
+        .update(rest)
+        .eq("id", id)
+        .eq("user_id", user_id);
+      if (error) throw error;
+    }
+
+    if (allocatedBuildings !== undefined) {
+      await supabase.from("staff_allocations").delete().eq("staff_id", id);
+      if (allocatedBuildings.length > 0) {
+        const allocations = allocatedBuildings.map((bId: string) => ({
+          staff_id: id,
+          building_id: bId
+        }));
+        await supabase.from("staff_allocations").insert(allocations);
+      }
+    }
   } catch (error) {
     console.error("Error in updateStaff:", error);
     throw error;
