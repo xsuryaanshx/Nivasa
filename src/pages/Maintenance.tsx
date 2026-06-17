@@ -76,7 +76,9 @@ export default function Maintenance() {
     queryFn: nivasaApi.getRooms,
   });
 
-  const availableRooms = rooms?.filter((r) => r.buildingId === newRequest.property_id) || [];
+  const availableRooms = (rooms?.filter((r) => r.buildingId === newRequest.property_id) || []).sort((a, b) => {
+    return a.number.localeCompare(b.number, undefined, { numeric: true });
+  });
 
   const addMutation = useMutation({
     mutationFn: (request: Partial<MaintenanceRequest>) =>
@@ -245,27 +247,7 @@ export default function Maintenance() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Priority</label>
-                  <Select
-                    value={newRequest.priority}
-                    onValueChange={(val) => setNewRequest({ ...newRequest, priority: val as any })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="low">Low</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="high">High</SelectItem>
-                      <SelectItem value="critical">Critical</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <Button type="submit" className="w-full" disabled={addMutation.isPending}>
+              <Button type="submit" className="w-full mt-4" disabled={addMutation.isPending}>
                 {addMutation.isPending ? "Adding..." : "Add Expense"}
               </Button>
             </form>
