@@ -39,9 +39,16 @@ export function UploadStaffDocumentModal({
     try {
       setLoading(true);
 
+      // SECURITY FIX #13: Validate MIME type and use crypto.randomUUID
+      const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
+      if (!ALLOWED_TYPES.includes(selectedFile.type)) {
+        toast.error("Invalid file type. Only images (JPG, PNG, GIF, WebP) and PDF are allowed.");
+        return;
+      }
+
       // Upload file to Supabase storage
       const fileExt = selectedFile.name.split('.').pop();
-      const fileName = `${staffId}_${Math.random()}.${fileExt}`;
+      const fileName = `${staffId}_${crypto.randomUUID()}.${fileExt}`;
       const filePath = `staff/${fileName}`;
 
       const { data: uploadData, error: uploadError } = await nivasaApi.supabase.storage

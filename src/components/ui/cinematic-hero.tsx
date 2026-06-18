@@ -122,6 +122,23 @@ export function CinematicHero({
     };
   }, [navigate]);
 
+  /* SECURITY FIX #20: Inject styles safely via useEffect instead of dangerouslySetInnerHTML */
+  const styleRef = useRef<HTMLStyleElement | null>(null);
+  useEffect(() => {
+    if (!styleRef.current) {
+      const style = document.createElement("style");
+      style.textContent = INJECTED_STYLES;
+      document.head.appendChild(style);
+      styleRef.current = style;
+    }
+    return () => {
+      if (styleRef.current) {
+        document.head.removeChild(styleRef.current);
+        styleRef.current = null;
+      }
+    };
+  }, []);
+
   return (
     <div
       ref={containerRef}
@@ -129,7 +146,6 @@ export function CinematicHero({
       style={{ perspective: "1500px" }}
       {...props}
     >
-      <style dangerouslySetInnerHTML={{ __html: INJECTED_STYLES }} />
       <div className="film-grain" aria-hidden="true" />
       <div className="bg-grid-theme absolute inset-0 z-0 pointer-events-none opacity-50" aria-hidden="true" />
 

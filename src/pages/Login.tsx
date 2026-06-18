@@ -26,10 +26,21 @@ export default function Login() {
     checkUser();
   }, [navigate]);
 
+  /* SECURITY FIX #10: Rate limiting — progressive delays on failed attempts */
+  const [failCount, setFailCount] = useState(0);
+  const [lockUntil, setLockUntil] = useState<number | null>(null);
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     if (!user || !pwd) { setError("Please fill in both fields."); return; }
+    
+    // Check lockout
+    if (lockUntil && Date.now() < lockUntil) {
+      const secsLeft = Math.ceil((lockUntil - Date.now()) / 1000);
+      setError(`Too many failed attempts. Try again in ${secsLeft}s.`);
+      return;
+    }
     
     setLoading(true);
     try {
@@ -44,9 +55,24 @@ export default function Login() {
       const { data, error } = await nivasaApi.auth.signIn(user, pwd);
       if (error) throw error;
       
+      setFailCount(0);
+      setLockUntil(null);
       navigate("/app");
     } catch (err: any) {
-      setError(err.message || "Invalid email or password");
+      const nextFail = failCount + 1;
+      setFailCount(nextFail);
+      if (nextFail >= 7) {
+        setLockUntil(Date.now() + 15000);
+        setError("Too many failed attempts. Account locked for 15 seconds.");
+      } else if (nextFail >= 5) {
+        setLockUntil(Date.now() + 5000);
+        setError("Too many failed attempts. Try again in 5 seconds.");
+      } else if (nextFail >= 3) {
+        setLockUntil(Date.now() + 2000);
+        setError(err.message || "Invalid email or password. Please wait before retrying.");
+      } else {
+        setError(err.message || "Invalid email or password");
+      }
     } finally {
       setLoading(false);
     }

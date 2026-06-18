@@ -46,7 +46,10 @@ export default function Register() {
     if (!selectedPlan) { setError("Please select a plan to continue."); return; }
     if (!fullName.trim()) { setError("Full name is required."); return; }
     if (!email || !pwd) { setError("Please fill in all fields."); return; }
-    if (pwd.length < 6) { setError("Password must be at least 6 characters."); return; }
+    if (pwd.length < 8) { setError("Password must be at least 8 characters."); return; }
+    if (!/[A-Z]/.test(pwd)) { setError("Password must include at least one uppercase letter."); return; }
+    if (!/[0-9]/.test(pwd)) { setError("Password must include at least one number."); return; }
+    if (!/[^A-Za-z0-9]/.test(pwd)) { setError("Password must include at least one special character."); return; }
 
     setLoading(true);
     try {

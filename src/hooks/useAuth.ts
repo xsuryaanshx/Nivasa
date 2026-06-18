@@ -50,6 +50,8 @@ export function useAuth() {
 
   const signOut = async () => {
     await nivasaApi.auth.signOut();
+    /* SECURITY FIX #22: signOut on all devices by using scope: 'global' */
+    await nivasaApi.supabase.auth.signOut({ scope: 'global' });
     setUser(null);
     window.location.href = "/login";
   };
