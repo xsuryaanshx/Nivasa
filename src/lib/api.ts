@@ -15,6 +15,16 @@ import {
 } from "./rentByOccupancy";
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+
+/* SECURITY: Safe logger — never expose raw Supabase errors to browser console in production */
+const IS_PROD = import.meta.env.PROD;
+function safeLog(context: string, error: unknown) {
+  if (IS_PROD) {
+    console.error(`[Nivasa] ${context}: An error occurred.`);
+  } else {
+    console.error(`[Nivasa] ${context}:`, error);
+  }
+}
 const customStorage = {
   getItem: (key: string) => {
     const local = localStorage.getItem(key);
@@ -115,7 +125,7 @@ async function getBuildings(): Promise<
       };
     });
   } catch (error) {
-    console.error("Error in getBuildings:", error);
+    safeLog("getBuildings", error);
     throw error;
   }
 }
@@ -150,7 +160,7 @@ async function addBuilding(input: {
     }
     return data;
   } catch (error) {
-    console.error("Error in addBuilding:", error);
+    safeLog("addBuilding", error);
     throw error;
   }
 }
@@ -233,7 +243,7 @@ async function updateBuilding(
       await adjustBuildingRooms(id, targetRooms);
     }
   } catch (error) {
-    console.error("Error in updateBuilding:", error);
+    safeLog("updateBuilding", error);
     throw error;
   }
 }
@@ -259,7 +269,7 @@ async function deleteRoom(id: string) {
     if (error) throw error;
     return true;
   } catch (error) {
-    console.error("Error in deleteRoom:", error);
+    safeLog("deleteRoom", error);
     throw error;
   }
 }
@@ -289,7 +299,7 @@ async function deleteBuilding(id: string) {
       .eq("user_id", user_id);
     if (error) throw error;
   } catch (error) {
-    console.error("Error in deleteBuilding:", error);
+    safeLog("deleteBuilding", error);
     throw error;
   }
 }
@@ -309,7 +319,7 @@ async function getPropertyDetails(buildingId: string | undefined) {
       .select("*")
       .eq("building_id", buildingId)
       .eq("user_id", user_id);
-    if (tError) console.error("Error fetching tenants:", tError);
+    if (tError) safeLog("getPropertyDetails.tenants", tError);
     return {
       ...building,
       tenants: tenants || [],
@@ -349,7 +359,7 @@ async function getPropertyDetails(buildingId: string | undefined) {
           : 0,
     };
   } catch (error) {
-    console.error("Error in getPropertyDetails:", error);
+    safeLog("getPropertyDetails", error);
     throw error;
   }
 }
@@ -422,7 +432,7 @@ async function getRooms(): Promise<any[]> {
     }));
     return unitsWithTenants.map(mapUnitToRoom);
   } catch (error) {
-    console.error("Error in getRooms:", error);
+    safeLog("getRooms", error);
     throw error;
   }
 }
@@ -437,14 +447,16 @@ async function getRoomById(id: string): Promise<any | null> {
       .single();
     if (error) throw error;
     if (!unit) return null;
+    /* SECURITY FIX #3: scope tenant query by user_id to prevent IDOR */
     const { data: tenants } = await supabase
       .from("tenants")
       .select("*")
-      .eq("room_id", id);
+      .eq("room_id", id)
+      .eq("user_id", user_id);
     const unitWithTenants = { ...unit, tenants: tenants || [] };
     return mapUnitToRoom(unitWithTenants);
   } catch (error) {
-    console.error("Error in getRoomById:", error);
+    safeLog("getRoomById", error);
     return null;
   }
 }
@@ -483,34 +495,36 @@ async function getTenants(): Promise<any[]> {
       };
     });
   } catch (error) {
-    console.error("Error in getTenants:", error);
+    safeLog("getTenants", error);
     throw error;
   }
 }
+/* SECURITY FIX #17: user_id is now REQUIRED — never update without ownership check */
 async function syncUnitEffectiveRent(unitId: string, user_id?: string) {
-  const query = supabase
+  const effectiveUserId = user_id || (await requireAuthUserId());
+  const { data: unit, error } = await supabase
     .from("units")
     .select("rent_amount, occupancy_prices, status")
-    .eq("id", unitId);
-  if (user_id) query.eq("user_id", user_id);
-  const { data: unit, error } = await query.single();
+    .eq("id", unitId)
+    .eq("user_id", effectiveUserId)
+    .single();
   if (error || !unit) return;
   const { count, error: tError } = await supabase
     .from("tenants")
     .select("*", { count: "exact", head: true })
-    .eq("room_id", unitId);
+    .eq("room_id", unitId)
+    .eq("user_id", effectiveUserId);
   const tiers = normalizeOccupancyTiers(unit.occupancy_prices);
   const occ =
     unit.status === "occupied" && count != null ? Math.max(1, count) : 1;
   const stored = Number(unit.rent_amount) || 0;
   const effective = computeRentFromTiers(tiers, stored, occ);
   if (Math.abs(stored - effective) < 0.005) return;
-  const updateQ = supabase
+  await supabase
     .from("units")
     .update({ rent_amount: effective })
-    .eq("id", unitId);
-  if (user_id) updateQ.eq("user_id", user_id);
-  await updateQ;
+    .eq("id", unitId)
+    .eq("user_id", effectiveUserId);
 }
 async function updateRoom(
   id: string,
@@ -598,7 +612,7 @@ async function updateTenant(
       await syncUnitEffectiveRent(row.room_id);
     }
   } catch (error) {
-    console.error("Error in updateTenant:", error);
+    safeLog("updateTenant", error);
     throw error;
   }
 }
@@ -631,7 +645,7 @@ async function addRoom(input: {
     if (error) throw error;
     return data;
   } catch (error) {
-    console.error("Error in addRoom:", error);
+    safeLog("addRoom", error);
     throw error;
   }
 }
@@ -698,11 +712,11 @@ async function addTenant(input: {
       .update({ status: "occupied" })
       .eq("id", input.room_id);
     if (updateError)
-      console.error("Failed to update room status:", updateError);
+      safeLog("addTenant.updateRoomStatus", updateError);
     await syncUnitEffectiveRent(input.room_id);
     return tenant;
   } catch (error) {
-    console.error("Error in addTenant:", error);
+    safeLog("addTenant", error);
     throw error;
   }
 }
@@ -741,7 +755,7 @@ async function removeTenant(roomId: string, tenantId: string) {
     await syncUnitEffectiveRent(roomId);
     return true;
   } catch (error) {
-    console.error("Error in removeTenant:", error);
+    safeLog("removeTenant", error);
     throw error;
   }
 }
@@ -792,7 +806,7 @@ async function addPayment(input: any) {
     }
     return data;
   } catch (error) {
-    console.error("Error in addPayment:", error);
+    safeLog("addPayment", error);
     throw error;
   }
 }
@@ -831,7 +845,7 @@ async function getRecentPayments(limit = 10) {
       buildingName: p.units?.buildings?.name,
     }));
   } catch (error) {
-    console.error("Error in getRecentPayments:", error);
+    safeLog("getRecentPayments", error);
     return [];
   }
 }
@@ -857,35 +871,34 @@ async function saveElectricityReading(input: {
     if (error) throw error;
     return true;
   } catch (error) {
-    console.error("Error in saveElectricityReading:", error);
+    safeLog("saveElectricityReading", error);
     throw error;
   }
 }
+/* SECURITY FIX #16: Electricity rate is now stored per-user in user_settings instead of a shared table */
 async function getElectricityRate(): Promise<number> {
   try {
+    const user_id = await requireAuthUserId();
     const { data, error } = await supabase
-      .from("settings")
-      .select("value")
-      .eq("key", "electricity_rate")
+      .from("user_settings")
+      .select("*")
+      .eq("user_id", user_id)
       .single();
-    if (error || !data) return 0.18;
-    /* Default */
-    return parseFloat(data.value);
+    if (error || !data || !(data as any).electricity_rate) return 0.18;
+    return parseFloat((data as any).electricity_rate) || 0.18;
   } catch (error) {
     return 0.18;
   }
 }
 async function updateElectricityRate(rate: number) {
   try {
+    const user_id = await requireAuthUserId();
     const { error } = await supabase
-      .from("settings")
-      .upsert(
-        { key: "electricity_rate", value: rate.toString() },
-        { onConflict: "key" },
-      );
+      .from("user_settings")
+      .upsert({ user_id, electricity_rate: rate });
     if (error) throw error;
   } catch (error) {
-    console.error("Error in updateElectricityRate:", error);
+    safeLog("updateElectricityRate", error);
     throw error;
   }
 }
@@ -954,7 +967,7 @@ async function getStaff() {
       allocatedBuildings: s.building_id ? [s.building_id] : []
     }));
   } catch (error) {
-    console.error("Error in getStaff:", error);
+    safeLog("getStaff", error);
     throw error;
   }
 }
@@ -974,20 +987,27 @@ async function getStaffById(id: string) {
       allocatedBuildings: data.building_id ? [data.building_id] : []
     };
   } catch (error) {
-    console.error("Error in getStaffById:", error);
+    safeLog("getStaffById", error);
     throw error;
   }
 }
 
+/* SECURITY FIX #7: Whitelist allowed fields — never spread raw input */
 async function addStaff(input: any) {
   try {
     const user_id = await requireAuthUserId();
-    const { allocatedBuildings, ...rest } = input;
     const payload = {
-      ...rest,
       user_id,
-      join_date: rest.join_date || new Date().toISOString().split('T')[0],
-      building_id: allocatedBuildings && allocatedBuildings.length > 0 ? allocatedBuildings[0] : null
+      name: input.name,
+      role: input.role,
+      phone: input.phone || null,
+      monthly_salary: input.monthly_salary || 0,
+      status: input.status || "active",
+      emergency_contact_name: input.emergency_contact_name || null,
+      emergency_contact_phone: input.emergency_contact_phone || null,
+      notes: input.notes || null,
+      join_date: input.join_date || new Date().toISOString().split('T')[0],
+      building_id: input.allocatedBuildings && input.allocatedBuildings.length > 0 ? input.allocatedBuildings[0] : null
     };
     const { data, error } = await supabase
       .from("staff")
@@ -998,30 +1018,39 @@ async function addStaff(input: any) {
 
     return data;
   } catch (error) {
-    console.error("Error in addStaff:", error);
+    safeLog("addStaff", error);
     throw error;
   }
 }
 
+/* SECURITY FIX #6: Whitelist allowed update fields — never spread raw input */
 async function updateStaff(id: string, updates: any) {
   try {
     const user_id = await requireAuthUserId();
-    const { allocatedBuildings, ...rest } = updates;
-    
-    if (allocatedBuildings !== undefined) {
-      rest.building_id = allocatedBuildings.length > 0 ? allocatedBuildings[0] : null;
+    const patch: Record<string, unknown> = {};
+    if (updates.name !== undefined) patch.name = updates.name;
+    if (updates.role !== undefined) patch.role = updates.role;
+    if (updates.phone !== undefined) patch.phone = updates.phone;
+    if (updates.monthly_salary !== undefined) patch.monthly_salary = updates.monthly_salary;
+    if (updates.status !== undefined) patch.status = updates.status;
+    if (updates.emergency_contact_name !== undefined) patch.emergency_contact_name = updates.emergency_contact_name;
+    if (updates.emergency_contact_phone !== undefined) patch.emergency_contact_phone = updates.emergency_contact_phone;
+    if (updates.notes !== undefined) patch.notes = updates.notes;
+    if (updates.join_date !== undefined) patch.join_date = updates.join_date;
+    if (updates.allocatedBuildings !== undefined) {
+      patch.building_id = updates.allocatedBuildings.length > 0 ? updates.allocatedBuildings[0] : null;
     }
     
-    if (Object.keys(rest).length > 0) {
+    if (Object.keys(patch).length > 0) {
       const { error } = await supabase
         .from("staff")
-        .update(rest)
+        .update(patch)
         .eq("id", id)
         .eq("user_id", user_id);
       if (error) throw error;
     }
   } catch (error) {
-    console.error("Error in updateStaff:", error);
+    safeLog("updateStaff", error);
     throw error;
   }
 }
@@ -1036,13 +1065,26 @@ async function removeStaff(id: string) {
       .eq("user_id", user_id);
     if (error) throw error;
   } catch (error) {
-    console.error("Error in removeStaff:", error);
+    safeLog("removeStaff", error);
     throw error;
   }
 }
 
+/* SECURITY FIX #4: Add auth + verify staff ownership in all staff sub-functions */
+async function verifyStaffOwnership(staffId: string, user_id: string): Promise<void> {
+  const { data, error } = await supabase
+    .from("staff")
+    .select("id")
+    .eq("id", staffId)
+    .eq("user_id", user_id)
+    .single();
+  if (error || !data) throw new Error("Staff not found or access denied");
+}
+
 async function getStaffPayments(staffId: string) {
   try {
+    const user_id = await requireAuthUserId();
+    await verifyStaffOwnership(staffId, user_id);
     const { data, error } = await supabase
       .from("staff_payments")
       .select("*")
@@ -1051,28 +1093,38 @@ async function getStaffPayments(staffId: string) {
     if (error) throw error;
     return data || [];
   } catch (error) {
-    console.error("Error in getStaffPayments:", error);
+    safeLog("getStaffPayments", error);
     throw error;
   }
 }
 
 async function addStaffPayment(input: any) {
   try {
+    const user_id = await requireAuthUserId();
+    await verifyStaffOwnership(input.staff_id, user_id);
+    const payload = {
+      staff_id: input.staff_id,
+      amount: input.amount,
+      payment_date: input.payment_date,
+      notes: input.notes || null,
+    };
     const { data, error } = await supabase
       .from("staff_payments")
-      .insert([input])
+      .insert([payload])
       .select()
       .single();
     if (error) throw error;
     return data;
   } catch (error) {
-    console.error("Error in addStaffPayment:", error);
+    safeLog("addStaffPayment", error);
     throw error;
   }
 }
 
 async function getStaffAttendance(staffId: string) {
   try {
+    const user_id = await requireAuthUserId();
+    await verifyStaffOwnership(staffId, user_id);
     const { data, error } = await supabase
       .from("staff_attendance")
       .select("*")
@@ -1081,28 +1133,38 @@ async function getStaffAttendance(staffId: string) {
     if (error) throw error;
     return data || [];
   } catch (error) {
-    console.error("Error in getStaffAttendance:", error);
+    safeLog("getStaffAttendance", error);
     throw error;
   }
 }
 
 async function addStaffAttendance(input: any) {
   try {
+    const user_id = await requireAuthUserId();
+    await verifyStaffOwnership(input.staff_id, user_id);
+    const payload = {
+      staff_id: input.staff_id,
+      date: input.date,
+      status: input.status,
+      notes: input.notes || null,
+    };
     const { data, error } = await supabase
       .from("staff_attendance")
-      .insert([input])
+      .insert([payload])
       .select()
       .single();
     if (error) throw error;
     return data;
   } catch (error) {
-    console.error("Error in addStaffAttendance:", error);
+    safeLog("addStaffAttendance", error);
     throw error;
   }
 }
 
 async function getStaffDocuments(staffId: string) {
   try {
+    const user_id = await requireAuthUserId();
+    await verifyStaffOwnership(staffId, user_id);
     const { data, error } = await supabase
       .from("staff_documents")
       .select("*")
@@ -1111,22 +1173,29 @@ async function getStaffDocuments(staffId: string) {
     if (error) throw error;
     return data || [];
   } catch (error) {
-    console.error("Error in getStaffDocuments:", error);
+    safeLog("getStaffDocuments", error);
     throw error;
   }
 }
 
 async function addStaffDocument(input: any) {
   try {
+    const user_id = await requireAuthUserId();
+    await verifyStaffOwnership(input.staff_id, user_id);
+    const payload = {
+      staff_id: input.staff_id,
+      document_type: input.document_type,
+      document_url: input.document_url,
+    };
     const { data, error } = await supabase
       .from("staff_documents")
-      .insert([input])
+      .insert([payload])
       .select()
       .single();
     if (error) throw error;
     return data;
   } catch (error) {
-    console.error("Error in addStaffDocument:", error);
+    safeLog("addStaffDocument", error);
     throw error;
   }
 }
@@ -1142,20 +1211,24 @@ async function getUserSettings() {
     if (error && error.code !== 'PGRST116') throw error; // ignore no rows
     return data;
   } catch (error) {
-    console.error("Error in getUserSettings:", error);
+    safeLog("getUserSettings", error);
     throw error;
   }
 }
 
+/* SECURITY FIX #9: Whitelist allowed fields — never spread raw input */
 async function updateUserSettings(settings: any) {
   try {
     const user_id = await requireAuthUserId();
+    const patch: Record<string, unknown> = { user_id };
+    if (settings.rent_collection_date !== undefined) patch.rent_collection_date = settings.rent_collection_date;
+    if (settings.electricity_rate !== undefined) patch.electricity_rate = settings.electricity_rate;
     const { error } = await supabase
       .from("user_settings")
-      .upsert({ user_id, ...settings });
+      .upsert(patch);
     if (error) throw error;
   } catch (error) {
-    console.error("Error in updateUserSettings:", error);
+    safeLog("updateUserSettings", error);
     throw error;
   }
 }
@@ -1171,23 +1244,35 @@ async function getInvoices(filter: { roomId?: string, tenantId?: string }) {
     if (error) throw error;
     return data || [];
   } catch (error) {
-    console.error("Error in getInvoices:", error);
+    safeLog("getInvoices", error);
     throw error;
   }
 }
 
+/* SECURITY FIX #8: Whitelist allowed fields — never spread raw input */
 async function createInvoice(invoice: any) {
   try {
     const user_id = await requireAuthUserId();
+    const payload = {
+      user_id,
+      tenant_id: invoice.tenant_id,
+      room_id: invoice.room_id,
+      month_year: invoice.month_year,
+      base_rent: invoice.base_rent || 0,
+      electricity_cost: invoice.electricity_cost || 0,
+      add_ons: invoice.add_ons || [],
+      previous_dues: invoice.previous_dues || 0,
+      total_due: invoice.total_due || 0,
+    };
     const { data, error } = await supabase
       .from("invoices")
-      .insert([{ user_id, ...invoice }])
+      .insert([payload])
       .select()
       .single();
     if (error) throw error;
     return data;
   } catch (error) {
-    console.error("Error in createInvoice:", error);
+    safeLog("createInvoice", error);
     throw error;
   }
 }
@@ -1206,33 +1291,51 @@ async function getMaintenanceRequests(): Promise<MaintenanceRequest[]> {
     if (error) throw error;
     return data as MaintenanceRequest[];
   } catch (error) {
-    console.error("Error in getMaintenanceRequests:", error);
+    safeLog("getMaintenanceRequests", error);
     throw error;
   }
 }
 
+/* SECURITY FIX #8: Whitelist allowed fields — never spread raw input */
 async function addMaintenanceRequest(request: Partial<MaintenanceRequest>): Promise<MaintenanceRequest> {
   try {
     const user_id = await requireAuthUserId();
+    const payload = {
+      user_id,
+      property_id: request.property_id,
+      unit_id: request.unit_id || null,
+      title: request.title,
+      description: request.description || null,
+      status: request.status || "pending",
+      priority: request.priority || "medium",
+      cost: (request as any).cost || 0,
+    };
     const { data, error } = await supabase
       .from("maintenance_requests")
-      .insert([{ user_id, ...request }])
+      .insert([payload])
       .select()
       .single();
     if (error) throw error;
     return data as MaintenanceRequest;
   } catch (error) {
-    console.error("Error in addMaintenanceRequest:", error);
+    safeLog("addMaintenanceRequest", error);
     throw error;
   }
 }
 
+/* SECURITY FIX #18: Whitelist allowed update fields */
 async function updateMaintenanceRequest(id: string, updates: Partial<MaintenanceRequest>): Promise<MaintenanceRequest> {
   try {
     const user_id = await requireAuthUserId();
+    const patch: Record<string, unknown> = {};
+    if (updates.title !== undefined) patch.title = updates.title;
+    if (updates.description !== undefined) patch.description = updates.description;
+    if (updates.status !== undefined) patch.status = updates.status;
+    if (updates.priority !== undefined) patch.priority = updates.priority;
+    if ((updates as any).cost !== undefined) patch.cost = (updates as any).cost;
     const { data, error } = await supabase
       .from("maintenance_requests")
-      .update(updates)
+      .update(patch)
       .eq("id", id)
       .eq("user_id", user_id)
       .select()
@@ -1240,7 +1343,7 @@ async function updateMaintenanceRequest(id: string, updates: Partial<Maintenance
     if (error) throw error;
     return data as MaintenanceRequest;
   } catch (error) {
-    console.error("Error in updateMaintenanceRequest:", error);
+    safeLog("updateMaintenanceRequest", error);
     throw error;
   }
 }
@@ -1255,7 +1358,7 @@ async function deleteMaintenanceRequest(id: string): Promise<void> {
       .eq("user_id", user_id);
     if (error) throw error;
   } catch (error) {
-    console.error("Error in deleteMaintenanceRequest:", error);
+    safeLog("deleteMaintenanceRequest", error);
     throw error;
   }
 }

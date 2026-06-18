@@ -140,8 +140,13 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
         if (selectedFile.size > 5 * 1024 * 1024) {
           throw new Error("Document is too large. Max size is 5MB.");
         }
+        // SECURITY FIX #13: Validate MIME type
+        const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
+        if (!ALLOWED_TYPES.includes(selectedFile.type)) {
+          throw new Error("Invalid file type. Only images (JPG, PNG, GIF, WebP) and PDF are allowed.");
+        }
         const fileExt = selectedFile.name.split('.').pop();
-        const fileName = `tenant_${Math.random()}.${fileExt}`;
+        const fileName = `tenant_${crypto.randomUUID()}.${fileExt}`;
         const filePath = `tenants/${fileName}`;
         const { error: uploadError } = await nivasaApi.supabase.storage
           .from('documents')

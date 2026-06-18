@@ -139,12 +139,13 @@ export async function getCurrentSubscription(userId: string): Promise<Subscripti
     .maybeSingle();
 
   if (error || !data) {
-    // Return a default/fallback Platinum active subscription if none exists in DB
+    // Return a default/fallback Silver (most restrictive) subscription if none exists in DB
+    // SECURITY: Never default to Platinum/unlimited — always fail to the safest option
     return {
       id: "fallback-sub-id",
       user_id: userId,
-      plan_id: DEFAULT_PLANS.platinum.id,
-      status: "active",
+      plan_id: DEFAULT_PLANS.silver.id,
+      status: "trial",
       billing_cycle: "monthly",
       start_date: new Date().toISOString(),
       expiry_date: null,
@@ -153,10 +154,10 @@ export async function getCurrentSubscription(userId: string): Promise<Subscripti
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       plans: {
-        ...DEFAULT_PLANS.platinum,
-        plan_features: Object.entries(DEFAULT_PLANS.platinum.features).map(([k, v]) => ({
+        ...DEFAULT_PLANS.silver,
+        plan_features: Object.entries(DEFAULT_PLANS.silver.features).map(([k, v]) => ({
           id: `feat-${k}`,
-          plan_id: DEFAULT_PLANS.platinum.id,
+          plan_id: DEFAULT_PLANS.silver.id,
           feature_key: k,
           feature_value: v,
           enabled: true,
