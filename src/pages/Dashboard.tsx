@@ -1,5 +1,5 @@
 import { nivasaApi } from "@/lib/api";
-import { Building2, IndianRupee, Home, ReceiptIndianRupee, Users, Plus } from "lucide-react";
+import { Building2, IndianRupee, Home, ReceiptIndianRupee, Users, Plus, TrendingUp } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/PageHeader";
@@ -25,7 +25,8 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState({
     stats: { totalBuildings: 0, totalRooms: 0, occupied: 0, pending: 0, monthlyRevenue: 0 },
-    recent: []
+    recent: [],
+    profitStats: { netProfit: 0 }
   });
   const [addOpen, setAddOpen] = useState(false);
 
@@ -34,12 +35,13 @@ export default function Dashboard() {
       setLoading(true);
       if (!nivasaApi) return;
 
-      const [stats, recent] = await Promise.all([
+      const [stats, recent, profitStats] = await Promise.all([
         nivasaApi.getDashboardStats(),
-        nivasaApi.getRecentPayments(8)
+        nivasaApi.getRecentPayments(8),
+        nivasaApi.getProfitStats()
       ]);
 
-      setData({ stats, recent });
+      setData({ stats, recent, profitStats });
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
     } finally {
@@ -83,6 +85,7 @@ export default function Dashboard() {
         <StatCard label={t('occupancy')}         value={s.occupied}       icon={Users}     delta="92%" trend="flat" delay={0.10} onClick={() => navigate("/app/rooms?status=occupied")} />
         <StatCard label={t('pending_payments')} value={s.pending}        icon={ReceiptIndianRupee}   delta="-1"  trend="up"   delay={0.15} onClick={() => navigate("/app/rooms?status=pending")} />
         <StatCard label={t('monthly_revenue')}  value={s.monthlyRevenue} icon={IndianRupee} money delta="+12%" trend="up" delay={0.20} onClick={() => navigate("/app/payments?status=paid")} />
+        <StatCard label="Net Profit"  value={data.profitStats?.netProfit || 0} icon={TrendingUp} money delta="+10%" trend="up" delay={0.25} onClick={() => navigate("/app/profile")} />
       </div>
 
       <div className="mt-6">

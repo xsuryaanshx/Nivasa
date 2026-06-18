@@ -5,6 +5,7 @@ import {
   type Payment,
   type PaymentStatus,
   type Tenant,
+  type MaintenanceRequest,
 } from "./types";
 import {
   type OccupancyPriceTier,
@@ -947,7 +948,11 @@ async function getStaff() {
       .eq("user_id", user_id)
       .order("created_at", { ascending: false });
     if (error) throw error;
-    return data || [];
+    
+    return (data || []).map((s: any) => ({
+      ...s,
+      allocatedBuildings: s.building_id ? [s.building_id] : []
+    }));
   } catch (error) {
     console.error("Error in getStaff:", error);
     throw error;
@@ -964,7 +969,10 @@ async function getStaffById(id: string) {
       .eq("user_id", user_id)
       .single();
     if (error) throw error;
-    return data;
+    return {
+      ...data,
+      allocatedBuildings: data.building_id ? [data.building_id] : []
+    };
   } catch (error) {
     console.error("Error in getStaffById:", error);
     throw error;
@@ -974,9 +982,12 @@ async function getStaffById(id: string) {
 async function addStaff(input: any) {
   try {
     const user_id = await requireAuthUserId();
+    const { allocatedBuildings, ...rest } = input;
     const payload = {
-      ...input,
+      ...rest,
       user_id,
+      join_date: rest.join_date || new Date().toISOString().split('T')[0],
+      building_id: allocatedBuildings && allocatedBuildings.length > 0 ? allocatedBuildings[0] : null
     };
     const { data, error } = await supabase
       .from("staff")
@@ -984,6 +995,7 @@ async function addStaff(input: any) {
       .select()
       .single();
     if (error) throw error;
+
     return data;
   } catch (error) {
     console.error("Error in addStaff:", error);
@@ -994,12 +1006,20 @@ async function addStaff(input: any) {
 async function updateStaff(id: string, updates: any) {
   try {
     const user_id = await requireAuthUserId();
-    const { error } = await supabase
-      .from("staff")
-      .update(updates)
-      .eq("id", id)
-      .eq("user_id", user_id);
-    if (error) throw error;
+    const { allocatedBuildings, ...rest } = updates;
+    
+    if (allocatedBuildings !== undefined) {
+      rest.building_id = allocatedBuildings.length > 0 ? allocatedBuildings[0] : null;
+    }
+    
+    if (Object.keys(rest).length > 0) {
+      const { error } = await supabase
+        .from("staff")
+        .update(rest)
+        .eq("id", id)
+        .eq("user_id", user_id);
+      if (error) throw error;
+    }
   } catch (error) {
     console.error("Error in updateStaff:", error);
     throw error;
@@ -1171,6 +1191,102 @@ async function createInvoice(invoice: any) {
     throw error;
   }
 }
+
+/* ─────────────────────────────────────────────────────────────
+ * Maintenance Requests
+ * ───────────────────────────────────────────────────────────── */
+async function getMaintenanceRequests(): Promise<MaintenanceRequest[]> {
+  try {
+    const user_id = await requireAuthUserId();
+    const { data, error } = await supabase
+      .from("maintenance_requests")
+      .select("*")
+      .eq("user_id", user_id)
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    return data as MaintenanceRequest[];
+  } catch (error) {
+    console.error("Error in getMaintenanceRequests:", error);
+    throw error;
+  }
+}
+
+async function addMaintenanceRequest(request: Partial<MaintenanceRequest>): Promise<MaintenanceRequest> {
+  try {
+    const user_id = await requireAuthUserId();
+    const { data, error } = await supabase
+      .from("maintenance_requests")
+      .insert([{ user_id, ...request }])
+      .select()
+      .single();
+    if (error) throw error;
+    return data as MaintenanceRequest;
+  } catch (error) {
+    console.error("Error in addMaintenanceRequest:", error);
+    throw error;
+  }
+}
+
+async function updateMaintenanceRequest(id: string, updates: Partial<MaintenanceRequest>): Promise<MaintenanceRequest> {
+  try {
+    const user_id = await requireAuthUserId();
+    const { data, error } = await supabase
+      .from("maintenance_requests")
+      .update(updates)
+      .eq("id", id)
+      .eq("user_id", user_id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data as MaintenanceRequest;
+  } catch (error) {
+    console.error("Error in updateMaintenanceRequest:", error);
+    throw error;
+  }
+}
+
+async function deleteMaintenanceRequest(id: string): Promise<void> {
+  try {
+    const user_id = await requireAuthUserId();
+    const { error } = await supabase
+      .from("maintenance_requests")
+      .delete()
+      .eq("id", id)
+      .eq("user_id", user_id);
+    if (error) throw error;
+  } catch (error) {
+    console.error("Error in deleteMaintenanceRequest:", error);
+    throw error;
+  }
+}
+
+async function getProfitStats() {
+  try {
+    const user_id = await requireAuthUserId();
+    const { data: unitsAuth } = await supabase.from("units").select("id").eq("user_id", user_id);
+    const unitIds = (unitsAuth || []).map((u) => u.id);
+    
+    const [payments, expenses] = await Promise.all([
+      supabase.from("payments").select("amount, created_at").eq("status", "paid").in("unit_id", unitIds.length > 0 ? unitIds : ["__none__"]),
+      supabase.from("maintenance_requests").select("cost, created_at").eq("user_id", user_id)
+    ]);
+
+    const totalRevenue = (payments.data || []).reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+    const totalExpenses = (expenses.data || []).reduce((sum, e) => sum + (Number(e.cost) || 0), 0);
+
+    return {
+      totalRevenue,
+      totalExpenses,
+      netProfit: totalRevenue - totalExpenses,
+      payments: payments.data || [],
+      expenses: expenses.data || []
+    };
+  } catch (error) {
+    console.error("Error in getProfitStats:", error);
+    return { totalRevenue: 0, totalExpenses: 0, netProfit: 0, payments: [], expenses: [] };
+  }
+}
+
 export const nivasaApi = {
   getUserSettings,
   updateUserSettings,
@@ -1210,5 +1326,10 @@ export const nivasaApi = {
   addStaffAttendance,
   getStaffDocuments,
   addStaffDocument,
+  getMaintenanceRequests,
+  addMaintenanceRequest,
+  updateMaintenanceRequest,
+  deleteMaintenanceRequest,
+  getProfitStats,
 };
 export type NivasaApi = typeof nivasaApi;

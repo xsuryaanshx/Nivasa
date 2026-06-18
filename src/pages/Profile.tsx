@@ -27,6 +27,8 @@ import {
   Banknote,
   Users,
   Calendar,
+  TrendingUp,
+  Wrench,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
@@ -34,6 +36,7 @@ import { useNavigate } from "react-router-dom";
 import { nivasaApi } from "@/lib/api";
 import { useTheme } from "next-themes";
 import { SecurityModal } from "@/components/SecurityModal";
+import { ProfitPanel } from "@/components/ProfitPanel";
 import { EditProfileModal } from "@/components/EditProfileModal";
 import { NotificationsPanel } from "@/components/NotificationsPanel";
 import { StaffManagementPanel } from "@/components/StaffManagementPanel";
@@ -450,6 +453,7 @@ const APP_FEATURE_KEY_MAP: Record<string, { label: string; desc: string }> = {
   "Analytics": { label: "app_feat_analytics", desc: "app_feat_analytics_desc" },
   "Expenses": { label: "app_feat_expenses", desc: "app_feat_expenses_desc" },
   "Staff": { label: "app_feat_staff", desc: "app_feat_staff_desc" },
+  "Billing Cycle": { label: "app_feat_billing_cycle", desc: "app_feat_billing_cycle_desc" },
 };
 
 const MENU_KEY_MAP: Record<string, { label: string; desc: string }> = {
@@ -471,6 +475,7 @@ export default function Profile() {
   const [themeOpen, setThemeOpen] = useState(false);
   const [rentDateOpen, setRentDateOpen] = useState(false);
   const [staffOpen, setStaffOpen] = useState(false);
+  const [profitOpen, setProfitOpen] = useState(false);
   const [editProfileOpen, setEditProfileOpen] = useState(false);
   const { t } = useLanguage();
 
@@ -510,6 +515,22 @@ export default function Profile() {
   });
 
   const MENU_ITEMS = [
+    {
+      icon: Wrench,
+      label: "Expense Register",
+      desc: "Log maintenance & facility costs",
+      onClick: () => navigate("/app/maintenance"),
+      accent: "text-rose-500",
+      bg: "bg-rose-500/10",
+    },
+    {
+      icon: TrendingUp,
+      label: "Profit",
+      desc: "Net profit summary",
+      onClick: () => setProfitOpen(true),
+      accent: "text-emerald-500",
+      bg: "bg-emerald-500/10",
+    },
     {
       icon: Bell,
       label: "Notifications",
@@ -703,6 +724,7 @@ export default function Profile() {
       <ThemePanel open={themeOpen} onClose={() => setThemeOpen(false)} />
       <LanguageRegionPanel open={languageOpen} onClose={() => setLanguageOpen(false)} />
       <RentSettingsModal open={rentDateOpen} onClose={() => setRentDateOpen(false)} />
+      <ProfitPanel open={profitOpen} onClose={() => setProfitOpen(false)} />
     </>
   );
 }

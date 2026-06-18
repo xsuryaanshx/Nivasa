@@ -7,6 +7,7 @@ import { useLanguage } from "./LanguageProvider";
 import { NotificationsPanel } from "./NotificationsPanel";
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
+import { useNavigate } from "react-router-dom";
 
 interface Props {
   collapsed: boolean;
@@ -22,6 +23,7 @@ export function Topbar({ collapsed, onToggle, onOpenPalette, onOpenMobileDrawer 
   const [unreadCount, setUnreadCount] = useState(0);
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const navigate = useNavigate();
 
   // Load unread badge count on mount
   useEffect(() => {
@@ -126,7 +128,7 @@ export function Topbar({ collapsed, onToggle, onOpenPalette, onOpenMobileDrawer 
               )}
             </button>
             <button
-              onClick={onOpenMobileDrawer}
+              onClick={() => navigate("/app/profile")}
               className="flex h-8 w-8 items-center justify-center rounded-full bg-foreground text-[10px] font-semibold text-background"
             >
               {user?.initials || "U"}
