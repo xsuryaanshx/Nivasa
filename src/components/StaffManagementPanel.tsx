@@ -29,7 +29,12 @@ export function StaffManagementPanel({ open, onClose }: Props) {
   const [role, setRole] = useState("Maid");
   const [customRole, setCustomRole] = useState("");
   const [phone, setPhone] = useState("");
+  const [aadhar, setAadhar] = useState("");
   const [allocatedBuildings, setAllocatedBuildings] = useState<string[]>([]);
+
+  const formatAadhar = (v: string) => {
+    return v.replace(/\W/gi, "").replace(/(.{4})/g, "$1 ").trim();
+  };
 
   useEffect(() => {
     if (open && hasAccess) {
@@ -58,12 +63,15 @@ export function StaffManagementPanel({ open, onClose }: Props) {
     const finalRole = role === "Others" ? customRole.trim() : role;
     if (!finalRole) return toast.error("Role is required");
 
+    const cleanAadhar = aadhar.replace(/\s+/g, "");
+    if (cleanAadhar && cleanAadhar.length !== 12) return toast.error("Aadhaar must be 12 digits");
+
     try {
       if (editingStaff) {
-        await nivasaApi.updateStaff(editingStaff.id, { name, role: finalRole, phone, allocatedBuildings });
+        await nivasaApi.updateStaff(editingStaff.id, { name, role: finalRole, phone, aadhar: cleanAadhar, allocatedBuildings });
         toast.success("Staff updated");
       } else {
-        await nivasaApi.addStaff({ name, role: finalRole, phone, allocatedBuildings });
+        await nivasaApi.addStaff({ name, role: finalRole, phone, aadhar: cleanAadhar, allocatedBuildings });
         toast.success("Staff added");
       }
       setIsAdding(false);
@@ -72,6 +80,7 @@ export function StaffManagementPanel({ open, onClose }: Props) {
       setRole("Maid");
       setCustomRole("");
       setPhone("");
+      setAadhar("");
       setAllocatedBuildings([]);
       fetchData();
     } catch (e) {
@@ -107,6 +116,7 @@ export function StaffManagementPanel({ open, onClose }: Props) {
       setCustomRole(s.role);
     }
     setPhone(s.phone || "");
+    setAadhar(s.aadhar || "");
     setAllocatedBuildings(s.allocatedBuildings);
     setIsAdding(true);
   };
@@ -118,6 +128,7 @@ export function StaffManagementPanel({ open, onClose }: Props) {
     setRole("Maid");
     setCustomRole("");
     setPhone("");
+    setAadhar("");
     setAllocatedBuildings([]);
   };
 
@@ -218,6 +229,18 @@ export function StaffManagementPanel({ open, onClose }: Props) {
                           onChange={(e) => setPhone(e.target.value)}
                           className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand"
                           placeholder="Phone number"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-medium text-muted-foreground">Aadhaar Number (Optional)</label>
+                        <input
+                          type="text"
+                          value={formatAadhar(aadhar)}
+                          onChange={(e) => setAadhar(e.target.value.replace(/\D/g, ""))}
+                          className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand"
+                          placeholder="1234 5678 9012"
+                          maxLength={14}
                         />
                       </div>
 

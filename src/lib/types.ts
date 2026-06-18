@@ -68,6 +68,7 @@ export interface Staff {
   name: string;
   role: string;
   phone?: string;
+  aadhar?: string;
   allocatedBuildings: string[]; // Array of building IDs
 }
 
