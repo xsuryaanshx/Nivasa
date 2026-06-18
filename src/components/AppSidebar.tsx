@@ -45,7 +45,7 @@ export function AppSidebar({ collapsed }: Props) {
             end={item.end}
             className={() => {
               const isItemActive = item.to === "/app/profile"
-                ? (location.pathname === "/app/profile" || location.pathname === "/app/maintenance")
+                ? (location.pathname === "/app/profile" || location.pathname === "/app/maintenance" || location.pathname === "/app/expenses")
                 : (item.end ? location.pathname === item.to : location.pathname.startsWith(item.to));
               return cn(
                 "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors",

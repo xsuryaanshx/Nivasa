@@ -646,7 +646,7 @@ export default function Profile() {
                     if (feat.label === "Buildings") navigate("/app/buildings");
                     else if (feat.label === "Rooms") navigate("/app/rooms");
                     else if (feat.label === "Payments") navigate("/app/payments");
-                    else if (feat.label === "Facilities" || feat.label === "Expenses") navigate("/app/maintenance");
+                    else if (feat.label === "Facilities" || feat.label === "Expenses") navigate("/app/expenses");
                     else if (feat.label === "Staff") setStaffOpen(true);
                     else if (feat.label === "Billing Cycle") setRentDateOpen(true);
                     else if (feat.label === "Analytics") navigate("/app");
