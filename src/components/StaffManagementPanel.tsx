@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { createPortal } from "react-dom";
 import { useState, useEffect } from "react";
-import { Users, X, Plus, Building2, Trash2, Edit2, ShieldCheck, Check } from "lucide-react";
+import { Users, X, Plus, Building2, Trash2, Edit2, ShieldCheck, Check, IdCard } from "lucide-react";
 import { nivasaApi } from "@/lib/api";
 import { useLanguage } from "./LanguageProvider";
 import { toast } from "sonner";
@@ -232,17 +232,16 @@ export function StaffManagementPanel({ open, onClose }: Props) {
                         />
                       </div>
 
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-muted-foreground">Aadhaar Number (Optional)</label>
-                        <input
-                          type="text"
+                      <Field label="Aadhar Number" hint="12 digits" optional>
+                        <IconInput 
+                          icon={<IdCard className="h-4 w-4" />}
                           value={formatAadhar(aadhar)}
-                          onChange={(e) => setAadhar(e.target.value.replace(/\D/g, ""))}
-                          className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand"
-                          placeholder="1234 5678 9012"
+                          onChange={(v) => setAadhar(v.replace(/\D/g, ""))}
+                          placeholder="1234 5678 9012" 
+                          inputMode="numeric" 
                           maxLength={14}
                         />
-                      </div>
+                      </Field>
 
                       <div className="space-y-1.5">
                         <label className="text-xs font-medium text-muted-foreground">Assigned Buildings</label>
@@ -351,5 +350,65 @@ export function StaffManagementPanel({ open, onClose }: Props) {
       )}
     </AnimatePresence>,
     document.body
+}
+
+function Field({ label, hint, optional, error, children }: {
+  label: string; hint?: string; optional?: boolean; error?: string; children: React.ReactNode;
+}) {
+  return (
+    <div className="block">
+      <div className="mb-2 flex items-center justify-between">
+        <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/80">
+          {label}
+          {optional && <span className="ml-1 normal-case font-normal text-muted-foreground/60">(Optional)</span>}
+        </span>
+        {hint && !error && <span className="text-[10px] text-muted-foreground tnum">{hint}</span>}
+        {error && (
+          <motion.span 
+            initial={{ opacity: 0, x: 5 }} 
+            animate={{ opacity: 1, x: 0 }}
+            className="text-[10px] font-semibold text-destructive bg-destructive/10 px-1.5 py-0.5 rounded"
+          >
+            {error}
+          </motion.span>
+        )}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function IconInput({
+  icon, value, onChange, placeholder, inputMode, maxLength, disabled,
+}: {
+  icon?: React.ReactNode;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
+  maxLength?: number;
+  disabled?: boolean;
+}) {
+  return (
+    <div className="relative group">
+      {icon && (
+        <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-brand transition-colors">
+          {icon}
+        </span>
+      )}
+      <input
+        value={value} 
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder} 
+        inputMode={inputMode} 
+        maxLength={maxLength} 
+        disabled={disabled}
+        className={cn(
+          "h-12 w-full rounded-xl border border-border bg-card/70 pr-4 text-sm outline-none transition-all focus:border-brand focus:ring-4 focus:ring-brand/10",
+          icon ? "pl-11" : "pl-4",
+          disabled && "opacity-50 cursor-not-allowed",
+        )}
+      />
+    </div>
   );
 }
