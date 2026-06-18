@@ -1007,6 +1007,7 @@ async function addStaff(input: any) {
       emergency_contact_phone: input.emergency_contact_phone || null,
       notes: input.notes || null,
       join_date: input.join_date || new Date().toISOString().split('T')[0],
+      aadhar: input.aadhar || null,
       building_id: input.allocatedBuildings && input.allocatedBuildings.length > 0 ? input.allocatedBuildings[0] : null
     };
     const { data, error } = await supabase
@@ -1037,6 +1038,7 @@ async function updateStaff(id: string, updates: any) {
     if (updates.emergency_contact_phone !== undefined) patch.emergency_contact_phone = updates.emergency_contact_phone;
     if (updates.notes !== undefined) patch.notes = updates.notes;
     if (updates.join_date !== undefined) patch.join_date = updates.join_date;
+    if (updates.aadhar !== undefined) patch.aadhar = updates.aadhar;
     if (updates.allocatedBuildings !== undefined) {
       patch.building_id = updates.allocatedBuildings.length > 0 ? updates.allocatedBuildings[0] : null;
     }

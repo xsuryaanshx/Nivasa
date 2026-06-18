@@ -40,9 +40,8 @@ export function UploadStaffDocumentModal({
       setLoading(true);
 
       // SECURITY FIX #13: Validate MIME type and use crypto.randomUUID
-      const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
-      if (!ALLOWED_TYPES.includes(selectedFile.type)) {
-        toast.error("Invalid file type. Only images (JPG, PNG, GIF, WebP) and PDF are allowed.");
+      if (!selectedFile.type.startsWith('image/') && selectedFile.type !== 'application/pdf') {
+        toast.error("Invalid file type. Only images and PDF are allowed.");
         return;
       }
 

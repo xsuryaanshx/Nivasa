@@ -141,9 +141,8 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
           throw new Error("Document is too large. Max size is 5MB.");
         }
         // SECURITY FIX #13: Validate MIME type
-        const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
-        if (!ALLOWED_TYPES.includes(selectedFile.type)) {
-          throw new Error("Invalid file type. Only images (JPG, PNG, GIF, WebP) and PDF are allowed.");
+        if (!selectedFile.type.startsWith('image/') && selectedFile.type !== 'application/pdf') {
+          throw new Error("Invalid file type. Only images and PDF are allowed.");
         }
         const fileExt = selectedFile.name.split('.').pop();
         const fileName = `tenant_${crypto.randomUUID()}.${fileExt}`;

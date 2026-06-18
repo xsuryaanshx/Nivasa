@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { createPortal } from "react-dom";
 import { useState, useEffect } from "react";
-import { Users, X, Plus, Building2, Trash2, Edit2, ShieldCheck, Check, IdCard } from "lucide-react";
+import { Users, X, Plus, Building2, Trash2, Edit2, ShieldCheck, Check, IdCard, FileText } from "lucide-react";
 import { nivasaApi } from "@/lib/api";
 import { useLanguage } from "./LanguageProvider";
 import { toast } from "sonner";
@@ -31,6 +31,8 @@ export function StaffManagementPanel({ open, onClose }: Props) {
   const [phone, setPhone] = useState("");
   const [aadhar, setAadhar] = useState("");
   const [allocatedBuildings, setAllocatedBuildings] = useState<string[]>([]);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const formatAadhar = (v: string) => {
     return v.replace(/\W/gi, "").replace(/(.{4})/g, "$1 ").trim();
@@ -67,13 +69,44 @@ export function StaffManagementPanel({ open, onClose }: Props) {
     if (cleanAadhar && cleanAadhar.length !== 12) return toast.error("Aadhaar must be 12 digits");
 
     try {
+      setSubmitting(true);
+      let staffId = editingStaff?.id;
+
       if (editingStaff) {
         await nivasaApi.updateStaff(editingStaff.id, { name, role: finalRole, phone, aadhar: cleanAadhar, allocatedBuildings });
         toast.success("Staff updated");
       } else {
-        await nivasaApi.addStaff({ name, role: finalRole, phone, aadhar: cleanAadhar, allocatedBuildings });
+        const newStaff = await nivasaApi.addStaff({ name, role: finalRole, phone, aadhar: cleanAadhar, allocatedBuildings });
+        staffId = newStaff.id;
         toast.success("Staff added");
       }
+
+      if (selectedFile && staffId) {
+        if (selectedFile.size > 5 * 1024 * 1024) {
+          throw new Error("Document is too large. Max size is 5MB.");
+        }
+        if (!selectedFile.type.startsWith('image/') && selectedFile.type !== 'application/pdf') {
+          throw new Error("Invalid file type. Only images and PDF are allowed.");
+        }
+        const fileExt = selectedFile.name.split('.').pop();
+        const fileName = `${staffId}_${crypto.randomUUID()}.${fileExt}`;
+        const filePath = `staff/${fileName}`;
+        const { error: uploadError } = await nivasaApi.supabase.storage
+          .from('documents')
+          .upload(filePath, selectedFile);
+        if (uploadError) throw new Error("Document upload failed: " + uploadError.message);
+        
+        const { data: { publicUrl } } = nivasaApi.supabase.storage
+          .from('documents')
+          .getPublicUrl(filePath);
+        
+        await nivasaApi.addStaffDocument({
+          staff_id: staffId,
+          document_type: "ID Document",
+          document_url: publicUrl
+        });
+      }
+
       setIsAdding(false);
       setEditingStaff(null);
       setName("");
@@ -81,10 +114,13 @@ export function StaffManagementPanel({ open, onClose }: Props) {
       setCustomRole("");
       setPhone("");
       setAadhar("");
+      setSelectedFile(null);
       setAllocatedBuildings([]);
       fetchData();
-    } catch (e) {
-      toast.error("Failed to save staff");
+    } catch (e: any) {
+      toast.error(e.message || "Failed to save staff");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -129,6 +165,7 @@ export function StaffManagementPanel({ open, onClose }: Props) {
     setCustomRole("");
     setPhone("");
     setAadhar("");
+    setSelectedFile(null);
     setAllocatedBuildings([]);
   };
 
@@ -240,7 +277,31 @@ export function StaffManagementPanel({ open, onClose }: Props) {
                           placeholder="1234 5678 9012" 
                           inputMode="numeric" 
                           maxLength={14}
+                          disabled={submitting}
                         />
+                      </Field>
+
+                      <Field label="ID Document" optional>
+                        <div className="relative flex items-center justify-center rounded-xl border border-dashed border-border bg-card/70 p-4 transition-colors hover:bg-secondary/50">
+                          <input
+                            type="file"
+                            accept="image/*,application/pdf"
+                            disabled={submitting}
+                            onChange={e => setSelectedFile(e.target.files?.[0] || null)}
+                            className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0 disabled:opacity-0 disabled:cursor-not-allowed"
+                          />
+                          <div className="flex flex-col items-center gap-1.5 text-center">
+                            <FileText className="h-6 w-6 text-muted-foreground" />
+                            {selectedFile ? (
+                              <p className="text-xs font-medium text-brand truncate max-w-[200px]">{selectedFile.name}</p>
+                            ) : (
+                              <>
+                                <p className="text-xs font-medium">Click to browse or take a photo</p>
+                                <p className="text-[10px] text-muted-foreground">Supports PDF and Images (Max 5MB)</p>
+                              </>
+                            )}
+                          </div>
+                        </div>
                       </Field>
 
                       <div className="space-y-1.5">
@@ -264,15 +325,17 @@ export function StaffManagementPanel({ open, onClose }: Props) {
                       <div className="flex gap-3 pt-4">
                         <button
                           onClick={closeForm}
-                          className="flex-1 rounded-xl border border-border bg-background py-2.5 text-sm font-semibold text-foreground hover:bg-secondary"
+                          disabled={submitting}
+                          className="flex-1 rounded-xl border border-border bg-background py-2.5 text-sm font-semibold text-foreground hover:bg-secondary disabled:opacity-50"
                         >
                           Cancel
                         </button>
                         <button
                           onClick={handleSave}
-                          className="flex-1 rounded-xl bg-brand py-2.5 text-sm font-semibold text-white shadow-soft hover:bg-brand/90"
+                          disabled={submitting}
+                          className="flex-1 rounded-xl bg-brand py-2.5 text-sm font-semibold text-white shadow-soft hover:opacity-90 disabled:opacity-50"
                         >
-                          {editingStaff ? "Update Staff" : "Add Staff"}
+                          {submitting ? "Saving..." : editingStaff ? "Update Staff" : "Add Staff"}
                         </button>
                       </div>
                     </div>
