@@ -133,7 +133,7 @@ export const translations = {
     app_feat_electricity_desc: "Utility billing automation",
     app_feat_analytics: "Analytics",
     app_feat_analytics_desc: "Revenue & occupancy insights",
-    app_feat_expenses: "Expenses",
+    app_feat_expenses: "Facilities",
     app_feat_expenses_desc: "Manage add-on costs",
     app_feat_staff: "Staff",
     app_feat_staff_desc: "Manage property staff",

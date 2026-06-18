@@ -120,7 +120,7 @@ const APP_FEATURES = [
   },
   {
     icon: Banknote,
-    label: "Expenses",
+    label: "Facilities",
     desc: "Manage add-on costs",
     color: "text-emerald-500",
     bg: "bg-emerald-500/10",
