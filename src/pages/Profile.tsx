@@ -451,7 +451,7 @@ const APP_FEATURE_KEY_MAP: Record<string, { label: string; desc: string }> = {
   "Payments": { label: "app_feat_payments", desc: "app_feat_payments_desc" },
   "Electricity": { label: "app_feat_electricity", desc: "app_feat_electricity_desc" },
   "Analytics": { label: "app_feat_analytics", desc: "app_feat_analytics_desc" },
-  "Expenses": { label: "app_feat_expenses", desc: "app_feat_expenses_desc" },
+  "Facilities": { label: "app_feat_expenses", desc: "app_feat_expenses_desc" },
   "Staff": { label: "app_feat_staff", desc: "app_feat_staff_desc" },
   "Billing Cycle": { label: "app_feat_billing_cycle", desc: "app_feat_billing_cycle_desc" },
 };
@@ -646,7 +646,7 @@ export default function Profile() {
                     if (feat.label === "Buildings") navigate("/app/buildings");
                     else if (feat.label === "Rooms") navigate("/app/rooms");
                     else if (feat.label === "Payments") navigate("/app/payments");
-                    else if (feat.label === "Expenses") navigate("/app/maintenance");
+                    else if (feat.label === "Facilities" || feat.label === "Expenses") navigate("/app/maintenance");
                     else if (feat.label === "Staff") setStaffOpen(true);
                     else if (feat.label === "Billing Cycle") setRentDateOpen(true);
                     else if (feat.label === "Analytics") navigate("/app");
