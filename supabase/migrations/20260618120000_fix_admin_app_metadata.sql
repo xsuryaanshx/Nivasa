@@ -96,3 +96,32 @@ CREATE POLICY "feature_overrides_all_admin" ON public.feature_overrides
   FOR ALL TO authenticated
   USING ((auth.jwt() -> 'app_metadata' ->> 'is_admin')::boolean = true)
   WITH CHECK ((auth.jwt() -> 'app_metadata' ->> 'is_admin')::boolean = true);
+
+-- Recreate RPC function using app_metadata check
+CREATE OR REPLACE FUNCTION public.get_admin_users_list()
+RETURNS TABLE (
+  id UUID,
+  email VARCHAR,
+  full_name VARCHAR,
+  created_at TIMESTAMP WITH TIME ZONE
+) AS $$
+BEGIN
+  IF (coalesce((auth.jwt() -> 'app_metadata' ->> 'is_admin')::boolean, false) = true) THEN
+    RETURN QUERY 
+    SELECT 
+      u.id, 
+      u.email::VARCHAR, 
+      coalesce((u.raw_user_meta_data ->> 'full_name')::VARCHAR, 'User'),
+      u.created_at
+    FROM auth.users u;
+  ELSE
+    RAISE EXCEPTION 'Unauthorized';
+  END IF;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Migrate existing admins to have app_metadata.is_admin = true
+UPDATE auth.users
+SET raw_app_meta_data = coalesce(raw_app_meta_data, '{}'::jsonb) || '{"is_admin": true}'::jsonb
+WHERE (raw_user_meta_data ->> 'is_admin')::boolean = true;
+

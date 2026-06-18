@@ -269,7 +269,7 @@ export default function App() {
   }, []);
 
   const checkAdminStatus = (user: any) => {
-    const isUserAdmin = user.user_metadata?.is_admin === true;
+    const isUserAdmin = user.app_metadata?.is_admin === true;
     setIsAdmin(isUserAdmin);
     setLoading(false);
     if (isUserAdmin) {
@@ -286,7 +286,7 @@ export default function App() {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       
-      const isUserAdmin = data.user?.user_metadata?.is_admin === true;
+      const isUserAdmin = data.user?.app_metadata?.is_admin === true;
       if (!isUserAdmin) {
         await supabase.auth.signOut();
         setAuthError("Access denied. This account does not have administrator privileges.");

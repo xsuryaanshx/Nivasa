@@ -1,14 +1,19 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-5F81KJ0X6G"></script>
+    <!-- Google Analytics — SECURITY FIX #23: Deferred until consent -->
+    <!-- To enable, implement a consent banner that calls window.loadGtag() after user accepts -->
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-
-      gtag('config', 'G-5F81KJ0X6G');
+      window.loadGtag = function() {
+        var s = document.createElement('script');
+        s.async = true;
+        s.src = 'https://www.googletagmanager.com/gtag/js?id=G-5F81KJ0X6G';
+        document.head.appendChild(s);
+        gtag('js', new Date());
+        gtag('config', 'G-5F81KJ0X6G', { anonymize_ip: true });
+      };
     </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=0" />
@@ -26,8 +31,8 @@
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="manifest" href="/manifest.json" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-    <script type="module" crossorigin src="/assets/index-CYGqzO1h.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-CtTg1qoC.css">
+    <script type="module" crossorigin src="/assets/index-CTanCarV.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-D1-roy2Q.css">
   </head>
 
   <body>

@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { createPortal } from "react-dom";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Users, X, Plus, Building2, Trash2, Edit2, ShieldCheck, Check, IdCard, FileText } from "lucide-react";
 import { nivasaApi } from "@/lib/api";
 import { useLanguage } from "./LanguageProvider";
@@ -16,6 +17,7 @@ interface Props {
 
 export function StaffManagementPanel({ open, onClose }: Props) {
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const [staff, setStaff] = useState<Staff[]>([]);
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [loading, setLoading] = useState(true);
@@ -364,7 +366,14 @@ export function StaffManagementPanel({ open, onClose }: Props) {
                       ) : (
                         <div className="space-y-3">
                           {staff.map((s) => (
-                            <div key={s.id} className="group relative flex flex-col gap-2 rounded-xl border border-border bg-secondary/30 p-4 transition-all hover:border-brand/30 hover:bg-secondary/60">
+                            <div 
+                              key={s.id} 
+                              onClick={() => {
+                                onClose();
+                                navigate(`/app/staff/${s.id}`);
+                              }}
+                              className="group cursor-pointer relative flex flex-col gap-2 rounded-xl border border-border bg-secondary/30 p-4 transition-all hover:border-brand/30 hover:bg-secondary/60"
+                            >
                               <div className="flex items-start justify-between">
                                 <div>
                                   <p className="font-semibold text-foreground flex items-center gap-2">
@@ -376,10 +385,22 @@ export function StaffManagementPanel({ open, onClose }: Props) {
                                   {s.phone && <p className="mt-0.5 text-xs text-muted-foreground">{s.phone}</p>}
                                 </div>
                                 <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                                  <button onClick={() => openEdit(s)} className="p-1.5 text-muted-foreground hover:text-foreground">
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      openEdit(s);
+                                    }} 
+                                    className="p-1.5 text-muted-foreground hover:text-foreground"
+                                  >
                                     <Edit2 className="h-3.5 w-3.5" />
                                   </button>
-                                  <button onClick={() => handleDelete(s.id)} className="p-1.5 text-muted-foreground hover:text-destructive">
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDelete(s.id);
+                                    }} 
+                                    className="p-1.5 text-muted-foreground hover:text-destructive"
+                                  >
                                     <Trash2 className="h-3.5 w-3.5" />
                                   </button>
                                 </div>
