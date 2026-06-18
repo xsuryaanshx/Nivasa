@@ -23,7 +23,7 @@ export function MobileNav() {
   };
 
   const activeIndex = useMemo(() => {
-    const currentPath = (location.pathname === "/app/maintenance" || location.pathname === "/app/subscription")
+    const currentPath = (location.pathname === "/app/maintenance" || location.pathname === "/app/expenses" || location.pathname === "/app/subscription")
       ? "/app/profile"
       : location.pathname;
     const index = dockApps.findIndex(app => {
