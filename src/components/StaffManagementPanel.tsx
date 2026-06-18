@@ -350,6 +350,7 @@ export function StaffManagementPanel({ open, onClose }: Props) {
       )}
     </AnimatePresence>,
     document.body
+  );
 }
 
 function Field({ label, hint, optional, error, children }: {
