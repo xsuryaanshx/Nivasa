@@ -301,9 +301,7 @@ export default function Maintenance() {
                     {request.description || "No description provided."}
                   </p>
                   <div className="flex items-center justify-between mt-4 pt-4 border-t">
-                    <Badge variant="outline" className={priorityColors[request.priority as keyof typeof priorityColors]}>
-                      {request.priority} priority
-                    </Badge>
+
                     <span className="text-xs text-muted-foreground flex items-center gap-1">
                       <Clock className="h-3 w-3" />
                       {format(new Date(request.created_at), "MMM d, yyyy")}
