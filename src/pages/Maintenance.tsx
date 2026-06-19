@@ -25,6 +25,9 @@ import {
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { useCurrency, formatMoney } from "@/lib/currency";
+import { useSubscriptionData } from "@/hooks/useSubscriptionData";
+import { downloadExcel } from "@/lib/export";
+import { FileSpreadsheet } from "lucide-react";
 
 const statusColors = {
   pending: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
@@ -43,6 +46,8 @@ export default function Maintenance() {
   const queryClient = useQueryClient();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const { currency } = useCurrency();
+  const { canAccessFeature } = useSubscriptionData();
+  const canExport = canAccessFeature("excel_exports");
   const [newRequest, setNewRequest] = useState<Partial<MaintenanceRequest>>({
     title: "",
     description: "",
@@ -136,6 +141,19 @@ export default function Maintenance() {
     });
   };
 
+  const handleExport = () => {
+    if (!canExport || !requests) return;
+    const dataToExport = requests.map(r => ({
+      "Title": r.title,
+      "Category": r.category || "maintenance",
+      "Cost": r.cost,
+      "Status": r.status,
+      "Date": r.created_at ? format(new Date(r.created_at), "yyyy-MM-dd") : "",
+      "Description": r.description || ""
+    }));
+    downloadExcel(dataToExport, "expenses_export.xlsx");
+  };
+
   if (isLoading) return <div>Loading...</div>;
 
   return (
@@ -146,13 +164,19 @@ export default function Maintenance() {
           <p className="text-muted-foreground">Track and manage service requests and facility expenses.</p>
         </div>
 
-        <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              Add Expense
+        <div className="flex items-center gap-2">
+          {canExport && (
+            <Button onClick={handleExport} variant="secondary" className="gap-2">
+              <FileSpreadsheet className="h-4 w-4" /> Export Excel
             </Button>
-          </DialogTrigger>
+          )}
+          <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2">
+                <Plus className="h-4 w-4" />
+                Add Expense
+              </Button>
+            </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Add Expense / Request</DialogTitle>

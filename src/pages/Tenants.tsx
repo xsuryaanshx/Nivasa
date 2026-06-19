@@ -9,6 +9,9 @@ import { type PaymentStatus } from "@/lib/types";
 import { cn, getTenantPaymentStatus } from "@/lib/utils";
 import { StatusPill } from "@/components/StatusPill";
 import { motion } from "framer-motion";
+import { useSubscriptionData } from "@/hooks/useSubscriptionData";
+import { downloadExcel } from "@/lib/export";
+import { FileSpreadsheet } from "lucide-react";
 
 const getFilters = (t: any): ({ key: PaymentStatus | "all"; label: string })[] => [
   { key: "all",     label: t('all') || "All" },
@@ -26,6 +29,8 @@ export default function Tenants() {
   const { t } = useLanguage();
   const [q, setQ] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
+  const { canAccessFeature } = useSubscriptionData();
+  const canExport = canAccessFeature("excel_exports");
   
   const statusParam = searchParams.get("status") as PaymentStatus | "all" | null;
   const [status, setStatus] = useState<PaymentStatus | "all">(statusParam || "all");
@@ -109,15 +114,36 @@ export default function Tenants() {
     return result;
   }, [q, status, selectedBuilding, tenantsWithStatus]);
 
+  const handleExport = () => {
+    if (!canExport) return;
+    const dataToExport = filtered.map(t => ({
+      "Tenant Name": t.name,
+      "Building": t.buildingName,
+      "Room Number": t.roomNumber,
+      "Phone": t.phone || "",
+      "Rent Amount": t.roomRent,
+      "Payment Status": t.paymentStatus,
+      "Join Date": t.joinDate || ""
+    }));
+    downloadExcel(dataToExport, "tenants_export.xlsx");
+  };
+
   return (
     <div>
       <PageHeader
         title={t('tenants') || "Tenants"}
         subtitle={"Manage all your property tenants and monitor their payment status"}
         action={
-          <MagneticButton onClick={() => window.dispatchEvent(new CustomEvent("nivasa:add-tenant"))}>
-            <UserPlus className="h-4 w-4" /> Add tenant
-          </MagneticButton>
+          <div className="flex items-center gap-2">
+            {canExport && (
+              <MagneticButton onClick={handleExport} className="bg-secondary text-secondary-foreground hover:bg-secondary/80">
+                <FileSpreadsheet className="h-4 w-4 mr-1" /> Export Excel
+              </MagneticButton>
+            )}
+            <MagneticButton onClick={() => window.dispatchEvent(new CustomEvent("nivasa:add-tenant"))}>
+              <UserPlus className="h-4 w-4" /> Add tenant
+            </MagneticButton>
+          </div>
         }
       />
 

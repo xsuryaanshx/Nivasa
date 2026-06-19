@@ -10,6 +10,9 @@ import { Money } from "@/components/Money";
 import { type PaymentStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/components/LanguageProvider";
+import { useSubscriptionData } from "@/hooks/useSubscriptionData";
+import { downloadExcel } from "@/lib/export";
+import { FileSpreadsheet } from "lucide-react";
 
 const getFilters = (t: ReturnType<typeof useLanguage>["t"]): ({ key: PaymentStatus | "all"; label: string })[] => [
   { key: "all", label: t("all") },
@@ -20,6 +23,8 @@ const getFilters = (t: ReturnType<typeof useLanguage>["t"]): ({ key: PaymentStat
 
 export default function Payments() {
   const { t } = useLanguage();
+  const { canAccessFeature } = useSubscriptionData();
+  const canExport = canAccessFeature("excel_exports");
   const [q, setQ] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
   const statusParam = searchParams.get("status") as PaymentStatus | "all" | null;
@@ -74,15 +79,35 @@ export default function Payments() {
   const total = filtered.reduce((s, p) => s + p.amount, 0);
   const outstanding = paymentsList.filter(p => p.status !== "paid").reduce((s, p) => s + p.amount, 0);
 
+  const handleExport = () => {
+    if (!canExport) return;
+    const dataToExport = filtered.map(p => ({
+      "Date": p.date,
+      "Tenant Name": p.tenantName,
+      "Room": p.roomNumber,
+      "Amount": p.amount,
+      "Method": p.method,
+      "Status": p.status
+    }));
+    downloadExcel(dataToExport, "rent_roll.xlsx");
+  };
+
   return (
     <div>
       <PageHeader
         title={t("payments")}
         subtitle={t("payments_subtitle")}
         action={
-          <MagneticButton onClick={() => setOpen(true)}>
-            <Plus className="h-4 w-4" /> {t("add_payment")}
-          </MagneticButton>
+          <div className="flex items-center gap-2">
+            {canExport && (
+              <MagneticButton onClick={handleExport} className="bg-secondary text-secondary-foreground hover:bg-secondary/80">
+                <FileSpreadsheet className="h-4 w-4 mr-1" /> Export Excel
+              </MagneticButton>
+            )}
+            <MagneticButton onClick={() => setOpen(true)}>
+              <Plus className="h-4 w-4" /> {t("add_payment")}
+            </MagneticButton>
+          </div>
         }
       />
 
