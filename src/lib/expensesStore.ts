@@ -9,14 +9,29 @@ export interface CustomExpense {
 const STORAGE_KEY = "nivasa_custom_expenses";
 
 export function getCustomExpenses(): CustomExpense[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch (e) {}
-  return [
+  const defaultExpenses: CustomExpense[] = [
     { id: "e1", name: "Laundry", cost: 500 },
     { id: "e2", name: "Food / Mess", cost: 3000 },
   ];
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      // Validate shape — guard against tampered or prototype-polluted data
+      if (
+        Array.isArray(parsed) &&
+        parsed.every(
+          (e) =>
+            typeof e.id === "string" &&
+            typeof e.name === "string" &&
+            typeof e.cost === "number"
+        )
+      ) {
+        return parsed;
+      }
+    }
+  } catch (e) {}
+  return defaultExpenses;
 }
 
 export function saveCustomExpenses(expenses: CustomExpense[]) {

@@ -28,15 +28,28 @@ import Staff from "./pages/Staff.tsx";
 import StaffDetails from "./pages/StaffDetails.tsx";
 import Maintenance from "./pages/Maintenance.tsx";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,           // MED-04: Reduce from default 3 to avoid hammering expired sessions
+      staleTime: 1000 * 30, // 30 seconds
+    },
+  },
+});
 
 const AnalyticsTracker = () => {
   const location = useLocation();
 
   useEffect(() => {
     if (typeof (window as any).gtag === 'function') {
+      // MED-06: Strip sensitive query params before sending to GA
+      // to prevent token or ID leakage to third-party analytics servers.
+      const url = new URL(window.location.href);
+      ['access_token', 'token', 'refresh_token', 'code'].forEach((p) =>
+        url.searchParams.delete(p)
+      );
       (window as any).gtag('event', 'page_view', {
-        page_path: location.pathname + location.search,
+        page_path: url.pathname + url.search,
       });
     }
   }, [location]);

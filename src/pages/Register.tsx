@@ -59,9 +59,6 @@ export default function Register() {
       // Force sign out immediately after sign up to prevent auto-login
       await nivasaApi.auth.signOut();
 
-      // Persist the name for the session
-      localStorage.setItem("nivasa_user_name", fullName.trim());
-
       toast.success("Account created!", {
         description: `Welcome, ${fullName.split(" ")[0]}! Please check your email for a confirmation link.`,
       });

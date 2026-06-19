@@ -46,12 +46,49 @@ export function useAuth() {
     };
     
     checkSession();
+
+    // HIGH-02 fix: Subscribe to real-time auth changes so the UI updates
+    // immediately on session expiry, sign-out from another tab, or token revocation.
+    const { data: { subscription } } = nivasaApi.supabase.auth.onAuthStateChange(
+      async (_event, session) => {
+        if (session?.user) {
+          const fullName =
+            session.user.user_metadata?.full_name ||
+            session.user.email?.split("@")[0] ||
+            "User";
+          setUser(buildUser({ id: session.user.id, email: session.user.email || "", fullName }));
+        } else {
+          setUser(null);
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
   }, []);
+
+  // HIGH-03 fix: Clear all Nivasa-owned localStorage keys on logout.
+  // Prevents expense data, rate-limit state, and names from leaking to
+  // the next user on a shared device.
+  const clearNivasaStorage = () => {
+    const keysToRemove = [
+      "nivasa_user_name",
+      "nivasa_no_remember",
+      "nivasa_fail_count",
+      "nivasa_lock_until",
+      "nivasa_custom_expenses",
+    ];
+    keysToRemove.forEach((k) => localStorage.removeItem(k));
+    // Clear per-tenant expense assignment keys
+    Object.keys(localStorage)
+      .filter((k) => k.startsWith("nivasa_tenant_exp_"))
+      .forEach((k) => localStorage.removeItem(k));
+  };
 
   const signOut = async () => {
     await nivasaApi.auth.signOut();
     /* SECURITY FIX #22: signOut on all devices by using scope: 'global' */
     await nivasaApi.supabase.auth.signOut({ scope: 'global' });
+    clearNivasaStorage();
     setUser(null);
     window.location.href = "/login";
   };

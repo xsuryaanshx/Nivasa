@@ -20,7 +20,7 @@ export function ProtectedRoute() {
 
     // SECURITY: Listen for auth state changes (logout, session expiry, token refresh failures)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_OUT" || event === "TOKEN_REFRESHED" && !session) {
+      if (event === "SIGNED_OUT" || (event === "TOKEN_REFRESHED" && !session)) {
         setStatus("unauth");
       } else if (session) {
         setStatus("auth");

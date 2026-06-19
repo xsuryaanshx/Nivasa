@@ -41,6 +41,14 @@ export const offlineSync = {
 
     for (const mutation of queue) {
       try {
+        // Validate payload shape before dispatching to prevent tampered IndexedDB entries
+        if (mutation.type === 'ADD_PAYMENT') {
+          const { room_id, amount } = mutation.payload || {};
+          if (!room_id || typeof amount !== 'number' || amount <= 0) {
+            console.warn(`[offlineSync] Skipping invalid mutation ${mutation.id}: bad payload`);
+            continue;
+          }
+        }
         await processMutation(mutation);
         successCount++;
       } catch (error) {

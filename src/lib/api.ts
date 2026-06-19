@@ -710,7 +710,8 @@ async function addTenant(input: {
     const { error: updateError } = await supabase
       .from("units")
       .update({ status: "occupied" })
-      .eq("id", input.room_id);
+      .eq("id", input.room_id)
+      .eq("user_id", user_id); // CRIT-02 fix: enforce ownership on status update
     if (updateError)
       safeLog("addTenant.updateRoomStatus", updateError);
     await syncUnitEffectiveRent(input.room_id);
@@ -749,7 +750,8 @@ async function removeTenant(roomId: string, tenantId: string) {
       const { error: roomError } = await supabase
         .from("units")
         .update({ status: "vacant" })
-        .eq("id", roomId);
+        .eq("id", roomId)
+        .eq("user_id", user_id); // CRIT-03 fix: enforce ownership on status revert
       if (roomError) throw roomError;
     }
     await syncUnitEffectiveRent(roomId);
@@ -940,7 +942,7 @@ async function getDashboardStats() {
       .reduce((sum, p) => sum + p.amount, 0);
     return { totalBuildings, totalRooms, occupied, pending, monthlyRevenue };
   } catch (error) {
-    console.error("Error in getDashboardStats:", error);
+    safeLog("getDashboardStats", error); // MED-01 fix: use safeLog to prevent raw error exposure in production
     return {
       totalBuildings: 0,
       totalRooms: 0,
@@ -1387,7 +1389,7 @@ async function getProfitStats() {
       expenses: expenses.data || []
     };
   } catch (error) {
-    console.error("Error in getProfitStats:", error);
+    safeLog("getProfitStats", error); // MED-02 fix: use safeLog to prevent raw error exposure in production
     return { totalRevenue: 0, totalExpenses: 0, netProfit: 0, payments: [], expenses: [] };
   }
 }
