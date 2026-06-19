@@ -270,19 +270,9 @@ export default function Maintenance() {
                 <CardHeader className="pb-2">
                   <div className="flex justify-between items-start">
                     <CardTitle className="text-lg font-semibold">{request.title}</CardTitle>
-                    <Select
-                      value={request.status}
-                      onValueChange={(val) => handleStatusChange(request.id, val)}
-                    >
-                      <SelectTrigger className={`h-7 w-fit text-xs border-0 ${statusColors[request.status as keyof typeof statusColors]}`}>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="in_progress">In Progress</SelectItem>
-                        <SelectItem value="resolved">Resolved</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Badge variant="outline" className={`capitalize h-7 px-2.5 text-xs border-0 ${statusColors[request.status as keyof typeof statusColors]}`}>
+                      {request.status.replace("_", " ")}
+                    </Badge>
                   </div>
                   <div className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
                     {building?.name || "Unknown Property"}
