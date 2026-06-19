@@ -278,8 +278,9 @@ export default function Maintenance() {
           </DialogContent>
         </Dialog>
       </div>
+    </div>
 
-      {requests?.length === 0 ? (
+    {requests?.length === 0 ? (
         <Card className="flex flex-col items-center justify-center py-12 text-center">
           <Wrench className="h-12 w-12 text-muted-foreground/50 mb-4" />
           <h3 className="text-lg font-medium">No maintenance requests</h3>
