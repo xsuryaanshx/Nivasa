@@ -12,6 +12,7 @@ import { MobileNav } from "./MobileNav";
 import { ElectricityBillingModal } from "./ElectricityBillingModal";
 import { MobileDrawerMenu } from "./MobileDrawerMenu";
 import { LanguageProvider } from "./LanguageProvider";
+import { PremiumUpgradeModal } from "./PremiumUpgradeModal";
 import { useLocation, Outlet } from "react-router-dom";
 
 function AppShell() {
@@ -21,6 +22,8 @@ function AppShell() {
   const [helpOpen, setHelpOpen] = useState(false);
   const [electricityOpen, setElectricityOpen] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [upgradeModalProps, setUpgradeModalProps] = useState({ title: "", message: "" });
   const location = useLocation();
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -42,6 +45,20 @@ function AppShell() {
     const h = () => setElectricityOpen(true);
     window.addEventListener("nivasa:add-electricity", h);
     return () => window.removeEventListener("nivasa:add-electricity", h);
+  }, []);
+
+  useEffect(() => {
+    const h = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail) {
+        setUpgradeModalProps({ title: detail.title, message: detail.message });
+      } else {
+        setUpgradeModalProps({ title: "Unlock Premium Features", message: "You have reached your plan limit. Upgrade to continue." });
+      }
+      setUpgradeModalOpen(true);
+    };
+    window.addEventListener("nivasa:upgrade-plan", h);
+    return () => window.removeEventListener("nivasa:upgrade-plan", h);
   }, []);
 
   // "?" opens shortcuts help.
@@ -114,6 +131,12 @@ function AppShell() {
       <AddTenantModal open={tenantOpen} onClose={() => setTenantOpen(false)} />
       <ElectricityBillingModal open={electricityOpen} onClose={() => setElectricityOpen(false)} />
       <ShortcutsHelp open={helpOpen} onClose={() => setHelpOpen(false)} />
+      <PremiumUpgradeModal 
+        open={upgradeModalOpen} 
+        onOpenChange={setUpgradeModalOpen} 
+        title={upgradeModalProps.title} 
+        message={upgradeModalProps.message} 
+      />
 
       {/* Floating help button — bottom right */}
       <button

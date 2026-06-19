@@ -27,6 +27,7 @@ import ConfirmedEmail from "./pages/ConfirmedEmail.tsx";
 import Staff from "./pages/Staff.tsx";
 import StaffDetails from "./pages/StaffDetails.tsx";
 import Maintenance from "./pages/Maintenance.tsx";
+import { FeatureGate } from "./components/FeatureGate.tsx";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -110,11 +111,11 @@ const App = () => {
                     <Route path="rooms" element={<Rooms />} />
                     <Route path="rooms/:id" element={<RoomDetails />} />
                     <Route path="payments" element={<Payments />} />
-                    <Route path="staff" element={<Staff />} />
-                    <Route path="staff/:id" element={<StaffDetails />} />
+                    <Route path="staff" element={<FeatureGate featureKey="staff_management" title="Staff Management Locked" description="Upgrade to Platinum to manage your staff and assign roles."><Staff /></FeatureGate>} />
+                    <Route path="staff/:id" element={<FeatureGate featureKey="staff_management"><StaffDetails /></FeatureGate>} />
                     <Route path="profile" element={<Profile />} />
-                    <Route path="expenses" element={<Expenses />} />
-                    <Route path="maintenance" element={<Maintenance />} />
+                    <Route path="expenses" element={<FeatureGate featureKey="expense_management" title="Expense Tracking Locked" description="Upgrade to Gold or Platinum to track property expenses."><Expenses /></FeatureGate>} />
+                    <Route path="maintenance" element={<FeatureGate featureKey="maintenance_tracking" title="Maintenance Tracking Locked" description="Upgrade to Gold or Platinum to manage maintenance requests."><Maintenance /></FeatureGate>} />
                     <Route path="subscription" element={<SubscriptionPage />} />
                   </Route>
                 </Route>

@@ -4,19 +4,22 @@ import { Building2, Home, LayoutDashboard, ReceiptIndianRupee, Sparkles, UserCir
 import { cn } from "@/lib/utils";
 import { useLanguage } from "./LanguageProvider";
 import { NivasaLogo } from "./NivasaLogo";
+import { useSubscriptionData } from "@/hooks/useSubscriptionData";
+import { Lock } from "lucide-react";
 
 interface Props { collapsed: boolean; }
 
 export function AppSidebar({ collapsed }: Props) {
   const { t } = useLanguage();
   const location = useLocation();
+  const { canAccessFeature } = useSubscriptionData();
   const items = [
     { to: "/app", label: t("dashboard"), icon: LayoutDashboard, end: true },
     { to: "/app/buildings", label: t("buildings"), icon: Building2 },
     { to: "/app/tenants", label: t("tenants") || "Tenants", icon: UserCircle2 },
     { to: "/app/payments", label: t("payments"), icon: ReceiptIndianRupee },
-    { to: "/app/staff", label: "Staff", icon: Briefcase },
-    { to: "/app/maintenance", label: "Maintenance", icon: Wrench },
+    { to: "/app/staff", label: "Staff", icon: Briefcase, featureKey: "staff_management", lockTitle: "Staff Management Locked", lockMessage: "Upgrade to Platinum to manage your staff and assign roles." },
+    { to: "/app/maintenance", label: "Maintenance", icon: Wrench, featureKey: "expense_management", lockTitle: "Maintenance & Expenses Locked", lockMessage: "Upgrade to Gold or Platinum to manage maintenance and track expenses." },
     { to: "/app/subscription", label: t("subscription") || "Subscription", icon: Sparkles },
     { to: "/app/profile", label: t("profile"), icon: UserCircle2 },
   ];
@@ -38,27 +41,54 @@ export function AppSidebar({ collapsed }: Props) {
       </div>
 
       <nav className="mt-2 flex flex-col gap-0.5 px-3">
-        {items.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            end={item.end}
-            className={() => {
-              const isItemActive = item.to === "/app/profile"
-                ? (location.pathname === "/app/profile" || location.pathname === "/app/maintenance" || location.pathname === "/app/expenses")
-                : (item.end ? location.pathname === item.to : location.pathname.startsWith(item.to));
-              return cn(
-                "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors",
-                isItemActive
-                  ? "bg-sidebar-accent text-foreground"
-                  : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground",
-              );
-            }}
-          >
-            <item.icon className="h-4 w-4 shrink-0" />
-            {!collapsed && <span className="truncate">{item.label}</span>}
-          </NavLink>
-        ))}
+        {items.map((item) => {
+          const isLocked = item.featureKey && !canAccessFeature(item.featureKey);
+          
+          if (isLocked) {
+            return (
+              <button
+                key={item.to}
+                onClick={(e) => {
+                  e.preventDefault();
+                  window.dispatchEvent(new CustomEvent("nivasa:upgrade-plan", {
+                    detail: { title: item.lockTitle, message: item.lockMessage }
+                  }));
+                }}
+                className={cn(
+                  "group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground",
+                )}
+              >
+                <item.icon className="h-4 w-4 shrink-0 opacity-50" />
+                {!collapsed && (
+                  <span className="truncate flex-1 text-left opacity-70">{item.label}</span>
+                )}
+                {!collapsed && <Lock className="h-3 w-3 opacity-50" />}
+              </button>
+            );
+          }
+
+          return (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.end}
+              className={() => {
+                const isItemActive = item.to === "/app/profile"
+                  ? (location.pathname === "/app/profile" || location.pathname === "/app/maintenance" || location.pathname === "/app/expenses")
+                  : (item.end ? location.pathname === item.to : location.pathname.startsWith(item.to));
+                return cn(
+                  "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors",
+                  isItemActive
+                    ? "bg-sidebar-accent text-foreground"
+                    : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground",
+                );
+              }}
+            >
+              <item.icon className="h-4 w-4 shrink-0" />
+              {!collapsed && <span className="truncate">{item.label}</span>}
+            </NavLink>
+          );
+        })}
       </nav>
 
       {/* Electricity billing quick-launch */}
