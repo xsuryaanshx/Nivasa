@@ -29,7 +29,7 @@ export function BuildingMarketingSettings({ buildingId, isPublic, slug, descript
 
   const [uploadingImage, setUploadingImage] = useState(false);
 
-  const publicUrl = formData.slug ? `https://amiflow.in/p/${formData.slug}` : "";
+  const publicUrl = formData.slug ? `https://www.amiflow.in/p/${formData.slug}` : "";
 
   const handleSave = async () => {
     try {
@@ -155,7 +155,7 @@ export function BuildingMarketingSettings({ buildingId, isPublic, slug, descript
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground">Custom URL Slug</label>
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground bg-secondary/50 px-3 py-2.5 rounded-l-xl border border-r-0 border-border">amiflow.in/p/</span>
+              <span className="text-sm text-muted-foreground bg-secondary/50 px-3 py-2.5 rounded-l-xl border border-r-0 border-border">www.amiflow.in/p/</span>
               <input
                 type="text"
                 placeholder="e.g. greenwood-pg"
