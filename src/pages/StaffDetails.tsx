@@ -172,6 +172,7 @@ export default function StaffDetails() {
                     "text-xs px-2 py-1 rounded-md capitalize font-medium",
                     a.status === 'present' ? "bg-emerald-500/10 text-emerald-500" :
                     a.status === 'absent' ? "bg-red-500/10 text-red-500" :
+                    a.status === 'leave' ? "bg-blue-500/10 text-blue-500" :
                     "bg-orange-500/10 text-orange-500"
                   )}>
                     {a.status}
