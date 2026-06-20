@@ -286,7 +286,7 @@ export default function RoomDetails() {
     const tenantPaymentsThisMonth = roomPayments.filter(p => p.tenantId === tenant.id && String(p.date).startsWith(currentMonthStr) && p.status === "paid");
     const totalPaidThisMonth = tenantPaymentsThisMonth.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
 
-    const pastDueHistorical = totalDueHistorical - (currentInvoice ? Number(currentInvoice.total_amount) : 0);
+    const pastDueHistorical = totalDueHistorical - (currentInvoice ? Number(currentInvoice.total_amount) : (currentBase + currentAddons));
     const pastPaidHistorical = totalPaidHistorical - totalPaidThisMonth;
     const previousDues = pastDueHistorical - pastPaidHistorical;
 
@@ -412,7 +412,7 @@ export default function RoomDetails() {
                 const tenantPaymentsThisMonth = roomPayments.filter(p => p.tenantId === t.id && String(p.date).startsWith(currentMonth) && p.status === "paid");
                 const totalPaidThisMonth = tenantPaymentsThisMonth.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
                 
-                const pastDueHistorical = totalDueHistorical - (currentInvoice ? Number(currentInvoice.total_amount) : 0);
+                const pastDueHistorical = totalDueHistorical - (currentInvoice ? Number(currentInvoice.total_amount) : fallbackMonthlyDue);
                 const pastPaidHistorical = totalPaidHistorical - totalPaidThisMonth;
                 const carryForwardBalance = pastDueHistorical - pastPaidHistorical;
                 
