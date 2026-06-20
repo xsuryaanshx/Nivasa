@@ -395,13 +395,18 @@ export default function RoomDetails() {
                 const tenantPaymentsThisMonth = roomPayments.filter(p => p.tenantId === t.id && String(p.date).startsWith(currentMonth) && p.status === "paid");
                 const totalPaidThisMonth = tenantPaymentsThisMonth.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
                 
-                const tenantShare = calculateTenantShare(room);
-                const remainingAmount = Math.max(0, tenantShare - totalPaidThisMonth);
+                const tenantExpenseIds = getTenantExpenses(t.id);
+                const activeExpenses = getCustomExpenses().filter((e: any) => tenantExpenseIds.includes(e.id));
+                const totalAddons = activeExpenses.reduce((sum: number, exp: any) => sum + exp.cost, 0);
+
+                const baseRent = t.rent_amount ? Number(t.rent_amount) : calculateTenantShare(room);
+                const tenantTotalDue = baseRent + totalAddons;
+                const remainingAmount = Math.max(0, tenantTotalDue - totalPaidThisMonth);
                 
                 let displayStatus = getTenantPaymentStatus(t, roomPayments);
                 let bgClass = "bg-secondary/60";
                 
-                if (totalPaidThisMonth >= tenantShare) {
+                if (totalPaidThisMonth >= tenantTotalDue) {
                   displayStatus = "paid";
                   bgClass = "bg-emerald-500/10 border border-emerald-500/20";
                 } else if (totalPaidThisMonth > 0) {
@@ -432,7 +437,7 @@ export default function RoomDetails() {
                         </div>
                         <div className="mt-1 flex flex-wrap items-center gap-3 text-xs font-medium">
                            {t.bed_assignment && <div className="text-brand dark:text-brand">Bed: <span className="font-semibold">{t.bed_assignment}</span></div>}
-                           <div className="text-muted-foreground">Rent: <span className="text-foreground">{formatMoney(t.rent_amount || tenantShare, currency, { decimals: 0 })}</span></div>
+                           <div className="text-muted-foreground">Total: <span className="text-foreground">{formatMoney(tenantTotalDue, currency, { decimals: 0 })}</span> {totalAddons > 0 && <span className="text-[10px] text-muted-foreground opacity-70">(inc. {formatMoney(totalAddons, currency, { decimals: 0 })} add-ons)</span>}</div>
                            <div className="text-emerald-600 dark:text-emerald-500">Paid: <span className="font-semibold">{formatMoney(totalPaidThisMonth, currency, { decimals: 0 })}</span></div>
                            {remainingAmount > 0 && (
                              <div className="text-red-600 dark:text-red-500">Remaining: <span className="font-bold">{formatMoney(remainingAmount, currency, { decimals: 0 })}</span></div>
