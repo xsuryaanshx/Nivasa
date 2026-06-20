@@ -3,6 +3,7 @@ import {
   User,
   Mail,
   Shield,
+  ShieldCheck,
   Star,
   Zap,
   Building2,
@@ -538,6 +539,14 @@ export default function Profile() {
       onClick: () => setNotificationsOpen(true),
       accent: "text-blue-400",
       bg: "bg-blue-500/10",
+    },
+    {
+      icon: ShieldCheck,
+      label: "Tenant Score",
+      desc: "Check tenant history via Aadhar",
+      onClick: () => navigate("/app/tenant-score"),
+      accent: "text-indigo-400",
+      bg: "bg-indigo-500/10",
     },
     {
       icon: Palette,

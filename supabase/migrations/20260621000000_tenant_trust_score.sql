@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS public.tenant_trust_scores (
-  phone text PRIMARY KEY,
+  aadhar text PRIMARY KEY,
   score integer NOT NULL DEFAULT 1000,
   created_at timestamp with time zone default now(),
   updated_at timestamp with time zone default now()
@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS public.tenant_trust_scores (
 
 CREATE TABLE IF NOT EXISTS public.trust_incidents (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_phone text REFERENCES public.tenant_trust_scores(phone) ON DELETE CASCADE,
+  tenant_aadhar text REFERENCES public.tenant_trust_scores(aadhar) ON DELETE CASCADE,
   landlord_id uuid REFERENCES auth.users(id),
   building_id uuid REFERENCES public.buildings(id),
   incident_type text NOT NULL,
@@ -21,15 +21,15 @@ CREATE OR REPLACE FUNCTION update_tenant_trust_score()
 RETURNS TRIGGER AS $$
 BEGIN
   -- Ensure the tenant exists in tenant_trust_scores
-  INSERT INTO public.tenant_trust_scores (phone, score)
-  VALUES (NEW.tenant_phone, 1000)
-  ON CONFLICT (phone) DO NOTHING;
+  INSERT INTO public.tenant_trust_scores (aadhar, score)
+  VALUES (NEW.tenant_aadhar, 1000)
+  ON CONFLICT (aadhar) DO NOTHING;
 
   -- Update the score, bounding it to a maximum of 1000
   UPDATE public.tenant_trust_scores
   SET score = LEAST(1000, score + NEW.score_change),
       updated_at = now()
-  WHERE phone = NEW.tenant_phone;
+  WHERE aadhar = NEW.tenant_aadhar;
 
   RETURN NEW;
 END;

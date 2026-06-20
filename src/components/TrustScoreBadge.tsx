@@ -4,24 +4,24 @@ import { cn } from "@/lib/utils";
 import { nivasaApi } from "@/lib/api";
 
 interface TrustScoreBadgeProps {
-  phone: string;
+  aadhar: string;
   className?: string;
   showLabel?: boolean;
 }
 
-export function TrustScoreBadge({ phone, className, showLabel = false }: TrustScoreBadgeProps) {
+export function TrustScoreBadge({ aadhar, className, showLabel = false }: TrustScoreBadgeProps) {
   const [score, setScore] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let mounted = true;
     async function loadScore() {
-      if (!phone) {
+      if (!aadhar) {
         setLoading(false);
         return;
       }
       setLoading(true);
-      const s = await nivasaApi.getTrustScore(phone);
+      const s = await nivasaApi.getTrustScore(aadhar);
       if (mounted) {
         setScore(s);
         setLoading(false);
@@ -31,9 +31,9 @@ export function TrustScoreBadge({ phone, className, showLabel = false }: TrustSc
     return () => {
       mounted = false;
     };
-  }, [phone]);
+  }, [aadhar]);
 
-  if (loading || !phone) return null;
+  if (loading || !aadhar) return null;
   if (score === null) return null;
 
   const isExcellent = score >= 800;

@@ -452,7 +452,7 @@ export default function RoomDetails() {
                       <div className="min-w-0">
                         <div className="text-sm font-semibold truncate flex items-center gap-2" title={t.name}>
                           {t.name}
-                          <TrustScoreBadge phone={t.phone} />
+                          <TrustScoreBadge aadhar={t.aadhar} />
                         </div>
                         <div className="mt-1 flex flex-wrap items-center gap-3 text-xs font-medium">
                            {t.bed_assignment && <div className="text-brand dark:text-brand">Bed: <span className="font-semibold">{t.bed_assignment}</span></div>}

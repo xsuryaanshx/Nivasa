@@ -758,7 +758,7 @@ async function addTenant(input: {
   name: string;
   phone: string;
   whatsapp_number?: string;
-  aadhar?: string;
+  aadhar: string;
   joined_at?: string;
   occupancy_count?: number;
   depositAmount?: number;
@@ -782,6 +782,7 @@ async function addTenant(input: {
         ? Math.max(1, Math.floor(Number(input.occupancy_count)))
         : 1;
     /* 2. Insert tenant with correct fields */
+    if (!input.aadhar) throw new Error("Aadhar number is required.");
     const payload = {
       name: input.name,
       phone: input.phone,
@@ -1567,12 +1568,12 @@ async function getProfitStats() {
 /* ─────────────────────────────────────────────────────────────
  * Trust Score
  * ───────────────────────────────────────────────────────────── */
-async function getTrustScore(phone: string): Promise<number | null> {
+async function getTrustScore(aadhar: string): Promise<number | null> {
   try {
     const { data, error } = await supabase
       .from("tenant_trust_scores")
       .select("score")
-      .eq("phone", phone)
+      .eq("aadhar", aadhar)
       .single();
     if (error && error.code !== "PGRST116") throw error; // PGRST116 = no rows returned
     return data ? data.score : 1000;
@@ -1582,12 +1583,12 @@ async function getTrustScore(phone: string): Promise<number | null> {
   }
 }
 
-async function getTrustIncidents(phone: string): Promise<any[]> {
+async function getTrustIncidents(aadhar: string): Promise<any[]> {
   try {
     const { data, error } = await supabase
       .from("trust_incidents")
       .select("*, landlords:auth.users(email)")
-      .eq("tenant_phone", phone)
+      .eq("tenant_aadhar", aadhar)
       .order("created_at", { ascending: false });
     if (error) throw error;
     return data || [];
@@ -1598,7 +1599,7 @@ async function getTrustIncidents(phone: string): Promise<any[]> {
 }
 
 async function reportTrustIncident(payload: {
-  tenant_phone: string;
+  tenant_aadhar: string;
   building_id?: string;
   incident_type: string;
   score_change: number;
@@ -1609,7 +1610,7 @@ async function reportTrustIncident(payload: {
     const { error } = await supabase
       .from("trust_incidents")
       .insert([{
-        tenant_phone: payload.tenant_phone,
+        tenant_aadhar: payload.tenant_aadhar,
         landlord_id: user_id,
         building_id: payload.building_id || null,
         incident_type: payload.incident_type,

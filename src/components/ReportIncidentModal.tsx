@@ -21,7 +21,7 @@ export function ReportIncidentModal({ open, tenant, buildingId, onClose }: Repor
   const [loadingHistory, setLoadingHistory] = useState(false);
 
   useEffect(() => {
-    if (open && tenant?.phone) {
+    if (open && tenant?.aadhar) {
       loadHistory();
       setIncidentType("rent_skipped");
       setDescription("");
@@ -30,7 +30,7 @@ export function ReportIncidentModal({ open, tenant, buildingId, onClose }: Repor
 
   const loadHistory = async () => {
     setLoadingHistory(true);
-    const data = await nivasaApi.getTrustIncidents(tenant.phone);
+    const data = await nivasaApi.getTrustIncidents(tenant.aadhar);
     setIncidents(data);
     setLoadingHistory(false);
   };
@@ -47,15 +47,15 @@ export function ReportIncidentModal({ open, tenant, buildingId, onClose }: Repor
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!tenant?.phone) {
-      toast.error("Tenant phone number is required to report an incident.");
+    if (!tenant?.aadhar) {
+      toast.error("Tenant Aadhar number is required to report an incident.");
       return;
     }
 
     try {
       setSubmitting(true);
       await nivasaApi.reportTrustIncident({
-        tenant_phone: tenant.phone,
+        tenant_aadhar: tenant.aadhar,
         building_id: buildingId,
         incident_type: incidentType,
         score_change: getPenalty(incidentType),
@@ -128,7 +128,7 @@ export function ReportIncidentModal({ open, tenant, buildingId, onClose }: Repor
             </form>
 
             <div className="mt-8">
-              <div className="text-xs font-semibold text-muted-foreground mb-3">Incident History for {tenant.phone}</div>
+              <div className="text-xs font-semibold text-muted-foreground mb-3">Incident History for {tenant.aadhar}</div>
               {loadingHistory ? (
                 <div className="text-xs text-muted-foreground animate-pulse">Loading history...</div>
               ) : incidents.length === 0 ? (

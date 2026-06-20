@@ -103,7 +103,9 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
       e.whatsapp = "Enter a valid WhatsApp number";
     }
     
-    if (aadhar && !isValidAadhar(aadhar)) {
+    if (!aadhar) {
+      e.aadhar = "Aadhar number is required";
+    } else if (!isValidAadhar(aadhar)) {
       e.aadhar = "Aadhar must be 12 digits";
     }
 
@@ -298,11 +300,6 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
                     inputMode="tel"
                     disabled={submitting}
                   />
-                  {mobile.length >= 10 && (
-                    <div className="mt-2">
-                      <TrustScoreBadge phone={mobile} showLabel />
-                    </div>
-                  )}
                 </Field>
 
                 <div className="space-y-2">
@@ -336,7 +333,7 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
                 </div>
               </div>
 
-              <Field label="Aadhar Number" hint="12 digits" optional error={errors.aadhar}>
+              <Field label="Aadhar Number" hint="12 digits (Required)" error={errors.aadhar}>
                 <IconInput 
                   icon={<IdCard className="h-4 w-4" />}
                   value={formatAadhar(aadhar)}
@@ -346,6 +343,11 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
                   maxLength={14}
                   disabled={submitting}
                 />
+                {aadhar.length === 12 && (
+                  <div className="mt-2">
+                    <TrustScoreBadge aadhar={aadhar} showLabel />
+                  </div>
+                )}
               </Field>
 
               <Field label="ID Document" optional>
