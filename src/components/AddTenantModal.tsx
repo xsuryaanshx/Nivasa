@@ -34,7 +34,7 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
   const [sameAsMobile, setSameAsMobile] = useState(true);
   const [aadhar, setAadhar] = useState("");
   const [depositAmount, setDepositAmount] = useState("");
-  const [depositMethod, setDepositMethod] = useState("Cash");
+  const [depositMethod, setDepositMethod] = useState("Pending");
   const [bedName, setBedName] = useState("");
   const [rentAmount, setRentAmount] = useState("");
   const [joinedAt, setJoinedAt] = useState(() => {
@@ -83,7 +83,7 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
       setSameAsMobile(true);
       setAadhar("");
       setDepositAmount("");
-      setDepositMethod("Cash");
+      setDepositMethod("Pending");
       setBedName("");
       setRentAmount("");
       const d = new Date();
@@ -416,6 +416,7 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
                       disabled={submitting}
                       className="h-12 w-full appearance-none rounded-xl border border-border bg-card/70 pl-11 pr-4 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-brand/10 transition-all disabled:opacity-50"
                     >
+                      <option value="Pending">Pending</option>
                       <option value="Cash">Cash</option>
                       <option value="UPI">UPI</option>
                       <option value="Bank">Bank Transfer</option>

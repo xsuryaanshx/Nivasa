@@ -807,6 +807,19 @@ async function addTenant(input: {
       .single();
     if (tenantError) throw tenantError;
 
+    /* 2.1 Auto-log deposit payment if not Pending */
+    if (payload.deposit_amount > 0 && payload.deposit_method !== "Pending") {
+      await addPayment({
+        room_id: input.room_id,
+        tenant_id: tenant.id,
+        amount: payload.deposit_amount,
+        status: "paid",
+        method: payload.deposit_method,
+        date: payload.joined_at,
+        notes: "Initial Deposit"
+      });
+    }
+
     /* 2.5 Upsert into global trust score table so their name is searchable */
     await supabase.from("tenant_trust_scores").upsert({
       aadhar: input.aadhar,

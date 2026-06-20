@@ -460,39 +460,48 @@ export default function RoomDetails() {
                         <div className="text-sm font-semibold truncate flex items-center gap-2" title={t.name}>
                           {t.name}
                           <TrustScoreBadge aadhar={t.aadhar} />
-                                 <div className="mt-1 flex flex-wrap items-center gap-3 text-xs font-medium">
-                           {t.bed_assignment && <div className="text-brand dark:text-brand">Bed: <span className="font-semibold">{t.bed_assignment}</span></div>}
-                           <div className="text-muted-foreground">This Month: <span className="text-foreground">{formatMoney(monthlyDue, currency, { decimals: 0 })}</span> {totalAddons > 0 && <span className="text-[10px] text-muted-foreground opacity-70">(inc. {formatMoney(totalAddons, currency, { decimals: 0 })} add-ons)</span>} {cost > 0 && <span className="text-[10px] text-muted-foreground opacity-70">(inc. {formatMoney(cost, currency, { decimals: 0 })} electricity)</span>}</div>
-                           <div className="text-emerald-600 dark:text-emerald-500">Paid: <span className="font-semibold">{formatMoney(totalPaidHistorical, currency, { decimals: 0 })}</span></div>
-                           {netBalance > 0 && (
-                             <div className="text-red-600 dark:text-red-500">Net Remaining: <span className="font-bold">{formatMoney(netBalance, currency, { decimals: 0 })}</span></div>
-                           )}
-                           {netBalance < 0 && (
-                             <div className="text-emerald-500 dark:text-emerald-400">Net Credit: <span className="font-bold">{formatMoney(Math.abs(netBalance), currency, { decimals: 0 })}</span></div>
-                           )}
+                                 <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 rounded-lg bg-background/50 p-3">
+                           <div className="flex flex-col">
+                             <span className="text-[10px] uppercase font-semibold tracking-wider text-muted-foreground/70">This Month</span>
+                             <span className="text-sm font-semibold">{formatMoney(monthlyDue, currency, { decimals: 0 })}</span>
+                             {(totalAddons > 0 || cost > 0) && (
+                               <span className="text-[9px] text-muted-foreground">
+                                 inc. {[totalAddons > 0 ? "add-ons" : "", cost > 0 ? "electricity" : ""].filter(Boolean).join(" & ")}
+                               </span>
+                             )}
+                           </div>
+                           <div className="flex flex-col">
+                             <span className="text-[10px] uppercase font-semibold tracking-wider text-muted-foreground/70">Paid</span>
+                             <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-500">{formatMoney(totalPaidHistorical, currency, { decimals: 0 })}</span>
+                           </div>
+                           <div className="flex flex-col">
+                             <span className="text-[10px] uppercase font-semibold tracking-wider text-muted-foreground/70">Net Balance</span>
+                             <span className={cn("text-sm font-bold", netBalance > 0 ? "text-red-600 dark:text-red-500" : netBalance < 0 ? "text-emerald-500 dark:text-emerald-400" : "text-foreground")}>
+                               {netBalance === 0 ? "₹0" : netBalance > 0 ? `${formatMoney(netBalance, currency, { decimals: 0 })} Due` : `${formatMoney(Math.abs(netBalance), currency, { decimals: 0 })} Credit`}
+                             </span>
+                           </div>
                            {Number(t.depositAmount || 0) > 0 && (
-                             <div className="text-muted-foreground flex items-center gap-1">
-                               Deposit: <span className={cn("font-semibold", totalPaidHistorical >= Number(t.depositAmount || 0) ? "text-emerald-500 dark:text-emerald-400" : "text-orange-500 dark:text-orange-400")}>{totalPaidHistorical >= Number(t.depositAmount || 0) ? "Paid" : "Pending"}</span>
-                               <span className="text-[10px] text-muted-foreground opacity-70">({formatMoney(Number(t.depositAmount || 0), currency, { decimals: 0 })})</span>
+                             <div className="flex flex-col">
+                               <span className="text-[10px] uppercase font-semibold tracking-wider text-muted-foreground/70">Deposit ({formatMoney(Number(t.depositAmount || 0), currency, { decimals: 0 })})</span>
+                               <span className={cn("text-sm font-bold", totalPaidHistorical >= Number(t.depositAmount || 0) ? "text-emerald-500 dark:text-emerald-400" : "text-orange-500 dark:text-orange-400")}>
+                                 {totalPaidHistorical >= Number(t.depositAmount || 0) ? "Paid" : "Pending"}
+                               </span>
                              </div>
                            )}
                          </div>
                        </div>
-                        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
-                          <span className="flex items-center gap-1 truncate">
-                            <Phone className="h-3 w-3 shrink-0" /> {t.phone}
-                          </span>
-                          {t.joined_at && <span className="flex items-center gap-1 shrink-0"><Calendar className="h-3 w-3" /> Joined: {new Date(t.joined_at).toLocaleDateString()}</span>}
-                          {t.document_url ? (
-                            <a href={t.document_url} target="_blank" rel="noreferrer" className="flex items-center gap-1 shrink-0 text-brand hover:underline">
-                              <FileText className="h-3 w-3" /> ID Document
-                            </a>
-                          ) : (
-                            <span className="flex items-center gap-1 shrink-0 text-muted-foreground/60" title="No ID Document">
-                              <FileText className="h-3 w-3" /> No Document
-                            </span>
-                          )}
-                        </div>
+                       <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-[11px] text-muted-foreground border-t border-border/50 pt-2">
+                         <div className="flex items-center gap-3">
+                           <span className="flex items-center gap-1 truncate"><Phone className="h-3 w-3 shrink-0" /> {t.phone}</span>
+                           {t.joined_at && <span className="flex items-center gap-1 shrink-0"><Calendar className="h-3 w-3" /> {new Date(t.joined_at).toLocaleDateString()}</span>}
+                           {t.bed_assignment && <span className="flex items-center gap-1 shrink-0 text-brand font-medium">Bed: {t.bed_assignment}</span>}
+                         </div>
+                         {t.document_url ? (
+                           <a href={t.document_url} target="_blank" rel="noreferrer" className="flex items-center gap-1 shrink-0 text-brand hover:underline"><FileText className="h-3 w-3" /> ID</a>
+                         ) : (
+                           <span className="flex items-center gap-1 shrink-0 text-muted-foreground/60" title="No ID Document"><FileText className="h-3 w-3" /> No ID</span>
+                         )}
+                       </div>
                       </div>
                     </div>
                     <div className="flex gap-1 items-center shrink-0">
