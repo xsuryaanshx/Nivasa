@@ -11,6 +11,8 @@ import { cn } from "@/lib/utils";
 import { MarkAttendanceModal } from "@/components/MarkAttendanceModal";
 import { RecordStaffPaymentModal } from "@/components/RecordStaffPaymentModal";
 import { UploadStaffDocumentModal } from "@/components/UploadStaffDocumentModal";
+import { EditStaffModal } from "@/components/EditStaffModal";
+import { toast } from "sonner";
 
 export default function StaffDetails() {
   const { id } = useParams();
@@ -23,6 +25,7 @@ export default function StaffDetails() {
   const [isAttendanceModalOpen, setIsAttendanceModalOpen] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isDocumentModalOpen, setIsDocumentModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -48,6 +51,17 @@ export default function StaffDetails() {
   useEffect(() => {
     fetchData();
   }, [id]);
+
+  const handleDelete = async () => {
+    if (!id || !window.confirm("Are you sure you want to delete this staff member?")) return;
+    try {
+      await nivasaApi.removeStaff(id);
+      toast.success("Staff member deleted successfully");
+      navigate("/app/staff");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to delete staff member");
+    }
+  };
 
   if (loading) {
     return <div className="p-8 text-center text-muted-foreground animate-pulse">Loading staff details...</div>;
@@ -89,10 +103,10 @@ export default function StaffDetails() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <button className="h-9 w-9 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center hover:bg-secondary/80 transition-colors">
+            <button onClick={() => setIsEditModalOpen(true)} className="h-9 w-9 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center hover:bg-secondary/80 transition-colors">
               <Edit2 className="h-4 w-4" />
             </button>
-            <button className="h-9 w-9 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500/20 transition-colors">
+            <button onClick={handleDelete} className="h-9 w-9 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500/20 transition-colors">
               <Trash2 className="h-4 w-4" />
             </button>
           </div>
@@ -238,6 +252,15 @@ export default function StaffDetails() {
         staffId={id!}
         onSuccess={fetchData}
       />
+
+      {staff && (
+        <EditStaffModal
+          open={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          staff={staff}
+          onSuccess={fetchData}
+        />
+      )}
     </div>
   );
 }
