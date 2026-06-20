@@ -270,8 +270,15 @@ export default function RoomDetails() {
     const activeExpenses = globalExpenses.filter(e => activeExpenseIds.includes(e.id));
     const currentMonthStr = new Date().toISOString().slice(0, 7);
     const invoicesForTenant = tenantInvoices.filter(i => i.tenant_id === tenant.id);
-    const totalDueHistorical = invoicesForTenant.reduce((sum, i) => sum + (Number(i.total_amount) || 0), 0);
     const currentInvoice = invoicesForTenant.find(i => i.billing_month === currentMonthStr);
+    
+    const currentAddons = activeExpenses.reduce((sum: number, exp: any) => sum + exp.cost, 0);
+    const currentBase = tenant.rent_amount ? Number(tenant.rent_amount) : calculateTenantShare(room!, tenant);
+    
+    let totalDueHistorical = invoicesForTenant.reduce((sum, i) => sum + (Number(i.total_amount) || 0), 0);
+    if (!currentInvoice) {
+      totalDueHistorical += (currentBase + currentAddons);
+    }
     
     const allTenantPayments = roomPayments.filter(p => p.tenantId === tenant.id && p.status === "paid");
     const totalPaidHistorical = allTenantPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
@@ -385,8 +392,19 @@ export default function RoomDetails() {
               {room.tenants.map((t) => {
                 const currentMonth = new Date().toISOString().slice(0, 7);
                 const invoicesForTenant = tenantInvoices.filter(i => i.tenant_id === t.id);
-                const totalDueHistorical = invoicesForTenant.reduce((sum, i) => sum + (Number(i.total_amount) || 0), 0);
                 const currentInvoice = invoicesForTenant.find(i => i.billing_month === currentMonth);
+                
+                const tenantExpenseIds = getTenantExpenses(t.id);
+                const activeExpenses = getCustomExpenses().filter((e: any) => tenantExpenseIds.includes(e.id));
+                const currentAddons = activeExpenses.reduce((sum: number, exp: any) => sum + exp.cost, 0);
+                const currentBase = t.rent_amount ? Number(t.rent_amount) : calculateTenantShare(room);
+                const fallbackMonthlyDue = currentBase + currentAddons;
+                
+                // If the invoice hasn't generated yet or DB failed, assume they owe at least this month
+                let totalDueHistorical = invoicesForTenant.reduce((sum, i) => sum + (Number(i.total_amount) || 0), 0);
+                if (!currentInvoice) {
+                  totalDueHistorical += fallbackMonthlyDue;
+                }
                 
                 const allTenantPayments = roomPayments.filter(p => p.tenantId === t.id && p.status === "paid");
                 const totalPaidHistorical = allTenantPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
@@ -401,8 +419,8 @@ export default function RoomDetails() {
                 const netBalance = totalDueHistorical - totalPaidHistorical;
                 const remainingAmount = Math.max(0, netBalance);
                 
-                const monthlyDue = currentInvoice ? Number(currentInvoice.total_amount) : (Number(t.rent_amount) || calculateTenantShare(room));
-                const totalAddons = currentInvoice ? Number(currentInvoice.addons_total) : 0;
+                const monthlyDue = currentInvoice ? Number(currentInvoice.total_amount) : fallbackMonthlyDue;
+                const totalAddons = currentInvoice ? Number(currentInvoice.addons_total) : currentAddons;
                 
                 let displayStatus = getTenantPaymentStatus(t, roomPayments);
                 let bgClass = "bg-secondary/60";
