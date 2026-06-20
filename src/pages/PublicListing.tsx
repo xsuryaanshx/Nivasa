@@ -136,6 +136,23 @@ export default function PublicListing() {
               ))}
             </div>
           </div>
+
+          {building.address && (
+            <div className="mt-8 border-t border-border/50 pt-8">
+              <h2 className="text-xl font-semibold text-foreground mb-4">Location</h2>
+              <div className="w-full h-64 overflow-hidden rounded-2xl border border-border/50 shadow-sm relative bg-secondary/50">
+                <iframe 
+                  width="100%" 
+                  height="100%" 
+                  frameBorder="0" 
+                  style={{ border: 0 }} 
+                  src={`https://www.google.com/maps?q=${encodeURIComponent(building.address)}&output=embed`} 
+                  allowFullScreen 
+                  title="Google Maps Location"
+                ></iframe>
+              </div>
+            </div>
+          )}
         </motion.div>
       </div>
 
