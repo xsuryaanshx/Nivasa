@@ -20,7 +20,7 @@ CREATE POLICY "Users can view invoices for their tenants" ON public.tenant_invoi
             JOIN public.units u ON t.unit_id = u.id
             JOIN public.buildings b ON u.building_id = b.id
             WHERE t.id = tenant_invoices.tenant_id
-            AND b.owner_id = auth.uid()
+            AND b.user_id = auth.uid()
         )
     );
 
@@ -31,7 +31,7 @@ CREATE POLICY "Users can insert invoices for their tenants" ON public.tenant_inv
             JOIN public.units u ON t.unit_id = u.id
             JOIN public.buildings b ON u.building_id = b.id
             WHERE t.id = tenant_invoices.tenant_id
-            AND b.owner_id = auth.uid()
+            AND b.user_id = auth.uid()
         )
     );
 
@@ -42,7 +42,7 @@ CREATE POLICY "Users can update invoices for their tenants" ON public.tenant_inv
             JOIN public.units u ON t.unit_id = u.id
             JOIN public.buildings b ON u.building_id = b.id
             WHERE t.id = tenant_invoices.tenant_id
-            AND b.owner_id = auth.uid()
+            AND b.user_id = auth.uid()
         )
     );
 
@@ -53,6 +53,6 @@ CREATE POLICY "Users can delete invoices for their tenants" ON public.tenant_inv
             JOIN public.units u ON t.unit_id = u.id
             JOIN public.buildings b ON u.building_id = b.id
             WHERE t.id = tenant_invoices.tenant_id
-            AND b.owner_id = auth.uid()
+            AND b.user_id = auth.uid()
         )
     );
