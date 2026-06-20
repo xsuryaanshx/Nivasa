@@ -1,7 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
-import { TrendingUp, IndianRupee, Wrench, Building2, Wallet, Users } from "lucide-react";
+import { TrendingUp, IndianRupee, Wrench, Building2, Wallet, Users, Download, FileText, Table as TableIcon } from "lucide-react";
 import { nivasaApi } from "@/lib/api";
 import { useCurrency, formatMoney } from "@/lib/currency";
+import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function ProfitPage() {
   const { currency } = useCurrency();
@@ -11,9 +20,99 @@ export default function ProfitPage() {
     queryFn: nivasaApi.getProfitStats,
   });
 
+  const handleExportExcel = () => {
+    if (!stats || !stats.buildingProfits) return;
+
+    // Prepare overview data
+    const overviewData = [
+      ["Metric", "Amount"],
+      ["Total Revenue (Paid)", stats.totalRevenue],
+      ["Total Maintenance", stats.totalMaintenance],
+      ["Total Staff Salaries", stats.totalStaffSalaries],
+      ["Total Expenses", stats.totalExpenses],
+      ["Net Profit", stats.netProfit],
+      [],
+    ];
+
+    // Prepare buildings data
+    const buildingsData = [
+      ["Building Name", "Revenue", "Maintenance", "Staff Salaries", "Total Expenses", "Net Profit", "Vacant Rooms"],
+      ...stats.buildingProfits.map((b: any) => [
+        b.name,
+        b.revenue,
+        b.maintenance,
+        b.staffSalaries,
+        b.expenses,
+        b.netProfit,
+        b.vacantRooms,
+      ]),
+    ];
+
+    // Create a new workbook and add sheets
+    const wb = XLSX.utils.book_new();
+    
+    // Overview Sheet
+    const wsOverview = XLSX.utils.aoa_to_sheet(overviewData);
+    XLSX.utils.book_append_sheet(wb, wsOverview, "Profit Overview");
+
+    // Buildings Sheet
+    const wsBuildings = XLSX.utils.aoa_to_sheet(buildingsData);
+    XLSX.utils.book_append_sheet(wb, wsBuildings, "Building Breakdown");
+
+    // Generate Excel file
+    XLSX.writeFile(wb, "Nivasa_Profit_Ledger.xlsx");
+  };
+
+  const handleExportPDF = () => {
+    if (!stats || !stats.buildingProfits) return;
+
+    const doc = new jsPDF();
+
+    doc.setFontSize(18);
+    doc.text("Nivasa Profit & Expenses Ledger", 14, 22);
+
+    doc.setFontSize(12);
+    doc.text("Overview", 14, 32);
+
+    const formatInr = (val: number) => `Rs ${val.toLocaleString("en-IN")}`;
+
+    autoTable(doc, {
+      startY: 36,
+      head: [["Metric", "Amount"]],
+      body: [
+        ["Total Revenue (Paid)", formatInr(stats.totalRevenue)],
+        ["Total Maintenance", formatInr(stats.totalMaintenance)],
+        ["Total Staff Salaries", formatInr(stats.totalStaffSalaries)],
+        ["Total Expenses", formatInr(stats.totalExpenses)],
+        ["Net Profit", formatInr(stats.netProfit)],
+      ],
+      theme: "grid",
+      headStyles: { fillColor: [41, 128, 185] },
+    });
+
+    const nextY = (doc as any).lastAutoTable.finalY + 10;
+    doc.text("Profit by Building", 14, nextY);
+
+    autoTable(doc, {
+      startY: nextY + 4,
+      head: [["Building", "Revenue", "Expenses", "Net Profit", "Vacant"]],
+      body: stats.buildingProfits.map((b: any) => [
+        b.name,
+        formatInr(b.revenue),
+        formatInr(b.expenses),
+        formatInr(b.netProfit),
+        b.vacantRooms.toString(),
+      ]),
+      theme: "striped",
+      headStyles: { fillColor: [39, 174, 96] },
+    });
+
+    doc.save("Nivasa_Profit_Ledger.pdf");
+  };
+
   return (
     <div className="flex flex-col gap-6 p-6 pb-24 md:p-8 md:pb-8 max-w-7xl mx-auto w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex flex-col gap-2 md:flex-row md:items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
             <TrendingUp className="h-8 w-8 text-emerald-500" />
@@ -21,6 +120,25 @@ export default function ProfitPage() {
           </h1>
           <p className="text-muted-foreground mt-1">Detailed breakdown of your financial performance</p>
         </div>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none">
+              <Download className="h-4 w-4" />
+              Export Ledger
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem onClick={handleExportPDF} className="cursor-pointer gap-2 py-2">
+              <FileText className="h-4 w-4 text-rose-500" />
+              <span>Export as PDF</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleExportExcel} className="cursor-pointer gap-2 py-2">
+              <TableIcon className="h-4 w-4 text-emerald-600" />
+              <span>Export as Excel</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {isLoading ? (
