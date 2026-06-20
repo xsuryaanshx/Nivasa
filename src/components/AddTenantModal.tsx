@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { isValidMobile, isValidAadhar } from "@/lib/tenantStore";
 import { useSubscriptionData } from "@/hooks/useSubscriptionData";
 import { PremiumUpgradeModal } from "./PremiumUpgradeModal";
+import { TrustScoreBadge } from "./TrustScoreBadge";
 
 interface Props {
   open: boolean;
@@ -297,6 +298,11 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
                     inputMode="tel"
                     disabled={submitting}
                   />
+                  {mobile.length >= 10 && (
+                    <div className="mt-2">
+                      <TrustScoreBadge phone={mobile} showLabel />
+                    </div>
+                  )}
                 </Field>
 
                 <div className="space-y-2">

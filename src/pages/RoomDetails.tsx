@@ -1,7 +1,7 @@
 import { nivasaApi } from "@/lib/api";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
-  ArrowLeft, BellRing, CheckCircle2, IdCard, MessageCircle, Phone, Plus, Save, Send, UserPlus, UserMinus, Zap, Calendar, Banknote, Edit2, FileText, Wrench
+  ArrowLeft, BellRing, CheckCircle2, IdCard, MessageCircle, Phone, Plus, Save, Send, UserPlus, UserMinus, Zap, Calendar, Banknote, Edit2, FileText, Wrench, ShieldAlert
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
@@ -17,6 +17,8 @@ import { ElectricityBillingModal } from "@/components/ElectricityBillingModal";
 import { TenantExpensesModal } from "@/components/TenantExpensesModal";
 import { InvoiceGeneratorModal } from "@/components/InvoiceGeneratorModal";
 import { PastInvoicesModal } from "@/components/PastInvoicesModal";
+import { ReportIncidentModal } from "@/components/ReportIncidentModal";
+import { TrustScoreBadge } from "@/components/TrustScoreBadge";
 import { Money } from "@/components/Money";
 import { type Room } from "@/lib/types";
 import { buildTiersFromBaseAndPerAdditional, normalizeOccupancyTiers, type OccupancyPriceTier } from "@/lib/rentByOccupancy";
@@ -48,6 +50,7 @@ export default function RoomDetails() {
   const [electricityOpen, setElectricityOpen] = useState(false);
   const [expensesTenant, setExpensesTenant] = useState<any>(null);
   const [invoiceTenant, setInvoiceTenant] = useState<any>(null);
+  const [incidentTenant, setIncidentTenant] = useState<any>(null);
   const [pastInvoicesRoomId, setPastInvoicesRoomId] = useState<string | null>(null);
   const [savingElectricity, setSavingElectricity] = useState(false);
   const [rentAmount, setRentAmount] = useState("");
@@ -449,10 +452,7 @@ export default function RoomDetails() {
                       <div className="min-w-0">
                         <div className="text-sm font-semibold truncate flex items-center gap-2" title={t.name}>
                           {t.name}
-                          {displayStatus === "paid" && <span className="inline-flex items-center rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">✅ Paid in Full</span>}
-                          {displayStatus === "partial" && <span className="inline-flex items-center rounded-full bg-blue-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-blue-600 dark:text-blue-400">⏳ Partial</span>}
-                          {displayStatus === "pending" && <span className="inline-flex items-center rounded-full bg-orange-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-orange-600 dark:text-orange-400">⚠️ Pending</span>}
-                          {displayStatus === "late" && <span className="inline-flex items-center rounded-full bg-red-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-red-600 dark:text-red-400">🔴 Overdue</span>}
+                          <TrustScoreBadge phone={t.phone} />
                         </div>
                         <div className="mt-1 flex flex-wrap items-center gap-3 text-xs font-medium">
                            {t.bed_assignment && <div className="text-brand dark:text-brand">Bed: <span className="font-semibold">{t.bed_assignment}</span></div>}
@@ -482,6 +482,14 @@ export default function RoomDetails() {
                       </div>
                     </div>
                     <div className="flex gap-1 items-center shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => setIncidentTenant(t)}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-orange-500 hover:bg-orange-500/10 transition-colors"
+                        title="Report Incident"
+                      >
+                        <ShieldAlert className="h-4 w-4" />
+                      </button>
                       <button
                         type="button"
                         onClick={() => sendReminderToTenant(t)}
@@ -782,6 +790,12 @@ export default function RoomDetails() {
         roomPayments={roomPayments}
         electricityCost={cost}
         onClose={() => setInvoiceTenant(null)} 
+      />
+      <ReportIncidentModal
+        open={!!incidentTenant}
+        tenant={incidentTenant}
+        buildingId={room.buildingId}
+        onClose={() => setIncidentTenant(null)}
       />
       <PastInvoicesModal
         open={!!pastInvoicesRoomId}

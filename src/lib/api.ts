@@ -1564,6 +1564,65 @@ async function getProfitStats() {
   }
 }
 
+/* ─────────────────────────────────────────────────────────────
+ * Trust Score
+ * ───────────────────────────────────────────────────────────── */
+async function getTrustScore(phone: string): Promise<number | null> {
+  try {
+    const { data, error } = await supabase
+      .from("tenant_trust_scores")
+      .select("score")
+      .eq("phone", phone)
+      .single();
+    if (error && error.code !== "PGRST116") throw error; // PGRST116 = no rows returned
+    return data ? data.score : 1000;
+  } catch (error) {
+    safeLog("getTrustScore", error);
+    return null;
+  }
+}
+
+async function getTrustIncidents(phone: string): Promise<any[]> {
+  try {
+    const { data, error } = await supabase
+      .from("trust_incidents")
+      .select("*, landlords:auth.users(email)")
+      .eq("tenant_phone", phone)
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    safeLog("getTrustIncidents", error);
+    return [];
+  }
+}
+
+async function reportTrustIncident(payload: {
+  tenant_phone: string;
+  building_id?: string;
+  incident_type: string;
+  score_change: number;
+  description?: string;
+}): Promise<void> {
+  try {
+    const user_id = await requireAuthUserId();
+    const { error } = await supabase
+      .from("trust_incidents")
+      .insert([{
+        tenant_phone: payload.tenant_phone,
+        landlord_id: user_id,
+        building_id: payload.building_id || null,
+        incident_type: payload.incident_type,
+        score_change: payload.score_change,
+        description: payload.description || null,
+      }]);
+    if (error) throw error;
+  } catch (error) {
+    safeLog("reportTrustIncident", error);
+    throw error;
+  }
+}
+
 export async function getPublicBuilding(slug: string) {
   const { data, error } = await supabase
     .from("buildings")
@@ -1626,5 +1685,8 @@ export const nivasaApi = {
   updateMaintenanceRequest,
   deleteMaintenanceRequest,
   getProfitStats,
+  getTrustScore,
+  getTrustIncidents,
+  reportTrustIncident,
 };
 export type NivasaApi = typeof nivasaApi;
