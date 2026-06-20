@@ -460,8 +460,7 @@ export default function RoomDetails() {
                         <div className="text-sm font-semibold truncate flex items-center gap-2" title={t.name}>
                           {t.name}
                           <TrustScoreBadge aadhar={t.aadhar} />
-                        </div>
-                        <div className="mt-1 flex flex-wrap items-center gap-3 text-xs font-medium">
+                                 <div className="mt-1 flex flex-wrap items-center gap-3 text-xs font-medium">
                            {t.bed_assignment && <div className="text-brand dark:text-brand">Bed: <span className="font-semibold">{t.bed_assignment}</span></div>}
                            <div className="text-muted-foreground">This Month: <span className="text-foreground">{formatMoney(monthlyDue, currency, { decimals: 0 })}</span> {totalAddons > 0 && <span className="text-[10px] text-muted-foreground opacity-70">(inc. {formatMoney(totalAddons, currency, { decimals: 0 })} add-ons)</span>} {cost > 0 && <span className="text-[10px] text-muted-foreground opacity-70">(inc. {formatMoney(cost, currency, { decimals: 0 })} electricity)</span>}</div>
                            <div className="text-emerald-600 dark:text-emerald-500">Paid: <span className="font-semibold">{formatMoney(totalPaidHistorical, currency, { decimals: 0 })}</span></div>
@@ -471,7 +470,14 @@ export default function RoomDetails() {
                            {netBalance < 0 && (
                              <div className="text-emerald-500 dark:text-emerald-400">Net Credit: <span className="font-bold">{formatMoney(Math.abs(netBalance), currency, { decimals: 0 })}</span></div>
                            )}
+                           {(t.depositAmount || 0) > 0 && (
+                             <div className="text-muted-foreground flex items-center gap-1">
+                               Deposit: <span className={cn("font-semibold", totalPaidHistorical >= t.depositAmount ? "text-emerald-500 dark:text-emerald-400" : "text-orange-500 dark:text-orange-400")}>{totalPaidHistorical >= t.depositAmount ? "Paid" : "Pending"}</span>
+                               <span className="text-[10px] text-muted-foreground opacity-70">({formatMoney(t.depositAmount, currency, { decimals: 0 })})</span>
+                             </div>
+                           )}
                          </div>
+                       </div>
                         <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
                           <span className="flex items-center gap-1 truncate">
                             <Phone className="h-3 w-3 shrink-0" /> {t.phone}
