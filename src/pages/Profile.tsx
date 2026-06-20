@@ -143,6 +143,34 @@ const APP_FEATURES = [
     color: "text-emerald-400",
     bg: "bg-emerald-500/10",
   },
+  {
+    icon: ShieldCheck,
+    label: "Tenant Score",
+    desc: "Check tenant history via Aadhar",
+    color: "text-indigo-400",
+    bg: "bg-indigo-500/10",
+  },
+  {
+    icon: Wrench,
+    label: "Expense Register",
+    desc: "Log maintenance & facility costs",
+    color: "text-rose-500",
+    bg: "bg-rose-500/10",
+  },
+  {
+    icon: TrendingUp,
+    label: "Profit",
+    desc: "Net profit summary",
+    color: "text-emerald-500",
+    bg: "bg-emerald-500/10",
+  },
+  {
+    icon: Bell,
+    label: "Notifications",
+    desc: "In-app alerts & property reminders",
+    color: "text-blue-400",
+    bg: "bg-blue-500/10",
+  },
 ];
 
 const stagger = {
@@ -517,38 +545,6 @@ export default function Profile() {
 
   const MENU_ITEMS = [
     {
-      icon: Wrench,
-      label: "Expense Register",
-      desc: "Log maintenance & facility costs",
-      onClick: () => navigate("/app/maintenance"),
-      accent: "text-rose-500",
-      bg: "bg-rose-500/10",
-    },
-    {
-      icon: TrendingUp,
-      label: "Profit",
-      desc: "Net profit summary",
-      onClick: () => setProfitOpen(true),
-      accent: "text-emerald-500",
-      bg: "bg-emerald-500/10",
-    },
-    {
-      icon: Bell,
-      label: "Notifications",
-      desc: "In-app alerts & property reminders",
-      onClick: () => setNotificationsOpen(true),
-      accent: "text-blue-400",
-      bg: "bg-blue-500/10",
-    },
-    {
-      icon: ShieldCheck,
-      label: "Tenant Score",
-      desc: "Check tenant history via Aadhar",
-      onClick: () => navigate("/app/tenant-score"),
-      accent: "text-indigo-400",
-      bg: "bg-indigo-500/10",
-    },
-    {
       icon: Palette,
       label: "Theme",
       desc: "Light, dark, & system preferences",
@@ -646,7 +642,9 @@ export default function Profile() {
               const transLabel = mapping ? t(mapping.label as any) : feat.label;
               const transDesc = mapping ? t(mapping.desc as any) : feat.desc;
               return (
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
                   key={feat.label}
                   onClick={() => {
                     const scroller = document.querySelector('.app-cover');
@@ -661,15 +659,22 @@ export default function Profile() {
                     else if (feat.label === "Analytics") navigate("/app");
                     else if (feat.label === "Electricity") window.dispatchEvent(new CustomEvent("nivasa:add-electricity")); 
                     else if (feat.label === "Multi-language") setLanguageOpen(true);
+                    else if (feat.label === "Expense Register") navigate("/app/maintenance");
+                    else if (feat.label === "Profit") setProfitOpen(true);
+                    else if (feat.label === "Notifications") setNotificationsOpen(true);
+                    else if (feat.label === "Tenant Score") navigate("/app/tenant-score");
                   }}
-                  className="flex flex-col gap-2 rounded-2xl border border-border/50 bg-card p-4 shadow-soft transition hover:border-border hover:bg-secondary/50 active:scale-[0.97] text-left"
+                  className="flex flex-col gap-3 rounded-2xl border border-border/50 bg-card p-5 shadow-soft transition-colors hover:border-border hover:bg-secondary/50 text-left relative overflow-hidden group"
                 >
-                  <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${feat.bg}`}>
-                    <Icon className={`h-4 w-4 ${feat.color}`} />
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${feat.bg}`}>
+                    <Icon className={`h-5 w-5 ${feat.color}`} />
                   </div>
-                  <p className="text-sm font-semibold text-foreground">{transLabel}</p>
-                  <p className="text-[11px] leading-snug text-muted-foreground">{transDesc}</p>
-                </button>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{transLabel}</p>
+                    <p className="text-[11px] leading-snug text-muted-foreground mt-0.5">{transDesc}</p>
+                  </div>
+                </motion.button>
               );
             })}
           </div>
@@ -685,22 +690,24 @@ export default function Profile() {
               const transLabel = mapping ? t(mapping.label as any) : item.label;
               const transDesc = mapping ? t(mapping.desc as any) : item.desc;
               return (
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
                   key={item.label}
                   onClick={item.onClick}
-                  className={`flex w-full items-center gap-3 px-4 py-3.5 text-left transition hover:bg-secondary/50 active:scale-[0.99] ${
+                  className={`flex w-full items-center gap-4 px-4 py-4 text-left transition-colors hover:bg-secondary/50 ${
                     i < MENU_ITEMS.length - 1 ? "border-b border-border/40" : ""
                   }`}
                 >
-                  <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${item.bg}`}>
-                    <Icon className={`h-4 w-4 ${item.accent}`} />
+                  <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${item.bg}`}>
+                    <Icon className={`h-5 w-5 ${item.accent}`} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground">{transLabel}</p>
                     <p className="text-xs text-muted-foreground">{transDesc}</p>
                   </div>
                   <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/40" />
-                </button>
+                </motion.button>
               );
             })}
           </div>
