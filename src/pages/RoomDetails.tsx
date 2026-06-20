@@ -457,11 +457,12 @@ export default function RoomDetails() {
                         <div className="mt-1 flex flex-wrap items-center gap-3 text-xs font-medium">
                            {t.bed_assignment && <div className="text-brand dark:text-brand">Bed: <span className="font-semibold">{t.bed_assignment}</span></div>}
                            <div className="text-muted-foreground">This Month: <span className="text-foreground">{formatMoney(monthlyDue, currency, { decimals: 0 })}</span> {totalAddons > 0 && <span className="text-[10px] text-muted-foreground opacity-70">(inc. {formatMoney(totalAddons, currency, { decimals: 0 })} add-ons)</span>}</div>
-                           {carryForwardBalance > 0 && <div className="text-orange-500">Arrears: <span className="font-semibold">{formatMoney(carryForwardBalance, currency, { decimals: 0 })}</span></div>}
-                           {carryForwardBalance < 0 && <div className="text-emerald-500">Credit: <span className="font-semibold">{formatMoney(Math.abs(carryForwardBalance), currency, { decimals: 0 })}</span></div>}
                            <div className="text-emerald-600 dark:text-emerald-500">Paid: <span className="font-semibold">{formatMoney(totalPaidHistorical, currency, { decimals: 0 })}</span></div>
-                           {remainingAmount > 0 && (
-                             <div className="text-red-600 dark:text-red-500">Net Remaining: <span className="font-bold">{formatMoney(remainingAmount, currency, { decimals: 0 })}</span></div>
+                           {netBalance > 0 && (
+                             <div className="text-red-600 dark:text-red-500">Net Remaining: <span className="font-bold">{formatMoney(netBalance, currency, { decimals: 0 })}</span></div>
+                           )}
+                           {netBalance < 0 && (
+                             <div className="text-emerald-500 dark:text-emerald-400">Net Credit: <span className="font-bold">{formatMoney(Math.abs(netBalance), currency, { decimals: 0 })}</span></div>
                            )}
                          </div>
                         <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
