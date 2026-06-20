@@ -1,7 +1,7 @@
 import { nivasaApi } from "@/lib/api";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Search, UserPlus, DoorOpen } from "lucide-react";
+import { Search, UserPlus, DoorOpen, ChevronDown } from "lucide-react";
 import { useLanguage } from "@/components/LanguageProvider";
 import { PageHeader } from "@/components/PageHeader";
 import { RoomCard } from "@/components/RoomCard";
@@ -44,6 +44,14 @@ export default function Rooms() {
   const [roomsList, setRoomsList] = useState<any[]>([]);
   const [paymentsList, setPaymentsList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [collapsedBuildings, setCollapsedBuildings] = useState<Record<string, boolean>>({});
+
+  const toggleBuilding = (bName: string) => {
+    setCollapsedBuildings(prev => ({
+      ...prev,
+      [bName]: !prev[bName]
+    }));
+  };
 
   const fetchRooms = async () => {
     try {
@@ -192,13 +200,21 @@ export default function Rooms() {
             
             return (
               <div key={buildingName} className="flex flex-col">
-                <div className="mb-4">
-                  <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-muted-foreground/80 mb-1">
+                <div 
+                  className="mb-4 cursor-pointer select-none group"
+                  onClick={() => toggleBuilding(buildingName)}
+                >
+                  <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-muted-foreground/80 mb-1 group-hover:text-foreground/80 transition-colors">
                     ROOMS &bull; {rooms.length} TOTAL
                   </p>
-                  <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mb-3">
-                    {buildingName}
-                  </h2>
+                  <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-2xl sm:text-3xl font-bold tracking-tight group-hover:text-brand transition-colors">
+                      {buildingName}
+                    </h2>
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-secondary/50 group-hover:bg-secondary transition-colors">
+                      <ChevronDown className={cn("h-5 w-5 text-muted-foreground transition-transform duration-200", collapsedBuildings[buildingName] ? "-rotate-90" : "rotate-0")} />
+                    </div>
+                  </div>
                   <div className="flex items-center gap-4 text-sm font-medium">
                     <div className="flex items-center gap-2">
                       <div className="w-2.5 h-2.5 rounded-full bg-green-500"></div>
@@ -211,7 +227,9 @@ export default function Rooms() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-4 gap-3 sm:gap-4 mt-2">
+                {!collapsedBuildings[buildingName] && (
+                  <>
+                    <div className="grid grid-cols-4 gap-3 sm:gap-4 mt-2">
                   {rooms.map((room: any) => {
                     const isOccupied = room.status === 'occupied';
                     return (
@@ -243,6 +261,8 @@ export default function Rooms() {
                        <div className="bg-green-500 h-full rounded-full transition-all duration-1000 ease-out" style={{ width: `${occRate}%` }} />
                     </div>
                   </div>
+                )}
+                  </>
                 )}
               </div>
             );
