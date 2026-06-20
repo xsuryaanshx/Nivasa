@@ -10,7 +10,7 @@ interface TrustScoreBadgeProps {
 }
 
 export function TrustScoreBadge({ aadhar, className, showLabel = false }: TrustScoreBadgeProps) {
-  const [score, setScore] = useState<number | null>(null);
+  const [scoreData, setScoreData] = useState<{ score: number, name: string | null } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -23,7 +23,7 @@ export function TrustScoreBadge({ aadhar, className, showLabel = false }: TrustS
       setLoading(true);
       const s = await nivasaApi.getTrustScore(aadhar);
       if (mounted) {
-        setScore(s);
+        setScoreData(s);
         setLoading(false);
       }
     }
@@ -34,16 +34,17 @@ export function TrustScoreBadge({ aadhar, className, showLabel = false }: TrustS
   }, [aadhar]);
 
   if (loading || !aadhar) return null;
-  if (score === null) return null;
-
-  const isExcellent = score >= 800;
-  const isFair = score >= 500 && score < 800;
-  const isPoor = score < 500;
+  const score = scoreData?.score ?? null;
+  const isExcellent = score !== null && score >= 800;
+  const isFair = score !== null && score >= 500 && score < 800;
+  const isPoor = score !== null && score < 500;
+  const isUnrated = score === null;
 
   const getColors = () => {
     if (isExcellent) return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20";
     if (isFair) return "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/20";
-    return "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20";
+    if (isPoor) return "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20";
+    return "bg-secondary text-muted-foreground border-border";
   };
 
   const getIcon = () => {
@@ -56,7 +57,7 @@ export function TrustScoreBadge({ aadhar, className, showLabel = false }: TrustS
     <div className={cn("inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-xs font-medium", getColors(), className)} title="Nivasa Trust Score">
       {getIcon()}
       {showLabel && <span>Trust Score:</span>}
-      <span className="font-bold">{score}</span>
+      <span className="font-bold">{isUnrated ? "Unrated" : score}</span>
     </div>
   );
 }

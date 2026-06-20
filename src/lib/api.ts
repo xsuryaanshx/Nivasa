@@ -806,6 +806,13 @@ async function addTenant(input: {
       .select()
       .single();
     if (tenantError) throw tenantError;
+
+    /* 2.5 Upsert into global trust score table so their name is searchable */
+    await supabase.from("tenant_trust_scores").upsert({
+      aadhar: input.aadhar,
+      name: input.name,
+      score: 1000
+    }, { onConflict: "aadhar" });
     /* 3. Update room status to 'occupied' only if full */
     const { count, error: countError } = await supabase
       .from("tenants")
@@ -1568,15 +1575,15 @@ async function getProfitStats() {
 /* ─────────────────────────────────────────────────────────────
  * Trust Score
  * ───────────────────────────────────────────────────────────── */
-async function getTrustScore(aadhar: string): Promise<number | null> {
+async function getTrustScore(aadhar: string): Promise<{ score: number, name: string | null } | null> {
   try {
     const { data, error } = await supabase
       .from("tenant_trust_scores")
-      .select("score")
+      .select("score, name")
       .eq("aadhar", aadhar)
       .maybeSingle();
     if (error) throw error;
-    return data ? data.score : 1000;
+    return data ? { score: data.score, name: data.name } : null;
   } catch (error) {
     safeLog("getTrustScore", error);
     return null;

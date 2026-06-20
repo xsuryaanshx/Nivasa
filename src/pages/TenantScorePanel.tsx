@@ -8,7 +8,7 @@ export default function TenantScorePanel() {
   const [aadharInput, setAadharInput] = useState("");
   const [searchedAadhar, setSearchedAadhar] = useState("");
   const [loading, setLoading] = useState(false);
-  const [score, setScore] = useState<number | null>(null);
+  const [scoreData, setScoreData] = useState<{ score: number, name: string | null } | null>(null);
   const [incidents, setIncidents] = useState<any[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
 
@@ -25,7 +25,7 @@ export default function TenantScorePanel() {
     
     try {
       const s = await nivasaApi.getTrustScore(cleanAadhar);
-      setScore(s);
+      setScoreData(s);
       
       const history = await nivasaApi.getTrustIncidents(cleanAadhar);
       setIncidents(history);
@@ -36,20 +36,24 @@ export default function TenantScorePanel() {
     }
   };
 
+  const score = scoreData?.score ?? null;
   const isExcellent = score !== null && score >= 800;
   const isFair = score !== null && score >= 500 && score < 800;
   const isPoor = score !== null && score < 500;
+  const isUnrated = score === null;
 
   const getColors = () => {
     if (isExcellent) return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20";
     if (isFair) return "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/20";
-    return "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20";
+    if (isPoor) return "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20";
+    return "bg-secondary text-muted-foreground border-border";
   };
 
   const getIcon = () => {
     if (isExcellent) return <ShieldCheck className="w-8 h-8" />;
     if (isFair) return <Shield className="w-8 h-8" />;
-    return <ShieldAlert className="w-8 h-8" />;
+    if (isPoor) return <ShieldAlert className="w-8 h-8" />;
+    return <Search className="w-8 h-8 opacity-50" />;
   };
 
   return (
@@ -92,15 +96,19 @@ export default function TenantScorePanel() {
         {hasSearched && !loading && (
           <div className="space-y-6">
             <div className="p-6 rounded-3xl border border-border bg-card shadow-sm text-center">
-              <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-4">Trust Score</h2>
-              <div className={`mx-auto inline-flex items-center gap-3 px-6 py-3 rounded-full border ${getColors()}`}>
+              <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-2">Trust Score</h2>
+              {scoreData?.name && (
+                <div className="text-xl font-bold text-foreground mb-4">{scoreData.name}</div>
+              )}
+              <div className={`mx-auto inline-flex items-center gap-3 px-6 py-3 rounded-full border ${getColors()} ${!scoreData?.name ? "mt-2" : ""}`}>
                 {getIcon()}
-                <span className="text-4xl font-black tracking-tight">{score}</span>
+                <span className="text-4xl font-black tracking-tight">{isUnrated ? "Unrated" : score}</span>
               </div>
               <p className="mt-4 text-sm font-medium text-foreground">
                 {isExcellent && "This tenant has an excellent track record!"}
                 {isFair && "This tenant has a fair track record. Proceed with caution."}
                 {isPoor && "This tenant has a poor track record. Reconsider onboarding."}
+                {isUnrated && "No record found for this Aadhar number in the Nivasa network."}
               </p>
             </div>
 

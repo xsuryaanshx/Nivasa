@@ -1,5 +1,6 @@
 CREATE TABLE IF NOT EXISTS public.tenant_trust_scores (
   aadhar text PRIMARY KEY,
+  name text,
   score integer NOT NULL DEFAULT 1000,
   created_at timestamp with time zone default now(),
   updated_at timestamp with time zone default now()
@@ -35,6 +36,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS on_trust_incident_insert ON public.trust_incidents;
 CREATE TRIGGER on_trust_incident_insert
 AFTER INSERT ON public.trust_incidents
 FOR EACH ROW
