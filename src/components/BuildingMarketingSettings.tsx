@@ -227,6 +227,37 @@ export function BuildingMarketingSettings({ buildingId, isPublic, slug, descript
                   </button>
                 );
               })}
+              
+              {/* Render custom amenities that are selected but not in COMMON_AMENITIES */}
+              {(formData.public_amenities || []).filter(a => !COMMON_AMENITIES.includes(a)).map(amenity => (
+                <button
+                  key={amenity}
+                  onClick={() => toggleAmenity(amenity)}
+                  className="rounded-full border border-blue-500 bg-blue-500/10 px-3 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 transition-colors"
+                >
+                  {amenity}
+                </button>
+              ))}
+            </div>
+
+            {/* Custom Amenity Input */}
+            <div className="mt-3 flex items-center gap-2">
+              <input
+                type="text"
+                placeholder="Type custom amenity..."
+                className="w-full sm:w-auto rounded-xl border border-border bg-background px-4 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const val = e.currentTarget.value.trim();
+                    if (val && !(formData.public_amenities || []).includes(val)) {
+                      setFormData(prev => ({ ...prev, public_amenities: [...(prev.public_amenities || []), val] }));
+                    }
+                    e.currentTarget.value = '';
+                  }
+                }}
+              />
+              <span className="text-[10px] text-muted-foreground hidden sm:inline-block">Press Enter to add</span>
             </div>
           </div>
 
