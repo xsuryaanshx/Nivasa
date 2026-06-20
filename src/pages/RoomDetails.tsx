@@ -59,6 +59,7 @@ export default function RoomDetails() {
   const [roomPayments, setRoomPayments] = useState<any[]>([]);
   const [roomExpenses, setRoomExpenses] = useState<any[]>([]);
   const [paymentTenantId, setPaymentTenantId] = useState<string | undefined>();
+  const [paymentDefaultAmount, setPaymentDefaultAmount] = useState<number | undefined>();
 
   const { currency } = useCurrency();
 
@@ -372,7 +373,7 @@ export default function RoomDetails() {
             <MagneticButton variant="ghost" onClick={() => navigate("/app/maintenance")}>
               <Wrench className="h-4 w-4" /> Maintenance
             </MagneticButton>
-            <MagneticButton onClick={() => { setPaymentTenantId(undefined); setAddOpen(true); }}>
+            <MagneticButton onClick={() => { setPaymentTenantId(undefined); setPaymentDefaultAmount(undefined); setAddOpen(true); }}>
               <Plus className="h-4 w-4" /> Add payment
             </MagneticButton>
           </div>
@@ -503,8 +504,8 @@ export default function RoomDetails() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => { setPaymentTenantId(t.id); setAddOpen(true); }}
-                      className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-brand/10 text-brand py-1.5 text-xs font-semibold hover:bg-brand/20 transition-colors"
+                      className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 rounded-lg border border-brand/20 bg-brand/5 px-3 py-1.5 text-xs font-semibold text-brand transition-colors hover:bg-brand hover:text-white"
+                      onClick={() => { setPaymentTenantId(t.id); setPaymentDefaultAmount(remainingAmount); setAddOpen(true); }}
                     >
                       <CheckCircle2 className="h-3.5 w-3.5" /> Pay ({currency.symbol}{remainingAmount.toFixed(0)})
                     </button>
@@ -681,7 +682,7 @@ export default function RoomDetails() {
             </div>
             <button
               type="button"
-              onClick={() => setAddOpen(true)}
+              onClick={() => { setPaymentTenantId(undefined); setPaymentDefaultAmount(undefined); setAddOpen(true); }}
               className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs font-medium text-foreground/80 hover:bg-secondary"
             >
               <Plus className="h-3 w-3" /> Add
@@ -750,7 +751,7 @@ export default function RoomDetails() {
         )}
       </div>
 
-      <AddPaymentModal open={addOpen} onClose={() => setAddOpen(false)} defaultRoomId={room.id} defaultTenantId={paymentTenantId} />
+      <AddPaymentModal open={addOpen} onClose={() => setAddOpen(false)} defaultRoomId={room.id} defaultTenantId={paymentTenantId} defaultAmount={paymentDefaultAmount} />
       <AddTenantModal open={tenantOpen} onClose={() => setTenantOpen(false)} defaultRoomId={room.id} />
       <EditTenantModal open={!!editingTenant} tenant={editingTenant} onClose={() => setEditingTenant(null)} onUpdated={fetchData} />
       <TenantExpensesModal open={!!expensesTenant} tenant={expensesTenant} onClose={() => setExpensesTenant(null)} />

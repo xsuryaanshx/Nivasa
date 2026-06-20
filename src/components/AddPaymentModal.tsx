@@ -32,9 +32,10 @@ interface Props {
   onClose: () => void;
   defaultRoomId?: string;
   defaultTenantId?: string;
+  defaultAmount?: number;
 }
 
-export function AddPaymentModal({ open, onClose, defaultRoomId, defaultTenantId }: Props) {
+export function AddPaymentModal({ open, onClose, defaultRoomId, defaultTenantId, defaultAmount }: Props) {
   const { currency } = useCurrency();
   const { t } = useLanguage();
 
@@ -118,8 +119,9 @@ export function AddPaymentModal({ open, onClose, defaultRoomId, defaultTenantId 
   };
 
   const selectedRoom = allRooms.find(r => r.id === roomId);
-  const defaultAmount = selectedRoom ? calculateTenantShare(selectedRoom) * currency.rate : 0;
-  const amountValue = Number(amount) || defaultAmount;
+  const baseDefaultAmount = selectedRoom ? calculateTenantShare(selectedRoom) * currency.rate : 0;
+  const initialAmount = defaultAmount !== undefined ? defaultAmount : baseDefaultAmount;
+  const amountValue = Number(amount) || initialAmount;
 
   // ── Submit ─────────────────────────────────────────────────────────────────
   const submit = async (e: React.FormEvent) => {
@@ -262,7 +264,7 @@ export function AddPaymentModal({ open, onClose, defaultRoomId, defaultTenantId 
           {/* Amount */}
           <Field
             label="Amount"
-            hint={defaultAmount > 0 ? `Default rent: ${currency.symbol}${defaultAmount.toLocaleString(undefined, { maximumFractionDigits: 0 })}` : undefined}
+            hint={initialAmount > 0 ? `Suggested amount: ${currency.symbol}${initialAmount.toLocaleString(undefined, { maximumFractionDigits: 0 })}` : undefined}
             error={error ?? undefined}
           >
             <div className="relative">
@@ -273,7 +275,7 @@ export function AddPaymentModal({ open, onClose, defaultRoomId, defaultTenantId 
                 value={amount}
                 onChange={e => setAmount(e.target.value)}
                 inputMode="decimal"
-                placeholder={defaultAmount.toFixed(0)}
+                placeholder={initialAmount.toFixed(0)}
                 className="h-11 w-full rounded-xl border border-border bg-card/70 pl-8 pr-16 text-base font-semibold tnum outline-none focus:border-brand focus:shadow-[0_0_0_4px_hsl(var(--ring)/0.12)]"
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md bg-secondary px-2 py-0.5 font-mono text-[10px] text-muted-foreground">
