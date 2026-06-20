@@ -57,7 +57,7 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
       if (!nivasaApi) return;
       const data = await nivasaApi.getRooms();
       setRoomsList(data);
-      if (!roomId && data.length > 0) {
+      if (!defaultRoomId && !roomId && data.length > 0) {
         const vacant = data.find((r: any) => r.status === 'vacant');
         setRoomId(vacant ? vacant.id : data[0].id);
       }
@@ -250,7 +250,7 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
                   <select
                     value={roomId} 
                     onChange={(e) => setRoomId(e.target.value)}
-                    disabled={loadingRooms || submitting}
+                    disabled={!!defaultRoomId || loadingRooms || submitting}
                     className="h-12 w-full appearance-none rounded-xl border border-border bg-card/70 px-4 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-brand/10 transition-all disabled:opacity-50"
                   >
                     <option value="" disabled>Select a room</option>
