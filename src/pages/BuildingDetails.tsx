@@ -15,6 +15,7 @@ import { RoomActionSheet } from "@/components/RoomActionSheet";
 import type { Room } from "@/lib/types";
 import { useSubscriptionData } from "@/hooks/useSubscriptionData";
 import { PremiumUpgradeModal } from "@/components/PremiumUpgradeModal";
+import { BuildingMarketingSettings } from "@/components/BuildingMarketingSettings";
 
 export default function BuildingDetails() {
   const { id } = useParams();
@@ -372,6 +373,15 @@ export default function BuildingDetails() {
             </div>
           </div>
         )}
+        {/* Marketing Settings Card */}
+        <BuildingMarketingSettings 
+          buildingId={data.id}
+          isPublic={data.is_public}
+          slug={data.slug}
+          description={data.public_description}
+          contactPhone={data.contact_phone}
+          onUpdate={fetchData}
+        />
       </div>
 
       {selectedRoomForSheet && (

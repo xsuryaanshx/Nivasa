@@ -10,6 +10,12 @@ export interface Building {
   occupied: number;
   monthlyRevenue: number;
   image?: string;
+  is_public?: boolean;
+  slug?: string;
+  public_description?: string;
+  public_amenities?: string[];
+  contact_phone?: string;
+  cover_image_url?: string;
 }
 
 export interface Tenant {

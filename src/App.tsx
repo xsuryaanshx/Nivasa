@@ -23,6 +23,7 @@ import BuildingDetails from "./pages/BuildingDetails.tsx";
 import { SplashScreen } from "./components/SplashScreen.tsx";
 import { ProtectedRoute } from "./components/ProtectedRoute.tsx";
 import SubscriptionPage from "./pages/Subscription.tsx";
+import PublicListing from "./pages/PublicListing.tsx";
 import ConfirmedEmail from "./pages/ConfirmedEmail.tsx";
 import Staff from "./pages/Staff.tsx";
 import StaffDetails from "./pages/StaffDetails.tsx";
@@ -119,6 +120,7 @@ const App = () => {
                     <Route path="subscription" element={<SubscriptionPage />} />
                   </Route>
                 </Route>
+                <Route path="/p/:slug" element={<PublicListing />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
