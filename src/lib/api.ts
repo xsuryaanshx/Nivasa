@@ -1587,7 +1587,7 @@ async function getTrustIncidents(aadhar: string): Promise<any[]> {
   try {
     const { data, error } = await supabase
       .from("trust_incidents")
-      .select("*, landlords:auth.users(email)")
+      .select("*")
       .eq("tenant_aadhar", aadhar)
       .order("created_at", { ascending: false });
     if (error) throw error;
