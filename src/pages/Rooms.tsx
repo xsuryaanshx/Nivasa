@@ -183,7 +183,7 @@ export default function Rooms() {
               return acc;
             }, {} as Record<string, any[]>)
           ).map(([buildingName, rooms]: [string, any[]]) => {
-            const occupied = rooms.filter(r => r.status === "occupied").length;
+            const occupied = rooms.filter(r => r.status === "occupied" || (r.tenants && r.tenants.length > 0)).length;
             const vacant = rooms.length - occupied;
             const occRate = rooms.length > 0 ? (occupied / rooms.length) * 100 : 0;
             
@@ -220,7 +220,7 @@ export default function Rooms() {
                   <>
                     <div className="grid grid-cols-4 gap-3 sm:gap-4 mt-2">
                   {rooms.map((room: any) => {
-                    const isOccupied = room.status === 'occupied';
+                    const isOccupied = room.status === 'occupied' || (room.tenants && room.tenants.length > 0);
                     return (
                       <div
                         key={room.id}
