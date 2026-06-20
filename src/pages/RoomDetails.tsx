@@ -51,6 +51,7 @@ export default function RoomDetails() {
   const [pastInvoicesRoomId, setPastInvoicesRoomId] = useState<string | null>(null);
   const [savingElectricity, setSavingElectricity] = useState(false);
   const [rentAmount, setRentAmount] = useState("");
+  const [editCapacity, setEditCapacity] = useState("1");
   const [rentType, setRentType] = useState<"total" | "per_person">("total");
   const [pricingSaving, setPricingSaving] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -71,6 +72,9 @@ export default function RoomDetails() {
         setStartReading(data.prevReading);
         setEndReading(data.currReading);
         setPricePerUnit(data.ratePerUnit);
+        setEditNameValue(data.number);
+        setRentAmount(String(data.rent || ""));
+        setEditCapacity(String(data.capacity || "1"));
         const tiers = data.occupancyPrices?.length ? data.occupancyPrices : [];
         if (tiers.length > 0) {
           // Check if it's a simple per-person pattern
@@ -189,18 +193,22 @@ export default function RoomDetails() {
     
     try {
       setPricingSaving(true);
+      const updatedCapacity = parseInt(editCapacity) || 1;
+      
       if (rentType === "per_person") {
         await nivasaApi.updateRoom(room.id, { 
           rent_amount: amt,
+          capacity: updatedCapacity,
           occupancy_prices: buildTiersFromBaseAndPerAdditional(amt, amt, 10) 
         });
         toast.success("Rent configured per person");
       } else {
         await nivasaApi.updateRoom(room.id, { 
           rent_amount: amt, 
+          capacity: updatedCapacity,
           occupancy_prices: null 
         });
-        toast.success("Total monthly rent saved");
+        toast.success("Room configuration saved");
       }
       fetchData();
       window.dispatchEvent(new CustomEvent("nivasa:refresh"));
@@ -596,10 +604,10 @@ export default function RoomDetails() {
       <div className="mt-4 rounded-2xl border border-border bg-card p-5 shadow-soft">
         <div className="text-sm font-semibold tracking-tight">Rent Configuration</div>
         <div className="mt-0.5 text-xs text-muted-foreground mb-4">
-          Set the rent amount and choose whether it applies to the entire room or per person.
+          Set the rent amount, number of beds, and whether rent applies to the entire room or per person.
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 items-end">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 items-end">
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground">Rent Amount</label>
             <input
@@ -607,6 +615,16 @@ export default function RoomDetails() {
               placeholder="0.00"
               value={rentAmount}
               onChange={(e) => setRentAmount(e.target.value)}
+              className="w-full rounded-xl border border-border bg-background px-4 py-2 text-sm focus:border-brand focus:ring-1 focus:ring-brand outline-none"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">Number of Beds</label>
+            <input
+              type="number" min="1"
+              value={editCapacity}
+              onChange={(e) => setEditCapacity(e.target.value)}
               className="w-full rounded-xl border border-border bg-background px-4 py-2 text-sm focus:border-brand focus:ring-1 focus:ring-brand outline-none"
             />
           </div>
