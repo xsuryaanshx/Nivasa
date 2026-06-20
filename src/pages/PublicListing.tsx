@@ -146,7 +146,7 @@ export default function PublicListing() {
                   height="100%" 
                   frameBorder="0" 
                   style={{ border: 0 }} 
-                  src={`https://maps.google.com/maps?q=${encodeURIComponent(building.address)}&t=&z=15&ie=UTF8&iwloc=&output=embed`} 
+                  src={`https://www.google.com/maps/embed?origin=mfe&pb=!1m3!2m1!1s${encodeURIComponent(building.address)}!6i15`} 
                   allowFullScreen 
                   title="Google Maps Location"
                 ></iframe>
