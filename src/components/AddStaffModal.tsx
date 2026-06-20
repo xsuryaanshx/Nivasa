@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { X, UserPlus, Phone, Briefcase, IndianRupee, Calendar } from "lucide-react";
 import { nivasaApi } from "@/lib/api";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import { Building2 } from "lucide-react";
 
 interface Props {
   open: boolean;
@@ -19,6 +21,12 @@ export function AddStaffModal({ open, onClose, onSuccess }: Props) {
     monthly_salary: "",
     join_date: new Date().toISOString().split("T")[0],
     status: "active",
+    building_id: "",
+  });
+
+  const { data: buildings } = useQuery({
+    queryKey: ["buildings"],
+    queryFn: nivasaApi.getBuildings,
   });
 
   // Handle custom event listener
@@ -42,12 +50,14 @@ export function AddStaffModal({ open, onClose, onSuccess }: Props) {
     
     const salary = parseFloat(formData.monthly_salary);
     if (isNaN(salary) || salary < 0) return toast.error("Valid monthly salary is required");
+    if (!formData.building_id) return toast.error("Please assign at least one building");
 
     try {
       setSubmitting(true);
       await nivasaApi.addStaff({
         ...formData,
         monthly_salary: salary,
+        allocatedBuildings: [formData.building_id],
       });
       toast.success("Staff member added successfully");
       if (onSuccess) onSuccess();
@@ -60,6 +70,7 @@ export function AddStaffModal({ open, onClose, onSuccess }: Props) {
         monthly_salary: "",
         join_date: new Date().toISOString().split("T")[0],
         status: "active",
+        building_id: "",
       });
       window.dispatchEvent(new CustomEvent("nivasa:refresh"));
     } catch (error: any) {
@@ -189,6 +200,25 @@ export function AddStaffModal({ open, onClose, onSuccess }: Props) {
                     onChange={handleChange}
                     className="h-11 w-full rounded-xl border border-border bg-background pl-10 pr-4 text-sm outline-none transition-colors focus:border-brand focus:ring-1 focus:ring-brand"
                   />
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Assign Building</label>
+                <div className="relative">
+                  <Building2 className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <select
+                    name="building_id"
+                    required
+                    value={formData.building_id}
+                    onChange={handleChange}
+                    className="h-11 w-full rounded-xl border border-border bg-background pl-10 pr-4 text-sm outline-none transition-colors focus:border-brand focus:ring-1 focus:ring-brand"
+                  >
+                    <option value="" disabled>Select Building</option>
+                    {(buildings || []).map((b) => (
+                      <option key={b.id} value={b.id}>{b.name}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
             </div>

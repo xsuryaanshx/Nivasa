@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { X, User, Phone, Briefcase, IndianRupee, Calendar, CheckCircle2 } from "lucide-react";
+import { X, User, Phone, Briefcase, IndianRupee, Calendar, CheckCircle2, Building2 } from "lucide-react";
 import { nivasaApi } from "@/lib/api";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -20,6 +21,12 @@ export function EditStaffModal({ open, onClose, staff, onSuccess }: Props) {
     monthly_salary: "",
     join_date: "",
     status: "",
+    building_id: "",
+  });
+
+  const { data: buildings } = useQuery({
+    queryKey: ["buildings"],
+    queryFn: nivasaApi.getBuildings,
   });
 
   useEffect(() => {
@@ -31,6 +38,7 @@ export function EditStaffModal({ open, onClose, staff, onSuccess }: Props) {
         monthly_salary: staff.monthly_salary ? staff.monthly_salary.toString() : "",
         join_date: staff.join_date ? new Date(staff.join_date).toISOString().split("T")[0] : "",
         status: staff.status || "active",
+        building_id: staff.allocatedBuildings && staff.allocatedBuildings.length > 0 ? staff.allocatedBuildings[0] : "",
       });
     }
   }, [staff, open]);
@@ -48,11 +56,14 @@ export function EditStaffModal({ open, onClose, staff, onSuccess }: Props) {
     const salary = parseFloat(formData.monthly_salary);
     if (isNaN(salary) || salary < 0) return toast.error("Valid monthly salary is required");
 
+    if (!formData.building_id) return toast.error("Please assign at least one building");
+
     try {
       setSubmitting(true);
       await nivasaApi.updateStaff(staff.id, {
         ...formData,
         monthly_salary: salary,
+        allocatedBuildings: [formData.building_id],
       });
       toast.success("Staff member updated successfully");
       if (onSuccess) onSuccess();
@@ -201,6 +212,25 @@ export function EditStaffModal({ open, onClose, staff, onSuccess }: Props) {
                   >
                     <option value="active">Active</option>
                     <option value="inactive">Inactive</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Assign Building</label>
+                <div className="relative">
+                  <Building2 className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <select
+                    name="building_id"
+                    required
+                    value={formData.building_id}
+                    onChange={handleChange}
+                    className="h-11 w-full rounded-xl border border-border bg-background pl-10 pr-4 text-sm outline-none transition-colors focus:border-brand focus:ring-1 focus:ring-brand"
+                  >
+                    <option value="" disabled>Select Building</option>
+                    {(buildings || []).map((b) => (
+                      <option key={b.id} value={b.id}>{b.name}</option>
+                    ))}
                   </select>
                 </div>
               </div>

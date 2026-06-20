@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { createPortal } from "react-dom";
-import { X, TrendingUp, IndianRupee, Wrench } from "lucide-react";
+import { X, TrendingUp, IndianRupee, Wrench, Building2, Wallet } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { nivasaApi } from "@/lib/api";
 import { useCurrency, formatMoney } from "@/lib/currency";
@@ -77,12 +77,24 @@ export function ProfitPanel({ open, onClose }: Props) {
 
                   {/* Expenses Card */}
                   <div className="rounded-2xl border border-border bg-secondary/30 p-5 shadow-sm">
-                    <div className="flex items-center gap-3 text-rose-600 dark:text-rose-400">
-                      <Wrench className="h-5 w-5" />
-                      <h3 className="text-sm font-semibold">Total Expenses</h3>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3 text-rose-600 dark:text-rose-400">
+                        <Wrench className="h-5 w-5" />
+                        <h3 className="text-sm font-semibold">Total Expenses</h3>
+                      </div>
                     </div>
                     <div className="mt-3 text-3xl font-bold tracking-tight text-foreground">
                       {formatMoney(stats?.totalExpenses || 0, currency, { decimals: 0 })}
+                    </div>
+                    <div className="mt-4 flex flex-col gap-2 border-t border-border pt-4">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground flex items-center gap-2"><Wrench className="h-4 w-4" /> Maintenance</span>
+                        <span className="font-medium text-foreground">{formatMoney(stats?.totalMaintenance || 0, currency, { decimals: 0 })}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground flex items-center gap-2"><Wallet className="h-4 w-4" /> Staff Salaries</span>
+                        <span className="font-medium text-foreground">{formatMoney(stats?.totalStaffSalaries || 0, currency, { decimals: 0 })}</span>
+                      </div>
                     </div>
                   </div>
 
@@ -95,6 +107,39 @@ export function ProfitPanel({ open, onClose }: Props) {
                       {formatMoney(stats?.netProfit || 0, currency, { decimals: 0 })}
                     </div>
                   </div>
+
+                  {/* Building-wise Breakdown */}
+                  {stats?.buildingProfits && stats.buildingProfits.length > 0 && (
+                    <div className="mt-8 space-y-4">
+                      <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                        <Building2 className="h-4 w-4" />
+                        Profit by Building
+                      </h3>
+                      <div className="space-y-3">
+                        {stats.buildingProfits.map((b: any) => (
+                          <div key={b.id} className="rounded-xl border border-border bg-card p-4 shadow-sm">
+                            <h4 className="font-semibold text-foreground mb-3">{b.name}</h4>
+                            <div className="space-y-2 text-sm">
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Revenue</span>
+                                <span className="text-emerald-500 font-medium">{formatMoney(b.revenue || 0, currency, { decimals: 0 })}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Expenses</span>
+                                <span className="text-rose-500 font-medium">{formatMoney(b.expenses || 0, currency, { decimals: 0 })}</span>
+                              </div>
+                              <div className="flex justify-between border-t border-border pt-2 mt-2 font-semibold">
+                                <span>Net Profit</span>
+                                <span className={b.netProfit >= 0 ? "text-brand" : "text-rose-500"}>
+                                  {formatMoney(b.netProfit || 0, currency, { decimals: 0 })}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
             </div>

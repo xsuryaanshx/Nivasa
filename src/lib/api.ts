@@ -1373,24 +1373,62 @@ async function getProfitStats() {
     const { data: unitsAuth } = await supabase.from("units").select("id").eq("user_id", user_id);
     const unitIds = (unitsAuth || []).map((u) => u.id);
     
-    const [payments, expenses] = await Promise.all([
-      supabase.from("payments").select("amount, created_at").eq("status", "paid").in("unit_id", unitIds.length > 0 ? unitIds : ["__none__"]),
-      supabase.from("maintenance_requests").select("cost, created_at").eq("user_id", user_id)
+    const { data: buildingsData } = await supabase.from("buildings").select("id, name").eq("user_id", user_id);
+    
+    const { data: staffData } = await supabase.from("staff").select("id, building_id").eq("user_id", user_id);
+    const staffBuildingMap: Record<string, string> = {};
+    const staffIds: string[] = [];
+    (staffData || []).forEach(s => {
+      staffIds.push(s.id);
+      if (s.building_id) {
+        staffBuildingMap[s.id] = s.building_id;
+      }
+    });
+
+    const [payments, expenses, staffPayments] = await Promise.all([
+      supabase.from("payments").select("amount, created_at, building_id").eq("status", "paid").in("unit_id", unitIds.length > 0 ? unitIds : ["__none__"]),
+      supabase.from("maintenance_requests").select("property_id, cost, created_at").eq("user_id", user_id),
+      supabase.from("staff_payments").select("staff_id, amount, payment_date").in("staff_id", staffIds.length > 0 ? staffIds : ["__none__"])
     ]);
 
     const totalRevenue = (payments.data || []).reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
-    const totalExpenses = (expenses.data || []).reduce((sum, e) => sum + (Number(e.cost) || 0), 0);
+    const totalMaintenance = (expenses.data || []).reduce((sum, e) => sum + (Number(e.cost) || 0), 0);
+    const totalStaffSalaries = (staffPayments.data || []).reduce((sum, sp) => sum + (Number(sp.amount) || 0), 0);
+    
+    const totalExpenses = totalMaintenance + totalStaffSalaries;
+
+    const buildingProfits = (buildingsData || []).map(b => {
+      const bPayments = (payments.data || []).filter(p => p.building_id === b.id).reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+      const bMaintenance = (expenses.data || []).filter(e => e.property_id === b.id).reduce((sum, e) => sum + (Number(e.cost) || 0), 0);
+      const bStaffSalaries = (staffPayments.data || []).filter(sp => staffBuildingMap[sp.staff_id] === b.id).reduce((sum, sp) => sum + (Number(sp.amount) || 0), 0);
+      
+      const bExpenses = bMaintenance + bStaffSalaries;
+      const bProfit = bPayments - bExpenses;
+
+      return {
+        id: b.id,
+        name: b.name,
+        revenue: bPayments,
+        maintenance: bMaintenance,
+        staffSalaries: bStaffSalaries,
+        expenses: bExpenses,
+        netProfit: bProfit
+      };
+    });
 
     return {
       totalRevenue,
       totalExpenses,
+      totalMaintenance,
+      totalStaffSalaries,
       netProfit: totalRevenue - totalExpenses,
+      buildingProfits,
       payments: payments.data || [],
       expenses: expenses.data || []
     };
   } catch (error) {
-    safeLog("getProfitStats", error); // MED-02 fix: use safeLog to prevent raw error exposure in production
-    return { totalRevenue: 0, totalExpenses: 0, netProfit: 0, payments: [], expenses: [] };
+    safeLog("getProfitStats", error);
+    return { totalRevenue: 0, totalExpenses: 0, totalMaintenance: 0, totalStaffSalaries: 0, netProfit: 0, buildingProfits: [], payments: [], expenses: [] };
   }
 }
 
