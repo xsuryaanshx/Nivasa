@@ -11,10 +11,17 @@ interface Props {
   description: string;
   contactPhone: string;
   images?: string[];
+  amenities?: string[];
   onUpdate: () => void;
 }
 
-export function BuildingMarketingSettings({ buildingId, isPublic, slug, description, contactPhone, images, onUpdate }: Props) {
+const COMMON_AMENITIES = [
+  "Fully Furnished", "AC", "Non-AC", "Wi-Fi", "RO Water", 
+  "Security Camera", "Daily Cleaning", "Power Backup", 
+  "Washing Machine", "TV", "Parking", "Meals Included"
+];
+
+export function BuildingMarketingSettings({ buildingId, isPublic, slug, description, contactPhone, images, amenities, onUpdate }: Props) {
   const [publishing, setPublishing] = useState(false);
   const [copied, setCopied] = useState(false);
   
@@ -24,6 +31,7 @@ export function BuildingMarketingSettings({ buildingId, isPublic, slug, descript
     public_description: description || "",
     contact_phone: contactPhone || "",
     images: images || [],
+    public_amenities: amenities || ["Fully Furnished", "Wi-Fi", "RO Water", "Security Camera"],
     cover_image_url: images && images.length > 0 ? images[0] : "",
   });
 
@@ -48,6 +56,7 @@ export function BuildingMarketingSettings({ buildingId, isPublic, slug, descript
         slug: formData.slug || undefined,
         public_description: formData.public_description,
         contact_phone: formData.contact_phone,
+        public_amenities: formData.public_amenities,
         images: formData.images,
         cover_image_url: formData.images[0] || "",
       });
@@ -68,6 +77,17 @@ export function BuildingMarketingSettings({ buildingId, isPublic, slug, descript
     setCopied(true);
     toast.success("Link copied to clipboard!");
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const toggleAmenity = (amenity: string) => {
+    setFormData(prev => {
+      const current = prev.public_amenities || [];
+      if (current.includes(amenity)) {
+        return { ...prev, public_amenities: current.filter(a => a !== amenity) };
+      } else {
+        return { ...prev, public_amenities: [...current, amenity] };
+      }
+    });
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -186,6 +206,28 @@ export function BuildingMarketingSettings({ buildingId, isPublic, slug, descript
               onChange={(e) => setFormData({ ...formData, public_description: e.target.value })}
               className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none resize-none"
             />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-muted-foreground">Property Amenities</label>
+            <div className="flex flex-wrap gap-2">
+              {COMMON_AMENITIES.map((amenity) => {
+                const isSelected = (formData.public_amenities || []).includes(amenity);
+                return (
+                  <button
+                    key={amenity}
+                    onClick={() => toggleAmenity(amenity)}
+                    className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+                      isSelected 
+                        ? "border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400" 
+                        : "border-border bg-secondary/30 text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
+                    }`}
+                  >
+                    {amenity}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           <div className="space-y-1.5">

@@ -381,6 +381,7 @@ export default function BuildingDetails() {
           description={data.public_description}
           contactPhone={data.contact_phone}
           images={data.images}
+          amenities={data.public_amenities}
           onUpdate={fetchData}
         />
       </div>
