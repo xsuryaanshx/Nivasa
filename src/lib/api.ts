@@ -852,14 +852,7 @@ async function addPayment(input: any) {
       .select()
       .single();
     if (error) throw error;
-    /* Update unit status if paid */
-    if (statusNorm === "paid") {
-      await supabase
-        .from("units")
-        .update({ status: "paid" })
-        .eq("id", input.room_id)
-        .eq("user_id", user_id);
-    }
+    
     return data;
   } catch (error) {
     safeLog("addPayment", error);
