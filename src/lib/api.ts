@@ -1574,8 +1574,8 @@ async function getTrustScore(aadhar: string): Promise<number | null> {
       .from("tenant_trust_scores")
       .select("score")
       .eq("aadhar", aadhar)
-      .single();
-    if (error && error.code !== "PGRST116") throw error; // PGRST116 = no rows returned
+      .maybeSingle();
+    if (error) throw error;
     return data ? data.score : 1000;
   } catch (error) {
     safeLog("getTrustScore", error);
