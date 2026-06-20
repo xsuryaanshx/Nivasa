@@ -1595,7 +1595,6 @@ export const nivasaApi = {
   getTenants,
   getTenantInvoices,
   ensureCurrentMonthInvoices,
-  getUnitsByBuilding,
   getRoomById,
   addRoom,
   addUnit,
