@@ -353,7 +353,7 @@ export default function BuildingDetails() {
                     navigate(`/app/rooms/${room.id}`);
                   }}
                   className={cn(
-                    "flex flex-col items-center justify-center p-3 sm:p-5 aspect-[4/5] rounded-[24px] cursor-pointer transition-all duration-200 select-none border-2",
+                    "flex flex-col relative overflow-hidden items-center justify-center p-3 sm:p-5 aspect-[4/5] rounded-[24px] cursor-pointer transition-all duration-200 select-none border-2",
                     pressingRoomId === room.id && "scale-[0.97]",
                     isOccupied 
                       ? "bg-brand border-brand text-white shadow-sm hover:shadow-md hover:-translate-y-0.5" 
@@ -367,6 +367,14 @@ export default function BuildingDetails() {
                   <span className={cn("text-[9px] sm:text-[10px] font-medium tracking-wide mt-0.5", isOccupied ? "opacity-90" : "opacity-60")}>
                     {capacity > 1 ? `${occCount}/${capacity} Filled` : (isOccupied ? "Occupied" : "Vacant")}
                   </span>
+                  {capacity > 1 && (
+                    <div className="absolute bottom-0 left-0 w-full h-1.5 bg-black/10 dark:bg-white/10">
+                      <div 
+                        className={cn("h-full transition-all duration-500", isOccupied ? "bg-white/80" : "bg-brand")}
+                        style={{ width: `${Math.min(100, (occCount / capacity) * 100)}%` }} 
+                      />
+                    </div>
+                  )}
                </div>
              )
           })}

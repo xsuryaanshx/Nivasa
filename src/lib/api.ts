@@ -354,7 +354,7 @@ async function getPropertyDetails(buildingId: string | undefined) {
             ? computeRentFromTiers(
                 tiers,
                 stored,
-                unitTenants.length > 0 && u.status === "occupied" ? occ : 1,
+                unitTenants.length > 0 ? occ : 1,
               )
             : stored;
         return {
@@ -363,6 +363,7 @@ async function getPropertyDetails(buildingId: string | undefined) {
           number: u.name || u.number,
           status: u.status || "vacant",
           rent_amount,
+          capacity: u.capacity ?? 1,
           occupancy_prices: u.occupancy_prices ?? null,
           tenants: unitTenants.filter((t: any) => t.status !== "vacated"),
         };
@@ -415,7 +416,7 @@ function mapUnitToRoom(u: any): any {
       ? computeRentFromTiers(
           tiers,
           stored,
-          u.status === "occupied" && unitTenants.length > 0 ? billingOcc : 1,
+          unitTenants.length > 0 ? billingOcc : 1,
         )
       : stored;
   return {
