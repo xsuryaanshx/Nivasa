@@ -148,17 +148,6 @@ export default function Rooms() {
             className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
           />
         </div>
-        
-        <select 
-          value={selectedBuilding} 
-          onChange={(e) => handleSetBuilding(e.target.value)}
-          className="h-10 rounded-xl border border-border bg-card px-3 py-1.5 text-sm outline-none focus:border-brand"
-        >
-          <option value="all">All Buildings</option>
-          {buildingsList.map(b => (
-            <option key={b} value={b as string}>{b as string}</option>
-          ))}
-        </select>
 
         <div className="flex items-center gap-1 rounded-xl border border-border bg-card p-1">
           {getFilters(t).map(f => (
