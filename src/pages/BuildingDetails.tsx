@@ -407,6 +407,7 @@ export default function BuildingDetails() {
           buildingId={data.id}
           isPublic={data.is_public}
           slug={data.slug}
+          address={data.address}
           description={data.public_description}
           contactPhone={data.contact_phone}
           images={data.images}

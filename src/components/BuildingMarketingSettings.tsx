@@ -8,6 +8,7 @@ interface Props {
   buildingId: string;
   isPublic: boolean;
   slug: string;
+  address: string;
   description: string;
   contactPhone: string;
   images?: string[];
@@ -21,13 +22,14 @@ const COMMON_AMENITIES = [
   "Washing Machine", "TV", "Parking", "Meals Included"
 ];
 
-export function BuildingMarketingSettings({ buildingId, isPublic, slug, description, contactPhone, images, amenities, onUpdate }: Props) {
+export function BuildingMarketingSettings({ buildingId, isPublic, slug, address, description, contactPhone, images, amenities, onUpdate }: Props) {
   const [publishing, setPublishing] = useState(false);
   const [copied, setCopied] = useState(false);
   
   const [formData, setFormData] = useState({
     is_public: isPublic || false,
     slug: slug || "",
+    address: address || "",
     public_description: description || "",
     contact_phone: contactPhone || "",
     images: images || [],
@@ -54,6 +56,7 @@ export function BuildingMarketingSettings({ buildingId, isPublic, slug, descript
       await nivasaApi.updateBuilding(buildingId, {
         is_public: formData.is_public,
         slug: formData.slug || undefined,
+        address: formData.address || undefined,
         public_description: formData.public_description,
         contact_phone: formData.contact_phone,
         public_amenities: formData.public_amenities,
@@ -71,7 +74,7 @@ export function BuildingMarketingSettings({ buildingId, isPublic, slug, descript
     }
   };
 
-  const isSaved = formData.slug === slug && formData.is_public === isPublic && slug !== "";
+  const isSaved = formData.slug === slug && formData.is_public === isPublic && formData.address === address && slug !== "";
 
   const copyLink = () => {
     if (!publicUrl || !isSaved) return;
@@ -202,11 +205,21 @@ export function BuildingMarketingSettings({ buildingId, isPublic, slug, descript
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground">Marketing Description</label>
             <textarea
-              placeholder="Describe why tenants should choose your property..."
-              rows={3}
               value={formData.public_description}
-              onChange={(e) => setFormData({ ...formData, public_description: e.target.value })}
-              className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none resize-none"
+              onChange={(e) => setFormData(prev => ({ ...prev, public_description: e.target.value }))}
+              placeholder="Describe what makes your property special..."
+              className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm min-h-[100px] resize-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">Map Address / Coordinates</label>
+            <p className="text-[10px] text-muted-foreground mb-1">Used to accurately pinpoint your property on the Google Map.</p>
+            <textarea
+              value={formData.address}
+              onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
+              placeholder="e.g. 123 Main Street, City OR 28.5355, 77.3910"
+              className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm min-h-[60px] resize-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
             />
           </div>
 
