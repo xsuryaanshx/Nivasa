@@ -410,7 +410,7 @@ export default function RoomDetails() {
                 totalDueHistorical += cost;
                 
                 // Add deposit amount to the total due
-                totalDueHistorical += (t.depositAmount || 0);
+                totalDueHistorical += Number(t.depositAmount || 0);
                 
                 if (!currentInvoice) {
                   totalDueHistorical += fallbackMonthlyDue;
@@ -470,10 +470,10 @@ export default function RoomDetails() {
                            {netBalance < 0 && (
                              <div className="text-emerald-500 dark:text-emerald-400">Net Credit: <span className="font-bold">{formatMoney(Math.abs(netBalance), currency, { decimals: 0 })}</span></div>
                            )}
-                           {(t.depositAmount || 0) > 0 && (
+                           {Number(t.depositAmount || 0) > 0 && (
                              <div className="text-muted-foreground flex items-center gap-1">
-                               Deposit: <span className={cn("font-semibold", totalPaidHistorical >= t.depositAmount ? "text-emerald-500 dark:text-emerald-400" : "text-orange-500 dark:text-orange-400")}>{totalPaidHistorical >= t.depositAmount ? "Paid" : "Pending"}</span>
-                               <span className="text-[10px] text-muted-foreground opacity-70">({formatMoney(t.depositAmount, currency, { decimals: 0 })})</span>
+                               Deposit: <span className={cn("font-semibold", totalPaidHistorical >= Number(t.depositAmount || 0) ? "text-emerald-500 dark:text-emerald-400" : "text-orange-500 dark:text-orange-400")}>{totalPaidHistorical >= Number(t.depositAmount || 0) ? "Paid" : "Pending"}</span>
+                               <span className="text-[10px] text-muted-foreground opacity-70">({formatMoney(Number(t.depositAmount || 0), currency, { decimals: 0 })})</span>
                              </div>
                            )}
                          </div>
