@@ -20,6 +20,7 @@ export function RoomActionSheet({ open, onClose, room, onSuccess }: RoomActionSh
   const [view, setView] = useState<ViewState>("menu");
   const [editName, setEditName] = useState(room.number);
   const [editRent, setEditRent] = useState(String(room.rent));
+  const [editCapacity, setEditCapacity] = useState(String(room.capacity || 1));
   const [submitting, setSubmitting] = useState(false);
 
   const handleEditSubmit = async (e: React.FormEvent) => {
@@ -40,6 +41,7 @@ export function RoomActionSheet({ open, onClose, room, onSuccess }: RoomActionSh
       await nivasaApi.updateRoom(room.id, {
         number: editName.trim(),
         rent_amount: rentAmount,
+        capacity: parseInt(editCapacity) || 1,
       });
 
       toast.success(t("room_updated"));
@@ -185,6 +187,17 @@ export function RoomActionSheet({ open, onClose, room, onSuccess }: RoomActionSh
                             type="number"
                             value={editRent}
                             onChange={(e) => setEditRent(e.target.value)}
+                            className="h-10 w-full rounded-xl border border-border bg-secondary/30 px-3.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/10 transition-all"
+                          />
+                        </div>
+                        
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Number of Beds</label>
+                          <input
+                            type="number"
+                            min="1"
+                            value={editCapacity}
+                            onChange={(e) => setEditCapacity(e.target.value)}
                             className="h-10 w-full rounded-xl border border-border bg-secondary/30 px-3.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/10 transition-all"
                           />
                         </div>

@@ -33,6 +33,8 @@ export interface Tenant {
   status?: "active" | "vacated";
   leftAt?: string;
   document_url?: string;
+  bed_assignment?: string;
+  rent_amount?: number;
 }
 
 export interface ElectricityReading {
@@ -60,6 +62,7 @@ export interface Room {
   rent: number;
   /** When set, rent follows these tiers by tenant billing occupancy. */
   occupancyPrices?: OccupancyPriceTier[] | null;
+  capacity?: number;
   status: PaymentStatus;
   tenants: Tenant[];
   prevReading: number;

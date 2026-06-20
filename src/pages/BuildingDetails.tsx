@@ -26,7 +26,7 @@ export default function BuildingDetails() {
   const [loading, setLoading] = useState(true);
   const [isAddingRoom, setIsAddingRoom] = useState(false);
   const [isEditingBuilding, setIsEditingBuilding] = useState(false);
-  const [newRoom, setNewRoom] = useState({ number: "", rent: "", rentType: "total" as "total" | "per_person" });
+  const [newRoom, setNewRoom] = useState({ number: "", rent: "", rentType: "total" as "total" | "per_person", capacity: "1" });
   const [addingRoom, setAddingRoom] = useState(false);
 
   // Upgrade Modal State
@@ -61,6 +61,7 @@ export default function BuildingDetails() {
           buildingName: data.name,
           rent: r.rent_amount,
           occupancyPrices: r.occupancy_prices,
+          capacity: r.capacity || 1,
           status: r.status,
           tenants: r.tenants,
           prevReading: 0,
@@ -163,6 +164,7 @@ export default function BuildingDetails() {
           building_id: id,
           number: newRoom.number.trim(),
           rent: rentAmt,
+          capacity: parseInt(newRoom.capacity) || 1,
           occupancy_prices: buildTiersFromBaseAndPerAdditional(rentAmt, rentAmt, 10), // Generate up to 10 occupants
         });
       } else {
@@ -170,12 +172,13 @@ export default function BuildingDetails() {
           building_id: id,
           number: newRoom.number.trim(),
           rent: rentAmt,
+          capacity: parseInt(newRoom.capacity) || 1,
         });
       }
 
       toast.success("Room added successfully");
       setIsAddingRoom(false);
-      setNewRoom({ number: "", rent: "", rentType: "total" });
+      setNewRoom({ number: "", rent: "", rentType: "total", capacity: "1" });
       fetchData();
       window.dispatchEvent(new CustomEvent("nivasa:refresh"));
     } catch (error) {
@@ -285,6 +288,17 @@ export default function BuildingDetails() {
                 </div>
 
                 <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">Number of Beds</label>
+                  <input
+                    type="number" min="1"
+                    placeholder="1"
+                    value={newRoom.capacity}
+                    onChange={(e) => setNewRoom({ ...newRoom, capacity: e.target.value })}
+                    className="w-full rounded-xl border border-border bg-background px-4 py-2 text-sm focus:border-brand focus:ring-1 focus:ring-brand outline-none"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
                   <label className="text-xs font-medium text-muted-foreground">Rent Type</label>
                   <select
                     value={newRoom.rentType}
@@ -316,7 +330,10 @@ export default function BuildingDetails() {
             const numB = String(b.number || b.name || "");
             return numA.localeCompare(numB, undefined, { numeric: true, sensitivity: 'base' });
           }).map((room: any) => {
-             const isOccupied = room.status === 'occupied';
+             const capacity = room.capacity || 1;
+             const occCount = room.tenants?.length || 0;
+             const isOccupied = occCount >= capacity;
+             const isPartiallyOccupied = occCount > 0 && occCount < capacity;
              return (
                <div
                   key={room.id}
@@ -340,12 +357,16 @@ export default function BuildingDetails() {
                     pressingRoomId === room.id && "scale-[0.97]",
                     isOccupied 
                       ? "bg-brand border-brand text-white shadow-sm hover:shadow-md hover:-translate-y-0.5" 
+                      : isPartiallyOccupied
+                      ? "bg-brand/10 border-brand/30 text-foreground hover:shadow-sm"
                       : "border-dashed border-border/80 bg-transparent text-muted-foreground hover:border-border hover:bg-secondary/20"
                   )}
                >
                   <DoorOpen className={cn("h-6 w-6 sm:h-7 sm:w-7 mb-1.5 sm:mb-2", isOccupied ? "opacity-90" : "opacity-40")} />
                   <span className={cn("font-bold text-base sm:text-lg tracking-tight", !isOccupied && "text-foreground/70")}>{room.name || room.number}</span>
-                  <span className={cn("text-[9px] sm:text-[10px] font-medium tracking-wide mt-0.5", isOccupied ? "opacity-90" : "opacity-60")}>{isOccupied ? "Occupied" : "Vacant"}</span>
+                  <span className={cn("text-[9px] sm:text-[10px] font-medium tracking-wide mt-0.5", isOccupied ? "opacity-90" : "opacity-60")}>
+                    {capacity > 1 ? `${occCount}/${capacity} Filled` : (isOccupied ? "Occupied" : "Vacant")}
+                  </span>
                </div>
              )
           })}

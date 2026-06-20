@@ -30,6 +30,8 @@ export function EditTenantModal({ open, tenant, onClose, onUpdated }: Props) {
   const [aadhar, setAadhar] = useState("");
   const [depositAmount, setDepositAmount] = useState("");
   const [depositMethod, setDepositMethod] = useState("Cash");
+  const [bedName, setBedName] = useState("");
+  const [rentAmount, setRentAmount] = useState("");
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -47,6 +49,8 @@ export function EditTenantModal({ open, tenant, onClose, onUpdated }: Props) {
       setAadhar(tenant.aadhar || "");
       setDepositAmount(tenant.depositAmount ? String(tenant.depositAmount) : "");
       setDepositMethod(tenant.depositMethod || "Cash");
+      setBedName(tenant.bed_assignment || "");
+      setRentAmount(tenant.rent_amount ? String(tenant.rent_amount) : "");
     }
   }, [open, tenant]);
 
@@ -82,6 +86,8 @@ export function EditTenantModal({ open, tenant, onClose, onUpdated }: Props) {
         aadhar: aadhar.replace(/\s+/g, ""),
         depositAmount: depositAmount ? Number(depositAmount) : 0,
         depositMethod: depositMethod,
+        bed_assignment: bedName.trim() || undefined,
+        rent_amount: rentAmount ? Number(rentAmount) : 0,
       });
 
       setSuccess(true);
@@ -170,6 +176,17 @@ export function EditTenantModal({ open, tenant, onClose, onUpdated }: Props) {
                   <div>
                     <div className="text-[10px] uppercase text-muted-foreground font-semibold mb-1">Deposit</div>
                     <div className="text-sm font-medium">₹{tenant.depositAmount || 0} ({tenant.depositMethod || "Cash"})</div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <div className="text-[10px] uppercase text-muted-foreground font-semibold mb-1">Bed Assignment</div>
+                    <div className="text-sm font-medium">{tenant.bed_assignment || "-"}</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] uppercase text-muted-foreground font-semibold mb-1">Monthly Rent</div>
+                    <div className="text-sm font-medium">₹{tenant.rent_amount || 0}</div>
                   </div>
                 </div>
               </div>
@@ -263,6 +280,27 @@ export function EditTenantModal({ open, tenant, onClose, onUpdated }: Props) {
                   disabled={submitting}
                 />
               </Field>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Field label="Bed Assignment" optional hint="e.g. Bed A or 1">
+                  <IconInput 
+                    value={bedName} 
+                    onChange={setBedName} 
+                    placeholder="Enter bed (optional)" 
+                    disabled={submitting}
+                  />
+                </Field>
+                <Field label="Monthly Rent" optional>
+                  <IconInput 
+                    icon={<Banknote className="h-4 w-4" />}
+                    value={rentAmount} 
+                    onChange={setRentAmount} 
+                    placeholder="e.g. 5000" 
+                    inputMode="numeric"
+                    disabled={submitting}
+                  />
+                </Field>
+              </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Field label="Deposit Amount" optional>

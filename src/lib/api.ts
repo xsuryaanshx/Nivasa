@@ -398,6 +398,8 @@ function mapTenantFromRow(t: any): any {
     status: t.status,
     leftAt: t.left_at,
     document_url: t.document_url,
+    bed_assignment: t.bed_assignment,
+    rent_amount: t.rent_amount != null ? Number(t.rent_amount) : undefined,
   };
 }
 function mapUnitToRoom(u: any): any {
@@ -423,6 +425,7 @@ function mapUnitToRoom(u: any): any {
     buildingName: u.buildings?.name || "Unknown",
     rent,
     occupancyPrices: tiers.length > 0 ? tiers : null,
+    capacity: u.capacity ?? 1,
     status: u.status as any,
     tenants: unitTenants.filter((t) => t.status !== "vacated"),
     prevReading: u.prev_reading || 0,
@@ -551,6 +554,7 @@ async function updateRoom(
     number?: string;
     rent_amount?: number;
     occupancy_prices?: OccupancyPriceTier[] | null;
+    capacity?: number;
   },
 ) {
   const payload: Record<string, unknown> = {};
@@ -562,6 +566,9 @@ async function updateRoom(
     payload.occupancy_prices = tiersToJsonbPayload(
       tiers.length > 0 ? tiers : null,
     );
+  }
+  if (updates.capacity !== undefined) {
+    payload.capacity = updates.capacity;
   }
   const user_id = await requireAuthUserId();
   const { error } = await supabase
@@ -583,6 +590,8 @@ async function updateTenant(
     depositAmount?: number;
     depositMethod?: string;
     document_url?: string;
+    bed_assignment?: string;
+    rent_amount?: number;
   },
 ) {
   try {
@@ -604,6 +613,10 @@ async function updateTenant(
       patch.deposit_method = updates.depositMethod;
     if (updates.document_url !== undefined)
       patch.document_url = updates.document_url;
+    if (updates.bed_assignment !== undefined)
+      patch.bed_assignment = updates.bed_assignment;
+    if (updates.rent_amount !== undefined)
+      patch.rent_amount = updates.rent_amount;
     if (Object.keys(patch).length === 0) return;
     const user_id = await requireAuthUserId();
     /* Authorize via unit */
@@ -640,6 +653,7 @@ async function addRoom(input: {
   number: string;
   rent: number;
   occupancy_prices?: OccupancyPriceTier[] | null;
+  capacity?: number;
 }) {
   try {
     const user_id = await requireAuthUserId();
@@ -652,6 +666,7 @@ async function addRoom(input: {
       building_id: input.building_id,
       name: input.number,
       rent_amount,
+      capacity: input.capacity ?? 1,
       status: "vacant",
       user_id,
     };
@@ -688,13 +703,15 @@ async function addTenant(input: {
   depositAmount?: number;
   depositMethod?: string;
   document_url?: string;
+  bed_assignment?: string;
+  rent_amount?: number;
 }) {
   try {
     /* 1. Fetch building_id — also verify room belongs to this user */
     const user_id = await requireAuthUserId();
     const { data: room, error: roomError } = await supabase
       .from("units")
-      .select("building_id")
+      .select("building_id, capacity")
       .eq("id", input.room_id)
       .eq("user_id", user_id)
       .single();
@@ -717,6 +734,8 @@ async function addTenant(input: {
       deposit_amount: input.depositAmount || 0,
       deposit_method: input.depositMethod || "Cash",
       document_url: input.document_url || null,
+      bed_assignment: input.bed_assignment || null,
+      rent_amount: input.rent_amount ?? 0,
       status: "active",
     };
     const { data: tenant, error: tenantError } = await supabase
@@ -725,14 +744,25 @@ async function addTenant(input: {
       .select()
       .single();
     if (tenantError) throw tenantError;
-    /* 3. Update room status to 'occupied' */
-    const { error: updateError } = await supabase
-      .from("units")
-      .update({ status: "occupied" })
-      .eq("id", input.room_id)
-      .eq("user_id", user_id); // CRIT-02 fix: enforce ownership on status update
-    if (updateError)
-      safeLog("addTenant.updateRoomStatus", updateError);
+    /* 3. Update room status to 'occupied' only if full */
+    const { count, error: countError } = await supabase
+      .from("tenants")
+      .select("*", { count: "exact", head: true })
+      .eq("room_id", input.room_id)
+      .neq("status", "vacated");
+    
+    const currentCount = count || 0;
+    const capacity = room.capacity || 1;
+    
+    if (currentCount >= capacity) {
+      const { error: updateError } = await supabase
+        .from("units")
+        .update({ status: "occupied" })
+        .eq("id", input.room_id)
+        .eq("user_id", user_id); // CRIT-02 fix: enforce ownership on status update
+      if (updateError)
+        safeLog("addTenant.updateRoomStatus", updateError);
+    }
     await syncUnitEffectiveRent(input.room_id);
     return tenant;
   } catch (error) {
@@ -759,13 +789,17 @@ async function removeTenant(roomId: string, tenantId: string) {
       .eq("room_id", roomId);
     /* Extra ownership check: tenant must belong to this room */
     if (tenantError) throw tenantError;
-    /* 2. Update room status to 'vacant' if no tenants left */
+    /* 2. Update room status to 'vacant' if tenants < capacity */
     const { count, error: checkError } = await supabase
       .from("tenants")
       .select("*", { count: "exact", head: true })
       .eq("room_id", roomId)
       .neq("status", "vacated");
-    if (count === 0) {
+      
+    const { data: unitData } = await supabase.from("units").select("capacity").eq("id", roomId).single();
+    const capacity = unitData?.capacity || 1;
+      
+    if (count != null && count < capacity) {
       const { error: roomError } = await supabase
         .from("units")
         .update({ status: "vacant" })

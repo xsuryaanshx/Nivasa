@@ -34,6 +34,8 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
   const [aadhar, setAadhar] = useState("");
   const [depositAmount, setDepositAmount] = useState("");
   const [depositMethod, setDepositMethod] = useState("Cash");
+  const [bedName, setBedName] = useState("");
+  const [rentAmount, setRentAmount] = useState("");
   const [joinedAt, setJoinedAt] = useState(() => {
     const d = new Date();
     return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
@@ -81,6 +83,8 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
       setAadhar("");
       setDepositAmount("");
       setDepositMethod("Cash");
+      setBedName("");
+      setRentAmount("");
       const d = new Date();
       setJoinedAt(`${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`);
       setSelectedFile(null);
@@ -169,6 +173,8 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
         depositAmount: depositAmount ? Number(depositAmount) : 0,
         depositMethod: depositMethod,
         document_url,
+        bed_assignment: bedName.trim() || undefined,
+        rent_amount: rentAmount ? Number(rentAmount) : 0,
       });
 
       setSuccess(true);
@@ -358,6 +364,27 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
                   </div>
                 </div>
               </Field>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Field label="Bed Assignment" optional hint="e.g. Bed A or 1">
+                  <IconInput 
+                    value={bedName} 
+                    onChange={setBedName} 
+                    placeholder="Enter bed (optional)" 
+                    disabled={submitting}
+                  />
+                </Field>
+                <Field label="Monthly Rent" optional>
+                  <IconInput 
+                    icon={<Banknote className="h-4 w-4" />}
+                    value={rentAmount} 
+                    onChange={setRentAmount} 
+                    placeholder="e.g. 5000" 
+                    inputMode="numeric"
+                    disabled={submitting}
+                  />
+                </Field>
+              </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Field label="Deposit Amount" optional>

@@ -277,8 +277,8 @@ export default function RoomDetails() {
         });
 
         if (!paidPreviousMonth) {
-          // Add the base rent as previous dues
-          previousDues = calculateTenantShare(room!, tenant);
+          // Add the base rent as previous dues. If tenant has custom rent, use that, else use room share.
+          previousDues = tenant.rent_amount ? Number(tenant.rent_amount) : calculateTenantShare(room!, tenant);
         }
       }
     }
@@ -293,15 +293,16 @@ export default function RoomDetails() {
       });
     }
 
-    const finalTotal = totalDue + totalAddons + previousDues;
+    const baseRent = tenant.rent_amount ? Number(tenant.rent_amount) : room.rent;
+    const finalTotal = baseRent + cost + totalAddons + previousDues;
 
     return [
       `*Nivasa · Invoice — ${monthLabel}*`,
       ``,
       `Hi ${tenant.name},`,
-      `Here is your bill for Room ${room.number}, ${room.buildingName}:`,
+      `Here is your bill for Room ${room.number}${tenant.bed_assignment ? ` (Bed ${tenant.bed_assignment})` : ''}, ${room.buildingName}:`,
       ``,
-      `• Rent: ${formatMoney(room.rent, currency, { decimals: 0 })}`,
+      `• Rent: ${formatMoney(baseRent, currency, { decimals: 0 })}`,
       `• Electricity meter: ${startReading.toLocaleString()} → ${endReading.toLocaleString()} (${used} units)`,
       `• Rate / unit: ${currency.symbol}${formatNumeric(pricePerUnit, currency, 2)}`,
       `• Electricity total: ${formatMoney(cost, currency, { decimals: 2 })}`,
@@ -376,7 +377,7 @@ export default function RoomDetails() {
           <div className="flex items-center justify-between mb-3">
             <div className="text-xs font-semibold text-muted-foreground">Tenants</div>
             <div className="text-xs text-muted-foreground">
-              Filled: {room.tenants?.length ?? 0}/{room.occupancyPrices?.length ? Math.max(...room.occupancyPrices.map(t => t.members)) : 1}
+              Filled: {room.tenants?.length ?? 0}/{room.capacity || 1}
             </div>
           </div>
           {room.tenants && room.tenants.length > 0 ? (
@@ -422,7 +423,8 @@ export default function RoomDetails() {
                           {displayStatus === "late" && <span className="inline-flex items-center rounded-full bg-red-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-red-600 dark:text-red-400">🔴 Overdue</span>}
                         </div>
                         <div className="mt-1 flex flex-wrap items-center gap-3 text-xs font-medium">
-                           <div className="text-muted-foreground">Share: <span className="text-foreground">{formatMoney(tenantShare, currency, { decimals: 0 })}</span></div>
+                           {t.bed_assignment && <div className="text-brand dark:text-brand">Bed: <span className="font-semibold">{t.bed_assignment}</span></div>}
+                           <div className="text-muted-foreground">Rent: <span className="text-foreground">{formatMoney(t.rent_amount || tenantShare, currency, { decimals: 0 })}</span></div>
                            <div className="text-emerald-600 dark:text-emerald-500">Paid: <span className="font-semibold">{formatMoney(totalPaidThisMonth, currency, { decimals: 0 })}</span></div>
                            {remainingAmount > 0 && (
                              <div className="text-red-600 dark:text-red-500">Remaining: <span className="font-bold">{formatMoney(remainingAmount, currency, { decimals: 0 })}</span></div>
