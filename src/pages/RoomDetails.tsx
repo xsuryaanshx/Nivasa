@@ -58,6 +58,7 @@ export default function RoomDetails() {
   const [editNameValue, setEditNameValue] = useState("");
   const [roomPayments, setRoomPayments] = useState<any[]>([]);
   const [roomExpenses, setRoomExpenses] = useState<any[]>([]);
+  const [tenantInvoices, setTenantInvoices] = useState<any[]>([]);
   const [paymentTenantId, setPaymentTenantId] = useState<string | undefined>();
   const [paymentDefaultAmount, setPaymentDefaultAmount] = useState<number | undefined>();
 
@@ -86,13 +87,15 @@ export default function RoomDetails() {
           setRentAmount(String(data.rent));
         }
       }
-      
-      const [paymentsData, expensesData] = await Promise.all([
+      await nivasaApi.ensureCurrentMonthInvoices();
+      const [paymentsData, expensesData, invoicesData] = await Promise.all([
         nivasaApi.getRecentPayments(100),
-        nivasaApi.getMaintenanceRequests()
+        nivasaApi.getMaintenanceRequests(),
+        nivasaApi.getTenantInvoices()
       ]);
       setRoomPayments(paymentsData.filter((p: any) => p.roomId === id));
       setRoomExpenses(expensesData.filter((e: any) => e.unit_id === id));
+      setTenantInvoices(invoicesData.filter((i: any) => i.room_id === id));
     } catch (error) {
       console.error("Error fetching room details:", error);
       toast.error("Failed to load room details");
@@ -265,32 +268,20 @@ export default function RoomDetails() {
     const activeExpenseIds = getTenantExpenses(tenant.id);
     const globalExpenses = getCustomExpenses();
     const activeExpenses = globalExpenses.filter(e => activeExpenseIds.includes(e.id));
+    const currentMonthStr = new Date().toISOString().slice(0, 7);
+    const invoicesForTenant = tenantInvoices.filter(i => i.tenant_id === tenant.id);
+    const totalDueHistorical = invoicesForTenant.reduce((sum, i) => sum + (Number(i.total_amount) || 0), 0);
+    const currentInvoice = invoicesForTenant.find(i => i.billing_month === currentMonthStr);
     
-    // Calculate previous dues dynamically
-    let previousDues = 0;
-    if (tenant.joined_at) {
-      const joinedDate = new Date(tenant.joined_at);
-      const now = new Date();
-      const startOfCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      
-      // If joined before current month
-      if (joinedDate < startOfCurrentMonth) {
-        const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        
-        // Check if there is any "paid" payment for the previous month
-        const paidPreviousMonth = roomPayments.some(p => {
-          if (p.tenantId !== tenant.id) return false;
-          if (p.status !== "paid") return false;
-          const pDate = new Date(p.date);
-          return pDate.getFullYear() === prevMonth.getFullYear() && pDate.getMonth() === prevMonth.getMonth();
-        });
+    const allTenantPayments = roomPayments.filter(p => p.tenantId === tenant.id && p.status === "paid");
+    const totalPaidHistorical = allTenantPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+    
+    const tenantPaymentsThisMonth = roomPayments.filter(p => p.tenantId === tenant.id && String(p.date).startsWith(currentMonthStr) && p.status === "paid");
+    const totalPaidThisMonth = tenantPaymentsThisMonth.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
 
-        if (!paidPreviousMonth) {
-          // Add the base rent as previous dues. If tenant has custom rent, use that, else use room share.
-          previousDues = tenant.rent_amount ? Number(tenant.rent_amount) : calculateTenantShare(room!, tenant);
-        }
-      }
-    }
+    const pastDueHistorical = totalDueHistorical - (currentInvoice ? Number(currentInvoice.total_amount) : 0);
+    const pastPaidHistorical = totalPaidHistorical - totalPaidThisMonth;
+    const previousDues = pastDueHistorical - pastPaidHistorical;
 
     let totalAddons = 0;
     const addonLines: string[] = [];
@@ -393,21 +384,30 @@ export default function RoomDetails() {
             <div className="space-y-4">
               {room.tenants.map((t) => {
                 const currentMonth = new Date().toISOString().slice(0, 7);
+                const invoicesForTenant = tenantInvoices.filter(i => i.tenant_id === t.id);
+                const totalDueHistorical = invoicesForTenant.reduce((sum, i) => sum + (Number(i.total_amount) || 0), 0);
+                const currentInvoice = invoicesForTenant.find(i => i.billing_month === currentMonth);
+                
+                const allTenantPayments = roomPayments.filter(p => p.tenantId === t.id && p.status === "paid");
+                const totalPaidHistorical = allTenantPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+                
                 const tenantPaymentsThisMonth = roomPayments.filter(p => p.tenantId === t.id && String(p.date).startsWith(currentMonth) && p.status === "paid");
                 const totalPaidThisMonth = tenantPaymentsThisMonth.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
                 
-                const tenantExpenseIds = getTenantExpenses(t.id);
-                const activeExpenses = getCustomExpenses().filter((e: any) => tenantExpenseIds.includes(e.id));
-                const totalAddons = activeExpenses.reduce((sum: number, exp: any) => sum + exp.cost, 0);
-
-                const baseRent = t.rent_amount ? Number(t.rent_amount) : calculateTenantShare(room);
-                const tenantTotalDue = baseRent + totalAddons;
-                const remainingAmount = Math.max(0, tenantTotalDue - totalPaidThisMonth);
+                const pastDueHistorical = totalDueHistorical - (currentInvoice ? Number(currentInvoice.total_amount) : 0);
+                const pastPaidHistorical = totalPaidHistorical - totalPaidThisMonth;
+                const carryForwardBalance = pastDueHistorical - pastPaidHistorical;
+                
+                const netBalance = totalDueHistorical - totalPaidHistorical;
+                const remainingAmount = Math.max(0, netBalance);
+                
+                const monthlyDue = currentInvoice ? Number(currentInvoice.total_amount) : (Number(t.rent_amount) || calculateTenantShare(room));
+                const totalAddons = currentInvoice ? Number(currentInvoice.addons_total) : 0;
                 
                 let displayStatus = getTenantPaymentStatus(t, roomPayments);
                 let bgClass = "bg-secondary/60";
                 
-                if (totalPaidThisMonth >= tenantTotalDue) {
+                if (netBalance <= 0) {
                   displayStatus = "paid";
                   bgClass = "bg-emerald-500/10 border border-emerald-500/20";
                 } else if (totalPaidThisMonth > 0) {
@@ -438,12 +438,14 @@ export default function RoomDetails() {
                         </div>
                         <div className="mt-1 flex flex-wrap items-center gap-3 text-xs font-medium">
                            {t.bed_assignment && <div className="text-brand dark:text-brand">Bed: <span className="font-semibold">{t.bed_assignment}</span></div>}
-                           <div className="text-muted-foreground">Total: <span className="text-foreground">{formatMoney(tenantTotalDue, currency, { decimals: 0 })}</span> {totalAddons > 0 && <span className="text-[10px] text-muted-foreground opacity-70">(inc. {formatMoney(totalAddons, currency, { decimals: 0 })} add-ons)</span>}</div>
-                           <div className="text-emerald-600 dark:text-emerald-500">Paid: <span className="font-semibold">{formatMoney(totalPaidThisMonth, currency, { decimals: 0 })}</span></div>
+                           <div className="text-muted-foreground">This Month: <span className="text-foreground">{formatMoney(monthlyDue, currency, { decimals: 0 })}</span> {totalAddons > 0 && <span className="text-[10px] text-muted-foreground opacity-70">(inc. {formatMoney(totalAddons, currency, { decimals: 0 })} add-ons)</span>}</div>
+                           {carryForwardBalance > 0 && <div className="text-orange-500">Arrears: <span className="font-semibold">{formatMoney(carryForwardBalance, currency, { decimals: 0 })}</span></div>}
+                           {carryForwardBalance < 0 && <div className="text-emerald-500">Credit: <span className="font-semibold">{formatMoney(Math.abs(carryForwardBalance), currency, { decimals: 0 })}</span></div>}
+                           <div className="text-emerald-600 dark:text-emerald-500">Paid: <span className="font-semibold">{formatMoney(totalPaidHistorical, currency, { decimals: 0 })}</span></div>
                            {remainingAmount > 0 && (
-                             <div className="text-red-600 dark:text-red-500">Remaining: <span className="font-bold">{formatMoney(remainingAmount, currency, { decimals: 0 })}</span></div>
+                             <div className="text-red-600 dark:text-red-500">Net Remaining: <span className="font-bold">{formatMoney(remainingAmount, currency, { decimals: 0 })}</span></div>
                            )}
-                        </div>
+                         </div>
                         <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
                           <span className="flex items-center gap-1 truncate">
                             <Phone className="h-3 w-3 shrink-0" /> {t.phone}

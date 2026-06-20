@@ -13,6 +13,9 @@ import {
   normalizeOccupancyTiers,
   tiersToJsonbPayload,
 } from "./rentByOccupancy";
+import { calculateTenantShare } from "./utils";
+import { getTenantExpenses, getCustomExpenses } from "./expensesStore";
+
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 
@@ -522,6 +525,63 @@ async function getTenants(): Promise<any[]> {
     throw error;
   }
 }
+
+async function getTenantInvoices(): Promise<any[]> {
+  try {
+    const user_id = await requireAuthUserId();
+    const { data, error } = await supabase.from("tenant_invoices").select("*");
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    safeLog("getTenantInvoices", error);
+    return [];
+  }
+}
+
+async function ensureCurrentMonthInvoices(): Promise<void> {
+  try {
+    const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+    const tenants = await getTenants();
+    const { data: existing } = await supabase
+      .from("tenant_invoices")
+      .select("tenant_id")
+      .eq("billing_month", currentMonth);
+      
+    const existingIds = new Set((existing || []).map(e => e.tenant_id));
+    const missingTenants = tenants.filter(t => !existingIds.has(t.id));
+    
+    if (missingTenants.length === 0) return;
+    
+    const rooms = await getRooms();
+    const globalExpenses = getCustomExpenses();
+    
+    const inserts = missingTenants.map(t => {
+      const activeExpenseIds = getTenantExpenses(t.id);
+      const activeExpenses = globalExpenses.filter(e => activeExpenseIds.includes(e.id));
+      const addonsTotal = activeExpenses.reduce((sum, e) => sum + e.cost, 0);
+      
+      const room = rooms.find(r => r.id === t.roomId);
+      const baseRent = t.rent_amount ? Number(t.rent_amount) : (room ? calculateTenantShare(room) : 0);
+      
+      return {
+        tenant_id: t.id,
+        room_id: t.roomId,
+        billing_month: currentMonth,
+        base_rent: baseRent,
+        addons_total: addonsTotal,
+        total_amount: baseRent + addonsTotal
+      };
+    });
+    
+    if (inserts.length > 0) {
+      const { error } = await supabase.from("tenant_invoices").insert(inserts);
+      if (error) throw error;
+    }
+  } catch (error) {
+    safeLog("ensureCurrentMonthInvoices", error);
+  }
+}
+
 /* SECURITY FIX #17: user_id is now REQUIRED — never update without ownership check */
 async function syncUnitEffectiveRent(unitId: string, user_id?: string) {
   const effectiveUserId = user_id || (await requireAuthUserId());
@@ -1533,6 +1593,9 @@ export const nivasaApi = {
   getPropertyDetails,
   getRooms,
   getTenants,
+  getTenantInvoices,
+  ensureCurrentMonthInvoices,
+  getUnitsByBuilding,
   getRoomById,
   addRoom,
   addUnit,
