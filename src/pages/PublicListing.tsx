@@ -103,6 +103,19 @@ export default function PublicListing() {
             <span className="text-sm font-medium">{building.address || "Address not provided"}</span>
           </div>
 
+          {building.images && building.images.length > 1 && (
+            <div className="mt-8 border-t border-border/50 pt-8">
+              <h2 className="text-xl font-semibold text-foreground mb-4">Gallery</h2>
+              <div className="flex gap-4 overflow-x-auto pb-4 snap-x">
+                {building.images.map((img, idx) => (
+                  <div key={idx} className="h-40 w-48 shrink-0 overflow-hidden rounded-2xl border border-border snap-center">
+                    <img src={img} alt={`Gallery image ${idx + 1}`} className="h-full w-full object-cover" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="mt-8 border-t border-border/50 pt-8">
             <h2 className="text-xl font-semibold text-foreground">About the property</h2>
             <p className="mt-4 text-muted-foreground leading-relaxed">

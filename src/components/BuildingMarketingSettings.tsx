@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Globe, Copy, Check, ExternalLink } from "lucide-react";
+import { Globe, Copy, Check, ExternalLink, Image as ImageIcon, Upload, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { nivasaApi } from "@/lib/api";
 import { motion } from "framer-motion";
@@ -10,10 +10,11 @@ interface Props {
   slug: string;
   description: string;
   contactPhone: string;
+  images?: string[];
   onUpdate: () => void;
 }
 
-export function BuildingMarketingSettings({ buildingId, isPublic, slug, description, contactPhone, onUpdate }: Props) {
+export function BuildingMarketingSettings({ buildingId, isPublic, slug, description, contactPhone, images, onUpdate }: Props) {
   const [publishing, setPublishing] = useState(false);
   const [copied, setCopied] = useState(false);
   
@@ -22,9 +23,13 @@ export function BuildingMarketingSettings({ buildingId, isPublic, slug, descript
     slug: slug || "",
     public_description: description || "",
     contact_phone: contactPhone || "",
+    images: images || [],
+    cover_image_url: images && images.length > 0 ? images[0] : "",
   });
 
-  const publicUrl = formData.slug ? `https://nivasa.app/p/${formData.slug}` : "";
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  const publicUrl = formData.slug ? `https://amiflow.in/p/${formData.slug}` : "";
 
   const handleSave = async () => {
     try {
@@ -43,6 +48,8 @@ export function BuildingMarketingSettings({ buildingId, isPublic, slug, descript
         slug: formData.slug || undefined,
         public_description: formData.public_description,
         contact_phone: formData.contact_phone,
+        images: formData.images,
+        cover_image_url: formData.images[0] || "",
       });
 
       toast.success("Marketing settings saved successfully!");
@@ -61,6 +68,58 @@ export function BuildingMarketingSettings({ buildingId, isPublic, slug, descript
     setCopied(true);
     toast.success("Link copied to clipboard!");
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (formData.images.length >= 6) {
+      toast.error("You can only upload up to 6 photos.");
+      return;
+    }
+
+    try {
+      setUploadingImage(true);
+      const fileExt = file.name.split('.').pop();
+      const fileName = `building_${buildingId}_${crypto.randomUUID()}.${fileExt}`;
+      const filePath = `buildings/${fileName}`;
+      
+      const { error: uploadError } = await nivasaApi.supabase.storage
+        .from('documents')
+        .upload(filePath, file);
+        
+      if (uploadError) throw new Error(uploadError.message);
+
+      const { data: { publicUrl } } = nivasaApi.supabase.storage
+        .from('documents')
+        .getPublicUrl(filePath);
+
+      setFormData(prev => ({
+        ...prev,
+        images: [...prev.images, publicUrl],
+        cover_image_url: prev.images.length === 0 ? publicUrl : prev.cover_image_url
+      }));
+      toast.success("Image uploaded!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to upload image.");
+    } finally {
+      setUploadingImage(false);
+      e.target.value = '';
+    }
+  };
+
+  const removeImage = (index: number) => {
+    setFormData(prev => {
+      const newImages = [...prev.images];
+      newImages.splice(index, 1);
+      return {
+        ...prev,
+        images: newImages,
+        cover_image_url: newImages[0] || ""
+      };
+    });
   };
 
   return (
@@ -96,7 +155,7 @@ export function BuildingMarketingSettings({ buildingId, isPublic, slug, descript
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground">Custom URL Slug</label>
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground bg-secondary/50 px-3 py-2.5 rounded-l-xl border border-r-0 border-border">nivasa.app/p/</span>
+              <span className="text-sm text-muted-foreground bg-secondary/50 px-3 py-2.5 rounded-l-xl border border-r-0 border-border">amiflow.in/p/</span>
               <input
                 type="text"
                 placeholder="e.g. greenwood-pg"
@@ -127,6 +186,40 @@ export function BuildingMarketingSettings({ buildingId, isPublic, slug, descript
               onChange={(e) => setFormData({ ...formData, public_description: e.target.value })}
               className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none resize-none"
             />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">Property Photos (Up to 6)</label>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {formData.images.map((url, i) => (
+                <div key={i} className="relative aspect-video overflow-hidden rounded-xl border border-border">
+                  <img src={url} alt="Property" className="h-full w-full object-cover" />
+                  <button 
+                    onClick={() => removeImage(i)}
+                    className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-md hover:bg-black/70"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                  {i === 0 && (
+                    <div className="absolute bottom-1 left-1 rounded bg-black/60 px-1.5 py-0.5 text-[9px] font-bold text-white backdrop-blur-sm">COVER</div>
+                  )}
+                </div>
+              ))}
+              
+              {formData.images.length < 6 && (
+                <label className="flex aspect-video cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-border/60 bg-secondary/20 hover:bg-secondary/40 hover:border-brand/50 transition-colors">
+                  {uploadingImage ? (
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  ) : (
+                    <>
+                      <Upload className="mb-2 h-5 w-5 text-muted-foreground" />
+                      <span className="text-[10px] font-medium text-muted-foreground">Add Photo</span>
+                    </>
+                  )}
+                  <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploadingImage} />
+                </label>
+              )}
+            </div>
           </div>
         </div>
 

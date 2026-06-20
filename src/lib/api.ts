@@ -232,6 +232,7 @@ async function updateBuilding(
     public_amenities?: string[];
     contact_phone?: string;
     cover_image_url?: string;
+    images?: string[];
   },
 ) {
   try {
@@ -245,6 +246,7 @@ async function updateBuilding(
     if (updates.public_amenities !== undefined) payload.public_amenities = updates.public_amenities;
     if (updates.contact_phone !== undefined) payload.contact_phone = updates.contact_phone;
     if (updates.cover_image_url !== undefined) payload.cover_image_url = updates.cover_image_url;
+    if (updates.images !== undefined) payload.images = updates.images;
     
     const targetRooms = updates.total_rooms;
     const user_id = await requireAuthUserId();

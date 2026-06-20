@@ -380,6 +380,7 @@ export default function BuildingDetails() {
           slug={data.slug}
           description={data.public_description}
           contactPhone={data.contact_phone}
+          images={data.images}
           onUpdate={fetchData}
         />
       </div>

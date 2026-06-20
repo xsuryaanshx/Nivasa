@@ -16,6 +16,7 @@ export interface Building {
   public_amenities?: string[];
   contact_phone?: string;
   cover_image_url?: string;
+  images?: string[];
 }
 
 export interface Tenant {
