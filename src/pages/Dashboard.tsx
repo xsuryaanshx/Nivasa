@@ -85,7 +85,7 @@ export default function Dashboard() {
         <StatCard label={t('occupancy')}         value={s.occupied}       icon={Users}     delta="92%" trend="flat" delay={0.10} onClick={() => navigate("/app/rooms?status=occupied")} />
         <StatCard label={t('pending_payments')} value={s.pending}        icon={ReceiptIndianRupee}   delta="-1"  trend="up"   delay={0.15} onClick={() => navigate("/app/rooms?status=pending")} />
         <StatCard label={t('monthly_revenue')}  value={s.monthlyRevenue} icon={IndianRupee} money delta="+12%" trend="up" delay={0.20} onClick={() => navigate("/app/payments?status=paid")} />
-        <StatCard label="Net Profit"  value={data.profitStats?.netProfit || 0} icon={TrendingUp} money delta="+10%" trend="up" delay={0.25} onClick={() => navigate("/app/profile")} />
+        <StatCard label="Net Profit"  value={data.profitStats?.netProfit || 0} icon={TrendingUp} money delta="+10%" trend="up" delay={0.25} onClick={() => navigate("/app/profit")} />
       </div>
 
       <div className="mt-6">

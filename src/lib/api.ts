@@ -1402,8 +1402,8 @@ async function deleteMaintenanceRequest(id: string): Promise<void> {
 async function getProfitStats() {
   try {
     const user_id = await requireAuthUserId();
-    const { data: unitsAuth } = await supabase.from("units").select("id").eq("user_id", user_id);
-    const unitIds = (unitsAuth || []).map((u) => u.id);
+    const { data: unitsData } = await supabase.from("units").select("id, building_id, status").eq("user_id", user_id);
+    const unitIds = (unitsData || []).map((u) => u.id);
     
     const { data: buildingsData } = await supabase.from("buildings").select("id, name").eq("user_id", user_id);
     
@@ -1444,6 +1444,7 @@ async function getProfitStats() {
       
       const bExpenses = bMaintenance + bStaffSalaries;
       const bProfit = bPayments - bExpenses;
+      const bVacantRooms = (unitsData || []).filter(u => u.building_id === b.id && u.status === 'vacant').length;
 
       return {
         id: b.id,
@@ -1452,7 +1453,8 @@ async function getProfitStats() {
         maintenance: bMaintenance,
         staffSalaries: bStaffSalaries,
         expenses: bExpenses,
-        netProfit: bProfit
+        netProfit: bProfit,
+        vacantRooms: bVacantRooms
       };
     });
 

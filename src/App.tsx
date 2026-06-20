@@ -17,6 +17,7 @@ import Payments from "./pages/Payments.tsx";
 import Register from "./pages/Register.tsx";
 import Profile from "./pages/Profile.tsx";
 import Expenses from "./pages/Expenses.tsx";
+import ProfitPage from "./pages/ProfitPage.tsx";
 import { AppLayout } from "./components/AppLayout.tsx";
 import { ThemeProvider } from "./components/ThemeProvider.tsx";
 import BuildingDetails from "./pages/BuildingDetails.tsx";
@@ -115,6 +116,7 @@ const App = () => {
                     <Route path="staff" element={<FeatureGate featureKey="staff_management" title="Staff Management Locked" description="Upgrade to Platinum to manage your staff and assign roles."><Staff /></FeatureGate>} />
                     <Route path="staff/:id" element={<FeatureGate featureKey="staff_management"><StaffDetails /></FeatureGate>} />
                     <Route path="profile" element={<Profile />} />
+                    <Route path="profit" element={<ProfitPage />} />
                     <Route path="expenses" element={<FeatureGate featureKey="expense_management" title="Expense Tracking Locked" description="Upgrade to Gold or Platinum to track property expenses."><Expenses /></FeatureGate>} />
                     <Route path="maintenance" element={<FeatureGate featureKey="maintenance_tracking" title="Maintenance Tracking Locked" description="Upgrade to Gold or Platinum to manage maintenance requests."><Maintenance /></FeatureGate>} />
                     <Route path="subscription" element={<SubscriptionPage />} />
