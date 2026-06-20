@@ -71,8 +71,10 @@ export function BuildingMarketingSettings({ buildingId, isPublic, slug, descript
     }
   };
 
+  const isSaved = formData.slug === slug && formData.is_public === isPublic && slug !== "";
+
   const copyLink = () => {
-    if (!publicUrl) return;
+    if (!publicUrl || !isSaved) return;
     navigator.clipboard.writeText(publicUrl);
     setCopied(true);
     toast.success("Link copied to clipboard!");
@@ -304,7 +306,7 @@ export function BuildingMarketingSettings({ buildingId, isPublic, slug, descript
           {publishing ? "Saving..." : "Save Settings"}
         </button>
 
-        {formData.is_public && formData.slug && (
+        {isSaved && formData.is_public && formData.slug && (
           <motion.div 
             initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
             className="mt-4 p-4 border border-blue-500/20 bg-blue-500/5 rounded-2xl flex flex-col items-center text-center space-y-3"
@@ -319,6 +321,12 @@ export function BuildingMarketingSettings({ buildingId, isPublic, slug, descript
               </button>
             </div>
           </motion.div>
+        )}
+        {!isSaved && formData.is_public && formData.slug && (
+          <div className="mt-4 p-4 border border-yellow-500/20 bg-yellow-500/5 rounded-2xl flex flex-col items-center text-center space-y-2">
+            <p className="text-sm font-medium text-yellow-600 dark:text-yellow-500">You have unsaved changes</p>
+            <p className="text-xs text-muted-foreground">Click "Save Settings" above to make your mini website live at this URL.</p>
+          </div>
         )}
       </div>
     </div>

@@ -1629,7 +1629,7 @@ export async function getPublicBuilding(slug: string) {
     .select("*")
     .eq("slug", slug)
     .eq("is_public", true)
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error("Error fetching public building:", error);
