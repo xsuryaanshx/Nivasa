@@ -976,14 +976,14 @@ async function getStaff() {
     const user_id = await requireAuthUserId();
     const { data, error } = await supabase
       .from("staff")
-      .select("*, buildings(name)")
+      .select("*, staff_buildings(buildings(id, name))")
       .eq("user_id", user_id)
       .order("created_at", { ascending: false });
     if (error) throw error;
     
     return (data || []).map((s: any) => ({
       ...s,
-      allocatedBuildings: s.building_id ? [s.building_id] : []
+      allocatedBuildings: s.staff_buildings ? s.staff_buildings.map((sb: any) => sb.buildings?.id).filter(Boolean) : []
     }));
   } catch (error) {
     safeLog("getStaff", error);
@@ -996,14 +996,14 @@ async function getStaffById(id: string) {
     const user_id = await requireAuthUserId();
     const { data, error } = await supabase
       .from("staff")
-      .select("*, buildings(name)")
+      .select("*, staff_buildings(buildings(id, name))")
       .eq("id", id)
       .eq("user_id", user_id)
       .single();
     if (error) throw error;
     return {
       ...data,
-      allocatedBuildings: data.building_id ? [data.building_id] : []
+      allocatedBuildings: data.staff_buildings ? data.staff_buildings.map((sb: any) => sb.buildings?.id).filter(Boolean) : []
     };
   } catch (error) {
     safeLog("getStaffById", error);
@@ -1027,7 +1027,6 @@ async function addStaff(input: any) {
       notes: input.notes || null,
       join_date: input.join_date || new Date().toISOString().split('T')[0],
       aadhar: input.aadhar || null,
-      building_id: input.allocatedBuildings && input.allocatedBuildings.length > 0 ? input.allocatedBuildings[0] : null
     };
     const { data, error } = await supabase
       .from("staff")
@@ -1035,6 +1034,14 @@ async function addStaff(input: any) {
       .select()
       .single();
     if (error) throw error;
+
+    if (input.allocatedBuildings && input.allocatedBuildings.length > 0) {
+      const allocations = input.allocatedBuildings.map((bid: string) => ({
+        staff_id: data.id,
+        building_id: bid
+      }));
+      await supabase.from("staff_buildings").insert(allocations);
+    }
 
     return data;
   } catch (error) {
@@ -1058,9 +1065,6 @@ async function updateStaff(id: string, updates: any) {
     if (updates.notes !== undefined) patch.notes = updates.notes;
     if (updates.join_date !== undefined) patch.join_date = updates.join_date;
     if (updates.aadhar !== undefined) patch.aadhar = updates.aadhar;
-    if (updates.allocatedBuildings !== undefined) {
-      patch.building_id = updates.allocatedBuildings.length > 0 ? updates.allocatedBuildings[0] : null;
-    }
     
     if (Object.keys(patch).length > 0) {
       const { error } = await supabase
@@ -1069,6 +1073,17 @@ async function updateStaff(id: string, updates: any) {
         .eq("id", id)
         .eq("user_id", user_id);
       if (error) throw error;
+    }
+
+    if (updates.allocatedBuildings !== undefined) {
+      await supabase.from("staff_buildings").delete().eq("staff_id", id);
+      if (updates.allocatedBuildings.length > 0) {
+        const allocations = updates.allocatedBuildings.map((bid: string) => ({
+          staff_id: id,
+          building_id: bid
+        }));
+        await supabase.from("staff_buildings").insert(allocations);
+      }
     }
   } catch (error) {
     safeLog("updateStaff", error);
@@ -1392,14 +1407,14 @@ async function getProfitStats() {
     
     const { data: buildingsData } = await supabase.from("buildings").select("id, name").eq("user_id", user_id);
     
-    const { data: staffData } = await supabase.from("staff").select("id, building_id").eq("user_id", user_id);
-    const staffBuildingMap: Record<string, string> = {};
+    // Fetch staff and their allocations
+    const { data: staffData } = await supabase.from("staff").select("id, staff_buildings(building_id)").eq("user_id", user_id);
+    
+    const staffBuildingMap: Record<string, string[]> = {};
     const staffIds: string[] = [];
     (staffData || []).forEach(s => {
       staffIds.push(s.id);
-      if (s.building_id) {
-        staffBuildingMap[s.id] = s.building_id;
-      }
+      staffBuildingMap[s.id] = s.staff_buildings ? s.staff_buildings.map((sb: any) => sb.building_id) : [];
     });
 
     const [payments, expenses, staffPayments] = await Promise.all([
@@ -1417,7 +1432,15 @@ async function getProfitStats() {
     const buildingProfits = (buildingsData || []).map(b => {
       const bPayments = (payments.data || []).filter(p => p.building_id === b.id).reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
       const bMaintenance = (expenses.data || []).filter(e => e.property_id === b.id).reduce((sum, e) => sum + (Number(e.cost) || 0), 0);
-      const bStaffSalaries = (staffPayments.data || []).filter(sp => staffBuildingMap[sp.staff_id] === b.id).reduce((sum, sp) => sum + (Number(sp.amount) || 0), 0);
+      
+      const bStaffSalaries = (staffPayments.data || []).reduce((sum, sp) => {
+        const allocated = staffBuildingMap[sp.staff_id] || [];
+        if (allocated.includes(b.id)) {
+          // Divide salary proportionally among the buildings they are assigned to
+          return sum + ((Number(sp.amount) || 0) / allocated.length);
+        }
+        return sum;
+      }, 0);
       
       const bExpenses = bMaintenance + bStaffSalaries;
       const bProfit = bPayments - bExpenses;
