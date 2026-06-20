@@ -96,7 +96,7 @@ export function MarkAttendanceModal({
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Notes (Optional)</label>
+                <label className="text-sm font-medium">Reason / Notes (Optional)</label>
                 <textarea
                   value={formData.notes}
                   onChange={e => setFormData(prev => ({ ...prev, notes: e.target.value }))}

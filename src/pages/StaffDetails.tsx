@@ -166,17 +166,24 @@ export default function StaffDetails() {
           ) : (
             <div className="space-y-4">
               {attendance.map(a => (
-                <div key={a.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
-                  <span className="text-sm">{new Date(a.date).toLocaleDateString()}</span>
-                  <span className={cn(
-                    "text-xs px-2 py-1 rounded-md capitalize font-medium",
-                    a.status === 'present' ? "bg-emerald-500/10 text-emerald-500" :
-                    a.status === 'absent' ? "bg-red-500/10 text-red-500" :
-                    a.status === 'leave' ? "bg-blue-500/10 text-blue-500" :
-                    "bg-orange-500/10 text-orange-500"
-                  )}>
-                    {a.status}
-                  </span>
+                <div key={a.id} className="flex flex-col p-3 rounded-lg bg-secondary/50 gap-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">{new Date(a.date).toLocaleDateString()}</span>
+                    <span className={cn(
+                      "text-xs px-2 py-1 rounded-md capitalize font-medium",
+                      a.status === 'present' ? "bg-emerald-500/10 text-emerald-500" :
+                      a.status === 'absent' ? "bg-red-500/10 text-red-500" :
+                      a.status === 'leave' ? "bg-blue-500/10 text-blue-500" :
+                      "bg-orange-500/10 text-orange-500"
+                    )}>
+                      {a.status}
+                    </span>
+                  </div>
+                  {a.notes && (
+                    <div className="text-xs text-muted-foreground mt-0.5 border-t border-border/50 pt-1.5">
+                      <span className="font-medium">Reason/Notes:</span> {a.notes}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
