@@ -66,9 +66,15 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+  *::-webkit-scrollbar {
+    display: none;
   }
   body {
     @apply bg-background text-foreground transition-colors duration-500 font-sans antialiased selection:bg-accent-blue/20 selection:text-accent-blue;
+    overflow-x: hidden;
   }
 }
 
