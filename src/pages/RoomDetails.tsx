@@ -409,6 +409,9 @@ export default function RoomDetails() {
                 // Add the dynamic electricity cost for the current month
                 totalDueHistorical += cost;
                 
+                // Add deposit amount to the total due
+                totalDueHistorical += (t.depositAmount || 0);
+                
                 if (!currentInvoice) {
                   totalDueHistorical += fallbackMonthlyDue;
                 }
