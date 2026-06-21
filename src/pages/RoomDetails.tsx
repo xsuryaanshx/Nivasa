@@ -640,7 +640,7 @@ export default function RoomDetails() {
             </div>
           </div>
 
-          <div className="mt-4">
+          <div className="mt-4 w-full min-w-0 overflow-hidden">
             <Sparkline data={room.history} gradientId={`detail-${room.id}`} />
           </div>
 

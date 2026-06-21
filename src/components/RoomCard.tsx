@@ -177,7 +177,7 @@ export function RoomCard({ room, index, payments = [] }: { room: Room; index: nu
           )}
         </div>
 
-        <div className="relative mt-3 -mx-1">
+        <div className="relative mt-3 -mx-1 w-full min-w-0 overflow-hidden">
           <Sparkline data={room.history} gradientId={`spark-${room.id}`} />
         </div>
 
