@@ -165,3 +165,14 @@
     }
   }
 }
+
+/* Print Styles for Lease Agreement */
+@media print {
+  body * { visibility: hidden; }
+  #print-lease-container, #print-lease-container * { visibility: visible; }
+  #print-lease-container {
+    position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0;
+    background: white !important; color: black !important;
+  }
+  .no-print, button, ::-webkit-scrollbar { display: none !important; }
+}

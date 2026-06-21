@@ -1,7 +1,7 @@
 import { nivasaApi } from "@/lib/api";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
-  ArrowLeft, BellRing, CheckCircle2, IdCard, MessageCircle, Phone, Plus, Save, Send, UserPlus, UserMinus, Zap, Calendar, Banknote, Edit2, FileText, Wrench, ShieldAlert
+  ArrowLeft, BellRing, CheckCircle2, IdCard, MessageCircle, Phone, Plus, Save, Send, UserPlus, UserMinus, Zap, Calendar, Banknote, Edit2, FileText, Wrench, ShieldAlert, FileSignature
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
@@ -19,6 +19,7 @@ import { InvoiceGeneratorModal } from "@/components/InvoiceGeneratorModal";
 import { PastInvoicesModal } from "@/components/PastInvoicesModal";
 import { ReportIncidentModal } from "@/components/ReportIncidentModal";
 import { MoveOutCalculatorModal } from "@/components/MoveOutCalculatorModal";
+import { LeaseAgreementModal } from "@/components/LeaseAgreementModal";
 import { TrustScoreBadge } from "@/components/TrustScoreBadge";
 import { Money } from "@/components/Money";
 import { type Room } from "@/lib/types";
@@ -53,6 +54,7 @@ export default function RoomDetails() {
   const [invoiceTenant, setInvoiceTenant] = useState<any>(null);
   const [incidentTenant, setIncidentTenant] = useState<any>(null);
   const [moveOutTenant, setMoveOutTenant] = useState<any>(null);
+  const [leaseTenant, setLeaseTenant] = useState<any>(null);
   const [moveOutNetBalance, setMoveOutNetBalance] = useState(0);
   const [moveOutDepositPaid, setMoveOutDepositPaid] = useState(0);
   const [pastInvoicesRoomId, setPastInvoicesRoomId] = useState<string | null>(null);
@@ -599,6 +601,13 @@ export default function RoomDetails() {
                     </button>
                     <button
                       type="button"
+                      onClick={() => setLeaseTenant(t)}
+                      className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-background/50 py-1.5 text-xs font-medium text-foreground hover:bg-secondary transition-colors w-full sm:w-auto"
+                    >
+                      <FileSignature className="h-3.5 w-3.5" /> Lease
+                    </button>
+                    <button
+                      type="button"
                       className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-brand/20 bg-brand/5 px-3 py-1.5 text-xs font-semibold text-brand transition-colors hover:bg-brand hover:text-white w-full sm:w-auto"
                       onClick={() => { setPaymentTenantId(t.id); setPaymentDefaultAmount(remainingAmount); setAddOpen(true); }}
                     >
@@ -885,6 +894,15 @@ export default function RoomDetails() {
           depositPaidAmount={moveOutDepositPaid}
           pendingDues={moveOutNetBalance}
           onConfirm={handleConfirmMoveOut}
+        />
+      )}
+
+      {leaseTenant && room && (
+        <LeaseAgreementModal
+          open={!!leaseTenant}
+          onClose={() => setLeaseTenant(null)}
+          tenant={leaseTenant}
+          room={room}
         />
       )}
     </div>
