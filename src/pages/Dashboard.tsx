@@ -10,6 +10,7 @@ import { AddPaymentModal } from "@/components/AddPaymentModal";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { useLanguage } from "@/components/LanguageProvider";
+import { useSubscriptionData } from "@/hooks/useSubscriptionData";
 
 function getGreetingKey() {
   const hour = new Date().getHours();
@@ -22,6 +23,7 @@ export default function Dashboard() {
   const { user } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const { subscription } = useSubscriptionData();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<any>({
     stats: { totalBuildings: 0, totalRooms: 0, occupied: 0, pending: 0, monthlyRevenue: 0 },
@@ -123,9 +125,15 @@ export default function Dashboard() {
                 );
               })()}
               <div className="mt-4 flex items-center gap-2">
-                <button className="rounded-lg bg-brand px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-brand/90 shadow-[0_0_15px_-3px_hsl(var(--ring)/0.5)]">
-                  Upgrade to Nivasa Pro for Full Insights
-                </button>
+                {subscription?.plans?.plan_name === "platinum" || subscription?.plans?.plan_name === "gold" ? (
+                  <button className="rounded-lg bg-brand px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-brand/90 shadow-[0_0_15px_-3px_hsl(var(--ring)/0.5)]">
+                    View Full AI Market Report
+                  </button>
+                ) : (
+                  <button className="rounded-lg bg-brand px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-brand/90 shadow-[0_0_15px_-3px_hsl(var(--ring)/0.5)]">
+                    Upgrade to Nivasa Pro for Full Insights
+                  </button>
+                )}
               </div>
             </div>
           </div>
