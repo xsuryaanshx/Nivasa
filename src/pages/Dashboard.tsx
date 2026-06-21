@@ -10,6 +10,7 @@ import { AddPaymentModal } from "@/components/AddPaymentModal";
 import { AddBuildingModal } from "@/components/AddBuildingModal";
 import { AddRoomModal } from "@/components/AddRoomModal";
 import { AddTenantModal } from "@/components/AddTenantModal";
+import { RevenueChart } from "@/components/RevenueChart";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { useLanguage } from "@/components/LanguageProvider";
@@ -325,19 +326,27 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="mt-6 min-w-0 rounded-2xl border border-border bg-card p-5 shadow-soft">
-        <div className="flex min-w-0 items-center justify-between">
-          <div className="min-w-0">
-            <div className="text-sm font-semibold tracking-tight">{t('recent_payments')}</div>
-            <div className="text-xs text-muted-foreground">{t("latest_activity")}</div>
-          </div>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
+        {/* Revenue Chart */}
+        <div className="lg:col-span-7 min-w-0">
+          <RevenueChart />
         </div>
-        <div className="mt-4 min-w-0">
-          {loading ? (
-            <div className="h-40 flex items-center justify-center text-muted-foreground">{t("loading_payments")}</div>
-          ) : (
-            <PaymentTimeline payments={recent} dense />
-          )}
+
+        {/* Recent Payments */}
+        <div className="lg:col-span-5 min-w-0 rounded-2xl border border-border bg-card p-5 shadow-soft">
+          <div className="flex min-w-0 items-center justify-between">
+            <div className="min-w-0">
+              <div className="text-sm font-semibold tracking-tight">{t('recent_payments')}</div>
+              <div className="text-xs text-muted-foreground">{t("latest_activity")}</div>
+            </div>
+          </div>
+          <div className="mt-4 min-w-0">
+            {loading ? (
+              <div className="h-40 flex items-center justify-center text-muted-foreground">{t("loading_payments")}</div>
+            ) : (
+              <PaymentTimeline payments={recent} dense />
+            )}
+          </div>
         </div>
       </div>
 
