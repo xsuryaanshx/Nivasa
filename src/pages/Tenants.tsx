@@ -10,7 +10,7 @@ import { MagneticButton } from "@/components/MagneticButton";
 import { type PaymentStatus } from "@/lib/types";
 import { cn, getTenantPaymentStatus } from "@/lib/utils";
 import { StatusPill } from "@/components/StatusPill";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useSubscriptionData } from "@/hooks/useSubscriptionData";
 import { downloadExcel } from "@/lib/export";
 import { FileSpreadsheet } from "lucide-react";
@@ -43,6 +43,96 @@ export default function Tenants() {
   const [tenantsList, setTenantsList] = useState<any[]>([]);
   const [paymentsList, setPaymentsList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [selectedTenantIds, setSelectedTenantIds] = useState<string[]>([]);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [remindersOpen, setRemindersOpen] = useState(false);
+  const [sentStatus, setSentStatus] = useState<Record<string, boolean>>({});
+
+  const selectedTenantsData = useMemo(() => {
+    return filtered.filter(t => selectedTenantIds.includes(t.id));
+  }, [filtered, selectedTenantIds]);
+
+  const handleOpenRemindersModal = () => {
+    setSentStatus({});
+    setRemindersOpen(true);
+  };
+
+  const getReminderUrl = (tenant: any) => {
+    const phone = tenant.whatsapp_number || tenant.phone;
+    if (!phone) return "";
+    const msg = encodeURIComponent(`Hi ${tenant.name}, this is a gentle reminder that your rent of ₹${tenant.roomRent} is currently pending. Please complete the payment at your earliest convenience.`);
+    return `https://wa.me/91${phone.replace(/\D/g, '')}?text=${msg}`;
+  };
+
+  const triggerSingleReminder = (tenant: any) => {
+    const url = getReminderUrl(tenant);
+    if (url) {
+      window.open(url, '_blank');
+      setSentStatus(prev => ({ ...prev, [tenant.id]: true }));
+    } else {
+      toast.error(`No phone number for ${tenant.name}`);
+    }
+  };
+
+  const triggerNextSequential = () => {
+    const nextTenant = selectedTenantsData.find(t => !sentStatus[t.id]);
+    if (nextTenant) {
+      triggerSingleReminder(nextTenant);
+    } else {
+      toast.success("All selected reminders have been opened!");
+    }
+  };
+
+  const allSent = selectedTenantsData.every(t => sentStatus[t.id]);
+  const unsentCount = selectedTenantsData.filter(t => !sentStatus[t.id]).length;
+
+  const lateTenantsCount = useMemo(() => {
+    return filtered.filter(t => t.paymentStatus === 'late').length;
+  }, [filtered]);
+
+  const handleSelectAll = () => {
+    setSelectedTenantIds(filtered.map(t => t.id));
+  };
+
+  const handleSelectAllLate = () => {
+    const lateIds = filtered.filter(t => t.paymentStatus === 'late').map(t => t.id);
+    setSelectedTenantIds(lateIds);
+    toast.success(`Selected all ${lateIds.length} late tenants`);
+  };
+
+  const handleBulkMarkPaid = async () => {
+    try {
+      setActionLoading(true);
+      const paymentsToMark = filtered
+        .filter(t => selectedTenantIds.includes(t.id) && t.paymentStatus !== "paid")
+        .map(t => ({
+          buildingId: t.buildingId,
+          roomId: t.roomId,
+          tenantId: t.id,
+          amount: t.roomRent,
+          method: "Cash",
+          date: new Date().toISOString(),
+          status: "paid"
+        }));
+
+      if (paymentsToMark.length === 0) {
+        toast.info("Selected tenants are already marked as Paid");
+        setSelectedTenantIds([]);
+        return;
+      }
+
+      await nivasaApi.addPaymentsBulk(paymentsToMark);
+      toast.success(`Successfully marked ${paymentsToMark.length} payments as paid!`);
+      setSelectedTenantIds([]);
+      window.dispatchEvent(new CustomEvent("nivasa:refresh"));
+    } catch (err) {
+      toast.error("Failed to mark payments as paid");
+      console.error(err);
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   const fetchTenants = async () => {
     try {
@@ -149,36 +239,58 @@ export default function Tenants() {
         }
       />
 
-      <div className="mb-5 flex flex-wrap items-center gap-3">
-        <div className="relative flex h-10 flex-1 min-w-[240px] max-w-md items-center gap-2 rounded-xl border border-border bg-card px-3.5">
-          <Search className="h-4 w-4 text-muted-foreground" />
-          <input
-            value={q} onChange={e => setQ(e.target.value)}
-            placeholder={"Search tenants by name, phone, or room..."}
-            className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-          />
-        </div>
-        
-        <select 
-          value={selectedBuilding} 
-          onChange={(e) => handleSetBuilding(e.target.value)}
-          className="h-10 rounded-xl border border-border bg-card px-3 py-1.5 text-sm outline-none focus:border-brand min-w-[140px]"
-        >
-          <option value="all">All Buildings</option>
-          {buildingsList.map(b => (
-            <option key={b as string} value={b as string}>{b as string}</option>
-          ))}
-        </select>
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-3 flex-1">
+          <div className="relative flex h-10 flex-1 min-w-[240px] max-w-md items-center gap-2 rounded-xl border border-border bg-card px-3.5">
+            <Search className="h-4 w-4 text-muted-foreground" />
+            <input
+              value={q} onChange={e => setQ(e.target.value)}
+              placeholder={"Search tenants by name, phone, or room..."}
+              className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+            />
+          </div>
+          
+          <select 
+            value={selectedBuilding} 
+            onChange={(e) => handleSetBuilding(e.target.value)}
+            className="h-10 rounded-xl border border-border bg-card px-3 py-1.5 text-sm outline-none focus:border-brand min-w-[140px]"
+          >
+            <option value="all">All Buildings</option>
+            {buildingsList.map(b => (
+              <option key={b as string} value={b as string}>{b as string}</option>
+            ))}
+          </select>
 
-        <select 
-          value={status} 
-          onChange={(e) => handleSetStatus(e.target.value as any)}
-          className="h-10 rounded-xl border border-border bg-card px-3 py-1.5 text-sm outline-none focus:border-brand min-w-[140px]"
-        >
-          {getFilters(t).map(f => (
-            <option key={f.key} value={f.key}>{f.label}</option>
-          ))}
-        </select>
+          <select 
+            value={status} 
+            onChange={(e) => handleSetStatus(e.target.value as any)}
+            className="h-10 rounded-xl border border-border bg-card px-3 py-1.5 text-sm outline-none focus:border-brand min-w-[140px]"
+          >
+            {getFilters(t).map(f => (
+              <option key={f.key} value={f.key}>{f.label}</option>
+            ))}
+          </select>
+        </div>
+
+        {filtered.length > 0 && (
+          <div className="flex items-center gap-2">
+            {lateTenantsCount > 0 && (
+              <button
+                onClick={handleSelectAllLate}
+                className="h-10 px-4 rounded-xl text-xs font-semibold bg-amber-500/10 text-amber-600 border border-amber-500/20 hover:bg-amber-500/20 transition-all flex items-center gap-1.5"
+              >
+                <AlertCircle className="h-3.5 w-3.5" />
+                Select All Late ({lateTenantsCount})
+              </button>
+            )}
+            <button
+              onClick={selectedTenantIds.length === filtered.length ? () => setSelectedTenantIds([]) : handleSelectAll}
+              className="h-10 px-4 rounded-xl text-xs font-semibold bg-secondary text-secondary-foreground border border-border hover:bg-secondary/80 transition-all"
+            >
+              {selectedTenantIds.length === filtered.length ? "Deselect All" : "Select All"}
+            </button>
+          </div>
+        )}
       </div>
 
       {loading ? (
@@ -192,15 +304,185 @@ export default function Tenants() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filtered.map((tenant, i) => (
-             <TenantCard key={tenant.id} tenant={tenant} index={i} />
+             <TenantCard 
+               key={tenant.id} 
+               tenant={tenant} 
+               index={i} 
+               isSelected={selectedTenantIds.includes(tenant.id)}
+               isSelectionMode={selectedTenantIds.length > 0}
+               onToggleSelect={(id) => {
+                 setSelectedTenantIds(prev => 
+                   prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+                 );
+               }}
+             />
           ))}
+        </div>
+      )}
+
+      {/* Glassmorphic Floating Action Bar */}
+      <AnimatePresence>
+        {selectedTenantIds.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 100 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 100 }}
+            transition={{ type: "spring", stiffness: 260, damping: 20 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between gap-6 px-6 py-4 rounded-2xl bg-card/85 border border-border/80 backdrop-blur-lg shadow-2xl min-w-[320px] max-w-lg w-[calc(100%-2rem)]"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-5 w-5 items-center justify-center rounded-md bg-brand text-white">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold">{selectedTenantIds.length} Selected</p>
+                <p className="text-[10px] text-muted-foreground">Perform bulk actions</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleBulkMarkPaid}
+                disabled={actionLoading}
+                className="h-9 px-4 rounded-xl text-xs font-semibold bg-emerald-500 text-white hover:bg-emerald-600 transition-colors flex items-center gap-1.5 shadow-md shadow-emerald-500/20 disabled:opacity-50"
+              >
+                {actionLoading ? "Processing..." : "Mark Paid"}
+              </button>
+              
+              <button
+                onClick={handleOpenRemindersModal}
+                className="h-9 px-4 rounded-xl text-xs font-semibold bg-brand text-white hover:bg-brand/90 transition-colors flex items-center gap-1.5 shadow-md shadow-brand/20"
+              >
+                <MessageCircle className="h-3.5 w-3.5" />
+                Reminders
+              </button>
+              
+              <button
+                onClick={() => setSelectedTenantIds([])}
+                className="h-9 w-9 rounded-xl border border-border bg-secondary hover:bg-secondary/80 transition-colors flex items-center justify-center text-muted-foreground"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Reminders Modal */}
+      {remindersOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/40 backdrop-blur-sm">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-card border border-border rounded-2xl shadow-2xl max-w-md w-full overflow-hidden flex flex-col max-h-[85vh]"
+          >
+            <div className="p-5 border-b border-border/50 flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-lg flex items-center gap-2">
+                  <MessageCircle className="h-5 w-5 text-brand" />
+                  Bulk WhatsApp Reminders
+                </h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Send reminders to {selectedTenantsData.length} selected tenants
+                </p>
+              </div>
+              <button
+                onClick={() => setRemindersOpen(false)}
+                className="h-8 w-8 rounded-lg hover:bg-secondary flex items-center justify-center text-muted-foreground"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="p-5 bg-secondary/30 border-b border-border/30 flex items-center justify-between">
+              <div className="text-xs text-muted-foreground">
+                {allSent ? (
+                  <span className="text-emerald-500 font-medium">All reminders opened</span>
+                ) : (
+                  <span>{unsentCount} of {selectedTenantsData.length} remaining</span>
+                )}
+              </div>
+              {!allSent && (
+                <button
+                  onClick={triggerNextSequential}
+                  className="h-8 px-3 rounded-lg text-xs font-semibold bg-brand text-white hover:bg-brand/90 transition-colors flex items-center gap-1.5"
+                >
+                  Send Next Reminder
+                </button>
+              )}
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-5 space-y-3">
+              {selectedTenantsData.map((tenant) => {
+                const isSent = sentStatus[tenant.id];
+                const phone = tenant.whatsapp_number || tenant.phone;
+                return (
+                  <div key={tenant.id} className={cn(
+                    "flex items-center justify-between p-3 rounded-xl border transition-colors",
+                    isSent ? "border-emerald-500/20 bg-emerald-500/5" : "border-border bg-card"
+                  )}>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold truncate">{tenant.name}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        Room {tenant.roomNumber} &bull; {phone || "No phone"}
+                      </p>
+                    </div>
+                    <div>
+                      {isSent ? (
+                        <div className="flex items-center gap-1 text-xs text-emerald-500 font-medium px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          Opened
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => triggerSingleReminder(tenant)}
+                          disabled={!phone}
+                          className="h-8 px-3 rounded-lg text-xs font-medium border border-brand bg-brand/5 text-brand hover:bg-brand hover:text-white transition-all disabled:opacity-50 disabled:pointer-events-none"
+                        >
+                          Send
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="p-5 border-t border-border/50 bg-secondary/10 flex items-center justify-end">
+              <button
+                onClick={() => {
+                  setRemindersOpen(false);
+                  setSelectedTenantIds([]);
+                }}
+                className="h-9 px-4 rounded-xl text-xs font-semibold bg-brand text-white hover:bg-brand/90 transition-colors"
+              >
+                Done
+              </button>
+            </div>
+          </motion.div>
         </div>
       )}
     </div>
   );
 }
 
-function TenantCard({ tenant, index }: { tenant: any; index: number }) {
+function TenantCard({ 
+  tenant, 
+  index,
+  isSelected,
+  isSelectionMode,
+  onToggleSelect
+}: { 
+  tenant: any; 
+  index: number;
+  isSelected: boolean;
+  isSelectionMode: boolean;
+  onToggleSelect: (id: string) => void;
+}) {
   const [submitting, setSubmitting] = useState(false);
   const controls = useAnimation();
   const x = useMotionValue(0);
@@ -258,7 +540,7 @@ function TenantCard({ tenant, index }: { tenant: any; index: number }) {
   };
 
   const handleDragEnd = (e: any, info: any) => {
-    if (submitting) return;
+    if (submitting || isSelectionMode) return;
     const offset = info.offset.x;
     if (offset > 80 && tenant.paymentStatus !== "paid") {
       handleMarkPaid();
@@ -274,46 +556,82 @@ function TenantCard({ tenant, index }: { tenant: any; index: number }) {
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: index * 0.04, ease: [0.2, 0.7, 0.2, 1] }}
-      className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-soft"
+      className={cn(
+        "relative overflow-hidden rounded-2xl border transition-all duration-200 bg-card shadow-soft group",
+        isSelected ? "border-brand shadow-glow-sm" : "border-border"
+      )}
     >
-      {/* Background Swipe Actions Layer */}
-      <div className="absolute inset-0 z-0 flex select-none items-center justify-between px-6 font-semibold">
-        <motion.div 
-          style={{ opacity: paidOpacity }} 
-          className="flex h-full w-1/2 items-center justify-start text-emerald-500"
-        >
-          <div className="flex flex-col items-start gap-1">
-            <CheckCircle2 className="h-6 w-6" />
-            <span className="text-[10px] uppercase tracking-wider">Mark Paid</span>
-          </div>
-        </motion.div>
-        
-        <motion.div 
-          style={{ opacity: reminderOpacity }} 
-          className="flex h-full w-1/2 items-center justify-end text-brand"
-        >
-          <div className="flex flex-col items-end gap-1">
-            <MessageCircle className="h-6 w-6" />
-            <span className="text-[10px] uppercase tracking-wider">Reminder</span>
-          </div>
-        </motion.div>
+      {/* Checkbox overlay */}
+      <div 
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggleSelect(tenant.id);
+        }}
+        className={cn(
+          "absolute top-4 right-4 z-20 flex h-5 w-5 cursor-pointer items-center justify-center rounded-md border transition-all duration-200",
+          isSelected 
+            ? "bg-brand border-brand text-white scale-110" 
+            : "border-border bg-card hover:border-brand/50 opacity-0 group-hover:opacity-100",
+          isSelectionMode && "opacity-100"
+        )}
+      >
+        {isSelected && (
+          <svg className="h-3.5 w-3.5 stroke-[3] stroke-current" fill="none" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+          </svg>
+        )}
       </div>
+
+      {/* Background Swipe Actions Layer */}
+      {!isSelectionMode && (
+        <div className="absolute inset-0 z-0 flex select-none items-center justify-between px-6 font-semibold">
+          <motion.div 
+            style={{ opacity: paidOpacity }} 
+            className="flex h-full w-1/2 items-center justify-start text-emerald-500"
+          >
+            <div className="flex flex-col items-start gap-1">
+              <CheckCircle2 className="h-6 w-6" />
+              <span className="text-[10px] uppercase tracking-wider">Mark Paid</span>
+            </div>
+          </motion.div>
+          
+          <motion.div 
+            style={{ opacity: reminderOpacity }} 
+            className="flex h-full w-1/2 items-center justify-end text-brand"
+          >
+            <div className="flex flex-col items-end gap-1">
+              <MessageCircle className="h-6 w-6" />
+              <span className="text-[10px] uppercase tracking-wider">Reminder</span>
+            </div>
+          </motion.div>
+        </div>
+      )}
 
       {/* Draggable Foreground Card */}
       <motion.div
-        drag="x"
+        drag={isSelectionMode ? false : "x"}
         dragConstraints={{ left: 0, right: 0 }}
         dragElastic={0.5}
         onDragEnd={handleDragEnd}
         animate={controls}
         style={{ x }}
-        className="relative z-10 flex h-full w-full cursor-grab active:cursor-grabbing flex-col justify-between bg-card p-5 transition-shadow hover:shadow-md"
+        onClick={() => {
+          if (isSelectionMode) {
+            onToggleSelect(tenant.id);
+          }
+        }}
+        className={cn(
+          "relative z-10 flex h-full w-full flex-col justify-between bg-card p-5 transition-shadow",
+          isSelectionMode ? "cursor-pointer select-none" : "cursor-grab active:cursor-grabbing",
+          !isSelectionMode && "hover:shadow-md",
+          isSelected && "bg-brand/[0.02]"
+        )}
       >
       <div className="flex items-start gap-4">
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-brand text-lg font-bold text-white shadow-glow">
           {initials(tenant.name)}
         </div>
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 pr-6">
           <div className="flex items-start justify-between gap-2">
             <h3 className="font-semibold text-base truncate">{tenant.name}</h3>
           </div>

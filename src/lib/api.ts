@@ -957,6 +957,61 @@ async function addPayment(input: any) {
     throw error;
   }
 }
+async function addPaymentsBulk(payments: any[]) {
+  try {
+    const user_id = await requireAuthUserId();
+    if (!payments || payments.length === 0) return [];
+
+    const roomIds = payments.map(p => p.room_id || p.roomId);
+
+    // Verify all rooms belong to this user
+    const { data: roomsCheck, error: roomsError } = await supabase
+      .from("units")
+      .select("id, building_id")
+      .in("id", roomIds)
+      .eq("user_id", user_id);
+
+    if (roomsError) throw roomsError;
+    const allowedRoomIds = new Set(roomsCheck.map(r => r.id));
+
+    const payloads = payments
+      .filter(p => allowedRoomIds.has(p.room_id || p.roomId))
+      .map(p => {
+        const roomId = p.room_id || p.roomId;
+        const room = roomsCheck.find(r => r.id === roomId);
+        return {
+          building_id: p.building_id || p.buildingId || room?.building_id,
+          unit_id: roomId,
+          tenant_id: p.tenant_id || p.tenantId,
+          user_id,
+          amount: p.amount,
+          status: (p.status || "paid").toLowerCase(),
+          method: (p.method || "cash").toLowerCase(),
+          paid_date: p.date || new Date().toISOString(),
+        };
+      });
+
+    if (payloads.length === 0) return [];
+
+    const { data, error } = await supabase
+      .from("payments")
+      .insert(payloads)
+      .select();
+
+    if (error) throw error;
+
+    // Refresh unit effective rent for all affected rooms
+    const uniqueRoomIds = Array.from(new Set(payloads.map(p => p.unit_id)));
+    for (const roomId of uniqueRoomIds) {
+      await syncUnitEffectiveRent(roomId, user_id);
+    }
+
+    return data;
+  } catch (error) {
+    safeLog("addPaymentsBulk", error);
+    throw error;
+  }
+}
 async function getRecentPayments(limit = 10) {
   try {
     const user_id = await requireAuthUserId();
@@ -1707,6 +1762,7 @@ export const nivasaApi = {
   addTenant,
   removeTenant,
   addPayment,
+  addPaymentsBulk,
   getRecentPayments,
   saveElectricityReading,
   getElectricityRate,
