@@ -18,6 +18,7 @@ import { TenantExpensesModal } from "@/components/TenantExpensesModal";
 import { InvoiceGeneratorModal } from "@/components/InvoiceGeneratorModal";
 import { PastInvoicesModal } from "@/components/PastInvoicesModal";
 import { ReportIncidentModal } from "@/components/ReportIncidentModal";
+import { MoveOutCalculatorModal } from "@/components/MoveOutCalculatorModal";
 import { TrustScoreBadge } from "@/components/TrustScoreBadge";
 import { Money } from "@/components/Money";
 import { type Room } from "@/lib/types";
@@ -51,6 +52,9 @@ export default function RoomDetails() {
   const [expensesTenant, setExpensesTenant] = useState<any>(null);
   const [invoiceTenant, setInvoiceTenant] = useState<any>(null);
   const [incidentTenant, setIncidentTenant] = useState<any>(null);
+  const [moveOutTenant, setMoveOutTenant] = useState<any>(null);
+  const [moveOutNetBalance, setMoveOutNetBalance] = useState(0);
+  const [moveOutDepositPaid, setMoveOutDepositPaid] = useState(0);
   const [pastInvoicesRoomId, setPastInvoicesRoomId] = useState<string | null>(null);
   const [savingElectricity, setSavingElectricity] = useState(false);
   const [rentAmount, setRentAmount] = useState("");
@@ -248,19 +252,43 @@ export default function RoomDetails() {
     }
   };
 
-  const handleRemoveTenant = async (tenantId: string) => {
-    const tenant = room.tenants?.find(t => t.id === tenantId);
-    if (!tenant || !window.confirm(`Are you sure you want to remove ${tenant.name}? This will free a bed.`)) return;
-
+  const handleConfirmMoveOut = async (finalAmount: number, damages: number, notes: string) => {
+    if (!room || !moveOutTenant) return;
     try {
+      if (finalAmount > 0) {
+        await (nivasaApi as any).saveMaintenanceRequest?.({
+          property_id: room.buildingId,
+          unit_id: room.id,
+          title: `Refund Security Deposit - ${moveOutTenant.name}`,
+          description: notes ? `Move-out settlement. Notes: ${notes}` : "Move-out settlement refund.",
+          status: "resolved",
+          priority: "medium",
+          cost: finalAmount,
+          category: "other",
+        });
+      } else if (finalAmount < 0) {
+        await nivasaApi.addPayment({
+          building_id: room.buildingId,
+          room_id: room.id,
+          tenant_id: moveOutTenant.id,
+          amount: Math.abs(finalAmount),
+          method: "Cash",
+          status: "paid",
+          date: new Date().toISOString().slice(0, 10),
+          note: notes ? `Move-out dues. Notes: ${notes}` : "Move-out settlement dues.",
+        });
+      }
+
+      await nivasaApi.removeTenant(room.id, moveOutTenant.id);
+      toast.success("Tenant moved out and settled");
       
-      await nivasaApi.removeTenant(room.id, tenantId);
-      toast.success("Tenant removed successfully");
-      fetchData(); // Refresh data
+      setMoveOutTenant(null);
+      fetchData();
       window.dispatchEvent(new CustomEvent("nivasa:refresh"));
     } catch (error: any) {
-      console.error("Error removing tenant:", error);
-      toast.error(error.message || "Failed to remove tenant");
+      console.error("Error moving out tenant:", error);
+      toast.error(error.message || "Failed to process move-out");
+      throw error;
     }
   };
 
@@ -482,7 +510,16 @@ export default function RoomDetails() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => handleRemoveTenant(t.id)}
+                        onClick={() => {
+                          const isDepositPaid = 
+                            (t.depositMethod && t.depositMethod !== "Pending") || 
+                            allTenantPayments.some(p => p.note?.toLowerCase().includes("deposit"));
+                          const depPaidAmount = isDepositPaid ? Number(t.depositAmount || 0) : 0;
+                          const dues = Math.max(0, netBalance - (isDepositPaid ? 0 : Number(t.depositAmount || 0)));
+                          setMoveOutDepositPaid(depPaidAmount);
+                          setMoveOutNetBalance(dues);
+                          setMoveOutTenant(t);
+                        }}
                         className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
                         title="Remove Tenant"
                       >
@@ -838,6 +875,18 @@ export default function RoomDetails() {
         defaultRoomId={room.id}
         onSaved={fetchData}
       />
+
+      {moveOutTenant && room && (
+        <MoveOutCalculatorModal
+          open={!!moveOutTenant}
+          onClose={() => setMoveOutTenant(null)}
+          tenant={moveOutTenant}
+          room={room}
+          depositPaidAmount={moveOutDepositPaid}
+          pendingDues={moveOutNetBalance}
+          onConfirm={handleConfirmMoveOut}
+        />
+      )}
     </div>
   );
 }
