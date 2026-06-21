@@ -328,7 +328,7 @@ export default function Tenants() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 100 }}
             transition={{ type: "spring", stiffness: 260, damping: 20 }}
-            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between gap-6 px-6 py-4 rounded-2xl bg-card/85 border border-border/80 backdrop-blur-lg shadow-2xl min-w-[320px] max-w-lg w-[calc(100%-2rem)]"
+            className="fixed bottom-24 lg:bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between gap-6 px-6 py-4 rounded-2xl bg-card/85 border border-border/80 backdrop-blur-lg shadow-2xl min-w-[320px] max-w-lg w-[calc(100%-2rem)]"
           >
             <div className="flex items-center gap-3">
               <div className="flex h-5 w-5 items-center justify-center rounded-md bg-brand text-white">
