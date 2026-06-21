@@ -357,8 +357,11 @@ export default function RoomDetails() {
 
   return (
     <div>
-      <Link to="/app/rooms" className="mb-4 inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="h-3.5 w-3.5" /> Back to rooms
+      <Link 
+        to={room.buildingId ? `/app/buildings/${room.buildingId}` : "/app/rooms"} 
+        className="mb-4 inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" /> Back to {room.buildingName && room.buildingName !== "Unknown" ? room.buildingName : "building"}
       </Link>
 
       <PageHeader

@@ -60,6 +60,7 @@ export interface Room {
   buildingId: string;
   buildingName: string;
   rent: number;
+  roomType?: string;
   /** When set, rent follows these tiers by tenant billing occupancy. */
   occupancyPrices?: OccupancyPriceTier[] | null;
   capacity?: number;

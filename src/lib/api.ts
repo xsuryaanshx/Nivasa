@@ -428,6 +428,7 @@ function mapUnitToRoom(u: any): any {
     buildingId: u.building_id,
     buildingName: u.buildings?.name || "Unknown",
     rent,
+    roomType: u.room_type,
     occupancyPrices: tiers.length > 0 ? tiers : null,
     capacity: u.capacity ?? 1,
     status: u.status as any,
@@ -616,10 +617,12 @@ async function updateRoom(
     rent_amount?: number;
     occupancy_prices?: OccupancyPriceTier[] | null;
     capacity?: number;
+    room_type?: string;
   },
 ) {
   const payload: Record<string, unknown> = {};
   if (updates.number !== undefined) payload.name = updates.number;
+  if (updates.room_type !== undefined) payload.room_type = updates.room_type;
   if (updates.rent_amount !== undefined)
     payload.rent_amount = updates.rent_amount;
   if (updates.occupancy_prices !== undefined) {
@@ -715,6 +718,7 @@ async function addRoom(input: {
   rent: number;
   occupancy_prices?: OccupancyPriceTier[] | null;
   capacity?: number;
+  room_type?: string;
 }) {
   try {
     const user_id = await requireAuthUserId();
@@ -730,6 +734,7 @@ async function addRoom(input: {
       capacity: input.capacity ?? 1,
       status: "vacant",
       user_id,
+      room_type: input.room_type,
     };
     if (hasTiers) row.occupancy_prices = tiersToJsonbPayload(tiers);
     const { data, error } = await supabase
