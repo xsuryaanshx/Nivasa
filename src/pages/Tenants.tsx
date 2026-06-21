@@ -49,6 +49,78 @@ export default function Tenants() {
   const [remindersOpen, setRemindersOpen] = useState(false);
   const [sentStatus, setSentStatus] = useState<Record<string, boolean>>({});
 
+  const fetchTenants = async () => {
+    try {
+      setLoading(true);
+      if (!nivasaApi) return;
+      const [data, payments] = await Promise.all([
+        nivasaApi.getTenants(),
+        nivasaApi.getRecentPayments(1000)
+      ]);
+      setTenantsList(data);
+      setPaymentsList(payments);
+    } catch (error) {
+      console.error("Error fetching tenants:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTenants();
+    const handler = () => fetchTenants();
+    window.addEventListener("nivasa:refresh", handler);
+    return () => window.removeEventListener("nivasa:refresh", handler);
+  }, []);
+
+  const handleSetStatus = (s: PaymentStatus | "all") => {
+    setStatus(s);
+    const newParams = new URLSearchParams(searchParams);
+    if (s === "all") newParams.delete("status");
+    else newParams.set("status", s);
+    setSearchParams(newParams);
+  };
+
+  const handleSetBuilding = (b: string | "all") => {
+    setSelectedBuilding(b);
+    const newParams = new URLSearchParams(searchParams);
+    if (b === "all") newParams.delete("building");
+    else newParams.set("building", b);
+    setSearchParams(newParams);
+  };
+
+  const buildingsList = useMemo(() => {
+    const b = new Set(tenantsList.map(t => t.buildingName).filter(Boolean));
+    return Array.from(b).sort();
+  }, [tenantsList]);
+
+  // Compute payment status for each tenant up front
+  const tenantsWithStatus = useMemo(() => {
+    return tenantsList.map(tenant => ({
+      ...tenant,
+      paymentStatus: getTenantPaymentStatus(tenant, paymentsList)
+    }));
+  }, [tenantsList, paymentsList]);
+
+  const filtered = useMemo(() => {
+    let result = tenantsWithStatus.filter(t => {
+      if (status !== "all" && t.paymentStatus !== status) return false;
+      if (selectedBuilding !== "all" && t.buildingName !== selectedBuilding) return false;
+      if (!q) return true;
+      const hay = `${t.name} ${t.roomNumber} ${t.buildingName} ${t.phone || ""} ${t.whatsapp_number || ""}`.toLowerCase();
+      return hay.includes(q.toLowerCase());
+    });
+
+    const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+    result.sort((a, b) => {
+      const nameA = a.name || '';
+      const nameB = b.name || '';
+      return collator.compare(nameA, nameB);
+    });
+
+    return result;
+  }, [q, status, selectedBuilding, tenantsWithStatus]);
+
   const selectedTenantsData = useMemo(() => {
     return filtered.filter(t => selectedTenantIds.includes(t.id));
   }, [filtered, selectedTenantIds]);
@@ -133,78 +205,6 @@ export default function Tenants() {
       setActionLoading(false);
     }
   };
-
-  const fetchTenants = async () => {
-    try {
-      setLoading(true);
-      if (!nivasaApi) return;
-      const [data, payments] = await Promise.all([
-        nivasaApi.getTenants(),
-        nivasaApi.getRecentPayments(1000)
-      ]);
-      setTenantsList(data);
-      setPaymentsList(payments);
-    } catch (error) {
-      console.error("Error fetching tenants:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchTenants();
-    const handler = () => fetchTenants();
-    window.addEventListener("nivasa:refresh", handler);
-    return () => window.removeEventListener("nivasa:refresh", handler);
-  }, []);
-
-  const handleSetStatus = (s: PaymentStatus | "all") => {
-    setStatus(s);
-    const newParams = new URLSearchParams(searchParams);
-    if (s === "all") newParams.delete("status");
-    else newParams.set("status", s);
-    setSearchParams(newParams);
-  };
-
-  const handleSetBuilding = (b: string | "all") => {
-    setSelectedBuilding(b);
-    const newParams = new URLSearchParams(searchParams);
-    if (b === "all") newParams.delete("building");
-    else newParams.set("building", b);
-    setSearchParams(newParams);
-  };
-
-  const buildingsList = useMemo(() => {
-    const b = new Set(tenantsList.map(t => t.buildingName).filter(Boolean));
-    return Array.from(b).sort();
-  }, [tenantsList]);
-
-  // Compute payment status for each tenant up front
-  const tenantsWithStatus = useMemo(() => {
-    return tenantsList.map(tenant => ({
-      ...tenant,
-      paymentStatus: getTenantPaymentStatus(tenant, paymentsList)
-    }));
-  }, [tenantsList, paymentsList]);
-
-  const filtered = useMemo(() => {
-    let result = tenantsWithStatus.filter(t => {
-      if (status !== "all" && t.paymentStatus !== status) return false;
-      if (selectedBuilding !== "all" && t.buildingName !== selectedBuilding) return false;
-      if (!q) return true;
-      const hay = `${t.name} ${t.roomNumber} ${t.buildingName} ${t.phone || ""} ${t.whatsapp_number || ""}`.toLowerCase();
-      return hay.includes(q.toLowerCase());
-    });
-
-    const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
-    result.sort((a, b) => {
-      const nameA = a.name || '';
-      const nameB = b.name || '';
-      return collator.compare(nameA, nameB);
-    });
-
-    return result;
-  }, [q, status, selectedBuilding, tenantsWithStatus]);
 
   const handleExport = () => {
     if (!canExport) return;
