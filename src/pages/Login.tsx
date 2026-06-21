@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { MagneticButton } from "@/components/MagneticButton";
 import { nivasaApi } from "@/lib/api";
+import { toast } from "sonner";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -96,6 +97,28 @@ export default function Login() {
     }
   };
 
+  const handleForgotPassword = async () => {
+    if (!user) {
+      toast.error("Please enter your email address first.");
+      setError("Please enter your email address first.");
+      return;
+    }
+    try {
+      setLoading(true);
+      setError(null);
+      const { error } = await nivasaApi.supabase.auth.resetPasswordForEmail(user, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      toast.success("Password reset email sent!");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to send reset email");
+      setError(err.message || "Failed to send reset email");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4">
       <div className="aurora" />
@@ -131,7 +154,17 @@ export default function Login() {
             />
           </Field>
 
-          <Field label="Password">
+          <div className="block">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-xs font-medium text-muted-foreground">Password</span>
+              <button 
+                type="button" 
+                onClick={handleForgotPassword}
+                className="text-xs font-medium text-brand hover:underline"
+              >
+                Forgot password?
+              </button>
+            </div>
             <div className="relative">
               <input
                 type={show ? "text" : "password"}
@@ -146,7 +179,7 @@ export default function Login() {
                 {show ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
               </button>
             </div>
-          </Field>
+          </div>
 
           <div className="flex items-center space-x-2 mt-2">
             <input
