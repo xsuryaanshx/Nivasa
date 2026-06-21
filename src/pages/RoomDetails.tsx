@@ -361,20 +361,20 @@ export default function RoomDetails() {
           room.occupancyPrices?.length ? " (by current billing occupancy)" : ""
         }`}
         action={
-          <div className="grid grid-cols-2 gap-2 w-full sm:flex sm:flex-wrap sm:items-center sm:w-auto">
-            <MagneticButton variant="ghost" onClick={sendReminderAll} className="w-full sm:w-auto text-xs py-2 px-3 justify-start">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            <MagneticButton variant="ghost" onClick={sendReminderAll} className="flex-1 sm:flex-initial text-xs py-2 px-3 bg-secondary/50 text-foreground hover:bg-secondary justify-center sm:justify-start">
               <BellRing className="h-3.5 w-3.5" /> Send reminder
             </MagneticButton>
-            <MagneticButton variant="ghost" onClick={() => setPastInvoicesRoomId(room.id)} className="w-full sm:w-auto text-xs py-2 px-3 justify-start">
+            <MagneticButton variant="ghost" onClick={() => setPastInvoicesRoomId(room.id)} className="flex-1 sm:flex-initial text-xs py-2 px-3 bg-secondary/50 text-foreground hover:bg-secondary justify-center sm:justify-start">
               <FileText className="h-3.5 w-3.5" /> Past Invoices
             </MagneticButton>
-            <MagneticButton variant="ghost" onClick={() => setElectricityOpen(true)} className="w-full sm:w-auto text-xs py-2 px-3 justify-start">
+            <MagneticButton variant="ghost" onClick={() => setElectricityOpen(true)} className="flex-1 sm:flex-initial text-xs py-2 px-3 bg-secondary/50 text-foreground hover:bg-secondary justify-center sm:justify-start">
               <Zap className="h-3.5 w-3.5" /> Enter Reading
             </MagneticButton>
-            <MagneticButton variant="ghost" onClick={() => navigate("/app/maintenance")} className="w-full sm:w-auto text-xs py-2 px-3 justify-start">
+            <MagneticButton variant="ghost" onClick={() => navigate("/app/maintenance")} className="flex-1 sm:flex-initial text-xs py-2 px-3 bg-secondary/50 text-foreground hover:bg-secondary justify-center sm:justify-start">
               <Wrench className="h-3.5 w-3.5" /> Maintenance
             </MagneticButton>
-            <MagneticButton onClick={() => { setPaymentTenantId(undefined); setPaymentDefaultAmount(undefined); setAddOpen(true); }} className="col-span-2 sm:col-span-1 w-full sm:w-auto text-xs py-2 px-3">
+            <MagneticButton onClick={() => { setPaymentTenantId(undefined); setPaymentDefaultAmount(undefined); setAddOpen(true); }} className="flex-1 sm:flex-initial text-xs py-2 px-3 justify-center sm:justify-start">
               <Plus className="h-3.5 w-3.5" /> Add payment
             </MagneticButton>
           </div>
@@ -565,7 +565,7 @@ export default function RoomDetails() {
                       className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-brand/20 bg-brand/5 px-3 py-1.5 text-xs font-semibold text-brand transition-colors hover:bg-brand hover:text-white w-full sm:w-auto"
                       onClick={() => { setPaymentTenantId(t.id); setPaymentDefaultAmount(remainingAmount); setAddOpen(true); }}
                     >
-                      <CheckCircle2 className="h-3.5 w-3.5" /> Pay ({currency.symbol}{remainingAmount.toFixed(0)})
+                      <CheckCircle2 className="h-3.5 w-3.5" /> Pay <span className="hidden sm:inline">({currency.symbol}{remainingAmount.toFixed(0)})</span>
                     </button>
                   </div>
                   </div>
