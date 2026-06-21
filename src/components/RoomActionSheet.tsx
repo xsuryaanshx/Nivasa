@@ -21,6 +21,7 @@ export function RoomActionSheet({ open, onClose, room, onSuccess }: RoomActionSh
   const [editName, setEditName] = useState(room.number);
   const [editRent, setEditRent] = useState(String(room.rent));
   const [editCapacity, setEditCapacity] = useState(String(room.capacity || 1));
+  const [editRoomType, setEditRoomType] = useState(room.roomType || "");
   const [submitting, setSubmitting] = useState(false);
 
   const handleEditSubmit = async (e: React.FormEvent) => {
@@ -42,6 +43,7 @@ export function RoomActionSheet({ open, onClose, room, onSuccess }: RoomActionSh
         number: editName.trim(),
         rent_amount: rentAmount,
         capacity: parseInt(editCapacity) || 1,
+        room_type: editRoomType || undefined,
       });
 
       toast.success(t("room_updated"));
@@ -200,6 +202,24 @@ export function RoomActionSheet({ open, onClose, room, onSuccess }: RoomActionSh
                             onChange={(e) => setEditCapacity(e.target.value)}
                             className="h-10 w-full rounded-xl border border-border bg-secondary/30 px-3.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/10 transition-all"
                           />
+                        </div>
+                        
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Room Type (Optional)</label>
+                          <select
+                            value={editRoomType}
+                            onChange={(e) => setEditRoomType(e.target.value)}
+                            className="h-10 w-full rounded-xl border border-border bg-secondary/30 px-3.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/10 transition-all appearance-none"
+                          >
+                            <option value="">Select Type</option>
+                            <option value="1-BHK">1-BHK</option>
+                            <option value="2-BHK">2-BHK</option>
+                            <option value="3-BHK">3-BHK</option>
+                            <option value="1-RK">1-RK</option>
+                            <option value="Single Room">Single Room</option>
+                            <option value="PG Bed">PG Bed</option>
+                            <option value="Shared Room">Shared Room</option>
+                          </select>
                         </div>
                       </div>
 

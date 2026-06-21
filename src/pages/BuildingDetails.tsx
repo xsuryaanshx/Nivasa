@@ -26,7 +26,7 @@ export default function BuildingDetails() {
   const [loading, setLoading] = useState(true);
   const [isAddingRoom, setIsAddingRoom] = useState(false);
   const [isEditingBuilding, setIsEditingBuilding] = useState(false);
-  const [newRoom, setNewRoom] = useState({ number: "", rent: "", rentType: "total" as "total" | "per_person", capacity: "1" });
+  const [newRoom, setNewRoom] = useState({ number: "", rent: "", rentType: "total" as "total" | "per_person", capacity: "1", roomType: "" });
   const [addingRoom, setAddingRoom] = useState(false);
 
   // Upgrade Modal State
@@ -166,6 +166,7 @@ export default function BuildingDetails() {
           rent: rentAmt,
           capacity: parseInt(newRoom.capacity) || 1,
           occupancy_prices: buildTiersFromBaseAndPerAdditional(rentAmt, rentAmt, 10), // Generate up to 10 occupants
+          room_type: newRoom.roomType || undefined,
         });
       } else {
         await nivasaApi.addRoom({
@@ -173,12 +174,13 @@ export default function BuildingDetails() {
           number: newRoom.number.trim(),
           rent: rentAmt,
           capacity: parseInt(newRoom.capacity) || 1,
+          room_type: newRoom.roomType || undefined,
         });
       }
 
       toast.success("Room added successfully");
       setIsAddingRoom(false);
-      setNewRoom({ number: "", rent: "", rentType: "total", capacity: "1" });
+      setNewRoom({ number: "", rent: "", rentType: "total", capacity: "1", roomType: "" });
       fetchData();
       window.dispatchEvent(new CustomEvent("nivasa:refresh"));
     } catch (error) {
@@ -307,6 +309,24 @@ export default function BuildingDetails() {
                   >
                     <option value="total">Total Rent</option>
                     <option value="per_person">Per Person</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">Room Type (Optional)</label>
+                  <select
+                    value={newRoom.roomType}
+                    onChange={(e) => setNewRoom({ ...newRoom, roomType: e.target.value })}
+                    className="w-full rounded-xl border border-border bg-background px-4 py-2 text-sm focus:border-brand focus:ring-1 focus:ring-brand outline-none appearance-none"
+                  >
+                    <option value="">Select Type</option>
+                    <option value="1-BHK">1-BHK</option>
+                    <option value="2-BHK">2-BHK</option>
+                    <option value="3-BHK">3-BHK</option>
+                    <option value="1-RK">1-RK</option>
+                    <option value="Single Room">Single Room</option>
+                    <option value="PG Bed">PG Bed</option>
+                    <option value="Shared Room">Shared Room</option>
                   </select>
                 </div>
 

@@ -23,10 +23,11 @@ export default function Dashboard() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [data, setData] = useState({
+  const [data, setData] = useState<any>({
     stats: { totalBuildings: 0, totalRooms: 0, occupied: 0, pending: 0, monthlyRevenue: 0 },
     recent: [],
-    profitStats: { netProfit: 0 }
+    profitStats: { netProfit: 0 },
+    rooms: []
   });
   const [addOpen, setAddOpen] = useState(false);
 
@@ -35,13 +36,14 @@ export default function Dashboard() {
       setLoading(true);
       if (!nivasaApi) return;
 
-      const [stats, recent, profitStats] = await Promise.all([
+      const [stats, recent, profitStats, rooms] = await Promise.all([
         nivasaApi.getDashboardStats(),
         nivasaApi.getRecentPayments(8),
-        nivasaApi.getProfitStats()
+        nivasaApi.getProfitStats(),
+        nivasaApi.getRooms()
       ]);
 
-      setData({ stats, recent, profitStats });
+      setData({ stats, recent, profitStats, rooms });
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
     } finally {
@@ -102,10 +104,24 @@ export default function Dashboard() {
                 Nivasa AI Market Insights
                 <span className="rounded-full bg-brand px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white">Beta</span>
               </h3>
-              <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed max-w-2xl">
-                Based on our real-time data analysis, 1-BHKs in your area are currently renting for an average of <strong className="text-foreground">₹18,500/month</strong>. 
-                You are currently charging <strong className="text-foreground">₹14,000/month</strong> for Room 101. Consider raising your rent by 15% for new tenants to match market rates and increase your yield.
-              </p>
+              {(() => {
+                const targetRoom = data.rooms?.find((r: any) => r.roomType);
+                if (targetRoom) {
+                  const marketRent = Math.round(targetRoom.rent * 1.15); // mock 15% higher
+                  return (
+                    <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed max-w-2xl">
+                      Based on our real-time data analysis, {targetRoom.roomType}s in your area are currently renting for an average of <strong className="text-foreground">₹{marketRent.toLocaleString()}/month</strong>. 
+                      You are currently charging <strong className="text-foreground">₹{targetRoom.rent.toLocaleString()}/month</strong> for {targetRoom.number}. Consider raising your rent by 15% for new tenants to match market rates.
+                    </p>
+                  );
+                }
+                return (
+                  <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed max-w-2xl">
+                    Based on our real-time data analysis, 1-BHKs in your area are currently renting for an average of <strong className="text-foreground">₹18,500/month</strong>. 
+                    Set a "Room Type" for your rooms to get personalized AI pricing insights and increase your yield!
+                  </p>
+                );
+              })()}
               <div className="mt-4 flex items-center gap-2">
                 <button className="rounded-lg bg-brand px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-brand/90 shadow-[0_0_15px_-3px_hsl(var(--ring)/0.5)]">
                   Upgrade to Nivasa Pro for Full Insights
