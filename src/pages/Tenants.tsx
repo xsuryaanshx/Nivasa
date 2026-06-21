@@ -1,8 +1,10 @@
 import { nivasaApi } from "@/lib/api";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Search, UserPlus, Building2, MapPin, CheckCircle2, AlertCircle, Clock } from "lucide-react";
+import { Search, UserPlus, Building2, MapPin, CheckCircle2, AlertCircle, Clock, MessageCircle, IndianRupee } from "lucide-react";
+import { toast } from "sonner";
 import { useLanguage } from "@/components/LanguageProvider";
+import { useAnimation, useMotionValue, useTransform } from "framer-motion";
 import { PageHeader } from "@/components/PageHeader";
 import { MagneticButton } from "@/components/MagneticButton";
 import { type PaymentStatus } from "@/lib/types";
@@ -199,6 +201,14 @@ export default function Tenants() {
 }
 
 function TenantCard({ tenant, index }: { tenant: any; index: number }) {
+  const [submitting, setSubmitting] = useState(false);
+  const controls = useAnimation();
+  const x = useMotionValue(0);
+
+  // Background opacities based on swipe distance
+  const paidOpacity = useTransform(x, [0, 80], [0, 1]);
+  const reminderOpacity = useTransform(x, [0, -80], [0, 1]);
+
   let statusIcon = <Clock className="h-3.5 w-3.5 text-orange-500" />;
   let statusText = "Pending";
   let statusColorClass = "text-orange-500 bg-orange-500/10 border-orange-500/20";
@@ -213,13 +223,91 @@ function TenantCard({ tenant, index }: { tenant: any; index: number }) {
     statusColorClass = "text-red-500 bg-red-500/10 border-red-500/20";
   }
 
+  const handleMarkPaid = async () => {
+    try {
+      setSubmitting(true);
+      await nivasaApi.addPayment({
+        roomId: tenant.roomId,
+        tenantId: tenant.id,
+        amount: tenant.roomRent,
+        method: "Cash",
+        date: new Date().toISOString(),
+        status: "paid"
+      });
+      toast.success("Rent marked as paid!");
+      window.dispatchEvent(new CustomEvent("nivasa:refresh"));
+    } catch (err) {
+      toast.error("Failed to mark as paid");
+    } finally {
+      setSubmitting(false);
+      controls.start({ x: 0 });
+    }
+  };
+
+  const handleSendReminder = () => {
+    const phone = tenant.whatsapp_number || tenant.phone;
+    if (!phone) {
+      toast.error("No phone number found for this tenant");
+      controls.start({ x: 0 });
+      return;
+    }
+    const msg = encodeURIComponent(`Hi ${tenant.name}, this is a gentle reminder that your rent of ₹${tenant.roomRent} is currently pending. Please complete the payment at your earliest convenience.`);
+    window.open(`https://wa.me/91${phone.replace(/\D/g, '')}?text=${msg}`, '_blank');
+    controls.start({ x: 0 });
+  };
+
+  const handleDragEnd = (e: any, info: any) => {
+    if (submitting) return;
+    const offset = info.offset.x;
+    if (offset > 80 && tenant.paymentStatus !== "paid") {
+      handleMarkPaid();
+    } else if (offset < -80) {
+      handleSendReminder();
+    } else {
+      controls.start({ x: 0 });
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: index * 0.04, ease: [0.2, 0.7, 0.2, 1] }}
-      className="group relative overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-soft transition-shadow hover:shadow-md"
+      className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-soft"
     >
+      {/* Background Swipe Actions Layer */}
+      <div className="absolute inset-0 z-0 flex select-none items-center justify-between px-6 font-semibold">
+        <motion.div 
+          style={{ opacity: paidOpacity }} 
+          className="flex h-full w-1/2 items-center justify-start text-emerald-500"
+        >
+          <div className="flex flex-col items-start gap-1">
+            <CheckCircle2 className="h-6 w-6" />
+            <span className="text-[10px] uppercase tracking-wider">Mark Paid</span>
+          </div>
+        </motion.div>
+        
+        <motion.div 
+          style={{ opacity: reminderOpacity }} 
+          className="flex h-full w-1/2 items-center justify-end text-brand"
+        >
+          <div className="flex flex-col items-end gap-1">
+            <MessageCircle className="h-6 w-6" />
+            <span className="text-[10px] uppercase tracking-wider">Reminder</span>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Draggable Foreground Card */}
+      <motion.div
+        drag="x"
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={0.5}
+        onDragEnd={handleDragEnd}
+        animate={controls}
+        style={{ x }}
+        className="relative z-10 flex h-full w-full cursor-grab active:cursor-grabbing flex-col justify-between bg-card p-5 transition-shadow hover:shadow-md"
+      >
       <div className="flex items-start gap-4">
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-brand text-lg font-bold text-white shadow-glow">
           {initials(tenant.name)}
@@ -245,6 +333,7 @@ function TenantCard({ tenant, index }: { tenant: any; index: number }) {
           {statusText}
         </div>
       </div>
+      </motion.div>
     </motion.div>
   );
 }

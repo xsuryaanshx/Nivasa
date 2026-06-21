@@ -449,13 +449,20 @@ async function getRooms(): Promise<any[]> {
       .eq("user_id", user_id);
     if (error) throw error;
     const unitIds = (units || []).map((u) => u.id);
-    const { data: tenants } = await supabase
-      .from("tenants")
-      .select("*")
-      .in("room_id", unitIds.length > 0 ? unitIds : ["__none__"]);
+    
+    let tenants: any[] = [];
+    if (unitIds.length > 0) {
+      const { data, error: tenantsError } = await supabase
+        .from("tenants")
+        .select("*")
+        .in("room_id", unitIds);
+      if (tenantsError) throw tenantsError;
+      tenants = data || [];
+    }
+
     const unitsWithTenants = (units || []).map((u) => ({
       ...u,
-      tenants: tenants ? tenants.filter((t: any) => t.room_id === u.id) : [],
+      tenants: tenants.filter((t: any) => t.room_id === u.id),
     }));
     return unitsWithTenants.map(mapUnitToRoom);
   } catch (error) {
@@ -499,12 +506,13 @@ async function getTenants(): Promise<any[]> {
       
     if (unitsError) throw unitsError;
     const unitIds = (units || []).map((u) => u.id);
+    if (unitIds.length === 0) return [];
     
     // Then get all tenants in these units
     const { data: tenants, error } = await supabase
       .from("tenants")
       .select("*")
-      .in("room_id", unitIds.length > 0 ? unitIds : ["__none__"]);
+      .in("room_id", unitIds);
       
     if (error) throw error;
     
@@ -950,15 +958,17 @@ async function getRecentPayments(limit = 10) {
     const user_id = await requireAuthUserId();
     const { data: unitsAuth } = await supabase
       .from("units")
-      .select("id, buildings!inner(user_id)")
-      .eq("buildings.user_id", user_id);
+      .select("id")
+      .eq("user_id", user_id);
     const unitIds = (unitsAuth || []).map((u) => u.id);
+    if (unitIds.length === 0) return [];
+
     const { data, error } = await supabase
       .from("payments")
       .select(
         `        id, amount, paid_date, created_at, status, method, tenant_id, unit_id, note,        units (name, buildings (name)),        tenants!tenant_id (name, phone, whatsapp_number)      `,
       )
-      .in("unit_id", unitIds.length > 0 ? unitIds : ["__none__"])
+      .in("unit_id", unitIds)
       .order("created_at", { ascending: false })
       .limit(limit);
     if (error) throw error;
@@ -1046,17 +1056,17 @@ async function getDashboardStats() {
       .select("id")
       .eq("user_id", user_id);
     const unitIds = (unitsAuth || []).map((u) => u.id);
-    const [buildings, units, payments] = await Promise.all([
+    const [buildings, units, paymentsResult] = await Promise.all([
       supabase
         .from("buildings")
         .select("*", { count: "exact", head: true })
         .eq("user_id", user_id),
       supabase.from("units").select("*").eq("user_id", user_id),
-      supabase
-        .from("payments")
-        .select("amount, status, created_at")
-        .in("unit_id", unitIds.length > 0 ? unitIds : ["__none__"]),
+      unitIds.length > 0
+        ? supabase.from("payments").select("amount, status, created_at").in("unit_id", unitIds)
+        : Promise.resolve({ data: [], error: null }),
     ]);
+    const payments = paymentsResult;
     const totalBuildings = buildings.count || 0;
     const totalRooms = units.data?.length || 0;
     const occupied = units.data
@@ -1534,9 +1544,13 @@ async function getProfitStats() {
     });
 
     const [payments, expenses, staffPayments] = await Promise.all([
-      supabase.from("payments").select("amount, created_at, building_id").eq("status", "paid").in("unit_id", unitIds.length > 0 ? unitIds : ["__none__"]),
+      unitIds.length > 0
+        ? supabase.from("payments").select("amount, created_at, building_id").eq("status", "paid").in("unit_id", unitIds)
+        : Promise.resolve({ data: [], error: null }),
       supabase.from("maintenance_requests").select("property_id, cost, created_at").eq("user_id", user_id),
-      supabase.from("staff_payments").select("staff_id, amount, payment_date").in("staff_id", staffIds.length > 0 ? staffIds : ["__none__"])
+      staffIds.length > 0
+        ? supabase.from("staff_payments").select("staff_id, amount, payment_date").in("staff_id", staffIds)
+        : Promise.resolve({ data: [], error: null })
     ]);
 
     const totalRevenue = (payments.data || []).reduce((sum, p) => sum + (Number(p.amount) || 0), 0);

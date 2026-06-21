@@ -8,6 +8,7 @@ import { PaymentTimeline } from "@/components/PaymentTimeline";
 import { MagneticButton } from "@/components/MagneticButton";
 import { AddPaymentModal } from "@/components/AddPaymentModal";
 import { AddBuildingModal } from "@/components/AddBuildingModal";
+import { AddRoomModal } from "@/components/AddRoomModal";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { useLanguage } from "@/components/LanguageProvider";
@@ -34,6 +35,7 @@ export default function Dashboard() {
   });
   const [addOpen, setAddOpen] = useState(false);
   const [addBuildingOpen, setAddBuildingOpen] = useState(false);
+  const [addRoomOpen, setAddRoomOpen] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -192,7 +194,7 @@ export default function Dashboard() {
                   <span className="text-xs font-medium text-muted-foreground/60 flex items-center gap-1">Unlock step 1 first</span>
                 ) : (
                   <button 
-                    onClick={() => navigate("/app/buildings")}
+                    onClick={() => setAddRoomOpen(true)}
                     className="inline-flex items-center gap-1 text-xs font-semibold text-brand hover:underline"
                   >
                     Create Rooms <ArrowRight className="h-3 w-3" />
@@ -348,6 +350,13 @@ export default function Dashboard() {
         open={addBuildingOpen}
         onClose={() => {
           setAddBuildingOpen(false);
+          fetchData();
+        }}
+      />
+      <AddRoomModal
+        open={addRoomOpen}
+        onClose={() => {
+          setAddRoomOpen(false);
           fetchData();
         }}
       />

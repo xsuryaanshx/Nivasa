@@ -8,6 +8,7 @@ import { MagneticButton } from "@/components/MagneticButton";
 import { Money } from "@/components/Money";
 import { toast } from "sonner";
 import { EditBuildingModal } from "@/components/EditBuildingModal";
+import { AddRoomModal } from "@/components/AddRoomModal";
 import { useLanguage } from "@/components/LanguageProvider";
 import { buildTiersFromBaseAndPerAdditional } from "@/lib/rentByOccupancy";
 import { cn } from "@/lib/utils";
@@ -26,8 +27,6 @@ export default function BuildingDetails() {
   const [loading, setLoading] = useState(true);
   const [isAddingRoom, setIsAddingRoom] = useState(false);
   const [isEditingBuilding, setIsEditingBuilding] = useState(false);
-  const [newRoom, setNewRoom] = useState({ number: "", rent: "", rentType: "total" as "total" | "per_person", capacity: "1", roomType: "" });
-  const [addingRoom, setAddingRoom] = useState(false);
 
   // Upgrade Modal State
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -140,55 +139,6 @@ export default function BuildingDetails() {
     return () => window.removeEventListener("nivasa:refresh", handler);
   }, [id]);
 
-  const handleAddRoom = async () => {
-    if (!newRoom.number.trim()) return toast.error("Room number is required");
-
-    // Subscription Limit Check
-    const currentRoomsCount = usage?.rooms_count || 0;
-    const roomLimit = limits?.roomLimit ?? 10;
-    if (roomLimit !== -1 && currentRoomsCount >= roomLimit) {
-      setModalTitle("Room Limit Reached");
-      setModalMessage(`Your current Silver plan allows up to ${roomLimit} rooms. Upgrade to Gold or Platinum to continue.`);
-      setShowUpgradeModal(true);
-      return;
-    }
-
-    if (!newRoom.rent || isNaN(parseFloat(newRoom.rent))) return toast.error("Valid rent amount is required");
-
-    try {
-      setAddingRoom(true);
-      const rentAmt = parseFloat(newRoom.rent);
-      
-      if (newRoom.rentType === "per_person") {
-        await nivasaApi.addRoom({
-          building_id: id,
-          number: newRoom.number.trim(),
-          rent: rentAmt,
-          capacity: parseInt(newRoom.capacity) || 1,
-          occupancy_prices: buildTiersFromBaseAndPerAdditional(rentAmt, rentAmt, 10), // Generate up to 10 occupants
-          room_type: newRoom.roomType || undefined,
-        });
-      } else {
-        await nivasaApi.addRoom({
-          building_id: id,
-          number: newRoom.number.trim(),
-          rent: rentAmt,
-          capacity: parseInt(newRoom.capacity) || 1,
-          room_type: newRoom.roomType || undefined,
-        });
-      }
-
-      toast.success("Room added successfully");
-      setIsAddingRoom(false);
-      setNewRoom({ number: "", rent: "", rentType: "total", capacity: "1", roomType: "" });
-      fetchData();
-      window.dispatchEvent(new CustomEvent("nivasa:refresh"));
-    } catch (error) {
-      toast.error("Failed to add room");
-    } finally {
-      setAddingRoom(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -253,96 +203,10 @@ export default function BuildingDetails() {
       <div className="mt-8">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">{t("rooms_tenants")}</h2>
-          <MagneticButton onClick={() => setIsAddingRoom(!isAddingRoom)} className="h-9 px-4 text-xs">
-            <Plus className="h-3.5 w-3.5 mr-2" /> {isAddingRoom ? t("cancel") : t("add_room")}
+          <MagneticButton onClick={() => setIsAddingRoom(true)} className="h-9 px-4 text-xs">
+            <Plus className="h-3.5 w-3.5 mr-2" /> {t("add_room")}
           </MagneticButton>
         </div>
-
-        <AnimatePresence>
-          {isAddingRoom && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="mb-6 overflow-hidden rounded-2xl border border-brand/20 bg-brand/[0.02] p-6"
-            >
-              <div className="grid gap-4 md:grid-cols-3">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-muted-foreground">{t("room_number")}</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. 101 or Master Bedroom"
-                    value={newRoom.number}
-                    onChange={(e) => setNewRoom({ ...newRoom, number: e.target.value })}
-                    className="w-full rounded-xl border border-border bg-background px-4 py-2 text-sm focus:border-brand focus:ring-1 focus:ring-brand outline-none"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-muted-foreground">Rent Amount</label>
-                  <input
-                    type="number" inputMode="decimal" step="any"
-                    placeholder="0.00"
-                    value={newRoom.rent}
-                    onChange={(e) => setNewRoom({ ...newRoom, rent: e.target.value })}
-                    className="w-full rounded-xl border border-border bg-background px-4 py-2 text-sm focus:border-brand focus:ring-1 focus:ring-brand outline-none"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-muted-foreground">Number of Beds</label>
-                  <input
-                    type="number" min="1"
-                    placeholder="1"
-                    value={newRoom.capacity}
-                    onChange={(e) => setNewRoom({ ...newRoom, capacity: e.target.value })}
-                    className="w-full rounded-xl border border-border bg-background px-4 py-2 text-sm focus:border-brand focus:ring-1 focus:ring-brand outline-none"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-muted-foreground">Rent Type</label>
-                  <select
-                    value={newRoom.rentType}
-                    onChange={(e) => setNewRoom({ ...newRoom, rentType: e.target.value as "total" | "per_person" })}
-                    className="w-full rounded-xl border border-border bg-background px-4 py-2 text-sm focus:border-brand focus:ring-1 focus:ring-brand outline-none appearance-none"
-                  >
-                    <option value="total">Total Rent</option>
-                    <option value="per_person">Per Person</option>
-                  </select>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-muted-foreground">Room Type (Optional)</label>
-                  <select
-                    value={newRoom.roomType}
-                    onChange={(e) => setNewRoom({ ...newRoom, roomType: e.target.value })}
-                    className="w-full rounded-xl border border-border bg-background px-4 py-2 text-sm focus:border-brand focus:ring-1 focus:ring-brand outline-none appearance-none"
-                  >
-                    <option value="">Select Type</option>
-                    <option value="1-BHK">1-BHK</option>
-                    <option value="2-BHK">2-BHK</option>
-                    <option value="3-BHK">3-BHK</option>
-                    <option value="1-RK">1-RK</option>
-                    <option value="Single Room">Single Room</option>
-                    <option value="PG Bed">PG Bed</option>
-                    <option value="Shared Room">Shared Room</option>
-                  </select>
-                </div>
-
-                <div className="flex items-end md:col-span-3 lg:col-span-1">
-                  <button
-                    onClick={handleAddRoom}
-                    disabled={addingRoom}
-                    className="h-[38px] w-full rounded-xl bg-brand text-sm font-semibold text-white shadow-glow hover:bg-brand/90 disabled:opacity-60 transition-opacity"
-                  >
-                    {addingRoom ? t("adding") : t("create_room")}
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         <div className="grid grid-cols-4 gap-3 sm:gap-4 mt-2">
           {[...data.units].sort((a: any, b: any) => {
@@ -449,6 +313,12 @@ export default function BuildingDetails() {
         onOpenChange={setShowUpgradeModal}
         title={modalTitle}
         message={modalMessage}
+      />
+      <AddRoomModal
+        open={isAddingRoom}
+        onClose={() => setIsAddingRoom(false)}
+        onSuccess={fetchData}
+        buildingId={data.id}
       />
     </motion.div>
   );
