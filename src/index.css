@@ -176,3 +176,9 @@
   }
   .no-print, button, ::-webkit-scrollbar { display: none !important; }
 }
+
+@media (max-width: 380px) {
+  .xs-hide-text {
+    display: none !important;
+  }
+}
