@@ -951,7 +951,7 @@ async function getRecentPayments(limit = 10) {
     const { data, error } = await supabase
       .from("payments")
       .select(
-        `        id, amount, paid_date, created_at, status, method, tenant_id, unit_id,        units (name, buildings (name)),        tenants!tenant_id (name, phone, whatsapp_number)      `,
+        `        id, amount, paid_date, created_at, status, method, tenant_id, unit_id, note,        units (name, buildings (name)),        tenants!tenant_id (name, phone, whatsapp_number)      `,
       )
       .in("unit_id", unitIds.length > 0 ? unitIds : ["__none__"])
       .order("created_at", { ascending: false })
