@@ -61,6 +61,11 @@ export function AddPaymentModal({ open, onClose, defaultRoomId, defaultTenantId,
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess]       = useState(false);
 
+  // Deposit tracking states
+  const [paymentType, setPaymentType] = useState<"Rent" | "Deposit">("Rent");
+  const [checkingDeposit, setCheckingDeposit] = useState(false);
+  const [depositPaid, setDepositPaid] = useState(false);
+
   // ── Fetch buildings + rooms on open ────────────────────────────────────────
   const fetchData = async () => {
     try {
@@ -105,10 +110,57 @@ export function AddPaymentModal({ open, onClose, defaultRoomId, defaultTenantId,
       setAmount(""); setNote(""); setReference("");
       setMethod("Bank"); setStatus("paid");
       setTenantId(defaultTenantId || "");
+      setPaymentType("Rent");
+      setDepositPaid(false);
       setDate(new Date().toISOString().slice(0, 10));
       fetchData();
     }
   }, [open, defaultTenantId]);
+
+  // Check deposit paid status for selected tenant
+  useEffect(() => {
+    async function checkDepositStatus() {
+      if (!tenantId) {
+        setDepositPaid(false);
+        return;
+      }
+      try {
+        setCheckingDeposit(true);
+        // 1. Check local tenant state for depositMethod/depositAmount (signup auto-log)
+        const currentSelectedRoom = allRooms.find(r => r.id === roomId);
+        const currentSelectedTenant = currentSelectedRoom?.tenants?.find(t => t.id === tenantId);
+        
+        if (currentSelectedTenant) {
+          const isDepositConfiguredPaid = 
+            (currentSelectedTenant.depositAmount || 0) > 0 && 
+            currentSelectedTenant.depositMethod !== "Pending";
+          if (isDepositConfiguredPaid) {
+            setDepositPaid(true);
+            return;
+          }
+        }
+
+        // 2. Query DB payments table for any paid deposit transaction
+        const { data, error: dbError } = await nivasaApi.supabase
+          .from("payments")
+          .select("amount, status, note")
+          .eq("tenant_id", tenantId)
+          .eq("status", "paid");
+        
+        if (dbError) throw dbError;
+
+        const hasPaidDepositPayment = (data || []).some((p: any) => 
+          p.note?.toLowerCase().includes("deposit")
+        );
+        setDepositPaid(hasPaidDepositPayment);
+      } catch (err) {
+        console.error("Error checking deposit status:", err);
+      } finally {
+        setCheckingDeposit(false);
+      }
+    }
+    checkDepositStatus();
+  }, [tenantId, allRooms, roomId]);
 
   // Cascade rooms when building changes
   const handleBuildingChange = (bId: string) => {
@@ -119,9 +171,19 @@ export function AddPaymentModal({ open, onClose, defaultRoomId, defaultTenantId,
   };
 
   const selectedRoom = allRooms.find(r => r.id === roomId);
+  const selectedTenant = selectedRoom?.tenants?.find(t => t.id === tenantId);
   const baseDefaultAmount = selectedRoom ? calculateTenantShare(selectedRoom) * currency.rate : 0;
-  const initialAmount = defaultAmount !== undefined ? defaultAmount : baseDefaultAmount;
+  const tenantDepositAmount = selectedTenant?.depositAmount ? selectedTenant.depositAmount * currency.rate : 0;
+
+  const initialAmount = paymentType === "Deposit"
+    ? tenantDepositAmount
+    : (defaultAmount !== undefined ? defaultAmount : baseDefaultAmount);
   const amountValue = Number(amount) || initialAmount;
+
+  const handlePaymentTypeChange = (type: "Rent" | "Deposit") => {
+    setPaymentType(type);
+    setAmount(""); // Clear manual amount to default to the selected type's suggested amount
+  };
 
   // ── Submit ─────────────────────────────────────────────────────────────────
   const submit = async (e: React.FormEvent) => {
@@ -147,6 +209,11 @@ export function AddPaymentModal({ open, onClose, defaultRoomId, defaultTenantId,
 
     try {
       setSubmitting(true);
+
+      let finalNote = note;
+      if (paymentType === "Deposit") {
+        finalNote = note ? `Deposit - ${note}` : "Deposit";
+      }
       
       await nivasaApi.addPayment({
         building_id: buildingId,
@@ -156,14 +223,14 @@ export function AddPaymentModal({ open, onClose, defaultRoomId, defaultTenantId,
         method,
         status,
         date,
-        note: note || undefined,
+        note: finalNote || undefined,
         reference: reference || undefined,
       });
 
       setSuccess(true);
       setTimeout(() => {
         onClose();
-        toast.success("Payment recorded", {
+        toast.success(paymentType === "Deposit" ? "Deposit recorded" : "Payment recorded", {
           description: `${currency.symbol}${amountValue.toLocaleString(undefined, { maximumFractionDigits: 2 })} · Room ${selectedRoom?.number ?? "?"} · ${status}`,
         });
         window.dispatchEvent(new CustomEvent("nivasa:refresh"));
@@ -260,6 +327,23 @@ export function AddPaymentModal({ open, onClose, defaultRoomId, defaultTenantId,
               </div>
             </Field>
           )}
+
+          {/* Payment Type */}
+          <Field label="Payment Type">
+            <div className="relative">
+              <FileText className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <select
+                value={paymentType}
+                onChange={e => handlePaymentTypeChange(e.target.value as "Rent" | "Deposit")}
+                className="h-11 w-full appearance-none rounded-xl border border-border bg-card/70 pl-9 pr-3 text-sm outline-none focus:border-brand focus:shadow-[0_0_0_4px_hsl(var(--ring)/0.12)]"
+              >
+                <option value="Rent">Rent</option>
+                <option value="Deposit" disabled={depositPaid}>
+                  Deposit {depositPaid ? " (Already paid)" : ""}
+                </option>
+              </select>
+            </div>
+          </Field>
 
           {/* Amount */}
           <Field

@@ -816,7 +816,7 @@ async function addTenant(input: {
         status: "paid",
         method: payload.deposit_method,
         date: payload.joined_at,
-        notes: "Initial Deposit"
+        note: "Initial Deposit"
       });
     }
 

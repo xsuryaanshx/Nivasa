@@ -511,14 +511,19 @@ export default function RoomDetails() {
                         {netBalance === 0 ? "₹0" : netBalance > 0 ? `${formatMoney(netBalance, currency, { decimals: 0 })} Due` : `${formatMoney(Math.abs(netBalance), currency, { decimals: 0 })} Credit`}
                       </span>
                     </div>
-                    {Number(t.depositAmount || 0) > 0 && (
-                      <div className="flex flex-col">
-                        <span className="text-[10px] uppercase font-semibold tracking-wider text-muted-foreground/70">Deposit ({formatMoney(Number(t.depositAmount || 0), currency, { decimals: 0 })})</span>
-                        <span className={cn("text-sm font-bold", totalPaidHistorical >= Number(t.depositAmount || 0) ? "text-emerald-500 dark:text-emerald-400" : "text-orange-500 dark:text-orange-400")}>
-                          {totalPaidHistorical >= Number(t.depositAmount || 0) ? "Paid" : "Pending"}
-                        </span>
-                      </div>
-                    )}
+                    {Number(t.depositAmount || 0) > 0 && (() => {
+                      const isDepositPaid = 
+                        (t.depositMethod && t.depositMethod !== "Pending") || 
+                        allTenantPayments.some(p => p.note?.toLowerCase().includes("deposit"));
+                      return (
+                        <div className="flex flex-col">
+                          <span className="text-[10px] uppercase font-semibold tracking-wider text-muted-foreground/70">Deposit ({formatMoney(Number(t.depositAmount || 0), currency, { decimals: 0 })})</span>
+                          <span className={cn("text-sm font-bold", isDepositPaid ? "text-emerald-500 dark:text-emerald-400" : "text-orange-500 dark:text-orange-400")}>
+                            {isDepositPaid ? "Paid" : "Pending"}
+                          </span>
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-muted-foreground border-t border-border/50 pt-2">
