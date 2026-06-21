@@ -97,27 +97,6 @@ export default function Login() {
     }
   };
 
-  const handleForgotPassword = async () => {
-    if (!user) {
-      toast.error("Please enter your email address first.");
-      setError("Please enter your email address first.");
-      return;
-    }
-    try {
-      setLoading(true);
-      setError(null);
-      const { error } = await nivasaApi.supabase.auth.resetPasswordForEmail(user, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
-      if (error) throw error;
-      toast.success("Password reset email sent!");
-    } catch (err: any) {
-      toast.error(err.message || "Failed to send reset email");
-      setError(err.message || "Failed to send reset email");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4">
@@ -157,13 +136,12 @@ export default function Login() {
           <div className="block">
             <div className="flex items-center justify-between mb-1.5">
               <span className="text-xs font-medium text-muted-foreground">Password</span>
-              <button 
-                type="button" 
-                onClick={handleForgotPassword}
+              <Link 
+                to="/forgot-password"
                 className="text-xs font-medium text-brand hover:underline"
               >
                 Forgot password?
-              </button>
+              </Link>
             </div>
             <div className="relative">
               <input

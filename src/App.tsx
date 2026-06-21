@@ -31,6 +31,8 @@ import Staff from "./pages/Staff.tsx";
 import StaffDetails from "./pages/StaffDetails.tsx";
 import Maintenance from "./pages/Maintenance.tsx";
 import { FeatureGate } from "./components/FeatureGate.tsx";
+import ForgotPassword from "./pages/ForgotPassword.tsx";
+import ResetPassword from "./pages/ResetPassword.tsx";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -104,6 +106,8 @@ const App = () => {
                 <Route path="/" element={<Index />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/confirmed" element={<ConfirmedEmail />} />
                 <Route path="/app" element={<ProtectedRoute />}>
                   <Route element={<AppLayout />}>
