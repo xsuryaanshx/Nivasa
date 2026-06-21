@@ -361,21 +361,21 @@ export default function RoomDetails() {
           room.occupancyPrices?.length ? " (by current billing occupancy)" : ""
         }`}
         action={
-          <div className="flex flex-wrap items-center gap-2">
-            <MagneticButton variant="ghost" onClick={sendReminderAll}>
-              <BellRing className="h-4 w-4" /> Send reminder
+          <div className="grid grid-cols-2 gap-2 w-full sm:flex sm:flex-wrap sm:items-center sm:w-auto">
+            <MagneticButton variant="ghost" onClick={sendReminderAll} className="w-full sm:w-auto text-xs py-2 px-3 justify-start">
+              <BellRing className="h-3.5 w-3.5" /> Send reminder
             </MagneticButton>
-            <MagneticButton variant="ghost" onClick={() => setPastInvoicesRoomId(room.id)}>
-              <FileText className="h-4 w-4" /> Past Invoices
+            <MagneticButton variant="ghost" onClick={() => setPastInvoicesRoomId(room.id)} className="w-full sm:w-auto text-xs py-2 px-3 justify-start">
+              <FileText className="h-3.5 w-3.5" /> Past Invoices
             </MagneticButton>
-            <MagneticButton variant="ghost" onClick={() => setElectricityOpen(true)}>
-              <Zap className="h-4 w-4" /> Enter Reading
+            <MagneticButton variant="ghost" onClick={() => setElectricityOpen(true)} className="w-full sm:w-auto text-xs py-2 px-3 justify-start">
+              <Zap className="h-3.5 w-3.5" /> Enter Reading
             </MagneticButton>
-            <MagneticButton variant="ghost" onClick={() => navigate("/app/maintenance")}>
-              <Wrench className="h-4 w-4" /> Maintenance
+            <MagneticButton variant="ghost" onClick={() => navigate("/app/maintenance")} className="w-full sm:w-auto text-xs py-2 px-3 justify-start">
+              <Wrench className="h-3.5 w-3.5" /> Maintenance
             </MagneticButton>
-            <MagneticButton onClick={() => { setPaymentTenantId(undefined); setPaymentDefaultAmount(undefined); setAddOpen(true); }}>
-              <Plus className="h-4 w-4" /> Add payment
+            <MagneticButton onClick={() => { setPaymentTenantId(undefined); setPaymentDefaultAmount(undefined); setAddOpen(true); }} className="col-span-2 sm:col-span-1 w-full sm:w-auto text-xs py-2 px-3">
+              <Plus className="h-3.5 w-3.5" /> Add payment
             </MagneticButton>
           </div>
         }
