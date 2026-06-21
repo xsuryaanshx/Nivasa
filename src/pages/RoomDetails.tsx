@@ -527,7 +527,7 @@ export default function RoomDetails() {
                   </div>
 
                   <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-muted-foreground border-t border-border/50 pt-2">
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 min-w-0">
                       <span className="flex items-center gap-1 truncate"><Phone className="h-3 w-3 shrink-0" /> {t.phone}</span>
                       {t.joined_at && <span className="flex items-center gap-1 shrink-0"><Calendar className="h-3 w-3" /> {new Date(t.joined_at).toLocaleDateString()}</span>}
                       {t.bed_assignment && <span className="flex items-center gap-1 shrink-0 text-brand font-medium">Bed: {t.bed_assignment}</span>}
@@ -539,30 +539,30 @@ export default function RoomDetails() {
                     )}
                   </div>
 
-                  <div className="flex items-center gap-2 pt-2 border-t border-border/50">
+                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border/50 sm:flex sm:flex-wrap sm:items-center">
                     <a
                       href={`tel:${t.phone}`}
-                      className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-background/50 py-1.5 text-xs font-medium text-foreground hover:bg-secondary transition-colors"
+                      className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-background/50 py-1.5 text-xs font-medium text-foreground hover:bg-secondary transition-colors w-full sm:w-auto"
                     >
                       <Phone className="h-3.5 w-3.5" /> Call
                     </a>
                     <button
                       type="button"
                       onClick={() => setExpensesTenant(t)}
-                      className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 py-1.5 text-xs font-medium hover:bg-emerald-500/20 transition-colors"
+                      className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 py-1.5 text-xs font-medium hover:bg-emerald-500/20 transition-colors w-full sm:w-auto"
                     >
                       <Banknote className="h-3.5 w-3.5" /> Add-ons
                     </button>
                     <button
                       type="button"
                       onClick={() => setInvoiceTenant(t)}
-                      className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-background/50 py-1.5 text-xs font-medium text-foreground hover:bg-secondary transition-colors"
+                      className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-background/50 py-1.5 text-xs font-medium text-foreground hover:bg-secondary transition-colors w-full sm:w-auto"
                     >
                       <Send className="h-3.5 w-3.5" /> Invoice
                     </button>
                     <button
                       type="button"
-                      className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 rounded-lg border border-brand/20 bg-brand/5 px-3 py-1.5 text-xs font-semibold text-brand transition-colors hover:bg-brand hover:text-white"
+                      className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-brand/20 bg-brand/5 px-3 py-1.5 text-xs font-semibold text-brand transition-colors hover:bg-brand hover:text-white w-full sm:w-auto"
                       onClick={() => { setPaymentTenantId(t.id); setPaymentDefaultAmount(remainingAmount); setAddOpen(true); }}
                     >
                       <CheckCircle2 className="h-3.5 w-3.5" /> Pay ({currency.symbol}{remainingAmount.toFixed(0)})

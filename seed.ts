@@ -41,7 +41,8 @@ async function seed() {
     console.log("Inserting building:", b.name);
     const { data, error } = await supabase.from("buildings").insert({
       name: b.name,
-      address: b.address
+      address: b.address,
+      user_id: userId
     }).select().single();
     if (error) console.error("Error building:", error);
     if (data) buildingIdMap.set(b.id, data.id);
