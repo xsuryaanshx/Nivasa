@@ -227,8 +227,9 @@ function TenantCard({ tenant, index }: { tenant: any; index: number }) {
     try {
       setSubmitting(true);
       await nivasaApi.addPayment({
-        roomId: tenant.roomId,
-        tenantId: tenant.id,
+        building_id: tenant.buildingId,
+        room_id: tenant.roomId,
+        tenant_id: tenant.id,
         amount: tenant.roomRent,
         method: "Cash",
         date: new Date().toISOString(),

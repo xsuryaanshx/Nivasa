@@ -913,11 +913,15 @@ async function removeTenant(roomId: string, tenantId: string) {
 async function addPayment(input: any) {
   try {
     const user_id = await requireAuthUserId();
+    const roomId = input.room_id || input.roomId;
+    const buildingId = input.building_id || input.buildingId;
+    const tenantId = input.tenant_id || input.tenantId;
+
     /* Verify the room belongs to this user before adding a payment */
     const { data: roomCheck } = await supabase
       .from("units")
       .select("id, building_id")
-      .eq("id", input.room_id)
+      .eq("id", roomId)
       .eq("user_id", user_id)
       .single();
     if (!roomCheck) throw new Error("Room not found or access denied");
@@ -927,9 +931,9 @@ async function addPayment(input: any) {
     if (!validStatuses.includes(statusNorm))
       throw new Error("Invalid payment status");
     const payload = {
-      building_id: input.building_id || roomCheck.building_id,
-      unit_id: input.room_id,
-      tenant_id: input.tenant_id,
+      building_id: buildingId || roomCheck.building_id,
+      unit_id: roomId,
+      tenant_id: tenantId,
       user_id,
       amount: input.amount,
       status: statusNorm,
