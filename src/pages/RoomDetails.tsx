@@ -548,7 +548,7 @@ export default function RoomDetails() {
                         {netBalance === 0 ? "₹0" : netBalance > 0 ? `${formatMoney(netBalance, currency, { decimals: 0 })} Due` : `${formatMoney(Math.abs(netBalance), currency, { decimals: 0 })} Credit`}
                       </span>
                     </div>
-                    {Number(t.depositAmount || 0) > 0 && (() => {
+                    {t.depositAmount !== undefined && t.depositAmount !== null && (() => {
                       const isDepositPaid = 
                         (t.depositMethod && t.depositMethod !== "Pending") || 
                         allTenantPayments.some(p => p.note?.toLowerCase().includes("deposit"));
