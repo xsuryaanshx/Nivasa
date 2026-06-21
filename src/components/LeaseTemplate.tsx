@@ -6,15 +6,27 @@ interface Props {
   room: any;
   landlordName: string;
   landlordAddress: string;
+  customTerms?: string[];
 }
 
-export const LeaseTemplate = forwardRef<HTMLDivElement, Props>(({ tenant, room, landlordName, landlordAddress }, ref) => {
+export const LeaseTemplate = forwardRef<HTMLDivElement, Props>(({ tenant, room, landlordName, landlordAddress, customTerms }, ref) => {
   const { currency } = useCurrency();
   const dateObj = tenant?.joined_at ? new Date(tenant.joined_at) : new Date();
   const formattedDate = dateObj.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
   
   const rent = tenant?.rent_amount || room?.rent || 0;
   const deposit = tenant?.depositAmount || 0;
+
+  // Render a term with bolded title if it has a colon
+  const renderTerm = (term: string) => {
+    const colonIdx = term.indexOf(':');
+    if (colonIdx > -1) {
+      const title = term.slice(0, colonIdx + 1);
+      const rest = term.slice(colonIdx + 1);
+      return <><strong className="mr-1">{title}</strong>{rest}</>;
+    }
+    return term;
+  };
 
   return (
     <div 
@@ -55,30 +67,9 @@ export const LeaseTemplate = forwardRef<HTMLDivElement, Props>(({ tenant, room, 
         <h2 className="text-lg font-bold mb-4 uppercase border-b pb-2">Terms & Conditions</h2>
 
         <ol className="list-decimal pl-5 space-y-4 mb-10 text-justify">
-          <li>
-            <strong>Duration:</strong> This rental agreement shall be valid for a period of <strong>11 (Eleven) months</strong> commencing from {formattedDate}.
-          </li>
-          <li>
-            <strong>Rent Amount:</strong> The Tenant shall pay a monthly rent of <strong>{currency.symbol}{rent.toLocaleString()}</strong>. The rent must be paid on or before the 5th of every month.
-          </li>
-          <li>
-            <strong>Security Deposit:</strong> The Tenant has paid a refundable, interest-free security deposit of <strong>{currency.symbol}{deposit.toLocaleString()}</strong> to the Landlord. This amount shall be refunded to the Tenant at the time of vacating the premises, after deducting any arrears of rent, electricity bills, or damages to the premises.
-          </li>
-          <li>
-            <strong>Electricity & Maintenance:</strong> Electricity and water charges are not included in the rent and shall be borne by the Tenant based on consumption or proportional share as determined by the Landlord.
-          </li>
-          <li>
-            <strong>Usage:</strong> The Scheduled Premises shall be used strictly for residential purposes only by the Tenant and shall not be used for any commercial or illegal activities.
-          </li>
-          <li>
-            <strong>Notice Period:</strong> Either party can terminate this agreement by giving <strong>1 (one) month's</strong> written notice to the other party.
-          </li>
-          <li>
-            <strong>Maintenance & Damages:</strong> The Tenant shall keep the premises in good condition. Any damages caused by the Tenant (excluding normal wear and tear) shall be repaired at the Tenant's expense.
-          </li>
-          <li>
-            <strong>Sub-letting:</strong> The Tenant shall not sub-let, assign, or part with the possession of the Scheduled Premises, in whole or in part, to anyone else.
-          </li>
+          {(customTerms || []).map((term, i) => (
+            <li key={i}>{renderTerm(term)}</li>
+          ))}
         </ol>
 
         <p className="mb-12 text-justify">
