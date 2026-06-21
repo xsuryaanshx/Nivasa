@@ -328,38 +328,41 @@ export default function Tenants() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 100 }}
             transition={{ type: "spring", stiffness: 260, damping: 20 }}
-            className="fixed bottom-24 lg:bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between gap-6 px-6 py-4 rounded-2xl bg-card/85 border border-border/80 backdrop-blur-lg shadow-2xl min-w-[320px] max-w-lg w-[calc(100%-2rem)]"
+            className="fixed bottom-24 lg:bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4 rounded-2xl bg-card/85 border border-border/80 backdrop-blur-lg shadow-2xl w-[calc(100%-2rem)] max-w-lg"
           >
             <div className="flex items-center gap-3">
-              <div className="flex h-5 w-5 items-center justify-center rounded-md bg-brand text-white">
+              <div className="flex h-5 w-5 items-center justify-center rounded-md bg-brand text-white shrink-0">
                 <CheckCircle2 className="h-3.5 w-3.5" />
               </div>
-              <div>
-                <p className="text-sm font-semibold">{selectedTenantIds.length} Selected</p>
-                <p className="text-[10px] text-muted-foreground">Perform bulk actions</p>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold truncate">{selectedTenantIds.length} Selected</p>
+                <p className="text-[10px] text-muted-foreground hidden sm:block">Perform bulk actions</p>
               </div>
             </div>
             
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
               <button
                 onClick={handleBulkMarkPaid}
                 disabled={actionLoading}
-                className="h-9 px-4 rounded-xl text-xs font-semibold bg-emerald-500 text-white hover:bg-emerald-600 transition-colors flex items-center gap-1.5 shadow-md shadow-emerald-500/20 disabled:opacity-50"
+                className="h-9 px-3 sm:px-4 rounded-xl text-xs font-semibold bg-emerald-500 text-white hover:bg-emerald-600 transition-colors flex items-center gap-1.5 shadow-md shadow-emerald-500/20 disabled:opacity-50"
               >
-                {actionLoading ? "Processing..." : "Mark Paid"}
+                <CheckCircle2 className="h-3.5 w-3.5 sm:hidden" />
+                <span className="hidden sm:inline">Mark Paid</span>
+                <span className="sm:hidden">Paid</span>
               </button>
               
               <button
                 onClick={handleOpenRemindersModal}
-                className="h-9 px-4 rounded-xl text-xs font-semibold bg-brand text-white hover:bg-brand/90 transition-colors flex items-center gap-1.5 shadow-md shadow-brand/20"
+                className="h-9 px-3 sm:px-4 rounded-xl text-xs font-semibold bg-brand text-white hover:bg-brand/90 transition-colors flex items-center gap-1.5 shadow-md shadow-brand/20"
               >
                 <MessageCircle className="h-3.5 w-3.5" />
-                Reminders
+                <span className="hidden sm:inline">Reminders</span>
+                <span className="sm:hidden">Remind</span>
               </button>
               
               <button
                 onClick={() => setSelectedTenantIds([])}
-                className="h-9 w-9 rounded-xl border border-border bg-secondary hover:bg-secondary/80 transition-colors flex items-center justify-center text-muted-foreground"
+                className="h-9 w-9 rounded-xl border border-border bg-secondary hover:bg-secondary/80 transition-colors flex items-center justify-center text-muted-foreground shrink-0"
               >
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
