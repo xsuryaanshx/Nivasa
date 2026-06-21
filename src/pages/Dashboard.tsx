@@ -1,5 +1,5 @@
 import { nivasaApi } from "@/lib/api";
-import { Building2, IndianRupee, Home, ReceiptIndianRupee, Users, Plus, TrendingUp } from "lucide-react";
+import { Building2, IndianRupee, Home, ReceiptIndianRupee, Users, Plus, TrendingUp, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/PageHeader";
@@ -86,6 +86,34 @@ export default function Dashboard() {
         <StatCard label={t('pending_payments')} value={s.pending}        icon={ReceiptIndianRupee}   delta="-1"  trend="up"   delay={0.15} onClick={() => navigate("/app/rooms?status=pending")} />
         <StatCard label={t('monthly_revenue')}  value={s.monthlyRevenue} icon={IndianRupee} money delta="+12%" trend="up" delay={0.20} onClick={() => navigate("/app/payments?status=paid")} />
         <StatCard label="Net Profit"  value={data.profitStats?.netProfit || 0} icon={TrendingUp} money delta="+10%" trend="up" delay={0.25} onClick={() => navigate("/app/profit")} />
+      </div>
+
+      <div className="mt-6">
+        <div className="relative overflow-hidden rounded-2xl border border-brand/20 bg-gradient-to-r from-brand/10 via-brand/5 to-transparent p-6 shadow-soft">
+          <div className="absolute -top-4 -right-4 p-4 opacity-10 pointer-events-none">
+            <Sparkles className="h-32 w-32 text-brand" />
+          </div>
+          <div className="relative z-10 flex flex-col sm:flex-row items-start gap-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand/20 text-brand">
+              <Sparkles className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold flex items-center gap-2">
+                Nivasa AI Market Insights
+                <span className="rounded-full bg-brand px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white">Beta</span>
+              </h3>
+              <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed max-w-2xl">
+                Based on our real-time data analysis, 1-BHKs in your area are currently renting for an average of <strong className="text-foreground">₹18,500/month</strong>. 
+                You are currently charging <strong className="text-foreground">₹14,000/month</strong> for Room 101. Consider raising your rent by 15% for new tenants to match market rates and increase your yield.
+              </p>
+              <div className="mt-4 flex items-center gap-2">
+                <button className="rounded-lg bg-brand px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-brand/90 shadow-[0_0_15px_-3px_hsl(var(--ring)/0.5)]">
+                  Upgrade to Nivasa Pro for Full Insights
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="mt-6">

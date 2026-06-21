@@ -90,14 +90,20 @@ export function EditBuildingModal({ open, onClose, onSuccess, buildingData }: Pr
 
           {/* Address */}
           <div className="space-y-1.5">
-            <label htmlFor="edit-building-address" className="text-xs font-medium text-muted-foreground">
-              Address <span className="text-destructive">*</span>
-            </label>
+            <div className="flex flex-col gap-0.5">
+              <label htmlFor="edit-building-address" className="text-xs font-medium text-muted-foreground">
+                Address <span className="text-destructive">*</span>
+              </label>
+              <p className="text-[10px] text-muted-foreground/75 leading-normal">
+                Include city & state (e.g. "Malviya Nagar, Indore, MP") or paste a Google Maps link to ensure the map shows correctly.
+              </p>
+            </div>
             <div className="relative">
               <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <input
                 id="edit-building-address"
                 type="text"
+                placeholder="e.g. Scheme No 54, Indore, MP or Google Maps URL"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 className="h-11 w-full rounded-xl border border-border bg-secondary/30 pl-10 pr-4 text-sm outline-none transition-all focus:border-brand focus:ring-4 focus:ring-brand/10"

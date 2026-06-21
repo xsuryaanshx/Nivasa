@@ -213,12 +213,12 @@ export function BuildingMarketingSettings({ buildingId, isPublic, slug, address,
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">Map Address / Coordinates</label>
-            <p className="text-[10px] text-muted-foreground mb-1">Used to accurately pinpoint your property on the Google Map.</p>
+            <label className="text-xs font-medium text-muted-foreground">Map Address, Coordinates, or Google Maps Link</label>
+            <p className="text-[10px] text-muted-foreground mb-1">Used to pinpoint your property. Include city & state (e.g. "Malviya Nagar, Indore, MP") or paste a Google Maps link so the location maps accurately.</p>
             <textarea
               value={formData.address}
               onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
-              placeholder="e.g. 123 Main Street, City OR 28.5355, 77.3910"
+              placeholder="e.g. Scheme No 54, Indore, MP OR Google Maps Link OR Coordinates"
               className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm min-h-[60px] resize-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
             />
           </div>

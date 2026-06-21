@@ -137,22 +137,60 @@ export default function PublicListing() {
             </div>
           </div>
 
-          {building.address && (
-            <div className="mt-8 border-t border-border/50 pt-8">
-              <h2 className="text-xl font-semibold text-foreground mb-4">Location</h2>
-              <div className="w-full h-64 overflow-hidden rounded-2xl border border-border/50 shadow-sm relative bg-secondary/50">
-                <iframe 
-                  width="100%" 
-                  height="100%" 
-                  frameBorder="0" 
-                  style={{ border: 0 }} 
-                  src={`https://www.google.com/maps/embed?origin=mfe&pb=!1m3!2m1!1s${encodeURIComponent(building.address)}!6i15`} 
-                  allowFullScreen 
-                  title="Google Maps Location"
-                ></iframe>
+          {building.address && (() => {
+            const isUrl = building.address.trim().startsWith("http://") || building.address.trim().startsWith("https://");
+            const directionsUrl = isUrl 
+              ? building.address.trim() 
+              : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(building.address)}`;
+            
+            return (
+              <div className="mt-8 border-t border-border/50 pt-8">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-semibold text-foreground">Location</h2>
+                  <a 
+                    href={directionsUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-secondary transition-colors"
+                  >
+                    <Navigation className="h-3.5 w-3.5 text-brand" /> Get Directions
+                  </a>
+                </div>
+                
+                {isUrl ? (
+                  <div className="flex flex-col items-center justify-center w-full h-64 overflow-hidden rounded-2xl border border-border/50 shadow-sm relative bg-secondary/30 p-6 text-center space-y-4">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand/10 text-brand">
+                      <MapPin className="h-6 w-6 animate-pulse" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">Google Maps Location Provided</p>
+                      <p className="text-xs text-muted-foreground mt-1 max-w-[280px] mx-auto">Click below to view the address and get turn-by-turn navigation directly on Google Maps.</p>
+                    </div>
+                    <a
+                      href={directionsUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand text-white px-5 py-2.5 text-xs font-semibold shadow-soft hover:opacity-90 transition-opacity"
+                    >
+                      <Navigation className="h-3.5 w-3.5" /> Open in Google Maps
+                    </a>
+                  </div>
+                ) : (
+                  <div className="w-full h-64 overflow-hidden rounded-2xl border border-border/50 shadow-sm relative bg-secondary/50">
+                    <iframe 
+                      width="100%" 
+                      height="100%" 
+                      frameBorder="0" 
+                      style={{ border: 0 }} 
+                      src={`https://www.google.com/maps/embed?origin=mfe&pb=!1m3!2m1!1s${encodeURIComponent(building.address)}!6i15`} 
+                      allowFullScreen 
+                      title="Google Maps Location"
+                    ></iframe>
+                  </div>
+                )}
               </div>
-            </div>
-          )}
+            );
+          })()}
         </motion.div>
       </div>
 
