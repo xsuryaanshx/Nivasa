@@ -438,6 +438,7 @@ function mapUnitToRoom(u: any): any {
     ratePerUnit: u.rate_per_unit || 0.18,
     history: [],
     pastTenants: unitTenants.filter((t) => t.status === "vacated"),
+    createdAt: u.created_at,
   };
 }
 async function getRooms(): Promise<any[]> {
