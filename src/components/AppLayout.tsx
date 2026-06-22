@@ -13,7 +13,6 @@ import { ElectricityBillingModal } from "./ElectricityBillingModal";
 import { MobileDrawerMenu } from "./MobileDrawerMenu";
 import { LanguageProvider } from "./LanguageProvider";
 import { PremiumUpgradeModal } from "./PremiumUpgradeModal";
-import { useLocation, Outlet } from "react-router-dom";
 
 function AppShell() {
   const [collapsed, setCollapsed] = useState(false);

@@ -15,6 +15,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { useLanguage } from "@/components/LanguageProvider";
 import { useSubscriptionData } from "@/hooks/useSubscriptionData";
+import { getTenantPaymentStatus } from "@/lib/utils";
 
 function getGreetingKey() {
   const hour = new Date().getHours();
@@ -47,7 +48,7 @@ export default function Dashboard() {
 
       const [stats, recent, profitStats, rooms] = await Promise.all([
         nivasaApi.getDashboardStats(),
-        nivasaApi.getRecentPayments(8),
+        nivasaApi.getRecentPayments(1000),
         nivasaApi.getProfitStats(),
         nivasaApi.getRooms()
       ]);
@@ -93,27 +94,30 @@ export default function Dashboard() {
   const now = new Date();
 
   rooms.forEach((room: any) => {
-    // 1. Late Rent
-    if (room.status === "pending" || room.status === "late") {
-      const primaryTenant = room.tenants?.[0];
-      if (primaryTenant) {
-        const rentAmount = primaryTenant.rent_amount || room.rent || 0;
-        attentionItems.push({
-          id: `late-${room.id}-${primaryTenant.id}`,
-          type: "late_rent",
-          title: `Rent Pending: Room ${room.number}`,
-          description: `${primaryTenant.name} is late on rent of ₹${rentAmount.toLocaleString()}.`,
-          actionLabel: "Remind",
-          severity: "high",
-          action: () => {
-            const msg = `Hi ${primaryTenant.name}, this is a gentle reminder that your rent of ₹${rentAmount} for Room ${room.number} is currently pending. Please complete the payment at your earliest convenience.`;
-            window.open(
-              `https://wa.me/${primaryTenant.whatsapp_number || primaryTenant.phone}?text=${encodeURIComponent(msg)}`,
-              "_blank"
-            );
-          },
-        });
-      }
+    // 1. Late Rent (calculated dynamically for active tenants using getTenantPaymentStatus)
+    if (room.tenants && room.tenants.length > 0) {
+      room.tenants.forEach((tenant: any) => {
+        const paymentStatus = getTenantPaymentStatus(tenant, recent);
+        if (paymentStatus === "late" || paymentStatus === "pending") {
+          const rentAmount = tenant.rent_amount || room.rent || 0;
+          const isLate = paymentStatus === "late";
+          attentionItems.push({
+            id: `late-${room.id}-${tenant.id}`,
+            type: "late_rent",
+            title: isLate ? `Rent Late: Room ${room.number}` : `Rent Pending: Room ${room.number}`,
+            description: `${tenant.name} is ${isLate ? 'late' : 'pending'} on rent of ₹${rentAmount.toLocaleString()}.`,
+            actionLabel: "Remind",
+            severity: isLate ? "high" : "medium",
+            action: () => {
+              const msg = `Hi ${tenant.name}, this is a gentle reminder that your rent of ₹${rentAmount} for Room ${room.number} is currently ${isLate ? 'late' : 'pending'}. Please complete the payment at your earliest convenience.`;
+              window.open(
+                `https://wa.me/91${(tenant.whatsapp_number || tenant.phone || '').replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`,
+                "_blank"
+              );
+            },
+          });
+        }
+      });
     }
 
     // 2. Vacant for >30 days
@@ -446,7 +450,7 @@ export default function Dashboard() {
         <StatCard label={t('buildings')}        value={s.totalBuildings} icon={Building2} delta="+1"  trend="up"   delay={0.00} onClick={() => navigate("/app/buildings")} />
         <StatCard label={t('rooms')}            value={s.totalRooms}     icon={Home}      delta="+2"  trend="up"   delay={0.05} onClick={() => navigate("/app/rooms")} />
         <StatCard label={t('occupancy')}         value={s.occupied}       icon={Users}     delta="92%" trend="flat" delay={0.10} onClick={() => navigate("/app/rooms?status=occupied")} />
-        <StatCard label={t('pending_payments')} value={s.pending}        icon={ReceiptIndianRupee}   delta="-1"  trend="up"   delay={0.15} onClick={() => navigate("/app/rooms?status=pending")} />
+        <StatCard label={t('pending_payments')} value={attentionItems.filter(i => i.type === 'late_rent').length}        icon={ReceiptIndianRupee}   delta={attentionItems.filter(i => i.type === 'late_rent').length > 0 ? `+${attentionItems.filter(i => i.type === 'late_rent').length}` : "0"}  trend={attentionItems.filter(i => i.type === 'late_rent').length > 0 ? "up" : "flat"}   delay={0.15} onClick={() => navigate("/app/tenants?status=late")} />
         <StatCard label={t('monthly_revenue')}  value={s.monthlyRevenue} icon={IndianRupee} money delta="+12%" trend="up" delay={0.20} onClick={() => navigate("/app/payments?status=paid")} />
         <StatCard label="Net Profit"  value={data.profitStats?.netProfit || 0} icon={TrendingUp} money delta="+10%" trend="up" delay={0.25} onClick={() => navigate("/app/profit")} />
       </div>
@@ -533,7 +537,7 @@ export default function Dashboard() {
             {loading ? (
               <div className="h-40 flex items-center justify-center text-muted-foreground">{t("loading_payments")}</div>
             ) : (
-              <PaymentTimeline payments={recent} dense />
+              <PaymentTimeline payments={recent.slice(0, 8)} dense />
             )}
           </div>
         </div>
