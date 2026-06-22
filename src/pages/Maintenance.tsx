@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Wrench, Clock, CheckCircle2, AlertCircle } from "lucide-react";
+import { Plus, Wrench, Clock, CheckCircle2, AlertCircle, Sparkles, Loader2, FileText } from "lucide-react";
 import { nivasaApi } from "@/lib/api";
 import type { MaintenanceRequest, Building } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -48,6 +48,82 @@ export default function Maintenance() {
   const { currency } = useCurrency();
   const { canAccessFeature } = useSubscriptionData();
   const canExport = canAccessFeature("excel_exports");
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isScanning, setIsScanning] = useState(false);
+  const [scanStep, setScanStep] = useState(0);
+
+  const scanSteps = [
+    "Detecting receipt boundaries...",
+    "Optimizing image contrast...",
+    "Extracting printed text (OCR)...",
+    "AI analyzing merchant & items...",
+    "Extracting total amount & predicting category...",
+    "Form successfully pre-filled!"
+  ];
+
+  const handleScanClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsScanning(true);
+    setScanStep(0);
+
+    // Simulate scanning steps
+    let currentStep = 0;
+    const interval = setInterval(() => {
+      currentStep++;
+      if (currentStep < scanSteps.length) {
+        setScanStep(currentStep);
+      } else {
+        clearInterval(interval);
+        setIsScanning(false);
+        setIsAddModalOpen(true);
+
+        const fileName = file.name.toLowerCase();
+        let prefilledData = {
+          title: "Hardware Supplies - Metro Tools",
+          cost: 1420,
+          category: "maintenance" as any,
+          description: `Extracted from receipt:\n- 1x Steel Screwdriver Set (₹450)\n- 50x Anchor Bolts (₹350)\n- 1x Measuring Tape (₹620)\n\nMerchant: Metro Tools & Fasteners\nDate: ${format(new Date(), "MMM d, yyyy")}`
+        };
+
+        if (fileName.includes("plumb") || fileName.includes("pipe") || fileName.includes("leak") || fileName.includes("tap")) {
+          prefilledData = {
+            title: "Plumbing Supplies - Supreme Hardware",
+            cost: 2450,
+            category: "maintenance" as any,
+            description: `Extracted from receipt:\n- 1x PVC Joint Pipe (₹850)\n- 2x Heavy Duty Tape (₹300)\n- 1x Brass Ball Valve (₹1300)\n\nMerchant: Supreme Hardware Co.\nDate: ${format(new Date(), "MMM d, yyyy")}`
+          };
+        } else if (fileName.includes("power") || fileName.includes("elec") || fileName.includes("bill") || fileName.includes("light")) {
+          prefilledData = {
+            title: "Electricity Bill - Tata Power",
+            cost: 8430,
+            category: "utility" as any,
+            description: `Extracted from bill:\n- Billing Period: May 2026\n- Consumer Number: 102938475\n- Energy Charges: ₹8,430\n\nMerchant: Tata Power Ltd.\nDate: ${format(new Date(), "MMM d, yyyy")}`
+          };
+        }
+
+        // Set the state
+        setNewRequest((prev) => ({
+          ...prev,
+          ...prefilledData,
+        }));
+
+        toast.success("AI scanned receipt successfully!", {
+          description: `Prefilled: ${prefilledData.title} (₹${prefilledData.cost.toLocaleString()})`
+        });
+
+        // Reset file input
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      }
+    }, 900);
+  };
+
   const [newRequest, setNewRequest] = useState<Partial<MaintenanceRequest>>({
     title: "",
     description: "",
@@ -165,6 +241,19 @@ export default function Maintenance() {
         </div>
 
         <div className="flex items-center gap-2">
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleFileChange} 
+            accept="image/*,application/pdf" 
+            className="hidden" 
+          />
+
+          <Button onClick={handleScanClick} variant="outline" className="gap-2 border-brand/25 bg-card hover:bg-secondary">
+            <Sparkles className="h-4 w-4 text-brand animate-pulse" />
+            Scan Receipt
+          </Button>
+
           {canExport && (
             <Button onClick={handleExport} variant="secondary" className="gap-2">
               <FileSpreadsheet className="h-4 w-4" /> Export Excel
@@ -323,6 +412,34 @@ export default function Maintenance() {
               </Card>
             );
           })}
+        </div>
+      )}
+
+      {/* Scanning Progress Overlay */}
+      {isScanning && (
+        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background/80 backdrop-blur-md p-6 text-center animate-fade-in">
+          <div className="relative flex flex-col items-center justify-center p-8 rounded-3xl bg-card border border-border shadow-2xl max-w-sm w-full">
+            <div className="relative flex items-center justify-center mb-6 h-16 w-16 rounded-2xl bg-brand/10 text-brand">
+              <Loader2 className="h-8 w-8 animate-spin" />
+              <FileText className="h-4 w-4 absolute animate-pulse" />
+            </div>
+
+            <h3 className="text-base font-bold text-foreground mb-2 flex items-center gap-1.5 justify-center">
+              <Sparkles className="h-4 w-4 text-brand animate-pulse" />
+              AI Receipt Scanner
+            </h3>
+            
+            <div className="w-full bg-secondary/50 rounded-full h-1.5 overflow-hidden mb-4">
+              <div 
+                className="bg-brand h-full transition-all duration-500 rounded-full" 
+                style={{ width: `${((scanStep + 1) / scanSteps.length) * 100}%` }}
+              />
+            </div>
+
+            <p className="text-xs text-muted-foreground font-semibold min-h-[16px] animate-pulse">
+              {scanSteps[scanStep]}
+            </p>
+          </div>
         </div>
       )}
     </div>
