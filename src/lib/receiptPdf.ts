@@ -28,149 +28,117 @@ export async function downloadReceiptPdf(p: any, landlordName: string = "Nivasa 
   const grayColor = [100, 116, 139]; // Slate 500
   const lightGrayBg = [248, 250, 252]; // Slate 50
 
-  // 1. Logo & Header
+  // 1. Top Header Banner (Slate 900 background)
+  doc.setFillColor(15, 23, 42);
+  doc.rect(0, 0, 210, 42, "F");
+
+  // Load and draw Nivasa Dark Logo with correct aspect ratio
   try {
-    const img = await loadImage("/nivasa-logo-light-v2.png");
-    doc.addImage(img, "PNG", 14, 15, 36, 12);
+    const img = await loadImage("/nivasa-logo-dark-v2.png");
+    const logoHeight = 14;
+    const logoWidth = (img.naturalWidth / img.naturalHeight) * logoHeight;
+    doc.addImage(img, "PNG", 16, 14, logoWidth, logoHeight);
   } catch (err) {
-    console.warn("Failed to load logo in PDF, falling back to text:", err);
-    doc.setFillColor(accentColor[0], accentColor[1], accentColor[2]);
-    doc.rect(14, 15, 6, 12, "F");
+    console.warn("Failed to load logo in PDF:", err);
     doc.setFont("Helvetica", "bold");
     doc.setFontSize(22);
-    doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-    doc.text("NIVASA", 24, 24);
+    doc.setTextColor(255, 255, 255);
+    doc.text("NIVASA", 16, 24);
   }
 
-  doc.setFont("Helvetica", "normal");
-  doc.setFontSize(9);
-  doc.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
-  doc.text("Premium Property Management", 14, 30);
-
+  // Header Title
   doc.setFont("Helvetica", "bold");
   doc.setFontSize(16);
-  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.text("RENT RECEIPT", 140, 24);
+  doc.setTextColor(255, 255, 255);
+  doc.text("PAYMENT RECEIPT", 194, 23, { align: "right" });
 
-  // Divider Line
+  doc.setFont("Helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(156, 163, 175); // Gray 400
+  doc.text("Official proof of rent settlement", 194, 29, { align: "right" });
+
+  // 2. Main Card Container (Centered)
   doc.setDrawColor(226, 232, 240); // Slate 200
-  doc.setLineWidth(0.5);
-  doc.line(14, 35, 196, 35);
+  doc.setFillColor(255, 255, 255);
+  doc.roundedRect(14, 50, 182, 210, 4, 4, "FD");
 
-  // 2. Metadata Columns (Receipt Info & Tenant Info)
-  doc.setFontSize(9);
-  
-  // Left: Receipt Info
-  doc.setFont("Helvetica", "bold");
-  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.text("RECEIPT DETAILS", 14, 44);
-
-  doc.setFont("Helvetica", "normal");
-  doc.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
-  doc.text("Receipt No:", 14, 50);
-  doc.setFont("Helvetica", "bold");
-  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.text(`REC-${p.id.slice(0, 8).toUpperCase()}`, 35, 50);
-
-  doc.setFont("Helvetica", "normal");
-  doc.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
-  doc.text("Date:", 14, 56);
-  doc.setFont("Helvetica", "bold");
-  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.text(new Date(p.date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }), 35, 56);
-
-  doc.setFont("Helvetica", "normal");
-  doc.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
-  doc.text("Landlord:", 14, 62);
-  doc.setFont("Helvetica", "bold");
-  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.text(landlordName || "Property Owner", 35, 62);
-
-  // Right: Tenant Info
-  doc.setFont("Helvetica", "bold");
-  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.text("TENANT DETAILS", 110, 44);
-
-  doc.setFont("Helvetica", "normal");
-  doc.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
-  doc.text("Name:", 110, 50);
-  doc.setFont("Helvetica", "bold");
-  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.text(p.tenantName, 130, 50);
-
-  doc.setFont("Helvetica", "normal");
-  doc.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
-  doc.text("Building:", 110, 56);
-  doc.setFont("Helvetica", "bold");
-  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.text(p.buildingName || "N/A", 130, 56);
-
-  doc.setFont("Helvetica", "normal");
-  doc.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
-  doc.text("Room No:", 110, 62);
-  doc.setFont("Helvetica", "bold");
-  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.text(p.roomNumber || "N/A", 130, 62);
-
-  // 3. Payment Breakdown Table
-  const formatInr = (val: number) => `Rs ${val.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`;
-
-  autoTable(doc, {
-    startY: 72,
-    head: [["Item Description", "Payment Method", "Reference", "Total Amount"]],
-    body: [
-      [
-        `Rent Payment for Room ${p.roomNumber || "N/A"}${p.note ? ` (${p.note})` : ""}`,
-        p.method,
-        p.reference || "N/A",
-        formatInr(p.amount)
-      ]
-    ],
-    theme: "striped",
-    headStyles: {
-      fillColor: [15, 23, 42],
-      fontSize: 10,
-      fontStyle: "bold",
-      halign: "left"
-    },
-    bodyStyles: {
-      fontSize: 9,
-      textColor: [15, 23, 42]
-    },
-    columnStyles: {
-      3: { halign: "right", fontStyle: "bold" }
-    }
-  });
-
-  const nextY = (doc as any).lastAutoTable.finalY + 12;
-
-  // 4. Summary Box & Signature
+  // A. Total Paid Box (Centered at top of card)
   doc.setFillColor(lightGrayBg[0], lightGrayBg[1], lightGrayBg[2]);
-  doc.rect(14, nextY, 90, 24, "F");
+  doc.roundedRect(30, 62, 150, 28, 2, 2, "F");
 
+  doc.setFont("Helvetica", "bold");
+  doc.setFontSize(9);
+  doc.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
+  doc.text("TOTAL AMOUNT PAID", 105, 71, { align: "center" });
+
+  const formatInr = (val: number) => `Rs ${val.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`;
+  doc.setFont("Helvetica", "bold");
+  doc.setFontSize(22);
+  doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
+  doc.text(formatInr(p.amount), 105, 83, { align: "center" });
+
+  // B. Receipt Details Table
   doc.setFont("Helvetica", "bold");
   doc.setFontSize(10);
   doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.text("TOTAL PAID", 18, nextY + 8);
+  doc.text("TRANSACTION SUMMARY", 30, 103);
 
-  doc.setFontSize(16);
-  doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
-  doc.text(formatInr(p.amount), 18, nextY + 18);
+  const tableBody = [
+    ["Receipt Number", `REC-${p.id.slice(0, 8).toUpperCase()}`],
+    ["Payment Date", new Date(p.date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })],
+    ["Landlord / Payee", landlordName],
+    ["Tenant Name", p.tenantName],
+    ["Building / Room", `${p.buildingName || "N/A"} - Room ${p.roomNumber || "N/A"}`],
+    ["Payment Method", p.method],
+    ["Transaction Reference", p.reference || "N/A"],
+    ["Remarks / Note", p.note || "Rent Payment"]
+  ];
 
-  // Signature Block
+  autoTable(doc, {
+    startY: 108,
+    margin: { left: 30, right: 30 },
+    body: tableBody,
+    theme: "striped",
+    styles: {
+      fontSize: 9.5,
+      cellPadding: 3.5,
+      textColor: [15, 23, 42],
+    },
+    columnStyles: {
+      0: { fontStyle: "bold", textColor: [100, 116, 139], width: 55 },
+      1: { fontStyle: "bold", halign: "left" }
+    }
+  });
+
+  const nextY = (doc as any).lastAutoTable.finalY + 15;
+
+  // C. Bottom Signatures & Stamp
+  // Stamp on left: PAID green badge
+  doc.setFillColor(209, 250, 229); // Green 100
+  doc.roundedRect(30, nextY, 32, 14, 1.5, 1.5, "F");
+  
+  doc.setFont("Helvetica", "bold");
+  doc.setFontSize(11);
+  doc.setTextColor(5, 150, 105); // Green 600
+  doc.text("PAID", 46, nextY + 9.5, { align: "center" });
+
+  // Signature line on right
+  doc.setDrawColor(203, 213, 225); // Slate 300
+  doc.setLineWidth(0.5);
+  doc.line(125, nextY + 8, 180, nextY + 8);
+  
   doc.setFont("Helvetica", "normal");
-  doc.setFontSize(9);
+  doc.setFontSize(8.5);
   doc.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
-  doc.line(140, nextY + 14, 196, nextY + 14); // Signature line
-  doc.text("Authorized Signatory", 148, nextY + 19);
+  doc.text("Authorized Signatory", 152.5, nextY + 13, { align: "center" });
 
-  // 5. Footer Notes
-  doc.setFontSize(8);
-  doc.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
-  doc.text("This is a computer-generated receipt and does not require a physical signature.", 14, 275);
-  doc.text("Thank you for your rent payment!", 14, 280);
+  // 3. Footer
+  doc.setFont("Helvetica", "normal");
+  doc.setFontSize(7.5);
+  doc.setTextColor(148, 163, 184); // Slate 400
+  doc.text("This receipt is a digitally generated document by Nivasa. No physical signature is required.", 105, 275, { align: "center" });
+  doc.text("Thank you for your prompt rent payment!", 105, 280, { align: "center" });
 
-  // Save the PDF
   const safeTenantName = p.tenantName.replace(/\s+/g, "_");
   const receiptFilename = `Receipt_${safeTenantName}_${p.date.split("T")[0]}.pdf`;
   doc.save(receiptFilename);
@@ -191,141 +159,132 @@ export async function downloadInvoicePdf(invoice: any, tenant: any, room: any, l
   const grayColor = [100, 116, 139]; // Slate 500
   const lightGrayBg = [248, 250, 252]; // Slate 50
 
-  // 1. Logo & Header
+  // 1. Top Header Banner (Slate 900 background)
+  doc.setFillColor(15, 23, 42);
+  doc.rect(0, 0, 210, 42, "F");
+
+  // Load and draw Nivasa Dark Logo with correct aspect ratio
   try {
-    const img = await loadImage("/nivasa-logo-light-v2.png");
-    doc.addImage(img, "PNG", 14, 15, 36, 12);
+    const img = await loadImage("/nivasa-logo-dark-v2.png");
+    const logoHeight = 14;
+    const logoWidth = (img.naturalWidth / img.naturalHeight) * logoHeight;
+    doc.addImage(img, "PNG", 16, 14, logoWidth, logoHeight);
   } catch (err) {
+    console.warn("Failed to load logo in PDF:", err);
     doc.setFont("Helvetica", "bold");
     doc.setFontSize(22);
-    doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-    doc.text("NIVASA", 14, 24);
+    doc.setTextColor(255, 255, 255);
+    doc.text("NIVASA", 16, 24);
   }
 
+  // Header Title
   doc.setFont("Helvetica", "bold");
   doc.setFontSize(16);
-  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.text("RENT INVOICE", 145, 24);
+  doc.setTextColor(255, 255, 255);
+  doc.text("RENT INVOICE", 194, 23, { align: "right" });
 
-  // Divider
-  doc.setDrawColor(226, 232, 240);
-  doc.setLineWidth(0.5);
-  doc.line(14, 35, 196, 35);
+  doc.setFont("Helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(156, 163, 175); // Gray 400
+  doc.text("Detailed breakdown of outstanding charges", 194, 29, { align: "right" });
 
-  // 2. Invoice Details & Tenant Details
+  // 2. Main Card Container (Centered)
+  doc.setDrawColor(226, 232, 240); // Slate 200
+  doc.setFillColor(255, 255, 255);
+  doc.roundedRect(14, 50, 182, 210, 4, 4, "FD");
+
+  // A. Total Due Box (Centered at top of card)
+  doc.setFillColor(lightGrayBg[0], lightGrayBg[1], lightGrayBg[2]);
+  doc.roundedRect(30, 60, 150, 26, 2, 2, "F");
+
+  doc.setFont("Helvetica", "bold");
   doc.setFontSize(9);
-  
-  // Left: Invoice Info
-  doc.setFont("Helvetica", "bold");
-  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.text("INVOICE DETAILS", 14, 44);
-
-  doc.setFont("Helvetica", "normal");
   doc.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
-  doc.text("Billing Month:", 14, 50);
-  doc.setFont("Helvetica", "bold");
-  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.text(invoice.month_year, 38, 50);
+  doc.text("TOTAL AMOUNT DUE", 105, 68, { align: "center" });
 
-  doc.setFont("Helvetica", "normal");
-  doc.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
-  doc.text("Date:", 14, 56);
-  doc.setFont("Helvetica", "bold");
-  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.text(new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }), 38, 56);
-
-  doc.setFont("Helvetica", "normal");
-  doc.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
-  doc.text("Landlord:", 14, 62);
-  doc.setFont("Helvetica", "bold");
-  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.text(landlordName, 38, 62);
-
-  // Right: Tenant Info
-  doc.setFont("Helvetica", "bold");
-  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.text("BILL TO (TENANT)", 110, 44);
-
-  doc.setFont("Helvetica", "normal");
-  doc.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
-  doc.text("Name:", 110, 50);
-  doc.setFont("Helvetica", "bold");
-  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.text(tenant.name, 130, 50);
-
-  doc.setFont("Helvetica", "normal");
-  doc.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
-  doc.text("Building:", 110, 56);
-  doc.setFont("Helvetica", "bold");
-  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.text(room.buildingName || "N/A", 130, 56);
-
-  doc.setFont("Helvetica", "normal");
-  doc.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
-  doc.text("Room No:", 110, 62);
-  doc.setFont("Helvetica", "bold");
-  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.text(room.number || "N/A", 130, 62);
-
-  // 3. Detailed Invoice Table (Rent, Electricity, Laundry, Food, Previous Dues)
   const formatInr = (val: number) => `Rs ${val.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`;
+  doc.setFont("Helvetica", "bold");
+  doc.setFontSize(20);
+  doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
+  doc.text(formatInr(invoice.total_due), 105, 79, { align: "center" });
 
+  // B. Invoice Meta Info Table
+  doc.setFont("Helvetica", "bold");
+  doc.setFontSize(9.5);
+  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.text("BILLING & TENANT INFO", 30, 96);
+
+  const metaBody = [
+    ["Billing Month", invoice.month_year],
+    ["Invoice Date", new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })],
+    ["Landlord / Payee", landlordName],
+    ["Tenant Name", tenant.name],
+    ["Room & Building", `${room.buildingName || "N/A"} - Room ${room.number || "N/A"}`]
+  ];
+
+  autoTable(doc, {
+    startY: 100,
+    margin: { left: 30, right: 30 },
+    body: metaBody,
+    theme: "striped",
+    styles: {
+      fontSize: 8.5,
+      cellPadding: 2.2,
+      textColor: [15, 23, 42],
+    },
+    columnStyles: {
+      0: { fontStyle: "bold", textColor: [100, 116, 139], width: 45 },
+      1: { fontStyle: "bold", halign: "left" }
+    }
+  });
+
+  // C. Items Breakdown Table
   const tableBody: any[] = [];
-  // Base Rent
   tableBody.push(["Base Rent", "1", formatInr(invoice.base_rent), formatInr(invoice.base_rent)]);
-  // Electricity
   if (invoice.electricity_cost > 0) {
     tableBody.push(["Electricity Charges", "1", formatInr(invoice.electricity_cost), formatInr(invoice.electricity_cost)]);
   }
-  // Addons
   if (invoice.add_ons && invoice.add_ons.length > 0) {
     invoice.add_ons.forEach((a: any) => {
       tableBody.push([a.name, "1", formatInr(a.cost), formatInr(a.cost)]);
     });
   }
-  // Previous Dues
   if (invoice.previous_dues > 0) {
     tableBody.push(["Previous Outstanding Dues", "1", formatInr(invoice.previous_dues), formatInr(invoice.previous_dues)]);
   }
 
+  const itemsStartY = (doc as any).lastAutoTable.finalY + 8;
+  doc.setFont("Helvetica", "bold");
+  doc.setFontSize(9.5);
+  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.text("CHARGES BREAKDOWN", 30, itemsStartY);
+
   autoTable(doc, {
-    startY: 72,
-    head: [["Item Description", "Qty", "Rate", "Total Amount"]],
+    startY: itemsStartY + 4,
+    margin: { left: 30, right: 30 },
+    head: [["Item Description", "Qty", "Rate", "Total"]],
     body: tableBody,
-    theme: "striped",
+    theme: "grid",
     headStyles: {
       fillColor: [15, 23, 42],
-      fontSize: 10,
+      fontSize: 8.5,
       fontStyle: "bold",
       halign: "left"
     },
     bodyStyles: {
-      fontSize: 9,
+      fontSize: 8.5,
       textColor: [15, 23, 42]
     },
     columnStyles: {
-      1: { halign: "center" },
-      2: { halign: "right" },
-      3: { halign: "right", fontStyle: "bold" }
+      1: { halign: "center", width: 12 },
+      2: { halign: "right", width: 28 },
+      3: { halign: "right", fontStyle: "bold", width: 28 }
     }
   });
 
-  const nextY = (doc as any).lastAutoTable.finalY + 10;
+  const nextY = (doc as any).lastAutoTable.finalY + 8;
 
-  // 4. Summary & UPI Link/QR Code
-  doc.setFillColor(lightGrayBg[0], lightGrayBg[1], lightGrayBg[2]);
-  doc.rect(14, nextY, 90, 24, "F");
-
-  doc.setFont("Helvetica", "bold");
-  doc.setFontSize(10);
-  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.text("TOTAL DUE", 18, nextY + 8);
-
-  doc.setFontSize(16);
-  doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
-  doc.text(formatInr(invoice.total_due), 18, nextY + 18);
-
-  // If UPI details are present, draw payment instructions and QR Code
+  // D. QR code / payment area
   if (upiId) {
     const upiUrl = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(landlordName)}&am=${invoice.total_due.toFixed(2)}&tn=${encodeURIComponent(invoice.month_year.replace(/\s+/g, '_'))}&cu=INR`;
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(upiUrl)}`;
@@ -333,35 +292,39 @@ export async function downloadInvoicePdf(invoice: any, tenant: any, room: any, l
     doc.setFont("Helvetica", "bold");
     doc.setFontSize(9);
     doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-    doc.text("PAYMENT INSTRUCTIONS", 110, nextY + 4);
+    doc.text("SCAN TO PAY INSTANTLY", 30, nextY + 4);
 
     doc.setFont("Helvetica", "normal");
-    doc.setFontSize(8);
+    doc.setFontSize(7.5);
     doc.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
-    doc.text("Scan the QR code below or tap", 110, nextY + 10);
-    doc.text("the link inside WhatsApp to pay.", 110, nextY + 14);
+    doc.text("You can scan this QR code using any UPI app", 30, nextY + 9);
+    doc.text("or click the link received inside WhatsApp.", 30, nextY + 13);
 
     try {
       const qrImg = await loadImage(qrUrl);
-      doc.addImage(qrImg, "PNG", 110, nextY + 18, 30, 30);
+      doc.addImage(qrImg, "PNG", 145, nextY, 26, 26);
     } catch (err) {
       console.warn("Failed to load QR code inside PDF invoice:", err);
     }
   }
 
   // Signature Block
-  const finalY = upiId ? nextY + 52 : nextY + 28;
+  const finalY = upiId ? nextY + 28 : nextY + 8;
+  doc.setDrawColor(203, 213, 225); // Slate 300
+  doc.setLineWidth(0.5);
+  doc.line(30, finalY + 12, 85, finalY + 12);
+  
   doc.setFont("Helvetica", "normal");
-  doc.setFontSize(9);
+  doc.setFontSize(8.5);
   doc.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
-  doc.line(14, finalY + 10, 70, finalY + 10); // Signature line
-  doc.text("Issuer / Landlord Signature", 14, finalY + 15);
+  doc.text("Issuer / Landlord Signature", 30, finalY + 17);
 
-  // 5. Footer Notes
-  doc.setFontSize(8);
-  doc.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
-  doc.text("This is an official rent invoice generated by Nivasa.", 14, 275);
-  doc.text("Please complete the payment to avoid late fees.", 14, 280);
+  // 3. Footer
+  doc.setFont("Helvetica", "normal");
+  doc.setFontSize(7.5);
+  doc.setTextColor(148, 163, 184); // Slate 400
+  doc.text("This invoice is an official rent invoice generated by Nivasa. Please pay before the due date.", 105, 275, { align: "center" });
+  doc.text("Thank you for your business!", 105, 280, { align: "center" });
 
   // Save the PDF
   const safeTenantName = tenant.name.replace(/\s+/g, "_");
