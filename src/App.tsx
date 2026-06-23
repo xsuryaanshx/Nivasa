@@ -33,6 +33,7 @@ import Maintenance from "./pages/Maintenance.tsx";
 import { FeatureGate } from "./components/FeatureGate.tsx";
 import ForgotPassword from "./pages/ForgotPassword.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
+import UpiPay from "./pages/UpiPay.tsx";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -129,6 +130,7 @@ const App = () => {
                   </Route>
                 </Route>
                 <Route path="/p/:slug" element={<PublicListing />} />
+                <Route path="/pay" element={<UpiPay />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>

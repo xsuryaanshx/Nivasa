@@ -134,11 +134,8 @@ export function InvoiceGeneratorModal({ open, onClose, tenant, room, roomPayment
       // WhatsApp message
       const addonLines = activeAddons.map(a => `• ${a.name}: ${formatMoney(a.cost, currency, { decimals: 0 })}`);
       const upiId = user?.upiId;
-      const upiUrl = upiId
-        ? `upi://pay?pa=${upiId}&pn=${encodeURIComponent(user.fullName)}&am=${totalDue.toFixed(2)}&tn=${encodeURIComponent(monthYear.replace(/\s+/g, '_'))}&cu=INR`
-        : "";
-      const qrCodeUrl = upiId
-        ? `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(upiUrl)}`
+      const redirectUrl = upiId
+        ? `${window.location.origin}/pay?pa=${upiId}&pn=${encodeURIComponent(user.fullName)}&am=${totalDue.toFixed(2)}&tn=${encodeURIComponent(monthYear.replace(/\s+/g, '_'))}`
         : "";
 
       const lines = [
@@ -156,8 +153,7 @@ export function InvoiceGeneratorModal({ open, onClose, tenant, room, roomPayment
         ...(upiId ? [
           ``,
           `⚡ *Pay Instantly via UPI:*`,
-          `• Click to pay on mobile: ${upiUrl}`,
-          `• Or scan this QR code: ${qrCodeUrl}`
+          `• Click here to pay: ${redirectUrl}`
         ] : [])
       ];
 
