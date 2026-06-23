@@ -82,15 +82,7 @@ export default function Maintenance() {
       } else {
         clearInterval(interval);
 
-        const fileName = file.name.toLowerCase();
-        const fileSize = file.size;
-        let prefilledData = {
-          title: "Lorem Ipsum Store",
-          cost: 16.5,
-          category: "other" as any,
-          description: `Extracted from receipt:\n- Lorem (₹1.1)\n- Ipsum (₹2.2)\n- Dolor sit amet (₹3.3)\n- Consectetur (₹4.4)\n- Adipiscing elit (₹5.5)\n\nMerchant: SHOP NAME\nTotal: ₹16.5\nDate: ${format(new Date(), "MMM d, yyyy")}`
-        };
-
+        let prefilledData = null;
         const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
         if (GEMINI_API_KEY) {
@@ -159,95 +151,27 @@ export default function Maintenance() {
               };
             }
           } catch (error) {
-            console.error("AI scanning failed, falling back to mock scanner:", error);
-            toast.error("AI Scanning failed, using local fallback.");
+            console.error("AI scanning failed:", error);
+            toast.error("Failed to scan receipt. Please make sure the image is clear and try again.");
           }
+        } else {
+          toast.error("AI Receipt Scanner is not configured. Please add your Gemini API Key.");
         }
-
-        // Fallback local mock logic if Gemini key is missing or failed to parse
-        if (!GEMINI_API_KEY || (prefilledData.title === "Lorem Ipsum Store" && prefilledData.cost === 16.5)) {
-          if (
-            fileSize === 63984 ||
-            fileName.includes("plywood") ||
-            fileName.includes("coimbatore") ||
-            fileName.includes("umarani") ||
-            fileName.includes("ply") ||
-            fileName.includes("1.webp") ||
-            fileName === "1" ||
-            (fileName.includes("metro") && fileName.includes("hardware"))
-          ) {
-            prefilledData = {
-              title: "Metro Hardware & Plywood",
-              cost: 7000,
-              category: "maintenance" as any,
-              description: `Extracted from receipt:\n- 19x20x4 cut (₹1150)\n- 19x20x6 Plain (₹1950)\n- 19x20x8 Plain (₹3150)\n- CGST & SGST 12% (₹750)\n\nMerchant: METRO HARDWARE & PLYWOOD\nTotal: ₹7000\nDate: Oct 19, 2020`
-            };
-          } else if (fileName.includes("plumb") || fileName.includes("pipe") || fileName.includes("leak") || fileName.includes("tap")) {
-            prefilledData = {
-              title: "Plumbing Supplies - Supreme Hardware",
-              cost: 2450,
-              category: "maintenance" as any,
-              description: `Extracted from receipt:\n- 1x PVC Joint Pipe (₹850)\n- 2x Heavy Duty Tape (₹300)\n- 1x Brass Ball Valve (₹1300)\n\nMerchant: Supreme Hardware Co.\nDate: ${format(new Date(), "MMM d, yyyy")}`
-            };
-          } else if (fileName.includes("power") || fileName.includes("elec") || fileName.includes("bill") || fileName.includes("light")) {
-            prefilledData = {
-              title: "Electricity Bill - Tata Power",
-              cost: 8430,
-              category: "utility" as any,
-              description: `Extracted from bill:\n- Billing Period: May 2026\n- Consumer Number: 102938475\n- Energy Charges: ₹8,430\n\nMerchant: Tata Power Ltd.\nDate: ${format(new Date(), "MMM d, yyyy")}`
-            };
-          } else if (fileName.includes("hardware") || fileName.includes("tool") || fileName.includes("metro")) {
-            prefilledData = {
-              title: "Hardware Supplies - Metro Tools",
-              cost: 1420,
-              category: "maintenance" as any,
-              description: `Extracted from receipt:\n- 1x Steel Screwdriver Set (₹450)\n- 50x Anchor Bolts (₹350)\n- 1x Measuring Tape (₹620)\n\nMerchant: Metro Tools & Fasteners\nDate: ${format(new Date(), "MMM d, yyyy")}`
-            };
-          } else if (
-            fileName.includes("radha") ||
-            fileName.includes("madhav") ||
-            fileName.includes("tile") ||
-            fileName.includes("cleaner") ||
-            fileName.includes("1200") ||
-            fileName.includes("annapurna") ||
-            fileName.includes("indore")
-          ) {
-            prefilledData = {
-              title: "Radha Madhav Enterprises",
-              cost: 1200,
-              category: "maintenance" as any,
-              description: `Extracted from receipt:\n- 12x Ri Tile Cleaner 1ltr (₹1017)\n- CGST 9% (₹91.53)\n- SGST 9% (₹91.53)\n- Rounding (₹-0.06)\n\nMerchant: RADHA MADHAV ENTERPRISES\nTotal: ₹1200\nDate: Dec 27, 2024`
-            };
-          } else if (
-            fileSize === 16315 ||
-            fileName.includes("lorem") ||
-            fileName.includes("ipsum") ||
-            fileName.includes("loreum") ||
-            fileName.includes("fake") ||
-            fileName.includes("template") ||
-            fileName.includes("cash")
-          ) {
-            prefilledData = {
-              title: "Lorem Ipsum Store",
-              cost: 16.5,
-              category: "other" as any,
-              description: `Extracted from receipt:\n- Lorem (₹1.1)\n- Ipsum (₹2.2)\n- Dolor sit amet (₹3.3)\n- Consectetur (₹4.4)\n- Adipiscing elit (₹5.5)\n\nMerchant: SHOP NAME\nTotal: ₹16.5\nDate: ${format(new Date(), "MMM d, yyyy")}`
-            };
-          }
-        }
-
-        // Set the state
-        setNewRequest((prev) => ({
-          ...prev,
-          ...prefilledData,
-        }));
 
         setIsScanning(false);
-        setIsAddModalOpen(true);
 
-        toast.success("AI scanned receipt successfully!", {
-          description: `Prefilled: ${prefilledData.title} (₹${prefilledData.cost.toLocaleString()})`
-        });
+        if (prefilledData) {
+          // Set the state
+          setNewRequest((prev) => ({
+            ...prev,
+            ...prefilledData,
+          }));
+
+          setIsAddModalOpen(true);
+          toast.success("AI scanned receipt successfully!", {
+            description: `Prefilled: ${prefilledData.title} (₹${prefilledData.cost.toLocaleString()})`
+          });
+        }
 
         // Reset file input
         if (fileInputRef.current) fileInputRef.current.value = "";
