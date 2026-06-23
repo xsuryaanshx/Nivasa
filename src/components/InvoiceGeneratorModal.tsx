@@ -137,6 +137,9 @@ export function InvoiceGeneratorModal({ open, onClose, tenant, room, roomPayment
       const upiUrl = upiId
         ? `upi://pay?pa=${upiId}&pn=${encodeURIComponent(user.fullName)}&am=${totalDue.toFixed(2)}&tn=${encodeURIComponent(monthYear.replace(/\s+/g, '_'))}&cu=INR`
         : "";
+      const qrCodeUrl = upiId
+        ? `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(upiUrl)}`
+        : "";
 
       const lines = [
         `*Nivasa · Invoice — ${monthYear}*`,
@@ -150,7 +153,12 @@ export function InvoiceGeneratorModal({ open, onClose, tenant, room, roomPayment
         ...(previousDues > 0 ? [` `, `*Previous Dues:* ${formatMoney(previousDues, currency, { decimals: 0 })} (Unpaid from last month)`] : []),
         ``,
         `*Total due: ${formatMoney(totalDue, currency, { decimals: 2 })}*`,
-        ...(upiId ? [``, `⚡ Pay instantly using this secure UPI link:`, upiUrl] : [])
+        ...(upiId ? [
+          ``,
+          `⚡ *Pay Instantly via UPI:*`,
+          `• Click to pay on mobile: ${upiUrl}`,
+          `• Or scan this QR code: ${qrCodeUrl}`
+        ] : [])
       ];
 
       if (fixedDate) {
