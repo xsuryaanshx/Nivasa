@@ -1,5 +1,7 @@
 import { motion } from "framer-motion";
-import { ReceiptIndianRupee, MessageCircle, Phone } from "lucide-react";
+import { ReceiptIndianRupee, MessageCircle, Phone, FileText } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { downloadReceiptPdf } from "@/lib/receiptPdf";
 import { StatusPill } from "./StatusPill";
 import { Money } from "./Money";
 import { useCurrency, formatMoney } from "@/lib/currency";
@@ -27,6 +29,7 @@ interface Props {
 export function PaymentTimeline({ payments, dense = false, grouped = true }: Props) {
   const { currency } = useCurrency();
   const { t } = useLanguage();
+  const { user } = useAuth();
 
   const groups = useMemo(() => {
     if (!grouped) return [{ key: "All", items: payments, total: payments.reduce((s, p) => s + p.amount, 0) }];
@@ -106,6 +109,23 @@ export function PaymentTimeline({ payments, dense = false, grouped = true }: Pro
                           >
                             <MessageCircle className="h-3 w-3" /> WhatsApp
                           </button>
+                          {p.status === "paid" && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                try {
+                                  downloadReceiptPdf(p, user?.fullName);
+                                  toast.success("Receipt downloaded successfully");
+                                } catch (err) {
+                                  console.error("PDF generation failed:", err);
+                                  toast.error("Failed to generate PDF receipt");
+                                }
+                              }}
+                              className="inline-flex h-7 shrink-0 items-center gap-1 rounded-lg border border-border bg-card/70 px-2 text-[11px] font-medium text-blue-500 hover:bg-blue-500/5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
+                            >
+                              <FileText className="h-3 w-3" /> Receipt
+                            </button>
+                          )}
                         </>
                       )}
                       <StatusPill status={p.status} />

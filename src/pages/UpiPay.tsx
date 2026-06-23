@@ -30,8 +30,18 @@ export default function UpiPay() {
   useEffect(() => {
     if (!pa) {
       setError("Invalid payment request: Recipient UPI ID is missing.");
+      return;
     }
-  }, [pa]);
+
+    const timestamp = searchParams.get("t");
+    if (timestamp) {
+      const timeElapsed = Date.now() - Number(timestamp);
+      const twelveHours = 12 * 60 * 60 * 1000; // 43200000 ms
+      if (isNaN(timeElapsed) || timeElapsed > twelveHours) {
+        setError("This payment link has expired. Payment links expire 12 hours after generation for security. Please contact your landlord for a new link.");
+      }
+    }
+  }, [pa, searchParams]);
 
   const handlePay = (url: string) => {
     if (url) {

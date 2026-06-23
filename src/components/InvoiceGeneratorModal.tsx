@@ -135,7 +135,7 @@ export function InvoiceGeneratorModal({ open, onClose, tenant, room, roomPayment
       const addonLines = activeAddons.map(a => `• ${a.name}: ${formatMoney(a.cost, currency, { decimals: 0 })}`);
       const upiId = user?.upiId;
       const redirectUrl = upiId
-        ? `${window.location.origin}/pay?pa=${upiId}&pn=${encodeURIComponent(user.fullName)}&am=${totalDue.toFixed(2)}&tn=${encodeURIComponent(monthYear.replace(/\s+/g, '_'))}`
+        ? `${window.location.origin}/pay?pa=${upiId}&pn=${encodeURIComponent(user.fullName)}&am=${totalDue.toFixed(2)}&tn=${encodeURIComponent(monthYear.replace(/\s+/g, '_'))}&t=${Date.now()}`
         : "";
 
       const lines = [
