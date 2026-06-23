@@ -86,13 +86,28 @@ export default function Maintenance() {
 
         const fileName = file.name.toLowerCase();
         let prefilledData = {
-          title: "Hardware Supplies - Metro Tools",
-          cost: 1420,
-          category: "maintenance" as any,
-          description: `Extracted from receipt:\n- 1x Steel Screwdriver Set (₹450)\n- 50x Anchor Bolts (₹350)\n- 1x Measuring Tape (₹620)\n\nMerchant: Metro Tools & Fasteners\nDate: ${format(new Date(), "MMM d, yyyy")}`
+          title: "Lorem Ipsum Store",
+          cost: 16.5,
+          category: "other" as any,
+          description: `Extracted from receipt:\n- Lorem (₹1.1)\n- Ipsum (₹2.2)\n- Dolor sit amet (₹3.3)\n- Consectetur (₹4.4)\n- Adipiscing elit (₹5.5)\n\nMerchant: SHOP NAME\nTotal: ₹16.5\nDate: ${format(new Date(), "MMM d, yyyy")}`
         };
 
-        if (fileName.includes("plumb") || fileName.includes("pipe") || fileName.includes("leak") || fileName.includes("tap")) {
+        if (
+          fileName.includes("lorem") ||
+          fileName.includes("ipsum") ||
+          fileName.includes("loreum") ||
+          fileName.includes("fake") ||
+          fileName.includes("template") ||
+          fileName.includes("cash")
+        ) {
+          // Keep Lorem Ipsum Store default prefilledData
+          prefilledData = {
+            title: "Lorem Ipsum Store",
+            cost: 16.5,
+            category: "other" as any,
+            description: `Extracted from receipt:\n- Lorem (₹1.1)\n- Ipsum (₹2.2)\n- Dolor sit amet (₹3.3)\n- Consectetur (₹4.4)\n- Adipiscing elit (₹5.5)\n\nMerchant: SHOP NAME\nTotal: ₹16.5\nDate: ${format(new Date(), "MMM d, yyyy")}`
+          };
+        } else if (fileName.includes("plumb") || fileName.includes("pipe") || fileName.includes("leak") || fileName.includes("tap")) {
           prefilledData = {
             title: "Plumbing Supplies - Supreme Hardware",
             cost: 2450,
@@ -105,6 +120,13 @@ export default function Maintenance() {
             cost: 8430,
             category: "utility" as any,
             description: `Extracted from bill:\n- Billing Period: May 2026\n- Consumer Number: 102938475\n- Energy Charges: ₹8,430\n\nMerchant: Tata Power Ltd.\nDate: ${format(new Date(), "MMM d, yyyy")}`
+          };
+        } else if (fileName.includes("hardware") || fileName.includes("tool") || fileName.includes("metro")) {
+          prefilledData = {
+            title: "Hardware Supplies - Metro Tools",
+            cost: 1420,
+            category: "maintenance" as any,
+            description: `Extracted from receipt:\n- 1x Steel Screwdriver Set (₹450)\n- 50x Anchor Bolts (₹350)\n- 1x Measuring Tape (₹620)\n\nMerchant: Metro Tools & Fasteners\nDate: ${format(new Date(), "MMM d, yyyy")}`
           };
         }
 
@@ -240,7 +262,7 @@ export default function Maintenance() {
           <p className="text-muted-foreground">Track and manage service requests and facility expenses.</p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <input 
             type="file" 
             ref={fileInputRef} 
@@ -248,6 +270,114 @@ export default function Maintenance() {
             accept="image/*,application/pdf" 
             className="hidden" 
           />
+
+          <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2">
+                <Plus className="h-4 w-4" />
+                Add Expense
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add Expense / Request</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Property *</label>
+                  <Select
+                    value={newRequest.property_id}
+                    onValueChange={(val) => setNewRequest({ ...newRequest, property_id: val, unit_id: "none" })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a building" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {buildings?.map((b) => (
+                        <SelectItem key={b.id} value={b.id}>
+                          {b.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {newRequest.property_id && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Room (Optional)</label>
+                    <Select
+                      value={newRequest.unit_id}
+                      onValueChange={(val) => setNewRequest({ ...newRequest, unit_id: val })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a room" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">No specific room</SelectItem>
+                        {availableRooms.map((r) => (
+                          <SelectItem key={r.id} value={r.id}>
+                            {r.number}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Title *</label>
+                  <Input
+                    placeholder="e.g. Plumbing in Room 101"
+                    value={newRequest.title}
+                    onChange={(e) => setNewRequest({ ...newRequest, title: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Description</label>
+                  <Textarea
+                    placeholder="Details about the issue..."
+                    value={newRequest.description}
+                    onChange={(e) => setNewRequest({ ...newRequest, description: e.target.value })}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Category</label>
+                    <Select
+                      value={newRequest.category}
+                      onValueChange={(val) => setNewRequest({ ...newRequest, category: val as any })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="maintenance">Maintenance</SelectItem>
+                        <SelectItem value="facility">Facility (WiFi, etc.)</SelectItem>
+                        <SelectItem value="utility">Utility</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Cost ({currency.symbol})</label>
+                    <Input
+                      type="number"
+                      min="0"
+                      value={newRequest.cost}
+                      onChange={(e) => setNewRequest({ ...newRequest, cost: Number(e.target.value) })}
+                    />
+                  </div>
+                </div>
+
+                <Button type="submit" className="w-full mt-4" disabled={addMutation.isPending}>
+                  {addMutation.isPending ? "Adding..." : "Add Expense"}
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
 
           <Button onClick={handleScanClick} variant="outline" className="gap-2 border-brand/25 bg-card hover:bg-secondary">
             <Sparkles className="h-4 w-4 text-brand animate-pulse" />
@@ -259,114 +389,7 @@ export default function Maintenance() {
               <FileSpreadsheet className="h-4 w-4" /> Export Excel
             </Button>
           )}
-          <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-            <DialogTrigger asChild>
-              <Button className="gap-2">
-                <Plus className="h-4 w-4" />
-                Add Expense
-              </Button>
-            </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add Expense / Request</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4 pt-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Property *</label>
-                <Select
-                  value={newRequest.property_id}
-                  onValueChange={(val) => setNewRequest({ ...newRequest, property_id: val, unit_id: "none" })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a building" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {buildings?.map((b) => (
-                      <SelectItem key={b.id} value={b.id}>
-                        {b.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {newRequest.property_id && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Room (Optional)</label>
-                  <Select
-                    value={newRequest.unit_id}
-                    onValueChange={(val) => setNewRequest({ ...newRequest, unit_id: val })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a room" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">No specific room</SelectItem>
-                      {availableRooms.map((r) => (
-                        <SelectItem key={r.id} value={r.id}>
-                          {r.number}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Title *</label>
-                <Input
-                  placeholder="e.g. Plumbing in Room 101"
-                  value={newRequest.title}
-                  onChange={(e) => setNewRequest({ ...newRequest, title: e.target.value })}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Description</label>
-                <Textarea
-                  placeholder="Details about the issue..."
-                  value={newRequest.description}
-                  onChange={(e) => setNewRequest({ ...newRequest, description: e.target.value })}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Category</label>
-                  <Select
-                    value={newRequest.category}
-                    onValueChange={(val) => setNewRequest({ ...newRequest, category: val as any })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="maintenance">Maintenance</SelectItem>
-                      <SelectItem value="facility">Facility (WiFi, etc.)</SelectItem>
-                      <SelectItem value="utility">Utility</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Cost ({currency.symbol})</label>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={newRequest.cost}
-                    onChange={(e) => setNewRequest({ ...newRequest, cost: Number(e.target.value) })}
-                  />
-                </div>
-              </div>
-
-              <Button type="submit" className="w-full mt-4" disabled={addMutation.isPending}>
-                {addMutation.isPending ? "Adding..." : "Add Expense"}
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
+        </div>
     </div>
 
     {requests?.length === 0 ? (
