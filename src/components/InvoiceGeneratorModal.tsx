@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { useCurrency, formatMoney } from "@/lib/currency";
 import { openWhatsApp } from "@/lib/whatsapp";
 import { getTenantExpenses, getCustomExpenses } from "@/lib/expensesStore";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Props {
   open: boolean;
@@ -20,6 +21,7 @@ interface Props {
 
 export function InvoiceGeneratorModal({ open, onClose, tenant, room, roomPayments, electricityCost }: Props) {
   const { currency } = useCurrency();
+  const { user } = useAuth();
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
 
@@ -131,6 +133,11 @@ export function InvoiceGeneratorModal({ open, onClose, tenant, room, roomPayment
       
       // WhatsApp message
       const addonLines = activeAddons.map(a => `• ${a.name}: ${formatMoney(a.cost, currency, { decimals: 0 })}`);
+      const upiId = user?.upiId;
+      const upiUrl = upiId
+        ? `upi://pay?pa=${upiId}&pn=${encodeURIComponent(user.fullName)}&am=${totalDue.toFixed(2)}&tn=${encodeURIComponent(monthYear.replace(/\s+/g, '_'))}&cu=INR`
+        : "";
+
       const lines = [
         `*Nivasa · Invoice — ${monthYear}*`,
         ``,
@@ -142,7 +149,8 @@ export function InvoiceGeneratorModal({ open, onClose, tenant, room, roomPayment
         ...addonLines,
         ...(previousDues > 0 ? [` `, `*Previous Dues:* ${formatMoney(previousDues, currency, { decimals: 0 })} (Unpaid from last month)`] : []),
         ``,
-        `*Total due: ${formatMoney(totalDue, currency, { decimals: 2 })}*`
+        `*Total due: ${formatMoney(totalDue, currency, { decimals: 2 })}*`,
+        ...(upiId ? [``, `⚡ Pay instantly using this secure UPI link:`, upiUrl] : [])
       ];
 
       if (fixedDate) {
@@ -287,6 +295,29 @@ export function InvoiceGeneratorModal({ open, onClose, tenant, room, roomPayment
             </div>
           )}
         </div>
+
+        {(() => {
+          const upiId = user?.upiId;
+          const upiUrl = upiId
+            ? `upi://pay?pa=${upiId}&pn=${encodeURIComponent(user.fullName)}&am=${totalDue.toFixed(2)}&tn=${encodeURIComponent(monthYear.replace(/\s+/g, '_'))}&cu=INR`
+            : "";
+          if (!upiId) return null;
+          return (
+            <div className="flex flex-col items-center justify-center p-4 rounded-xl border border-border bg-card/50 space-y-3">
+              <div className="relative p-2 bg-white rounded-lg border border-border shadow-soft flex items-center justify-center">
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(upiUrl)}`}
+                  alt="UPI QR Code"
+                  className="h-36 w-36"
+                />
+              </div>
+              <div className="text-center">
+                <p className="text-xs font-bold text-foreground">Scan QR to pay exactly {formatMoney(totalDue, currency)}</p>
+                <p className="text-[9px] text-muted-foreground tracking-wide font-mono mt-0.5 truncate max-w-xs">{upiId}</p>
+              </div>
+            </div>
+          );
+        })()}
 
         <div className="flex gap-3">
           <MagneticButton

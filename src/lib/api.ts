@@ -83,7 +83,7 @@ const auth = {
     const { data } = await supabase.auth.getSession();
     return data.session;
   },
-  updateProfile: async (updates: { full_name?: string }) => {
+  updateProfile: async (updates: { full_name?: string; upi_id?: string }) => {
     const { data, error } = await supabase.auth.updateUser({ data: updates });
     if (error) throw error;
     return data;

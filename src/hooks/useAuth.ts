@@ -13,9 +13,10 @@ export interface AuthUser {
   initials: string;
   /** First name only */
   firstName: string;
+  upiId?: string;
 }
 
-function buildUser(raw: { id: string; email: string; fullName: string }): AuthUser {
+function buildUser(raw: { id: string; email: string; fullName: string; upiId?: string }): AuthUser {
   const full = (raw.fullName || raw.email.split("@")[0] || "User").trim();
   const parts = full.split(/\s+/);
   const initials = parts
@@ -28,6 +29,7 @@ function buildUser(raw: { id: string; email: string; fullName: string }): AuthUs
     fullName: full,
     initials,
     firstName: parts[0] || full,
+    upiId: raw.upiId,
   };
 }
 
@@ -39,7 +41,8 @@ export function useAuth() {
       const session = await nivasaApi.auth.getSession();
       if (session?.user) {
         const fullName = session.user.user_metadata?.full_name || session.user.email?.split("@")[0] || "User";
-        setUser(buildUser({ id: session.user.id, email: session.user.email || "", fullName }));
+        const upiId = session.user.user_metadata?.upi_id || localStorage.getItem("nivasa_user_upi_id") || undefined;
+        setUser(buildUser({ id: session.user.id, email: session.user.email || "", fullName, upiId }));
       } else {
         setUser(null);
       }
@@ -56,7 +59,8 @@ export function useAuth() {
             session.user.user_metadata?.full_name ||
             session.user.email?.split("@")[0] ||
             "User";
-          setUser(buildUser({ id: session.user.id, email: session.user.email || "", fullName }));
+          const upiId = session.user.user_metadata?.upi_id || localStorage.getItem("nivasa_user_upi_id") || undefined;
+          setUser(buildUser({ id: session.user.id, email: session.user.email || "", fullName, upiId }));
         } else {
           setUser(null);
         }
@@ -72,6 +76,7 @@ export function useAuth() {
   const clearNivasaStorage = () => {
     const keysToRemove = [
       "nivasa_user_name",
+      "nivasa_user_upi_id",
       "nivasa_no_remember",
       "nivasa_fail_count",
       "nivasa_lock_until",

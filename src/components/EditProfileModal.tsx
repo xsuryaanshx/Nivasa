@@ -2,7 +2,7 @@ import { nivasaApi } from "@/lib/api";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, User, Mail, Save } from "lucide-react";
+import { X, User, Mail, Save, Smartphone } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
@@ -10,12 +10,14 @@ export function EditProfileModal({ open, onClose }: { open: boolean; onClose: ()
   const { user } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [upiId, setUpiId] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (user && open) {
       setName(user.fullName || "");
       setEmail(user.email || "");
+      setUpiId(user.upiId || "");
     }
   }, [user, open]);
 
@@ -25,13 +27,14 @@ export function EditProfileModal({ open, onClose }: { open: boolean; onClose: ()
       if (nivasaApi?.auth) {
         const session = await nivasaApi.auth.getSession();
         if (session?.user) {
-          await nivasaApi.auth.updateProfile({ full_name: name });
+          await nivasaApi.auth.updateProfile({ full_name: name, upi_id: upiId });
           toast.success("Profile updated successfully!");
           setTimeout(() => {
             window.location.reload();
           }, 1000);
         } else {
           localStorage.setItem("nivasa_user_name", name);
+          localStorage.setItem("nivasa_user_upi_id", upiId);
           toast.success("Profile updated (local)!");
           setTimeout(() => {
             window.location.reload();
@@ -96,6 +99,20 @@ export function EditProfileModal({ open, onClose }: { open: boolean; onClose: ()
                       placeholder="Your name"
                     />
                   </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">UPI ID for Payments</label>
+                  <div className="relative">
+                    <Smartphone className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <input
+                      value={upiId}
+                      onChange={(e) => setUpiId(e.target.value.trim())}
+                      className="w-full rounded-xl border border-border bg-background py-2 pl-9 pr-4 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
+                      placeholder="e.g. landlord@okaxis"
+                    />
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">Used to generate dynamic UPI payment QR codes</p>
                 </div>
 
                 <div className="space-y-1.5">

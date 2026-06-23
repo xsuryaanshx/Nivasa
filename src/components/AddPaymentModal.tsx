@@ -12,6 +12,7 @@ import { useCurrency } from "@/lib/currency";
 import { cn, calculateTenantShare } from "@/lib/utils";
 import { toast } from "sonner";
 import { useLanguage } from "./LanguageProvider";
+import { useAuth } from "@/hooks/useAuth";
 
 type Method = "Bank" | "UPI" | "Cash";
 
@@ -38,6 +39,7 @@ interface Props {
 export function AddPaymentModal({ open, onClose, defaultRoomId, defaultTenantId, defaultAmount }: Props) {
   const { currency } = useCurrency();
   const { t } = useLanguage();
+  const { user } = useAuth();
 
   // Building + Room cascade
   const [buildingsList, setBuildingsList] = useState<any[]>([]);
@@ -442,6 +444,38 @@ export function AddPaymentModal({ open, onClose, defaultRoomId, defaultTenantId,
               </div>
             </Field>
           </div>
+
+          {/* UPI QR Code */}
+          {method === "UPI" && amountValue > 0 && (() => {
+            const upiId = user?.upiId;
+            const upiUrl = upiId
+              ? `upi://pay?pa=${upiId}&pn=${encodeURIComponent(user.fullName)}&am=${amountValue}&tn=${encodeURIComponent(note || 'Rent')}&cu=INR`
+              : "";
+            return (
+              <div className="flex flex-col items-center justify-center p-4 rounded-xl border border-border bg-card/50 space-y-3">
+                {upiId ? (
+                  <>
+                    <div className="relative p-2 bg-white rounded-lg border border-border shadow-soft flex items-center justify-center">
+                      <img
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(upiUrl)}`}
+                        alt="UPI QR Code"
+                        className="h-40 w-40"
+                      />
+                    </div>
+                    <div className="text-center space-y-1">
+                      <p className="text-xs font-bold text-foreground">Scan QR to pay exactly ₹{amountValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}</p>
+                      <p className="text-[10px] text-muted-foreground tracking-wide font-mono truncate max-w-xs">{upiId}</p>
+                    </div>
+                  </>
+                ) : (
+                  <div className="w-full p-3 rounded-lg border border-amber-500/20 bg-amber-500/5 text-center text-xs text-amber-600 dark:text-amber-500">
+                    <p className="font-semibold">UPI ID not configured</p>
+                    <p className="text-[10px] text-muted-foreground mt-1">Please enter your UPI ID in Profile Settings to generate payment QR codes.</p>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {/* Summary */}
           <div className="flex items-center justify-between rounded-xl bg-secondary/50 px-3.5 py-2.5">
