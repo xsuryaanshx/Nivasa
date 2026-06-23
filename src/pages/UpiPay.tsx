@@ -139,56 +139,56 @@ export default function UpiPay() {
             {/* Google Pay */}
             <Button
               onClick={() => handlePay(gpayUrl)}
-              className="w-full h-12 justify-start px-4 text-sm font-medium rounded-xl border border-blue-500/10 bg-blue-500/5 hover:bg-blue-500/10 text-white hover:text-white"
+              className="w-full h-12 justify-start px-4 text-sm font-medium rounded-xl border border-blue-500/20 bg-blue-500/5 hover:bg-blue-500/10 text-foreground"
             >
-              <div className="mr-3 flex h-7 w-7 items-center justify-center rounded-lg bg-white p-1 shrink-0">
+              <div className="mr-3 flex h-7 w-7 items-center justify-center rounded-lg bg-white p-1.5 shrink-0 shadow-sm border border-border">
                 <svg viewBox="0 0 24 24" className="h-5 w-5">
                   <path fill="#4285F4" d="M12.24 10.285V14.4h6.887c-.648 2.41-2.519 4.114-5.136 4.114-3.478 0-6.3-2.822-6.3-6.3 0-3.478 2.822-6.3 6.3-6.3 1.637 0 3.129.624 4.26 1.65l3.059-3.059C19.394 2.824 16.34 1.5 12.99 1.5 6.643 1.5 1.5 6.643 1.5 12.99s5.143 11.49 11.49 11.49c6.386 0 11.835-4.577 11.835-11.49 0-.785-.078-1.543-.225-2.28H12.24z"/>
                 </svg>
               </div>
               Google Pay
-              <ExternalLink className="ml-auto h-4 w-4 opacity-50" />
+              <ExternalLink className="ml-auto h-4 w-4 opacity-40 text-muted-foreground" />
             </Button>
 
             {/* PhonePe */}
             <Button
               onClick={() => handlePay(phonepeUrl)}
-              className="w-full h-12 justify-start px-4 text-sm font-medium rounded-xl border border-purple-500/10 bg-purple-500/5 hover:bg-purple-500/10 text-white hover:text-white"
+              className="w-full h-12 justify-start px-4 text-sm font-medium rounded-xl border border-purple-500/20 bg-purple-500/5 hover:bg-purple-500/10 text-foreground"
             >
-              <div className="mr-3 flex h-7 w-7 items-center justify-center rounded-lg bg-white p-1 shrink-0">
+              <div className="mr-3 flex h-7 w-7 items-center justify-center rounded-lg bg-white p-1.5 shrink-0 shadow-sm border border-border">
                 <svg viewBox="0 0 24 24" className="h-5 w-5">
                   <path fill="#5f259f" d="M19.5 3h-15C3.67 3 3 3.67 3 4.5v15c0 .83.67 1.5 1.5 1.5h15c.83 0 1.5-.67 1.5-1.5v-15c0-.83-.67-1.5-1.5-1.5zM12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6zm3-6h-2V9c0-.55-.45-1-1-1s-1 .45-1 1v3c0 .55.45 1 1 1h3c.55 0 1-.45 1-1s-.45-1-1-1z"/>
                 </svg>
               </div>
               PhonePe
-              <ExternalLink className="ml-auto h-4 w-4 opacity-50" />
+              <ExternalLink className="ml-auto h-4 w-4 opacity-40 text-muted-foreground" />
             </Button>
 
             {/* Paytm */}
             <Button
               onClick={() => handlePay(paytmUrl)}
-              className="w-full h-12 justify-start px-4 text-sm font-medium rounded-xl border border-sky-500/10 bg-sky-500/5 hover:bg-sky-500/10 text-white hover:text-white"
+              className="w-full h-12 justify-start px-4 text-sm font-medium rounded-xl border border-sky-500/20 bg-sky-500/5 hover:bg-sky-500/10 text-foreground"
             >
-              <div className="mr-3 flex h-7 w-7 items-center justify-center rounded-lg bg-white p-1 shrink-0">
+              <div className="mr-3 flex h-7 w-7 items-center justify-center rounded-lg bg-white p-1.5 shrink-0 shadow-sm border border-border">
                 <svg viewBox="0 0 24 24" className="h-5 w-5">
                   <path fill="#00baf2" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
                 </svg>
               </div>
               Paytm
-              <ExternalLink className="ml-auto h-4 w-4 opacity-50" />
+              <ExternalLink className="ml-auto h-4 w-4 opacity-40 text-muted-foreground" />
             </Button>
 
             {/* Generic UPI */}
             <Button
               onClick={() => handlePay(genericUpiUrl)}
               variant="outline"
-              className="w-full h-12 justify-start px-4 text-sm font-medium rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white hover:text-white"
+              className="w-full h-12 justify-start px-4 text-sm font-medium rounded-xl border border-border bg-card hover:bg-muted text-foreground"
             >
-              <div className="mr-3 flex h-7 w-7 items-center justify-center rounded-lg bg-white/10 p-1.5 shrink-0 text-white">
+              <div className="mr-3 flex h-7 w-7 items-center justify-center rounded-lg bg-muted p-1.5 shrink-0 text-muted-foreground border border-border">
                 <Smartphone className="h-4 w-4" />
               </div>
               Other UPI Apps (Default)
-              <ExternalLink className="ml-auto h-4 w-4 opacity-50" />
+              <ExternalLink className="ml-auto h-4 w-4 opacity-40 text-muted-foreground" />
             </Button>
           </div>
         </div>
