@@ -1087,10 +1087,9 @@ async function getElectricityRate(): Promise<number> {
     const { data, error } = await supabase
       .from("user_settings")
       .select("*")
-      .eq("user_id", user_id)
-      .single();
-    if (error || !data || !(data as any).electricity_rate) return 0.18;
-    return parseFloat((data as any).electricity_rate) || 0.18;
+      .eq("user_id", user_id);
+    if (error || !data || data.length === 0 || !(data[0] as any).electricity_rate) return 0.18;
+    return parseFloat((data[0] as any).electricity_rate) || 0.18;
   } catch (error) {
     return 0.18;
   }
@@ -1428,10 +1427,9 @@ async function getUserSettings() {
     const { data, error } = await supabase
       .from("user_settings")
       .select("*")
-      .eq("user_id", user_id)
-      .single();
-    if (error && error.code !== 'PGRST116') throw error; // ignore no rows
-    return data;
+      .eq("user_id", user_id);
+    if (error) throw error;
+    return data && data.length > 0 ? data[0] : null;
   } catch (error) {
     safeLog("getUserSettings", error);
     throw error;
