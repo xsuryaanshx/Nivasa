@@ -9,6 +9,7 @@ import { useCurrency, formatMoney } from "@/lib/currency";
 import { openWhatsApp } from "@/lib/whatsapp";
 import { getTenantExpenses, getCustomExpenses } from "@/lib/expensesStore";
 import { useAuth } from "@/hooks/useAuth";
+import { downloadInvoicePdf } from "@/lib/receiptPdf";
 
 interface Props {
   open: boolean;
@@ -130,6 +131,13 @@ export function InvoiceGeneratorModal({ open, onClose, tenant, room, roomPayment
         total_due: totalDue
       };
       await nivasaApi.createInvoice(invoiceData);
+
+      // Download the PDF Invoice
+      try {
+        await downloadInvoicePdf(invoiceData, tenant, room, user?.fullName || "Nivasa Landlord", upiId);
+      } catch (err) {
+        console.error("Failed to generate and download PDF invoice:", err);
+      }
       
       // WhatsApp message
       const addonLines = activeAddons.map(a => `• ${a.name}: ${formatMoney(a.cost, currency, { decimals: 0 })}`);
