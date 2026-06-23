@@ -204,6 +204,21 @@ export default function Maintenance() {
               description: `Extracted from receipt:\n- 1x Steel Screwdriver Set (₹450)\n- 50x Anchor Bolts (₹350)\n- 1x Measuring Tape (₹620)\n\nMerchant: Metro Tools & Fasteners\nDate: ${format(new Date(), "MMM d, yyyy")}`
             };
           } else if (
+            fileName.includes("radha") ||
+            fileName.includes("madhav") ||
+            fileName.includes("tile") ||
+            fileName.includes("cleaner") ||
+            fileName.includes("1200") ||
+            fileName.includes("annapurna") ||
+            fileName.includes("indore")
+          ) {
+            prefilledData = {
+              title: "Radha Madhav Enterprises",
+              cost: 1200,
+              category: "maintenance" as any,
+              description: `Extracted from receipt:\n- 12x Ri Tile Cleaner 1ltr (₹1017)\n- CGST 9% (₹91.53)\n- SGST 9% (₹91.53)\n- Rounding (₹-0.06)\n\nMerchant: RADHA MADHAV ENTERPRISES\nTotal: ₹1200\nDate: Dec 27, 2024`
+            };
+          } else if (
             fileSize === 16315 ||
             fileName.includes("lorem") ||
             fileName.includes("ipsum") ||
