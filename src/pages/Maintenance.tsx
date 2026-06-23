@@ -63,7 +63,9 @@ export default function Maintenance() {
   ];
 
   const handleScanClick = () => {
-    fileInputRef.current?.click();
+    toast("Scan Receipt", {
+      description: "AI receipt scanning will be available in an upcoming update."
+    });
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
