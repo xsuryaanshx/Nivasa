@@ -140,40 +140,18 @@ export function InvoiceGeneratorModal({ open, onClose, tenant, room, roomPayment
       }
       
       // WhatsApp message
-      const addonLines = activeAddons.map(a => `• ${a.name}: ${formatMoney(a.cost, currency, { decimals: 0 })}`);
-       const upiId = user?.upiId;
-      const redirectUrl = upiId
-        ? `${window.location.origin}/pay?pa=${upiId}&pn=${encodeURIComponent(user.fullName)}&am=${totalDue.toFixed(2)}&tn=${encodeURIComponent(monthYear.replace(/\s+/g, '_'))}&t=${Date.now()}`
-        : "";
       const portalUrl = `${window.location.origin}/register`;
 
       const lines = [
-        `*Nivasa · Invoice — ${monthYear}*`,
+        `*Nivasa · Payment Reminder*`,
         ``,
         `Hi ${tenant.name},`,
-        `Here is your bill for Room ${room.number}, ${room.buildingName}:`,
+        `Please clear your outstanding dues of *${formatMoney(totalDue, currency, { decimals: 2 })}* for *${monthYear}*.`,
         ``,
-        `• Rent: ${formatMoney(baseRent, currency, { decimals: 0 })}`,
-        `• Electricity total: ${formatMoney(elecCost, currency, { decimals: 2 })}`,
-        ...addonLines,
-        ...(previousDues > 0 ? [` `, `*Previous Dues:* ${formatMoney(previousDues, currency, { decimals: 0 })} (Unpaid from last month)`] : []),
+        `🔗 *View details & pay/upload receipt here:* ${portalUrl}`,
         ``,
-        `*Total due: ${formatMoney(totalDue, currency, { decimals: 2 })}*`,
-        ...(upiId ? [
-          ``,
-          `⚡ *Pay Instantly via UPI:*`,
-          `• Click here to pay: ${redirectUrl}`
-        ] : []),
-        ``,
-        `📱 *Nivasa Resident Portal:*`,
-        `• View details & upload payment receipt to verify: ${portalUrl}`
+        `Thanks!`
       ];
-
-      if (fixedDate) {
-        lines.push(``, `Please submit the rent by the ${fixedDate}th of this month.`);
-      }
-
-      lines.push(``, `Reply here if you have any questions. Thanks!`);
 
       const phone = tenant.whatsapp_number || tenant.phone;
       if (phone) {
@@ -312,28 +290,7 @@ export function InvoiceGeneratorModal({ open, onClose, tenant, room, roomPayment
           )}
         </div>
 
-        {(() => {
-          const upiId = user?.upiId;
-          const upiUrl = upiId
-            ? `upi://pay?pa=${upiId}&pn=${encodeURIComponent(user.fullName)}&am=${totalDue.toFixed(2)}&tn=${encodeURIComponent(monthYear.replace(/\s+/g, '_'))}&cu=INR`
-            : "";
-          if (!upiId) return null;
-          return (
-            <div className="flex flex-col items-center justify-center p-4 rounded-xl border border-border bg-card/50 space-y-3">
-              <div className="relative p-2 bg-white rounded-lg border border-border shadow-soft flex items-center justify-center">
-                <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(upiUrl)}`}
-                  alt="UPI QR Code"
-                  className="h-36 w-36"
-                />
-              </div>
-              <div className="text-center">
-                <p className="text-xs font-bold text-foreground">Scan QR to pay exactly {formatMoney(totalDue, currency)}</p>
-                <p className="text-[9px] text-muted-foreground tracking-wide font-mono mt-0.5 truncate max-w-xs">{upiId}</p>
-              </div>
-            </div>
-          );
-        })()}
+
 
         <div className="flex gap-3">
           <MagneticButton
