@@ -139,7 +139,7 @@ export default function TenantDashboard() {
         }
       }
 
-      const outstandingAmount = activeInvoice ? (activeInvoice.total_amount || activeInvoice.base_rent || 0) : 0;
+      const outstandingAmount = activeInvoice ? (Number(activeInvoice.total_amount || 0) + Number(activeInvoice.electricity_cost || 0)) : 0;
       const exactMatch = matches.find(amt => amt === outstandingAmount);
       if (exactMatch) {
         detectedAmount = exactMatch;
@@ -176,7 +176,7 @@ export default function TenantDashboard() {
       console.error("OCR Scan failed:", err);
       toast.error("Scanning failed. Please verify details manually.");
       setOcrResult({ file });
-      setManualAmount(activeInvoice ? String(activeInvoice.total_amount || activeInvoice.base_rent || 0) : "");
+      setManualAmount(activeInvoice ? String(Number(activeInvoice.total_amount || 0) + Number(activeInvoice.electricity_cost || 0)) : "");
       setManualUtr("");
       setManualDate(new Date().toISOString().slice(0, 10));
       setOcrConfirmOpen(true);
@@ -257,7 +257,7 @@ export default function TenantDashboard() {
   const handlePayClick = (invoice: any) => {
     const upiId = tenant?.building?.upi_id || "payment@nivasa"; // fallback placeholder
     const landlordName = tenant?.building?.name || "Nivasa Landlord";
-    const amount = invoice.total_amount || invoice.base_rent || 0;
+    const amount = Number(invoice.total_amount || 0) + Number(invoice.electricity_cost || 0);
     const purpose = `${invoice.billing_month}_Rent_Payment`;
 
     // Redirect to secure pay page
@@ -339,7 +339,7 @@ export default function TenantDashboard() {
                 <div>
                   <div className="text-xs text-muted-foreground uppercase font-semibold tracking-wider">Total Amount Due</div>
                   <div className="text-3xl font-extrabold text-foreground mt-0.5">
-                    ₹{(activeInvoice.total_amount || 0).toLocaleString()}
+                    ₹{(Number(activeInvoice.total_amount || 0) + Number(activeInvoice.electricity_cost || 0)).toLocaleString()}
                   </div>
                 </div>
                 
@@ -367,6 +367,12 @@ export default function TenantDashboard() {
                   <span className="text-muted-foreground block text-xs">Base Rent</span>
                   <span className="font-semibold text-foreground">₹{(activeInvoice.base_rent || 0).toLocaleString()}</span>
                 </div>
+                {Number(activeInvoice.electricity_cost || 0) > 0 && (
+                  <div>
+                    <span className="text-muted-foreground block text-xs">Electricity</span>
+                    <span className="font-semibold text-foreground">₹{(activeInvoice.electricity_cost || 0).toLocaleString()}</span>
+                  </div>
+                )}
                 <div>
                   <span className="text-muted-foreground block text-xs">Utility/Addons</span>
                   <span className="font-semibold text-foreground">₹{(activeInvoice.addons_total || 0).toLocaleString()}</span>
@@ -475,7 +481,7 @@ export default function TenantDashboard() {
             </div>
 
             <div className="p-5 space-y-4 flex-1 overflow-y-auto">
-              {ocrResult?.amount === (activeInvoice?.total_amount || activeInvoice?.base_rent) ? (
+              {ocrResult?.amount === (Number(activeInvoice?.total_amount || 0) + Number(activeInvoice?.electricity_cost || 0)) ? (
                 <div className="rounded-xl p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-xs font-semibold flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 shrink-0" />
                   Exact match found for your outstanding rent invoice!

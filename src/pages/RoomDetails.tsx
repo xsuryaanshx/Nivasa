@@ -436,17 +436,18 @@ export default function RoomDetails() {
                 const currentBase = t.rent_amount ? Number(t.rent_amount) : calculateTenantShare(room);
                 const fallbackMonthlyDue = currentBase + currentAddons;
                 
-                // If the invoice hasn't generated yet or DB failed, assume they owe at least this month
-                let totalDueHistorical = invoicesForTenant.reduce((sum, i) => sum + (Number(i.total_amount) || 0), 0);
-                
-                // Add the dynamic electricity cost for the current month
-                totalDueHistorical += cost;
+                // Sum up historical invoices (base_rent + addons_total) and their electricity_cost column
+                let totalDueHistorical = invoicesForTenant.reduce(
+                  (sum, i) => sum + (Number(i.total_amount) || 0) + (Number(i.electricity_cost) || 0), 
+                  0
+                );
                 
                 // Add deposit amount to the total due
                 totalDueHistorical += Number(t.depositAmount || 0);
                 
+                // If the invoice hasn't generated yet or DB failed, assume they owe at least this month (rent + addons + dynamic electricity cost)
                 if (!currentInvoice) {
-                  totalDueHistorical += fallbackMonthlyDue;
+                  totalDueHistorical += fallbackMonthlyDue + cost;
                 }
                 
                 const allTenantPayments = roomPayments.filter(p => p.tenantId === t.id && p.status === "paid");
@@ -455,14 +456,17 @@ export default function RoomDetails() {
                 const tenantPaymentsThisMonth = roomPayments.filter(p => p.tenantId === t.id && String(p.date).startsWith(currentMonth) && p.status === "paid");
                 const totalPaidThisMonth = tenantPaymentsThisMonth.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
                 
-                const pastDueHistorical = totalDueHistorical - ((currentInvoice ? Number(currentInvoice.total_amount) : fallbackMonthlyDue) + cost);
+                const currentMonthDue = currentInvoice 
+                  ? (Number(currentInvoice.total_amount) || 0) + (Number(currentInvoice.electricity_cost) || 0)
+                  : fallbackMonthlyDue + cost;
+                const pastDueHistorical = totalDueHistorical - currentMonthDue;
                 const pastPaidHistorical = totalPaidHistorical - totalPaidThisMonth;
                 const carryForwardBalance = pastDueHistorical - pastPaidHistorical;
                 
                 const netBalance = totalDueHistorical - totalPaidHistorical;
                 const remainingAmount = Math.max(0, netBalance);
                 
-                const monthlyDue = (currentInvoice ? Number(currentInvoice.total_amount) : fallbackMonthlyDue) + cost;
+                const monthlyDue = currentMonthDue;
                 const totalAddons = currentInvoice ? Number(currentInvoice.addons_total) : currentAddons;
                 
                 let displayStatus = getTenantPaymentStatus(t, roomPayments);

@@ -1548,6 +1548,41 @@ async function createInvoice(invoice: any) {
       .select()
       .single();
     if (error) throw error;
+
+    // Convert month_year (e.g. "June 2026") to billing_month (e.g. "2026-06") for tenant_invoices
+    let billingMonth = new Date().toISOString().slice(0, 7); // fallback
+    try {
+      const parts = (invoice.month_year || "").split(" ");
+      if (parts.length === 2) {
+        const monthName = parts[0];
+        const year = parts[1];
+        const monthIndex = new Date(`${monthName} 1, 2000`).getMonth() + 1;
+        const monthStr = monthIndex < 10 ? `0${monthIndex}` : `${monthIndex}`;
+        billingMonth = `${year}-${monthStr}`;
+      }
+    } catch (e) {
+      console.error("Failed to parse billing month from month_year:", e);
+    }
+
+    const addonsTotal = (invoice.add_ons || []).reduce((sum: number, a: any) => sum + Number(a.cost || 0), 0);
+    const { error: tenantInvError } = await supabase
+      .from("tenant_invoices")
+      .upsert({
+        tenant_id: invoice.tenant_id,
+        room_id: invoice.room_id,
+        billing_month: billingMonth,
+        base_rent: invoice.base_rent || 0,
+        addons_total: addonsTotal,
+        electricity_cost: invoice.electricity_cost || 0,
+        total_amount: (invoice.base_rent || 0) + addonsTotal
+      }, {
+        onConflict: "tenant_id,billing_month"
+      });
+
+    if (tenantInvError) {
+      console.error("Error upserting tenant_invoice:", tenantInvError);
+    }
+
     return data;
   } catch (error) {
     safeLog("createInvoice", error);

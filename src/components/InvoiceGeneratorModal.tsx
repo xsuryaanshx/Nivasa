@@ -141,10 +141,11 @@ export function InvoiceGeneratorModal({ open, onClose, tenant, room, roomPayment
       
       // WhatsApp message
       const addonLines = activeAddons.map(a => `• ${a.name}: ${formatMoney(a.cost, currency, { decimals: 0 })}`);
-      const upiId = user?.upiId;
+       const upiId = user?.upiId;
       const redirectUrl = upiId
         ? `${window.location.origin}/pay?pa=${upiId}&pn=${encodeURIComponent(user.fullName)}&am=${totalDue.toFixed(2)}&tn=${encodeURIComponent(monthYear.replace(/\s+/g, '_'))}&t=${Date.now()}`
         : "";
+      const portalUrl = `${window.location.origin}/register`;
 
       const lines = [
         `*Nivasa · Invoice — ${monthYear}*`,
@@ -162,7 +163,10 @@ export function InvoiceGeneratorModal({ open, onClose, tenant, room, roomPayment
           ``,
           `⚡ *Pay Instantly via UPI:*`,
           `• Click here to pay: ${redirectUrl}`
-        ] : [])
+        ] : []),
+        ``,
+        `📱 *Nivasa Resident Portal:*`,
+        `• View details & upload payment receipt to verify: ${portalUrl}`
       ];
 
       if (fixedDate) {
