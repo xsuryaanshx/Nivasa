@@ -19,7 +19,8 @@ export default function UpiPay() {
   // Construct custom deep-linking schemes for popular UPI apps
   const getUpiUrl = (scheme: string) => {
     if (!pa) return "";
-    return `${scheme}://pay?pa=${pa}&pn=${encodeURIComponent(pn)}&am=${parseFloat(am).toFixed(2)}&tn=${encodeURIComponent(tn)}&cu=${cu}`;
+    const path = scheme === "gpay" ? "upi/pay" : "pay";
+    return `${scheme}://${path}?pa=${pa}&pn=${encodeURIComponent(pn)}&am=${parseFloat(am).toFixed(2)}&tn=${encodeURIComponent(tn)}&cu=${cu}`;
   };
 
   const gpayUrl = getUpiUrl("gpay");
