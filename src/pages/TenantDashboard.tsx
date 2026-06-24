@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Wrench, Calendar, ShieldCheck, LogOut, CheckCircle2, Home, Receipt, AlertCircle, Loader2 } from "lucide-react";
+import { NivasaLogo } from "@/components/NivasaLogo";
 
 export default function TenantDashboard() {
   const { signOut } = useAuth();
@@ -89,9 +90,12 @@ export default function TenantDashboard() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-brand" />
-          <p className="text-sm text-muted-foreground font-medium">Loading your portal...</p>
+        <div className="flex flex-col items-center gap-4">
+          <NivasaLogo className="h-16 w-auto animate-pulse" />
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin text-brand" />
+            <p className="text-sm text-muted-foreground font-medium">Loading your portal...</p>
+          </div>
         </div>
       </div>
     );
@@ -125,9 +129,7 @@ export default function TenantDashboard() {
       <nav className="border-b border-border bg-card/50 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="h-9 w-9 rounded-xl bg-brand/10 flex items-center justify-center text-brand font-bold text-lg border border-brand/20">
-              N
-            </div>
+            <NivasaLogo className="h-8 w-auto" />
             <span className="font-bold tracking-tight text-foreground">Nivasa Portal</span>
           </div>
 
