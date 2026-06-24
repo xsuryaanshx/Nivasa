@@ -62,25 +62,18 @@ export default function Register() {
       
       setLoading(true);
       try {
-        const { data: tenantRecords, error: tenantErr } = await supabase
-          .from("tenants")
-          .select("id, status, phone")
-          .eq("status", "active");
+        const { data: tenantId, error: rpcErr } = await supabase
+          .rpc("verify_tenant_phone", { phone_input: cleanPhone });
           
-        if (tenantErr) throw tenantErr;
+        if (rpcErr) throw rpcErr;
         
-        const matchedTenant = tenantRecords?.find(t => {
-          const cleanDb = t.phone.replace(/\D/g, "");
-          return cleanDb === cleanPhone;
-        });
-        
-        if (!matchedTenant) {
+        if (!tenantId) {
           setError("No active tenant record found with this phone number. Please ask your landlord to add you to the system first.");
           setLoading(false);
           return;
         }
         
-        matchedTenantId = matchedTenant.id;
+        matchedTenantId = tenantId;
       } catch (err: any) {
         setError(err.message || "Failed to verify tenant record.");
         setLoading(false);
