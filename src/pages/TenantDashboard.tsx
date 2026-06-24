@@ -47,7 +47,7 @@ export default function TenantDashboard() {
           rent_amount,
           joined_at,
           room:room_id (id, name, rent_amount),
-          building:building_id (id, name, address, upi_id, contact_phone, user_id)
+          building:buildings!tenants_building_id_fkey (id, name, address, upi_id, contact_phone, user_id)
         `)
         .eq("id", tenantId)
         .single();
