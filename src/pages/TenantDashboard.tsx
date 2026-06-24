@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Wrench, Calendar, ShieldCheck, LogOut, CheckCircle2, Home, Receipt, AlertCircle, Loader2 } from "lucide-react";
 import { NivasaLogo } from "@/components/NivasaLogo";
-import { recognize } from "tesseract.js";
+// Gemini Vision is used for OCR — no tesseract import needed
 import { motion } from "framer-motion";
 
 export default function TenantDashboard() {
@@ -147,107 +147,56 @@ export default function TenantDashboard() {
 
     setOcrLoading(true);
     try {
-      const ret = await recognize(file, 'eng');
-      const text = ret.data.text;
-      console.log("Scanned OCR Text:", text);
+      // Convert the image file to base64 for Gemini Vision API
+      const toBase64 = (f: File): Promise<string> =>
+        new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve((reader.result as string).split(",")[1]);
+          reader.onerror = reject;
+          reader.readAsDataURL(f);
+        });
+      const base64Image = await toBase64(file);
+      const mimeType = file.type || "image/jpeg";
 
-      let detectedAmount: number | undefined = undefined;
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      const prompt = `You are a payment receipt parser. Look at this UPI/payment screenshot and extract:
+1. amount: The transaction amount in INR (just the number, no currency symbol, e.g. 1500)
+2. utr: The transaction reference/UTR/Ref No (a 12-digit number)
+3. date: The payment date in YYYY-MM-DD format
 
-      // Strategy 1: Standard currency prefix (₹, Rs, INR) — most reliable when OCR reads the symbol
-      const amountRegex = /(?:₹|Rs\.?|INR)\s*([\d,]+(?:\.\d{1,2})?)/gi;
-      let match;
-      const matches: number[] = [];
-      while ((match = amountRegex.exec(text)) !== null) {
-        const numStr = match[1].replace(/,/g, "");
-        const val = parseFloat(numStr);
-        if (!isNaN(val) && val > 0) {
-          matches.push(val);
+Return ONLY a valid JSON object with keys "amount" (number), "utr" (string), "date" (string).
+If you cannot find a value, use null for that key.
+Example: {"amount": 1500, "utr": "617589779921", "date": "2026-06-24"}`;
+
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{
+              parts: [
+                { text: prompt },
+                { inline_data: { mime_type: mimeType, data: base64Image } }
+              ]
+            }],
+            generationConfig: { temperature: 0, maxOutputTokens: 256 }
+          })
         }
-      }
+      );
 
-      // Strategy 2: UPI receipt structure — Paytm shows AMOUNT then "Ref No: ..."
-      // The number immediately before the "Ref No" line is almost always the transaction amount.
-      // This handles Tesseract failing to OCR the large stylized ₹ glyph.
-      if (matches.length === 0) {
-        const refNoIndex = text.search(/Ref\.?\s*No\.?/i);
-        if (refNoIndex > 0) {
-          // Look at the text preceding the Ref No for a standalone number (avoid timestamps like "6:15")
-          const preRefText = text.substring(0, refNoIndex);
-          // Match numbers that are NOT preceded or followed by ":" (to exclude time like 6:15)
-          const preRefNumbers = preRefText.match(/(?<![:\d])(\d{1,6}(?:\.\d{1,2})?)(?![\d:])/g);
-          if (preRefNumbers) {
-            // Take the LAST number before Ref No (closest to the amount in Paytm layout)
-            // Filter out clearly-timestamp-like values (single digit hours like 6, 7, 8...)
-            const candidates = preRefNumbers
-              .map(n => parseFloat(n.replace(/,/g, "")))
-              .filter(n => !isNaN(n) && n > 0 && n < 1000000);
-            // Prefer numbers that are not common UI noise (not year-like, not percentage-like)
-            // The last non-trivial number before "Ref No" is the payment amount
-            const nonTrivial = candidates.filter(n => n >= 1);
-            if (nonTrivial.length > 0) {
-              matches.push(nonTrivial[nonTrivial.length - 1]);
-            }
-          }
-        }
-      }
+      if (!response.ok) throw new Error(`Gemini API error: ${response.status}`);
+      const geminiData = await response.json();
+      const rawText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+      console.log("Gemini Vision response:", rawText);
 
-      // Strategy 3: Common Tesseract misreadings of ₹ symbol (z, 3, %, R, ~)
-      if (matches.length === 0) {
-        const misreadRupeeRegex = /(?:[zZ3%~R]|Rs?)\s*(\d{1,6}(?:\.\d{1,2})?)\b/g;
-        while ((match = misreadRupeeRegex.exec(text)) !== null) {
-          const val = parseFloat(match[1]);
-          // Only accept if it looks like a plausible payment amount (not a single-digit timestamp fragment)
-          if (!isNaN(val) && val >= 1 && val < 500000) {
-            matches.push(val);
-          }
-        }
-      }
+      // Parse the JSON — strip markdown code fences if present
+      const jsonStr = rawText.replace(/```json?\s*/gi, "").replace(/```/g, "").trim();
+      const parsed = JSON.parse(jsonStr);
 
-      const outstandingAmount = activeInvoice ? (Number(activeInvoice.total_amount || 0) + Number(activeInvoice.electricity_cost || 0)) : 0;
-      const exactMatch = matches.find(amt => amt === outstandingAmount);
-      if (exactMatch) {
-        detectedAmount = exactMatch;
-      } else if (matches.length > 0) {
-        detectedAmount = matches.find(amt => Math.abs(amt - outstandingAmount) < 100) || matches[0];
-      }
-
-      let detectedUtr: string | undefined = undefined;
-      // First try labeled ref number: "Ref No: 617589779921", "UTR: ...", "Transaction ID: ..."
-      const labeledRefMatch = text.match(/(?:Ref\.?\s*No\.?|UTR|Transaction\s*ID|UPI\s*Ref)[:\s#]+([0-9][0-9\s]{10,14}[0-9])/i);
-      if (labeledRefMatch) {
-        // Strip any OCR-introduced spaces within the number
-        detectedUtr = labeledRefMatch[1].replace(/\s/g, "").slice(0, 12);
-      } else {
-        // Fallback: find a standalone 12-digit number that isn't part of a time (e.g. "6:15")
-        const utrFallback = text.match(/(?<![:\d])(\d{12})(?![\d:])/);
-        if (utrFallback) {
-          detectedUtr = utrFallback[1];
-        }
-      }
-
-      let detectedDate: string | undefined = undefined;
-      // Try numeric date formats first: DD/MM/YYYY or YYYY-MM-DD
-      const numericDateMatch = text.match(/\b(\d{2})[-/.](\d{2})[-/.](\d{4})\b/) || text.match(/\b(\d{4})[-/.](\d{2})[-/.](\d{2})\b/);
-      if (numericDateMatch) {
-        detectedDate = numericDateMatch[0];
-      } else {
-        // Handle Paytm/UPI style: "24 Jun", "24 Jun 2024", "24 Jun, 6:15 PM"
-        const monthNames = "Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec";
-        const paytmDateMatch = text.match(new RegExp(`(\\d{1,2})\\s+(${monthNames})[,\\s]*(\\d{4})?`, "i"));
-        if (paytmDateMatch) {
-          const day = paytmDateMatch[1].padStart(2, "0");
-          const monthStr = paytmDateMatch[2];
-          const year = paytmDateMatch[3] || new Date().getFullYear().toString();
-          const monthIndex = ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"].indexOf(monthStr.toLowerCase());
-          if (monthIndex !== -1) {
-            const month = String(monthIndex + 1).padStart(2, "0");
-            detectedDate = `${year}-${month}-${day}`;
-          }
-        }
-      }
-      if (!detectedDate) {
-        detectedDate = new Date().toISOString().slice(0, 10);
-      }
+      const detectedAmount: number | undefined = parsed.amount ? Number(parsed.amount) : undefined;
+      const detectedUtr: string | undefined = parsed.utr ? String(parsed.utr) : undefined;
+      const detectedDate: string = parsed.date || new Date().toISOString().slice(0, 10);
 
       setOcrResult({
         amount: detectedAmount,
