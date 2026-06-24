@@ -171,7 +171,7 @@ Return ONLY a raw JSON object (no markdown, no code fences):
 If a value is not found, use null. The "utr" field MUST be a string enclosed in double quotes.`;
 
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
