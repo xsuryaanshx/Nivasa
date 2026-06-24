@@ -34,6 +34,7 @@ import { FeatureGate } from "./components/FeatureGate.tsx";
 import ForgotPassword from "./pages/ForgotPassword.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
 import UpiPay from "./pages/UpiPay.tsx";
+import TenantDashboard from "./pages/TenantDashboard.tsx";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -110,7 +111,7 @@ const App = () => {
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/confirmed" element={<ConfirmedEmail />} />
-                <Route path="/app" element={<ProtectedRoute />}>
+                <Route path="/app" element={<ProtectedRoute allowedRole="landlord" />}>
                   <Route element={<AppLayout />}>
                     <Route index element={<Dashboard />} />
                     <Route path="buildings" element={<Buildings />} />
@@ -128,6 +129,9 @@ const App = () => {
                     <Route path="maintenance" element={<FeatureGate featureKey="maintenance_tracking" title="Maintenance Tracking Locked" description="Upgrade to Gold or Platinum to manage maintenance requests."><Maintenance /></FeatureGate>} />
                     <Route path="subscription" element={<SubscriptionPage />} />
                   </Route>
+                </Route>
+                <Route path="/tenant" element={<ProtectedRoute allowedRole="tenant" />}>
+                  <Route path="dashboard" element={<TenantDashboard />} />
                 </Route>
                 <Route path="/p/:slug" element={<PublicListing />} />
                 <Route path="/pay" element={<UpiPay />} />

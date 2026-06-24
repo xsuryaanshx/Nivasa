@@ -7,22 +7,33 @@ import { useEffect, useState } from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import { nivasaApi, supabase } from "@/lib/api";
 
-export function ProtectedRoute() {
+interface ProtectedRouteProps {
+  allowedRole?: "landlord" | "tenant";
+}
+
+export function ProtectedRoute({ allowedRole = "landlord" }: ProtectedRouteProps) {
   const [status, setStatus] = useState<"loading" | "auth" | "unauth">("loading");
+  const [userRole, setUserRole] = useState<string>("landlord");
 
   useEffect(() => {
     // Initial session check
     nivasaApi.auth.getSession().then((session) => {
-      setStatus(session ? "auth" : "unauth");
+      if (session?.user) {
+        setUserRole(session.user.user_metadata?.role || "landlord");
+        setStatus("auth");
+      } else {
+        setStatus("unauth");
+      }
     }).catch(() => {
       setStatus("unauth");
     });
 
-    // SECURITY: Listen for auth state changes (logout, session expiry, token refresh failures)
+    // SECURITY: Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_OUT" || (event === "TOKEN_REFRESHED" && !session)) {
         setStatus("unauth");
-      } else if (session) {
+      } else if (session?.user) {
+        setUserRole(session.user.user_metadata?.role || "landlord");
         setStatus("auth");
       } else {
         setStatus("unauth");
@@ -42,5 +53,12 @@ export function ProtectedRoute() {
     );
   }
 
-  return status === "auth" ? <Outlet /> : <Navigate to="/login" replace />;
+  if (status === "auth") {
+    if (allowedRole !== userRole) {
+      return <Navigate to={userRole === "tenant" ? "/tenant/dashboard" : "/app"} replace />;
+    }
+    return <Outlet />;
+  }
+
+  return <Navigate to="/login" replace />;
 }
