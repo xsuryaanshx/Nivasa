@@ -720,6 +720,54 @@ async function updateTenant(
       .select("room_id")
       .single();
     if (error) throw error;
+    
+    // Auto-update existing invoices for the current month if the rent amount is updated
+    if (updates.rent_amount !== undefined) {
+      const currentMonth = new Date().toISOString().slice(0, 7); // "YYYY-MM"
+      
+      // Update tenant_invoices
+      const { data: existingTenantInvoice } = await supabase
+        .from("tenant_invoices")
+        .select("id, addons_total")
+        .eq("tenant_id", tenantId)
+        .eq("billing_month", currentMonth)
+        .maybeSingle();
+
+      if (existingTenantInvoice) {
+        const addonsTotal = Number(existingTenantInvoice.addons_total || 0);
+        await supabase
+          .from("tenant_invoices")
+          .update({
+            base_rent: updates.rent_amount,
+            total_amount: updates.rent_amount + addonsTotal
+          })
+          .eq("id", existingTenantInvoice.id);
+      }
+      
+      // Update invoices (historical PDF invoices)
+      const monthLabel = new Date().toLocaleString("en-US", { month: "long", year: "numeric" }); // "June 2026"
+      const { data: existingInvoice } = await supabase
+        .from("invoices")
+        .select("id, electricity_cost, previous_dues, add_ons")
+        .eq("tenant_id", tenantId)
+        .eq("month_year", monthLabel)
+        .maybeSingle();
+        
+      if (existingInvoice) {
+        const elec = Number(existingInvoice.electricity_cost || 0);
+        const prev = Number(existingInvoice.previous_dues || 0);
+        const addonsList = Array.isArray(existingInvoice.add_ons) ? existingInvoice.add_ons : [];
+        const addonsSum = addonsList.reduce((sum: number, a: any) => sum + Number(a.cost || 0), 0);
+        await supabase
+          .from("invoices")
+          .update({
+            base_rent: updates.rent_amount,
+            total_due: updates.rent_amount + elec + prev + addonsSum
+          })
+          .eq("id", existingInvoice.id);
+      }
+    }
+
     if (row?.room_id && patch.occupancy_count !== undefined) {
       await syncUnitEffectiveRent(row.room_id);
     }
