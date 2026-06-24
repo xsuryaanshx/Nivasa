@@ -241,6 +241,12 @@ export default function UpiPay() {
           </div>
         </div>
 
+        <div className="mt-4 pt-2 border-t border-border/20 text-center">
+          <a href="/tenant/dashboard" className="text-xs text-brand hover:underline font-semibold">
+            Already Paid? Go to Tenant Portal to upload screenshot & verify
+          </a>
+        </div>
+
         <p className="text-[10px] text-muted-foreground mt-6 leading-relaxed">
           Powered by Nivasa Payment Gateway. Your transaction is encrypted and completely secure.
         </p>

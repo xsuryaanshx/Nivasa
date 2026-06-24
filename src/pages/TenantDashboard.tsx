@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Wrench, Calendar, ShieldCheck, LogOut, CheckCircle2, Home, Receipt, AlertCircle, Loader2 } from "lucide-react";
 import { NivasaLogo } from "@/components/NivasaLogo";
+import { createWorker } from "tesseract.js";
 
 export default function TenantDashboard() {
   const { signOut } = useAuth();
@@ -14,6 +15,19 @@ export default function TenantDashboard() {
   const [tenant, setTenant] = useState<any>(null);
   const [invoices, setInvoices] = useState<any[]>([]);
   const [payments, setPayments] = useState<any[]>([]);
+
+  // OCR state variables
+  const [ocrLoading, setOcrLoading] = useState(false);
+  const [ocrConfirmOpen, setOcrConfirmOpen] = useState(false);
+  const [ocrResult, setOcrResult] = useState<{
+    amount?: number;
+    utr?: string;
+    date?: string;
+    file?: File;
+  } | null>(null);
+  const [manualAmount, setManualAmount] = useState("");
+  const [manualUtr, setManualUtr] = useState("");
+  const [manualDate, setManualDate] = useState("");
 
   const fetchTenantData = async () => {
     try {
@@ -87,6 +101,145 @@ export default function TenantDashboard() {
     fetchTenantData();
   }, []);
 
+  // Derived state helpers
+  const unpaidInvoices = invoices.filter(inv => {
+    const isPaid = payments.some(p => {
+      const pMonth = p.paid_date ? p.paid_date.slice(0, 7) : "";
+      return pMonth === inv.billing_month && p.status === "paid";
+    });
+    return !isPaid;
+  });
+  const activeInvoice = unpaidInvoices[0];
+
+  const handleScreenshotUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("File is too large. Max size is 5MB.");
+      return;
+    }
+
+    setOcrLoading(true);
+    try {
+      const worker = await createWorker('eng');
+      const ret = await worker.recognize(file);
+      await worker.terminate();
+
+      const text = ret.data.text;
+      console.log("Scanned OCR Text:", text);
+
+      let detectedAmount: number | undefined = undefined;
+      const amountRegex = /(?:₹|Rs\.?|INR)?\s*(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)/gi;
+      let match;
+      const matches: number[] = [];
+      while ((match = amountRegex.exec(text)) !== null) {
+        const numStr = match[1].replace(/,/g, "");
+        const val = parseFloat(numStr);
+        if (!isNaN(val) && val > 0) {
+          matches.push(val);
+        }
+      }
+
+      const outstandingAmount = activeInvoice ? (activeInvoice.total_amount || activeInvoice.base_rent || 0) : 0;
+      const exactMatch = matches.find(amt => amt === outstandingAmount);
+      if (exactMatch) {
+        detectedAmount = exactMatch;
+      } else if (matches.length > 0) {
+        detectedAmount = matches.find(amt => Math.abs(amt - outstandingAmount) < 100) || matches[0];
+      }
+
+      let detectedUtr: string | undefined = undefined;
+      const utrMatch = text.match(/\b\d{12}\b/);
+      if (utrMatch) {
+        detectedUtr = utrMatch[0];
+      }
+
+      let detectedDate: string | undefined = undefined;
+      const dateMatch = text.match(/\b\d{2}[-/.]\d{2}[-/.]\d{4}\b/) || text.match(/\b\d{4}[-/.]\d{2}[-/.]\d{2}\b/);
+      if (dateMatch) {
+        detectedDate = dateMatch[0];
+      } else {
+        detectedDate = new Date().toISOString().slice(0, 10);
+      }
+
+      setOcrResult({
+        amount: detectedAmount,
+        utr: detectedUtr,
+        date: detectedDate,
+        file
+      });
+      setManualAmount(detectedAmount ? String(detectedAmount) : "");
+      setManualUtr(detectedUtr || "");
+      setManualDate(detectedDate || new Date().toISOString().slice(0, 10));
+      setOcrConfirmOpen(true);
+
+    } catch (err: any) {
+      console.error("OCR Scan failed:", err);
+      toast.error("Scanning failed. Please verify details manually.");
+      setOcrResult({ file });
+      setManualAmount(activeInvoice ? String(activeInvoice.total_amount || activeInvoice.base_rent || 0) : "");
+      setManualUtr("");
+      setManualDate(new Date().toISOString().slice(0, 10));
+      setOcrConfirmOpen(true);
+    } finally {
+      setOcrLoading(false);
+    }
+  };
+
+  const handleConfirmOcrPayment = async () => {
+    if (!ocrResult?.file) return;
+    const amt = parseFloat(manualAmount);
+    if (isNaN(amt) || amt <= 0) {
+      toast.error("Please enter a valid payment amount.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const fileExt = ocrResult.file.name.split('.').pop();
+      const filePath = `receipts/receipt_${crypto.randomUUID()}.${fileExt}`;
+      const { error: uploadErr } = await supabase.storage
+        .from('documents')
+        .upload(filePath, ocrResult.file);
+
+      if (uploadErr) throw uploadErr;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('documents')
+        .getPublicUrl(filePath);
+
+      const cleanDate = manualDate || new Date().toISOString().slice(0, 10);
+      const { error: insertErr } = await supabase
+        .from('payments')
+        .insert([{
+          building_id: tenant?.building?.id,
+          unit_id: tenant?.room?.id,
+          tenant_id: tenant?.id,
+          user_id: tenant?.building?.user_id,
+          amount: amt,
+          method: 'upi',
+          status: 'paid',
+          paid_date: cleanDate,
+          reference_number: manualUtr || null,
+          note: `Auto-verified via UPI Screenshot OCR. Receipt: ${publicUrl}`
+        }]);
+
+      if (insertErr) throw insertErr;
+
+      toast.success("Receipt verified! Payment recorded successfully.");
+      setOcrConfirmOpen(false);
+      setOcrResult(null);
+      fetchTenantData();
+      
+    } catch (err: any) {
+      console.error("Failed to submit payment receipt:", err);
+      toast.error("Submission failed: " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -101,17 +254,7 @@ export default function TenantDashboard() {
     );
   }
 
-  // Get active unpaid invoice
-  const unpaidInvoices = invoices.filter(inv => {
-    // If there's no payment in payments matching this invoice's billing_month
-    const isPaid = payments.some(p => {
-      const pMonth = p.paid_date ? p.paid_date.slice(0, 7) : "";
-      return pMonth === inv.billing_month && p.status === "paid";
-    });
-    return !isPaid;
-  });
-
-  const activeInvoice = unpaidInvoices[0];
+  // Derived state helpers are now defined at the top of the component body.
 
   const handlePayClick = (invoice: any) => {
     const upiId = tenant?.building?.upi_id || "payment@nivasa"; // fallback placeholder
@@ -194,16 +337,29 @@ export default function TenantDashboard() {
               </Badge>
             </CardHeader>
             <CardContent className="p-6 space-y-4">
-              <div className="flex justify-between items-baseline">
+              <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between">
                 <div>
                   <div className="text-xs text-muted-foreground uppercase font-semibold tracking-wider">Total Amount Due</div>
                   <div className="text-3xl font-extrabold text-foreground mt-0.5">
                     ₹{(activeInvoice.total_amount || 0).toLocaleString()}
                   </div>
                 </div>
-                <Button onClick={() => handlePayClick(activeInvoice)} className="bg-brand hover:bg-brand/90 text-brand-foreground rounded-full px-6 py-5 font-semibold text-sm">
-                  Pay Instantly via UPI
-                </Button>
+                
+                <div className="flex flex-col xs:flex-row gap-2">
+                  <Button onClick={() => handlePayClick(activeInvoice)} className="bg-brand hover:bg-brand/90 text-brand-foreground rounded-xl px-5 h-10 font-semibold text-xs shrink-0">
+                    Pay Instantly via UPI
+                  </Button>
+                  
+                  <label className="cursor-pointer inline-flex items-center justify-center rounded-xl border border-brand/20 bg-brand/5 text-xs font-semibold text-brand hover:bg-brand hover:text-white transition-all duration-200 px-4 h-10 text-center shrink-0">
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={handleScreenshotUpload} 
+                      className="hidden" 
+                    />
+                    Upload Screenshot (Auto-Verify)
+                  </label>
+                </div>
               </div>
 
               <div className="h-px bg-border/50 my-2" />
@@ -274,6 +430,109 @@ export default function TenantDashboard() {
           )}
         </div>
       </main>
+
+      {/* OCR Scanning Loader Modal */}
+      {ocrLoading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/60 backdrop-blur-md">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-card border border-border rounded-2xl p-8 shadow-2xl max-w-sm w-full text-center space-y-4"
+          >
+            <Loader2 className="h-10 w-10 animate-spin text-brand mx-auto" />
+            <h3 className="font-semibold text-lg text-foreground">Scanning Payment Receipt</h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              We are scanning your UPI screenshot to extract the amount, date, and reference numbers automatically. This may take a few seconds...
+            </p>
+          </motion.div>
+        </div>
+      )}
+
+      {/* OCR Details Verification Dialog */}
+      {ocrConfirmOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/60 backdrop-blur-md">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-card border border-border rounded-2xl shadow-2xl max-w-md w-full overflow-hidden flex flex-col max-h-[85vh]"
+          >
+            <div className="p-5 border-b border-border/50 flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-lg flex items-center gap-2">
+                  <ShieldCheck className="h-5 w-5 text-brand" />
+                  Verify Payment Details
+                </h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Confirm the details scanned from your screenshot.
+                </p>
+              </div>
+              <button
+                onClick={() => setOcrConfirmOpen(false)}
+                className="h-8 w-8 rounded-lg hover:bg-secondary flex items-center justify-center text-muted-foreground"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4 flex-1 overflow-y-auto">
+              {ocrResult?.amount === (activeInvoice?.total_amount || activeInvoice?.base_rent) ? (
+                <div className="rounded-xl p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-xs font-semibold flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 shrink-0" />
+                  Exact match found for your outstanding rent invoice!
+                </div>
+              ) : (
+                <div className="rounded-xl p-3 bg-amber-500/10 border border-amber-500/20 text-amber-600 text-xs font-medium flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  Please verify or update the details if the scan wasn't fully accurate.
+                </div>
+              )}
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Amount Paid (₹)</label>
+                <input
+                  type="number"
+                  value={manualAmount}
+                  onChange={(e) => setManualAmount(e.target.value)}
+                  className="h-10 w-full rounded-xl border border-border bg-background px-3.5 text-sm outline-none focus:border-brand"
+                  placeholder="2000"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Transaction Ref / UTR (12 digits)</label>
+                <input
+                  type="text"
+                  value={manualUtr}
+                  onChange={(e) => setManualUtr(e.target.value)}
+                  className="h-10 w-full rounded-xl border border-border bg-background px-3.5 text-sm outline-none focus:border-brand font-mono"
+                  placeholder="612345678901"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Payment Date</label>
+                <input
+                  type="date"
+                  value={manualDate}
+                  onChange={(e) => setManualDate(e.target.value)}
+                  className="h-10 w-full rounded-xl border border-border bg-background px-3.5 text-sm outline-none focus:border-brand"
+                />
+              </div>
+            </div>
+
+            <div className="p-5 border-t border-border/50 bg-secondary/10 flex items-center justify-end gap-2">
+              <Button onClick={() => setOcrConfirmOpen(false)} variant="ghost" className="rounded-xl">
+                Cancel
+              </Button>
+              <Button onClick={handleConfirmOcrPayment} className="bg-brand hover:bg-brand/90 text-brand-foreground rounded-xl">
+                Confirm & Submit Payment
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
