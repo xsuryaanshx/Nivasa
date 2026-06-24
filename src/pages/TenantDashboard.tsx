@@ -152,7 +152,8 @@ export default function TenantDashboard() {
       console.log("Scanned OCR Text:", text);
 
       let detectedAmount: number | undefined = undefined;
-      const amountRegex = /(?:₹|Rs\.?|INR)?\s*(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)/gi;
+      // IMPORTANT: require a currency symbol/prefix so we don't grab bare digits (e.g. "6" from "6:15 AM")
+      const amountRegex = /(?:₹|Rs\.?|INR)\s*([\d,]+(?:\.\d{1,2})?)/gi;
       let match;
       const matches: number[] = [];
       while ((match = amountRegex.exec(text)) !== null) {
@@ -172,16 +173,40 @@ export default function TenantDashboard() {
       }
 
       let detectedUtr: string | undefined = undefined;
-      const utrMatch = text.match(/\b\d{12}\b/);
-      if (utrMatch) {
-        detectedUtr = utrMatch[0];
+      // First try labeled ref number: "Ref No: 617589779921", "UTR: ...", "Transaction ID: ..."
+      const labeledRefMatch = text.match(/(?:Ref\.?\s*No\.?|UTR|Transaction\s*ID|UPI\s*Ref)[:\s#]+([0-9][0-9\s]{10,14}[0-9])/i);
+      if (labeledRefMatch) {
+        // Strip any OCR-introduced spaces within the number
+        detectedUtr = labeledRefMatch[1].replace(/\s/g, "").slice(0, 12);
+      } else {
+        // Fallback: find a standalone 12-digit number that isn't part of a time (e.g. "6:15")
+        const utrFallback = text.match(/(?<![:\d])(\d{12})(?![\d:])/);
+        if (utrFallback) {
+          detectedUtr = utrFallback[1];
+        }
       }
 
       let detectedDate: string | undefined = undefined;
-      const dateMatch = text.match(/\b\d{2}[-/.]\d{2}[-/.]\d{4}\b/) || text.match(/\b\d{4}[-/.]\d{2}[-/.]\d{2}\b/);
-      if (dateMatch) {
-        detectedDate = dateMatch[0];
+      // Try numeric date formats first: DD/MM/YYYY or YYYY-MM-DD
+      const numericDateMatch = text.match(/\b(\d{2})[-/.](\d{2})[-/.](\d{4})\b/) || text.match(/\b(\d{4})[-/.](\d{2})[-/.](\d{2})\b/);
+      if (numericDateMatch) {
+        detectedDate = numericDateMatch[0];
       } else {
+        // Handle Paytm/UPI style: "24 Jun", "24 Jun 2024", "24 Jun, 6:15 PM"
+        const monthNames = "Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec";
+        const paytmDateMatch = text.match(new RegExp(`(\\d{1,2})\\s+(${monthNames})[,\\s]*(\\d{4})?`, "i"));
+        if (paytmDateMatch) {
+          const day = paytmDateMatch[1].padStart(2, "0");
+          const monthStr = paytmDateMatch[2];
+          const year = paytmDateMatch[3] || new Date().getFullYear().toString();
+          const monthIndex = ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"].indexOf(monthStr.toLowerCase());
+          if (monthIndex !== -1) {
+            const month = String(monthIndex + 1).padStart(2, "0");
+            detectedDate = `${year}-${month}-${day}`;
+          }
+        }
+      }
+      if (!detectedDate) {
         detectedDate = new Date().toISOString().slice(0, 10);
       }
 
