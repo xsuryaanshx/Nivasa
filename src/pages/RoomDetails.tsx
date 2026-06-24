@@ -590,6 +590,25 @@ export default function RoomDetails() {
                     </a>
                     <button
                       type="button"
+                      onClick={() => {
+                        const phone = t.whatsapp_number || t.phone;
+                        if (!phone) {
+                          toast.error("No phone number found for this tenant");
+                          return;
+                        }
+                        const signupUrl = `${window.location.origin}/register`;
+                        const msg = encodeURIComponent(
+                          `Hi ${t.name},\n\nWelcome to Nivasa! Your landlord has added you to the system. You can now register and set up your login credentials to view your room details, invoices, and pay rent directly.\n\n👉 Sign up here: ${signupUrl}\n\n*Important:* Please register using your phone number (${phone}) as it is linked to your profile.\n\nThank you!`
+                        );
+                        window.open(`https://wa.me/91${phone.replace(/\D/g, '')}?text=${msg}`, '_blank');
+                        toast.success("Opening WhatsApp invite...");
+                      }}
+                      className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-brand/10 text-brand py-1.5 text-xs font-medium hover:bg-brand/20 transition-colors w-full sm:w-auto"
+                    >
+                      <UserPlus className="h-3.5 w-3.5" /> Invite
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => setExpensesTenant(t)}
                       className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 py-1.5 text-xs font-medium hover:bg-emerald-500/20 transition-colors w-full sm:w-auto"
                     >

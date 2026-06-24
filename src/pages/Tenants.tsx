@@ -544,6 +544,20 @@ function TenantCard({
     controls.start({ x: 0 });
   };
 
+  const handleSendInvite = () => {
+    const phone = tenant.whatsapp_number || tenant.phone;
+    if (!phone) {
+      toast.error("No phone number found for this tenant");
+      return;
+    }
+    const signupUrl = `${window.location.origin}/register`;
+    const msg = encodeURIComponent(
+      `Hi ${tenant.name},\n\nWelcome to Nivasa! Your landlord has added you to the system. You can now register and set up your login credentials to view your room details, invoices, and pay rent directly.\n\n👉 Sign up here: ${signupUrl}\n\n*Important:* Please register using your phone number (${phone}) as it is linked to your profile.\n\nThank you!`
+    );
+    window.open(`https://wa.me/91${phone.replace(/\D/g, '')}?text=${msg}`, '_blank');
+    toast.success("Opening WhatsApp invite...");
+  };
+
   const handleDragEnd = (e: any, info: any) => {
     if (submitting || isSelectionMode) return;
     const offset = info.offset.x;
@@ -647,15 +661,28 @@ function TenantCard({
         </div>
       </div>
 
-      <div className="mt-5 pt-4 border-t border-border/50 flex items-center justify-between">
-        <div className="flex flex-col gap-0.5">
-          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Rent Amount</span>
-          <span className="text-sm font-semibold tnum">₹{tenant.roomRent}</span>
+      <div className="mt-5 pt-4 border-t border-border/50 flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-0.5">
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Rent Amount</span>
+            <span className="text-sm font-semibold tnum">₹{tenant.roomRent}</span>
+          </div>
+          <div className={cn("inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium", statusColorClass)}>
+            {statusIcon}
+            {statusText}
+          </div>
         </div>
-        <div className={cn("inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium", statusColorClass)}>
-          {statusIcon}
-          {statusText}
-        </div>
+
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            handleSendInvite();
+          }}
+          className="w-full h-8 flex items-center justify-center gap-1.5 rounded-xl border border-brand/20 bg-brand/5 text-[11px] font-semibold text-brand hover:bg-brand hover:text-white transition-all duration-200"
+        >
+          <UserPlus className="h-3.5 w-3.5" />
+          Invite to Portal
+        </button>
       </div>
       </motion.div>
     </motion.div>
