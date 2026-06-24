@@ -152,7 +152,8 @@ export default function TenantDashboard() {
       console.log("Scanned OCR Text:", text);
 
       let detectedAmount: number | undefined = undefined;
-      // IMPORTANT: require a currency symbol/prefix so we don't grab bare digits (e.g. "6" from "6:15 AM")
+
+      // Strategy 1: Standard currency prefix (₹, Rs, INR) — most reliable when OCR reads the symbol
       const amountRegex = /(?:₹|Rs\.?|INR)\s*([\d,]+(?:\.\d{1,2})?)/gi;
       let match;
       const matches: number[] = [];
@@ -161,6 +162,44 @@ export default function TenantDashboard() {
         const val = parseFloat(numStr);
         if (!isNaN(val) && val > 0) {
           matches.push(val);
+        }
+      }
+
+      // Strategy 2: UPI receipt structure — Paytm shows AMOUNT then "Ref No: ..."
+      // The number immediately before the "Ref No" line is almost always the transaction amount.
+      // This handles Tesseract failing to OCR the large stylized ₹ glyph.
+      if (matches.length === 0) {
+        const refNoIndex = text.search(/Ref\.?\s*No\.?/i);
+        if (refNoIndex > 0) {
+          // Look at the text preceding the Ref No for a standalone number (avoid timestamps like "6:15")
+          const preRefText = text.substring(0, refNoIndex);
+          // Match numbers that are NOT preceded or followed by ":" (to exclude time like 6:15)
+          const preRefNumbers = preRefText.match(/(?<![:\d])(\d{1,6}(?:\.\d{1,2})?)(?![\d:])/g);
+          if (preRefNumbers) {
+            // Take the LAST number before Ref No (closest to the amount in Paytm layout)
+            // Filter out clearly-timestamp-like values (single digit hours like 6, 7, 8...)
+            const candidates = preRefNumbers
+              .map(n => parseFloat(n.replace(/,/g, "")))
+              .filter(n => !isNaN(n) && n > 0 && n < 1000000);
+            // Prefer numbers that are not common UI noise (not year-like, not percentage-like)
+            // The last non-trivial number before "Ref No" is the payment amount
+            const nonTrivial = candidates.filter(n => n >= 1);
+            if (nonTrivial.length > 0) {
+              matches.push(nonTrivial[nonTrivial.length - 1]);
+            }
+          }
+        }
+      }
+
+      // Strategy 3: Common Tesseract misreadings of ₹ symbol (z, 3, %, R, ~)
+      if (matches.length === 0) {
+        const misreadRupeeRegex = /(?:[zZ3%~R]|Rs?)\s*(\d{1,6}(?:\.\d{1,2})?)\b/g;
+        while ((match = misreadRupeeRegex.exec(text)) !== null) {
+          const val = parseFloat(match[1]);
+          // Only accept if it looks like a plausible payment amount (not a single-digit timestamp fragment)
+          if (!isNaN(val) && val >= 1 && val < 500000) {
+            matches.push(val);
+          }
         }
       }
 
