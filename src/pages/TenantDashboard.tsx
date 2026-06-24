@@ -7,7 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Wrench, Calendar, ShieldCheck, LogOut, CheckCircle2, Home, Receipt, AlertCircle, Loader2 } from "lucide-react";
 import { NivasaLogo } from "@/components/NivasaLogo";
-import { createWorker } from "tesseract.js";
+import { recognize } from "tesseract.js";
+import { motion } from "framer-motion";
 
 export default function TenantDashboard() {
   const { signOut } = useAuth();
@@ -122,10 +123,7 @@ export default function TenantDashboard() {
 
     setOcrLoading(true);
     try {
-      const worker = await createWorker('eng');
-      const ret = await worker.recognize(file);
-      await worker.terminate();
-
+      const ret = await recognize(file, 'eng');
       const text = ret.data.text;
       console.log("Scanned OCR Text:", text);
 
