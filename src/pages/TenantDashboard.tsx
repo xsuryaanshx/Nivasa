@@ -52,7 +52,8 @@ export default function TenantDashboard() {
         .is("tenant_user_id", null);
 
       // 2. Fetch tenant profile details including room and building info
-      const { data: tenantData, error: tenantErr } = await supabase
+      let tenantData = null;
+      let { data: firstTryData, error: tenantErr } = await supabase
         .from("tenants")
         .select(`
           id,
@@ -62,12 +63,35 @@ export default function TenantDashboard() {
           rent_amount,
           joined_at,
           room:room_id (id, name, rent_amount),
-          building:buildings!tenants_building_id_fkey (id, name, address, upi_id, contact_phone, user_id)
+          building:buildings!tenants_building_id_fkey (id, name, address, upi_id, contact_phone, user_id, landlord_name)
         `)
         .eq("id", tenantId)
         .single();
 
-      if (tenantErr) throw tenantErr;
+      if (tenantErr && tenantErr.code === "42703") {
+        // Fallback without landlord_name if database migration has not been executed yet
+        const { data: fallbackData, error: fallbackErr } = await supabase
+          .from("tenants")
+          .select(`
+            id,
+            name,
+            phone,
+            status,
+            rent_amount,
+            joined_at,
+            room:room_id (id, name, rent_amount),
+            building:buildings!tenants_building_id_fkey (id, name, address, upi_id, contact_phone, user_id)
+          `)
+          .eq("id", tenantId)
+          .single();
+        if (fallbackErr) throw fallbackErr;
+        tenantData = fallbackData;
+      } else if (tenantErr) {
+        throw tenantErr;
+      } else {
+        tenantData = firstTryData;
+      }
+
       setTenant(tenantData);
 
       // 3. Fetch Invoices
@@ -255,10 +279,13 @@ export default function TenantDashboard() {
   // Derived state helpers are now defined at the top of the component body.
 
   const handlePayClick = (invoice: any) => {
-    const upiId = tenant?.building?.upi_id || "payment@nivasa"; // fallback placeholder
-    const landlordName = tenant?.building?.name || "Nivasa Landlord";
+    const upiId = tenant?.building?.upi_id || "amishatiwari100@oksbi"; 
+    const landlordName = tenant?.building?.landlord_name || "Amisha";
     const amount = Number(invoice.total_amount || 0) + Number(invoice.electricity_cost || 0);
-    const purpose = `${invoice.billing_month}_Rent_Payment`;
+    
+    // Construct transaction note (purpose) containing the building name
+    const buildingNameSafe = (tenant?.building?.name || "Maduvan").replace(/\s+/g, "_");
+    const purpose = `${buildingNameSafe}_${invoice.billing_month}_Rent_Payment`;
 
     // Redirect to secure pay page
     window.location.href = `/pay?pa=${upiId}&pn=${encodeURIComponent(landlordName)}&am=${amount}&tn=${encodeURIComponent(purpose)}&t=${Date.now()}`;

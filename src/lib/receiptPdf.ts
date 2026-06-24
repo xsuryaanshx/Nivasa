@@ -286,7 +286,8 @@ export async function downloadInvoicePdf(invoice: any, tenant: any, room: any, l
 
   // D. QR code / payment area
   if (upiId) {
-    const upiUrl = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(landlordName)}&am=${invoice.total_due.toFixed(2)}&tn=${encodeURIComponent(invoice.month_year.replace(/\s+/g, '_'))}&cu=INR`;
+    const buildingNameSafe = (room.buildingName || "Maduvan").replace(/\s+/g, '_');
+    const upiUrl = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(landlordName)}&am=${invoice.total_due.toFixed(2)}&tn=${encodeURIComponent(`${buildingNameSafe}_${invoice.month_year.replace(/\s+/g, '_')}_Rent_Payment`)}&cu=INR`;
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(upiUrl)}`;
 
     doc.setFont("Helvetica", "bold");

@@ -93,6 +93,42 @@ const auth = {
   updateProfile: async (updates: { full_name?: string; upi_id?: string }) => {
     const { data, error } = await supabase.auth.updateUser({ data: updates });
     if (error) throw error;
+
+    const user = data.user;
+    if (user) {
+      const dbUpdates: any = {};
+      if (updates.upi_id !== undefined) dbUpdates.upi_id = updates.upi_id;
+      if (updates.full_name !== undefined) dbUpdates.landlord_name = updates.full_name;
+
+      if (Object.keys(dbUpdates).length > 0) {
+        try {
+          const { error: dbErr } = await supabase
+            .from("buildings")
+            .update(dbUpdates)
+            .eq("user_id", user.id);
+          
+          if (dbErr) {
+            // Handle case where landlord_name column is not in the schema (code '42703')
+            if (dbErr.code === "42703" && dbUpdates.landlord_name !== undefined) {
+              const fallbackUpdates: any = {};
+              if (updates.upi_id !== undefined) fallbackUpdates.upi_id = updates.upi_id;
+              
+              if (Object.keys(fallbackUpdates).length > 0) {
+                await supabase
+                  .from("buildings")
+                  .update(fallbackUpdates)
+                  .eq("user_id", user.id);
+              }
+            } else {
+              throw dbErr;
+            }
+          }
+        } catch (dbErr) {
+          console.error("Failed to sync profile updates to buildings table:", dbErr);
+        }
+      }
+    }
+
     return data;
   },
 };
@@ -147,12 +183,46 @@ async function addBuilding(input: {
 }) {
   try {
     const user_id = await requireAuthUserId();
-    const { data, error } = await supabase
-      .from("buildings")
-      .insert([{ name: input.name, address: input.address, user_id, upi_id: input.upi_id }])
-      .select()
-      .single();
-    if (error) throw error;
+    
+    // Fetch landlord's real name from user metadata
+    const { data: { session } } = await supabase.auth.getSession();
+    const landlordName = session?.user?.user_metadata?.full_name || "Nivasa Landlord";
+
+    let data;
+    try {
+      const { data: insertedData, error } = await supabase
+        .from("buildings")
+        .insert([{ 
+          name: input.name, 
+          address: input.address, 
+          user_id, 
+          upi_id: input.upi_id,
+          landlord_name: landlordName
+        }])
+        .select()
+        .single();
+      if (error) throw error;
+      data = insertedData;
+    } catch (insertErr: any) {
+      // Fallback if landlord_name column doesn't exist in the database (code '42703')
+      if (insertErr.code === "42703") {
+        const { data: insertedData, error } = await supabase
+          .from("buildings")
+          .insert([{ 
+            name: input.name, 
+            address: input.address, 
+            user_id, 
+            upi_id: input.upi_id 
+          }])
+          .select()
+          .single();
+        if (error) throw error;
+        data = insertedData;
+      } else {
+        throw insertErr;
+      }
+    }
+
     if (input.total_rooms && input.total_rooms > 0) {
       const unitsToInsert = Array.from({ length: input.total_rooms }).map(
         (_, i) => ({
