@@ -159,17 +159,19 @@ export default function TenantDashboard() {
       const mimeType = file.type || "image/jpeg";
 
       const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-      const prompt = `You are a payment receipt parser. Look at this UPI/payment screenshot and extract:
-1. amount: The transaction amount in INR (just the number, no currency symbol, e.g. 1500)
-2. utr: The transaction reference/UTR/Ref No (a 12-digit number)
-3. date: The payment date in YYYY-MM-DD format
+      const prompt = `You are a UPI payment receipt parser. Analyze this payment screenshot carefully and extract these exact fields:
 
-Return ONLY a valid JSON object with keys "amount" (number), "utr" (string), "date" (string).
-If you cannot find a value, use null for that key.
-Example: {"amount": 1500, "utr": "617589779921", "date": "2026-06-24"}`;
+1. "amount": The rupee amount paid (return as a NUMBER, e.g. 1 or 1500.00). Look for ₹ symbol followed by a number.
+2. "utr": The 12-digit transaction reference number. It may be labeled as "Ref No", "UTR", "Transaction ID", "UPI Ref", or similar. IMPORTANT: Return this as a STRING (not a number) to preserve all digits. Example: "617589779921"
+3. "date": The payment date in YYYY-MM-DD format. Convert "24 Jun" or "24 Jun 2024" or "24/06/2024" to YYYY-MM-DD.
+
+Return ONLY a raw JSON object (no markdown, no code fences):
+{"amount": 1, "utr": "617589779921", "date": "2026-06-24"}
+
+If a value is not found, use null. The "utr" field MUST be a string enclosed in double quotes.`;
 
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -185,6 +187,9 @@ Example: {"amount": 1500, "utr": "617589779921", "date": "2026-06-24"}`;
         }
       );
 
+      if (response.status === 429) {
+        throw new Error("RATE_LIMITED");
+      }
       if (!response.ok) throw new Error(`Gemini API error: ${response.status}`);
       const geminiData = await response.json();
       const rawText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
@@ -194,26 +199,26 @@ Example: {"amount": 1500, "utr": "617589779921", "date": "2026-06-24"}`;
       const jsonStr = rawText.replace(/```json?\s*/gi, "").replace(/```/g, "").trim();
       const parsed = JSON.parse(jsonStr);
 
-      const detectedAmount: number | undefined = parsed.amount ? Number(parsed.amount) : undefined;
-      const detectedUtr: string | undefined = parsed.utr ? String(parsed.utr) : undefined;
+      const detectedAmount: number | undefined = parsed.amount != null ? Number(parsed.amount) : undefined;
+      // UTR must stay a string — Gemini sometimes returns it as a number which loses precision
+      const detectedUtr: string | undefined = parsed.utr != null ? String(parsed.utr) : undefined;
       const detectedDate: string = parsed.date || new Date().toISOString().slice(0, 10);
 
-      setOcrResult({
-        amount: detectedAmount,
-        utr: detectedUtr,
-        date: detectedDate,
-        file
-      });
-      setManualAmount(detectedAmount ? String(detectedAmount) : "");
+      setOcrResult({ amount: detectedAmount, utr: detectedUtr, date: detectedDate, file });
+      setManualAmount(detectedAmount != null ? String(detectedAmount) : "");
       setManualUtr(detectedUtr || "");
-      setManualDate(detectedDate || new Date().toISOString().slice(0, 10));
+      setManualDate(detectedDate);
       setOcrConfirmOpen(true);
 
     } catch (err: any) {
       console.error("OCR Scan failed:", err);
-      toast.error("Scanning failed. Please verify details manually.");
+      if (err.message === "RATE_LIMITED") {
+        toast.error("Too many scans — please wait a moment and try again.");
+      } else {
+        toast.error("Scan failed. Please enter the details manually.");
+      }
       setOcrResult({ file });
-      setManualAmount(activeInvoice ? String(Number(activeInvoice.total_amount || 0) + Number(activeInvoice.electricity_cost || 0)) : "");
+      setManualAmount("");
       setManualUtr("");
       setManualDate(new Date().toISOString().slice(0, 10));
       setOcrConfirmOpen(true);
