@@ -143,12 +143,13 @@ async function addBuilding(input: {
   name: string;
   address: string;
   total_rooms?: number;
+  upi_id?: string;
 }) {
   try {
     const user_id = await requireAuthUserId();
     const { data, error } = await supabase
       .from("buildings")
-      .insert([{ name: input.name, address: input.address, user_id }])
+      .insert([{ name: input.name, address: input.address, user_id, upi_id: input.upi_id }])
       .select()
       .single();
     if (error) throw error;
@@ -243,6 +244,7 @@ async function updateBuilding(
     contact_phone?: string;
     cover_image_url?: string;
     images?: string[];
+    upi_id?: string;
   },
 ) {
   try {
@@ -257,6 +259,7 @@ async function updateBuilding(
     if (updates.contact_phone !== undefined) payload.contact_phone = updates.contact_phone;
     if (updates.cover_image_url !== undefined) payload.cover_image_url = updates.cover_image_url;
     if (updates.images !== undefined) payload.images = updates.images;
+    if (updates.upi_id !== undefined) payload.upi_id = updates.upi_id;
     
     const targetRooms = updates.total_rooms;
     const user_id = await requireAuthUserId();

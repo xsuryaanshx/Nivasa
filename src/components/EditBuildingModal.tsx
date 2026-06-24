@@ -9,7 +9,7 @@ interface Props {
   open: boolean;
   onClose: () => void;
   onSuccess?: () => void;
-  buildingData: { id: string; name: string; address: string; total_rooms?: number };
+  buildingData: { id: string; name: string; address: string; total_rooms?: number; upi_id?: string };
 }
 
 export function EditBuildingModal({ open, onClose, onSuccess, buildingData }: Props) {
@@ -18,6 +18,7 @@ export function EditBuildingModal({ open, onClose, onSuccess, buildingData }: Pr
   const [totalRooms, setTotalRooms] = useState<string>(
     String(buildingData.total_rooms ?? (buildingData as any).rooms ?? 0)
   );
+  const [upiId, setUpiId] = useState(buildingData.upi_id || "");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,6 +26,7 @@ export function EditBuildingModal({ open, onClose, onSuccess, buildingData }: Pr
     setName(buildingData.name);
     setAddress(buildingData.address);
     setTotalRooms(String(buildingData.total_rooms ?? (buildingData as any).rooms ?? 0));
+    setUpiId(buildingData.upi_id || "");
     setError(null);
   }, [buildingData]);
 
@@ -48,6 +50,7 @@ export function EditBuildingModal({ open, onClose, onSuccess, buildingData }: Pr
         name: name.trim(),
         address: address.trim(),
         total_rooms: roomsCount,
+        upi_id: upiId.trim(),
       });
 
       toast.success("Building updated");
@@ -125,6 +128,28 @@ export function EditBuildingModal({ open, onClose, onSuccess, buildingData }: Pr
                 value={totalRooms}
                 onChange={(e) => setTotalRooms(e.target.value)}
                 className="h-11 w-full rounded-xl border border-border bg-secondary/30 pl-10 pr-4 text-sm outline-none transition-all focus:border-brand focus:ring-4 focus:ring-brand/10"
+              />
+            </div>
+          </div>
+
+          {/* UPI ID */}
+          <div className="space-y-1.5">
+            <div className="flex flex-col gap-0.5">
+              <label htmlFor="edit-building-upi" className="text-xs font-medium text-muted-foreground">
+                UPI ID for Payments
+              </label>
+              <p className="text-[10px] text-muted-foreground/75 leading-normal">
+                Used to generate dynamic UPI links and QR codes for tenants in this building.
+              </p>
+            </div>
+            <div className="relative">
+              <input
+                id="edit-building-upi"
+                type="text"
+                placeholder="e.g. landlord@upi or landlord@okaxis"
+                value={upiId}
+                onChange={(e) => setUpiId(e.target.value.trim())}
+                className="h-11 w-full rounded-xl border border-border bg-secondary/30 px-4 text-sm outline-none transition-all focus:border-brand focus:ring-4 focus:ring-brand/10 font-mono"
               />
             </div>
           </div>

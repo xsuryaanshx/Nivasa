@@ -21,6 +21,7 @@ export function AddBuildingModal({ open, onClose, onSuccess }: Props) {
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
   const [totalRooms, setTotalRooms] = useState<string>("");
+  const [upiId, setUpiId] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +33,7 @@ export function AddBuildingModal({ open, onClose, onSuccess }: Props) {
 
   const handleClose = () => {
     onClose();
-    setName(""); setAddress(""); setTotalRooms(""); setSuccess(false); setError(null);
+    setName(""); setAddress(""); setTotalRooms(""); setUpiId(""); setSuccess(false); setError(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -76,6 +77,7 @@ export function AddBuildingModal({ open, onClose, onSuccess }: Props) {
         name: name.trim(),
         address: address.trim(),
         total_rooms: totalRooms !== "" ? rooms : undefined,
+        upi_id: upiId.trim() || undefined,
       });
 
       setSuccess(true);
@@ -179,6 +181,29 @@ export function AddBuildingModal({ open, onClose, onSuccess }: Props) {
                   value={totalRooms}
                   onChange={(e) => setTotalRooms(e.target.value)}
                   className="h-11 w-full rounded-xl border border-border bg-secondary/30 pl-10 pr-4 text-sm outline-none transition-all focus:border-brand focus:ring-4 focus:ring-brand/10"
+                />
+              </div>
+            </div>
+
+            {/* UPI ID */}
+            <div className="space-y-1.5">
+              <div className="flex flex-col gap-0.5">
+                <label htmlFor="building-upi" className="text-xs font-medium text-muted-foreground">
+                  UPI ID for Payments{" "}
+                  <span className="text-muted-foreground/60 text-[10px]">(optional)</span>
+                </label>
+                <p className="text-[10px] text-muted-foreground/75 leading-normal">
+                  Used to generate dynamic UPI links and QR codes for tenants in this building.
+                </p>
+              </div>
+              <div className="relative">
+                <input
+                  id="building-upi"
+                  type="text"
+                  placeholder="e.g. landlord@upi or landlord@okaxis"
+                  value={upiId}
+                  onChange={(e) => setUpiId(e.target.value.trim())}
+                  className="h-11 w-full rounded-xl border border-border bg-secondary/30 px-4 text-sm outline-none transition-all focus:border-brand focus:ring-4 focus:ring-brand/10 font-mono"
                 />
               </div>
             </div>
