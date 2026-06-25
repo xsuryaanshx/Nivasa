@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { useLanguage } from "@/components/LanguageProvider";
 import { useSubscriptionData } from "@/hooks/useSubscriptionData";
 import { getTenantPaymentStatus } from "@/lib/utils";
+import { downloadMonthlyReportPdf } from "@/lib/monthlyReportPdf";
 
 function getGreetingKey() {
   const hour = new Date().getHours();
@@ -190,9 +191,14 @@ export default function Dashboard() {
         title={`${t(getGreetingKey() as any)}, ${user?.fullName || t('user')}`}
         subtitle={t("dashboard_subtitle")}
         action={
-          <MagneticButton onClick={() => setAddOpen(true)}>
-            <Plus className="h-4 w-4" /> {t('add_payment')}
-          </MagneticButton>
+          <div className="flex gap-2">
+            <MagneticButton onClick={() => downloadMonthlyReportPdf(data, user?.fullName)} className="bg-secondary text-secondary-foreground hover:bg-secondary/80">
+              <Download className="h-4 w-4" /> Report
+            </MagneticButton>
+            <MagneticButton onClick={() => setAddOpen(true)}>
+              <Plus className="h-4 w-4" /> {t('add_payment')}
+            </MagneticButton>
+          </div>
         }
       />
 

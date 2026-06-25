@@ -1,0 +1,138 @@
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+
+export async function downloadMonthlyReportPdf(data: any, ownerName: string = "Nivasa Landlord") {
+  const doc = new jsPDF({
+    orientation: "portrait",
+    unit: "mm",
+    format: "a4",
+  });
+
+  const now = new Date();
+  const period = `${now.toLocaleString('default', { month: 'long' })} 1st, ${now.getFullYear()} – ${now.toLocaleString('default', { month: 'long' })} ${new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()}, ${now.getFullYear()}`;
+  const generatedOn = now.toLocaleString();
+
+  // Color Palette
+  const primaryColor = [15, 23, 42]; // Slate 900
+  const grayColor = [100, 116, 139]; // Slate 500
+
+  // 1. Header
+  doc.setFont("Helvetica", "bold");
+  doc.setFontSize(20);
+  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.text("Monthly Property Ledger", 14, 20);
+
+  doc.setFont("Helvetica", "normal");
+  doc.setFontSize(10);
+  doc.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
+  doc.text(`Owner: ${ownerName}`, 14, 28);
+  doc.text(`Statement Period: ${period}`, 14, 34);
+  doc.text(`Generated On: ${generatedOn}`, 14, 40);
+
+  // 2. Financial Summary (The TL;DR)
+  const formatInr = (val: number) => `Rs ${val.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`;
+  
+  doc.setDrawColor(226, 232, 240);
+  doc.setFillColor(248, 250, 252);
+  doc.roundedRect(14, 46, 182, 24, 2, 2, "FD");
+
+  doc.setFont("Helvetica", "bold");
+  doc.setFontSize(9);
+  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  
+  const totalCollected = data.recent.reduce((acc: number, p: any) => acc + (p.amount || 0), 0);
+  const totalExpected = data.stats.monthlyRevenue || 0;
+  const totalPending = Math.max(0, totalExpected - totalCollected);
+  const netProfit = data.profitStats.netProfit || 0;
+  const totalExpenses = totalCollected - netProfit;
+
+  doc.text("Total Expected", 20, 54);
+  doc.text("Total Collected", 55, 54);
+  doc.text("Pending Dues", 95, 54);
+  doc.text("Total Expenses", 135, 54);
+  doc.text("Net Profit", 175, 54);
+
+  doc.setFont("Helvetica", "normal");
+  doc.setFontSize(10);
+  doc.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
+  
+  doc.text(formatInr(totalExpected), 20, 62);
+  doc.text(formatInr(totalCollected), 55, 62);
+  doc.text(formatInr(totalPending), 95, 62);
+  doc.text(formatInr(totalExpenses), 135, 62);
+  doc.setFont("Helvetica", "bold");
+  doc.setTextColor(16, 185, 129); // Emerald 500 for Profit
+  doc.text(formatInr(netProfit), 175, 62);
+
+  // 3. Room-by-Room Breakdown
+  doc.setFont("Helvetica", "bold");
+  doc.setFontSize(14);
+  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.text("Room Breakdown", 14, 82);
+
+  const roomBody = data.rooms.map((r: any) => [
+    `${r.building_name} - ${r.room_number}`,
+    r.tenant_name || "Vacant",
+    formatInr(r.rent_amount || 0),
+    r.payment_status || (r.tenant_name ? "Pending" : "-"),
+    r.payment_date ? new Date(r.payment_date).toLocaleDateString() : "-",
+    formatInr(r.arrears || 0)
+  ]);
+
+  autoTable(doc, {
+    startY: 86,
+    head: [["Room", "Tenant Name", "Rent", "Status", "Paid On", "Arrears"]],
+    body: roomBody,
+    theme: "striped",
+    headStyles: { fillColor: primaryColor as any, textColor: 255 },
+    styles: { fontSize: 9, cellPadding: 4 },
+  });
+
+  // 4. Vacancy Report
+  const finalY = (doc as any).lastAutoTable.finalY + 15;
+  doc.setFont("Helvetica", "bold");
+  doc.setFontSize(14);
+  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.text("Vacancy Report", 14, finalY);
+
+  const vacantRooms = data.rooms.filter((r: any) => !r.tenant_name);
+  if (vacantRooms.length === 0) {
+    doc.setFont("Helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
+    doc.text("No vacant rooms. Fully occupied!", 14, finalY + 8);
+  } else {
+    const vacancyBody = vacantRooms.map((r: any) => [
+      r.building_name,
+      r.room_number,
+      formatInr(r.rent_amount || 0)
+    ]);
+    autoTable(doc, {
+      startY: finalY + 4,
+      head: [["Building", "Room Number", "Expected Rent"]],
+      body: vacancyBody,
+      theme: "plain",
+      headStyles: { fillColor: [241, 245, 249], textColor: primaryColor as any },
+      styles: { fontSize: 9, cellPadding: 4 },
+    });
+  }
+
+  // 5. Signature Footer
+  const pageHeight = doc.internal.pageSize.height;
+  doc.setFont("Helvetica", "normal");
+  doc.setFontSize(10);
+  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.text("Signature: ___________________________", 14, pageHeight - 30);
+
+  // 6. Universal Watermark (Nivasa by Ami Group.)
+  const pageCount = doc.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFont("Helvetica", "italic");
+    doc.setFontSize(8);
+    doc.setTextColor(156, 163, 175); // Gray 400
+    doc.text("Generated by Nivasa by Ami Group.", 105, pageHeight - 10, { align: "center" });
+  }
+
+  doc.save(`Monthly_Report_${now.toLocaleString('default', { month: 'short' })}_${now.getFullYear()}.pdf`);
+}

@@ -3,7 +3,8 @@ export function buildWhatsAppUrl(phone: string, message: string) {
   const digits = phone.replace(/[^\d]/g, "");
   // Auto-prepend Indian country code for 10-digit numbers
   const normalized = digits.length === 10 ? `91${digits}` : digits;
-  return `https://wa.me/${normalized}?text=${encodeURIComponent(message)}`;
+  const finalMessage = `${message}\n\n- Nivasa by Ami Group.`;
+  return `https://wa.me/${normalized}?text=${encodeURIComponent(finalMessage)}`;
 }
 
 export function openWhatsApp(phone: string, message: string) {
