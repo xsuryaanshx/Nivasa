@@ -84,15 +84,28 @@ export async function downloadReceiptPdf(p: any, landlordName: string = "Nivasa 
   doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
   doc.text("TRANSACTION SUMMARY", 30, 103);
 
+  let cleanNote = p.note || "Rent Payment";
+  // Remove fraud warnings
+  cleanNote = cleanNote.replace(/\[⚠️ FRAUD WARNING:[^\]]+\]\s*/g, "");
+  // Remove URLs starting with http:// or https://
+  cleanNote = cleanNote.replace(/https?:\/\/[^\s]+/gi, "");
+  // Clean up references to "Receipt:"
+  cleanNote = cleanNote.replace(/Receipt:\s*$/gi, "");
+  cleanNote = cleanNote.replace(/Receipt:\s*,\s*$/gi, "");
+  cleanNote = cleanNote.trim();
+  // Remove trailing commas, periods, spaces
+  cleanNote = cleanNote.replace(/[\s,.-]+$/, "");
+  if (!cleanNote) cleanNote = "Rent Payment";
+
   const tableBody = [
-    ["Receipt Number", `REC-${p.id.slice(0, 8).toUpperCase()}`],
-    ["Payment Date", new Date(p.date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })],
-    ["Landlord / Payee", landlordName],
-    ["Tenant Name", p.tenantName],
-    ["Building / Room", `${p.buildingName || "N/A"} - Room ${p.roomNumber || "N/A"}`],
-    ["Payment Method", p.method],
-    ["Transaction Reference", p.reference || "N/A"],
-    ["Remarks / Note", p.note || "Rent Payment"]
+    { label: "Receipt Number", value: `REC-${p.id.slice(0, 8).toUpperCase()}` },
+    { label: "Payment Date", value: new Date(p.date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) },
+    { label: "Landlord / Payee", value: landlordName },
+    { label: "Tenant Name", value: p.tenantName },
+    { label: "Building / Room", value: `${p.buildingName || "N/A"} - Room ${p.roomNumber || "N/A"}` },
+    { label: "Payment Method", value: p.method },
+    { label: "Transaction Reference", value: p.reference || "N/A" },
+    { label: "Remarks / Note", value: cleanNote }
   ];
 
   autoTable(doc, {
@@ -100,14 +113,20 @@ export async function downloadReceiptPdf(p: any, landlordName: string = "Nivasa 
     margin: { left: 30, right: 30 },
     body: tableBody,
     theme: "striped",
+    showHead: "never",
+    columns: [
+      { dataKey: "label" },
+      { dataKey: "value" }
+    ],
     styles: {
       fontSize: 9.5,
-      cellPadding: 3.5,
+      cellPadding: 2.8,
       textColor: [15, 23, 42],
+      overflow: "linebreak"
     },
     columnStyles: {
-      0: { fontStyle: "bold", textColor: [100, 116, 139], width: 55 },
-      1: { fontStyle: "bold", halign: "left" }
+      label: { fontStyle: "bold", textColor: [100, 116, 139], cellWidth: 50 },
+      value: { fontStyle: "bold", halign: "left" }
     }
   });
 
@@ -228,11 +247,11 @@ export async function downloadInvoicePdf(invoice: any, tenant: any, room: any, l
   doc.text("BILLING & TENANT INFO", 30, 96);
 
   const metaBody = [
-    ["Billing Month", invoice.month_year],
-    ["Invoice Date", new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })],
-    ["Landlord / Payee", landlordName],
-    ["Tenant Name", tenant.name],
-    ["Room & Building", `${room.buildingName || "N/A"} - Room ${room.number || "N/A"}`]
+    { label: "Billing Month", value: invoice.month_year },
+    { label: "Invoice Date", value: new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) },
+    { label: "Landlord / Payee", value: landlordName },
+    { label: "Tenant Name", value: tenant.name },
+    { label: "Room & Building", value: `${room.buildingName || "N/A"} - Room ${room.number || "N/A"}` }
   ];
 
   autoTable(doc, {
@@ -240,14 +259,20 @@ export async function downloadInvoicePdf(invoice: any, tenant: any, room: any, l
     margin: { left: 30, right: 30 },
     body: metaBody,
     theme: "striped",
+    showHead: "never",
+    columns: [
+      { dataKey: "label" },
+      { dataKey: "value" }
+    ],
     styles: {
       fontSize: 8.5,
       cellPadding: 2.2,
       textColor: [15, 23, 42],
+      overflow: "linebreak"
     },
     columnStyles: {
-      0: { fontStyle: "bold", textColor: [100, 116, 139], width: 45 },
-      1: { fontStyle: "bold", halign: "left" }
+      label: { fontStyle: "bold", textColor: [100, 116, 139], cellWidth: 45 },
+      value: { fontStyle: "bold", halign: "left" }
     }
   });
 
@@ -289,9 +314,9 @@ export async function downloadInvoicePdf(invoice: any, tenant: any, room: any, l
       textColor: [15, 23, 42]
     },
     columnStyles: {
-      1: { halign: "center", width: 12 },
-      2: { halign: "right", width: 28 },
-      3: { halign: "right", fontStyle: "bold", width: 28 }
+      1: { halign: "center", cellWidth: 12 },
+      2: { halign: "right", cellWidth: 28 },
+      3: { halign: "right", fontStyle: "bold", cellWidth: 28 }
     }
   });
 
