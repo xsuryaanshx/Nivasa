@@ -217,7 +217,7 @@ Return ONLY a raw JSON object (no conversational text, no markdown fences):
               ],
               generationConfig: { 
                 temperature: 0, 
-                maxOutputTokens: 256,
+                maxOutputTokens: 2048,
                 responseMimeType: "application/json",
                 responseSchema: {
                   type: "OBJECT",
