@@ -87,7 +87,7 @@ export default function Maintenance() {
         let prefilledData = null;
         const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
-        if (GEMINI_API_KEY) {
+        if (GEMINI_API_KEY && GEMINI_API_KEY.trim() !== "") {
           try {
             // Read file to base64
             const base64Data = await new Promise<string>((resolve, reject) => {
@@ -112,12 +112,7 @@ export default function Maintenance() {
                     {
                       parts: [
                         {
-                          text: "Analyze this receipt or bill image. Extract and return a JSON object with these EXACT fields: " +
-                            "\"title\" (string: short descriptive title of the expense, like merchant name + item description), " +
-                            "\"cost\" (number: the total amount after taxes), " +
-                            "\"category\" (string: must be one of 'maintenance', 'facility', 'utility', or 'other'), " +
-                            "\"description\" (string: itemized list of items with their individual costs, followed by merchant name, total, and date). " +
-                            "Do not wrap the JSON in markdown codeblocks. Just return raw JSON."
+                          text: "Analyze this receipt or bill image and extract information."
                         },
                         {
                           inlineData: {
@@ -129,20 +124,41 @@ export default function Maintenance() {
                     }
                   ],
                   generationConfig: {
-                    responseMimeType: "application/json"
+                    temperature: 0,
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                      type: "OBJECT",
+                      properties: {
+                        title: { type: "STRING", description: "Short descriptive title of the expense (like merchant name)" },
+                        cost: { type: "NUMBER", description: "The total amount paid after taxes" },
+                        category: { 
+                          type: "STRING", 
+                          enum: ["maintenance", "facility", "utility", "other"],
+                          description: "The expense category"
+                        },
+                        description: { type: "STRING", description: "Itemized list of items with individual costs, total, date" }
+                      },
+                      required: ["title", "cost", "category", "description"]
+                    }
                   }
                 })
               }
             );
 
             if (!response.ok) {
-              throw new Error(`Gemini API error: ${response.statusText}`);
+              const errorText = await response.text();
+              let apiErrorMsg = response.statusText;
+              try {
+                const errJson = JSON.parse(errorText);
+                apiErrorMsg = errJson.error?.message || apiErrorMsg;
+              } catch (_) {}
+              throw new Error(`Gemini API returned status ${response.status}: ${apiErrorMsg}`);
             }
 
             const result = await response.json();
             const textResponse = result.candidates?.[0]?.content?.parts?.[0]?.text;
             if (textResponse) {
-              const parsed = JSON.parse(textResponse);
+              const parsed = JSON.parse(textResponse.trim());
               prefilledData = {
                 title: parsed.title || "Scanned Expense",
                 cost: Number(parsed.cost) || 0,
@@ -152,12 +168,12 @@ export default function Maintenance() {
                 description: parsed.description || "Scanned from receipt."
               };
             }
-          } catch (error) {
+          } catch (error: any) {
             console.error("AI scanning failed:", error);
-            toast.error("Failed to scan receipt. Please make sure the image is clear and try again.");
+            toast.error(`Failed to scan receipt: ${error.message || "Unknown error"}. Please check settings.`);
           }
         } else {
-          toast.error("AI Receipt Scanner is not configured. Please add your Gemini API Key.");
+          toast.error("AI Receipt Scanner is not configured. If you recently updated your .env file, please restart your Vite development server.");
         }
 
         setIsScanning(false);

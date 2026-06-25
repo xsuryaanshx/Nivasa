@@ -159,16 +159,11 @@ export default function TenantDashboard() {
       const mimeType = file.type || "image/jpeg";
 
       const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-      const prompt = `You are a UPI payment receipt parser. Analyze this payment screenshot carefully and extract these exact fields:
+      if (!apiKey || apiKey.trim() === "") {
+        throw new Error("Gemini API Key is missing. If you recently updated your .env file, you MUST stop your terminal server and run 'npm run dev' again to restart it.");
+      }
 
-1. "amount": The rupee amount paid (return as a NUMBER, e.g. 1 or 1500.00). Look for ₹ symbol followed by a number.
-2. "utr": The 12-digit transaction reference number. It may be labeled as "Ref No", "UTR", "Transaction ID", "UPI Ref", or similar. IMPORTANT: Return this as a STRING (not a number) to preserve all digits. Example: "617589779921"
-3. "date": The payment date in YYYY-MM-DD format. Convert "24 Jun" or "24 Jun 2024" or "24/06/2024" to YYYY-MM-DD.
-
-Return ONLY a raw JSON object (no markdown, no code fences):
-{"amount": 1, "utr": "617589779921", "date": "2026-06-24"}
-
-If a value is not found, use null. The "utr" field MUST be a string enclosed in double quotes.`;
+      const prompt = `You are a UPI payment receipt parser. Analyze this payment screenshot carefully and extract these fields.`;
 
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
@@ -182,7 +177,20 @@ If a value is not found, use null. The "utr" field MUST be a string enclosed in 
                 { inline_data: { mime_type: mimeType, data: base64Image } }
               ]
             }],
-            generationConfig: { temperature: 0, maxOutputTokens: 256 }
+            generationConfig: { 
+              temperature: 0, 
+              maxOutputTokens: 256,
+              responseMimeType: "application/json",
+              responseSchema: {
+                type: "OBJECT",
+                properties: {
+                  amount: { type: "NUMBER", description: "The rupee amount paid (e.g. 1.00)" },
+                  utr: { type: "STRING", description: "The 12-digit UPI transaction reference number / UTR" },
+                  date: { type: "STRING", description: "The payment date in YYYY-MM-DD format" }
+                },
+                required: ["amount", "utr", "date"]
+              }
+            }
           })
         }
       );
@@ -190,18 +198,24 @@ If a value is not found, use null. The "utr" field MUST be a string enclosed in 
       if (response.status === 429) {
         throw new Error("RATE_LIMITED");
       }
-      if (!response.ok) throw new Error(`Gemini API error: ${response.status}`);
+      if (!response.ok) {
+        const errorText = await response.text();
+        let apiErrorMsg = response.statusText;
+        try {
+          const errJson = JSON.parse(errorText);
+          apiErrorMsg = errJson.error?.message || apiErrorMsg;
+        } catch (_) {}
+        throw new Error(`Gemini API returned status ${response.status}: ${apiErrorMsg}`);
+      }
+
       const geminiData = await response.json();
       const rawText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
       console.log("Gemini Vision response:", rawText);
 
-      // Parse the JSON — strip markdown code fences if present
-      const jsonStr = rawText.replace(/```json?\s*/gi, "").replace(/```/g, "").trim();
-      const parsed = JSON.parse(jsonStr);
+      const parsed = JSON.parse(rawText.trim());
 
-      const detectedAmount: number | undefined = parsed.amount != null ? Number(parsed.amount) : undefined;
-      // UTR must stay a string — Gemini sometimes returns it as a number which loses precision
-      const detectedUtr: string | undefined = parsed.utr != null ? String(parsed.utr) : undefined;
+      const detectedAmount: number | undefined = parsed.amount != null && parsed.amount > 0 ? Number(parsed.amount) : undefined;
+      const detectedUtr: string | undefined = parsed.utr ? String(parsed.utr) : undefined;
       const detectedDate: string = parsed.date || new Date().toISOString().slice(0, 10);
 
       setOcrResult({ amount: detectedAmount, utr: detectedUtr, date: detectedDate, file });
@@ -215,7 +229,7 @@ If a value is not found, use null. The "utr" field MUST be a string enclosed in 
       if (err.message === "RATE_LIMITED") {
         toast.error("Too many scans — please wait a moment and try again.");
       } else {
-        toast.error("Scan failed. Please enter the details manually.");
+        toast.error(`Scan failed: ${err.message || "Unknown error"}. Please check your settings.`);
       }
       setOcrResult({ file });
       setManualAmount("");
