@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Wrench, Clock, CheckCircle2, AlertCircle, Sparkles, Loader2, FileText } from "lucide-react";
+import { Plus, Wrench, Clock } from "lucide-react";
 import { nivasaApi } from "@/lib/api";
 import type { MaintenanceRequest, Building } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -49,192 +49,7 @@ export default function Maintenance() {
   const { canAccessFeature } = useSubscriptionData();
   const canExport = canAccessFeature("excel_exports");
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isScanning, setIsScanning] = useState(false);
-  const [scanStep, setScanStep] = useState(0);
 
-  const scanSteps = [
-    "Detecting receipt boundaries...",
-    "Optimizing image contrast...",
-    "Extracting printed text (OCR)...",
-    "AI analyzing merchant & items...",
-    "Extracting total amount & predicting category...",
-    "Form successfully pre-filled!"
-  ];
-
-  const handleScanClick = () => {
-    toast("Scan Receipt", {
-      description: "AI receipt scanning will be available in an upcoming update."
-    });
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsScanning(true);
-    setScanStep(0);
-
-    // Simulate scanning steps
-    let currentStep = 0;
-    const interval = setInterval(async () => {
-      currentStep++;
-      if (currentStep < scanSteps.length) {
-        setScanStep(currentStep);
-      } else {
-        clearInterval(interval);
-
-        let prefilledData = null;
-        const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-
-        if (GEMINI_API_KEY && GEMINI_API_KEY.trim() !== "") {
-          try {
-            // Read file to base64
-            const base64Data = await new Promise<string>((resolve, reject) => {
-              const reader = new FileReader();
-              reader.readAsDataURL(file);
-              reader.onload = () => {
-                const base64String = (reader.result as string).split(",")[1];
-                resolve(base64String);
-              };
-              reader.onerror = (error) => reject(error);
-            });
-
-            const makeGeminiRequest = async (modelName: string) => {
-              return await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${GEMINI_API_KEY}`,
-                {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify({
-                    contents: [
-                      {
-                        parts: [
-                          {
-                            text: "Analyze this receipt or bill image and extract information."
-                          },
-                          {
-                            inlineData: {
-                              mimeType: file.type || "image/png",
-                              data: base64Data
-                            }
-                          }
-                        ]
-                      }
-                    ],
-                    safetySettings: [
-                      { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-                      { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-                      { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-                      { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
-                    ],
-                    generationConfig: {
-                      temperature: 0,
-                      responseMimeType: "application/json",
-                      responseSchema: {
-                        type: "OBJECT",
-                        properties: {
-                          title: { type: "STRING", description: "Short descriptive title of the expense (like merchant name)" },
-                          cost: { type: "NUMBER", description: "The total amount paid after taxes" },
-                          category: { 
-                            type: "STRING", 
-                            enum: ["maintenance", "facility", "utility", "other"],
-                            description: "The expense category"
-                          },
-                          description: { type: "STRING", description: "Itemized list of items with individual costs, total, date" }
-                        },
-                        required: []
-                      }
-                    }
-                  })
-                }
-              );
-            };
-
-            let response = await makeGeminiRequest("gemini-2.5-flash-lite");
-
-            // Auto-fallback to gemini-2.5-flash if the lite model is rate-limited or busy/unavailable
-            if (!response.ok || response.status === 503 || response.status === 429) {
-              console.warn(`Primary model gemini-2.5-flash-lite failed with status ${response.status}. Retrying with gemini-2.5-flash...`);
-              const fallbackResponse = await makeGeminiRequest("gemini-2.5-flash");
-              if (fallbackResponse.ok) {
-                response = fallbackResponse;
-              }
-            }
-
-            if (!response.ok) {
-              const errorText = await response.text();
-              let apiErrorMsg = response.statusText;
-              try {
-                const errJson = JSON.parse(errorText);
-                apiErrorMsg = errJson.error?.message || apiErrorMsg;
-              } catch (_) {}
-              throw new Error(`Gemini API returned status ${response.status}: ${apiErrorMsg}`);
-            }
-
-            const result = await response.json();
-            console.log("Full Gemini response (Maintenance):", result);
-
-            const candidate = result.candidates?.[0];
-            if (candidate?.finishReason === "SAFETY") {
-              throw new Error("The receipt scan was blocked by Gemini safety filters. Please enter details manually.");
-            }
-
-            const textResponse = candidate?.content?.parts?.[0]?.text;
-            if (textResponse) {
-              let jsonStr = textResponse.trim();
-              const firstBrace = jsonStr.indexOf("{");
-              const lastBrace = jsonStr.lastIndexOf("}");
-              if (firstBrace !== -1 && lastBrace !== -1) {
-                jsonStr = jsonStr.slice(firstBrace, lastBrace + 1);
-              } else {
-                throw new SyntaxError("No JSON braces found in Gemini response");
-              }
-
-              const parsed = JSON.parse(jsonStr);
-              prefilledData = {
-                title: parsed.title || "Scanned Expense",
-                cost: Number(parsed.cost) || 0,
-                category: ["maintenance", "facility", "utility", "other"].includes(parsed.category)
-                  ? parsed.category
-                  : "other",
-                description: parsed.description || "Scanned from receipt."
-              };
-            }
-          } catch (error: any) {
-            console.error("AI scanning failed:", error);
-            if (error instanceof SyntaxError) {
-              toast.info("Could not auto-detect details from the image. Please enter them manually.");
-            } else {
-              toast.error(`Failed to scan receipt: ${error.message || "Unknown error"}. Please check settings.`);
-            }
-          }
-        } else {
-          toast.error("AI Receipt Scanner is not configured. If you recently updated your .env file, please restart your Vite development server.");
-        }
-
-        setIsScanning(false);
-
-        if (prefilledData) {
-          // Set the state
-          setNewRequest((prev) => ({
-            ...prev,
-            ...prefilledData,
-          }));
-
-          setIsAddModalOpen(true);
-          toast.success("AI scanned receipt successfully!", {
-            description: `Prefilled: ${prefilledData.title} (₹${prefilledData.cost.toLocaleString()})`
-          });
-        }
-
-        // Reset file input
-        if (fileInputRef.current) fileInputRef.current.value = "";
-      }
-    }, 900);
-  };
 
   const [newRequest, setNewRequest] = useState<Partial<MaintenanceRequest>>({
     title: "",
@@ -353,13 +168,7 @@ export default function Maintenance() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <input 
-            type="file" 
-            ref={fileInputRef} 
-            onChange={handleFileChange} 
-            accept="image/*,application/pdf" 
-            className="hidden" 
-          />
+
 
           <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
             <DialogTrigger asChild>
@@ -469,10 +278,7 @@ export default function Maintenance() {
             </DialogContent>
           </Dialog>
 
-          <Button onClick={handleScanClick} variant="outline" className="gap-2 border-brand/25 bg-card hover:bg-secondary">
-            <Sparkles className="h-4 w-4 text-brand animate-pulse" />
-            Scan Receipt
-          </Button>
+
 
           {canExport && (
             <Button onClick={handleExport} variant="secondary" className="gap-2">
@@ -528,33 +334,7 @@ export default function Maintenance() {
         </div>
       )}
 
-      {/* Scanning Progress Overlay */}
-      {isScanning && (
-        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background/80 backdrop-blur-md p-6 text-center animate-fade-in">
-          <div className="relative flex flex-col items-center justify-center p-8 rounded-3xl bg-card border border-border shadow-2xl max-w-sm w-full">
-            <div className="relative flex items-center justify-center mb-6 h-16 w-16 rounded-2xl bg-brand/10 text-brand">
-              <Loader2 className="h-8 w-8 animate-spin" />
-              <FileText className="h-4 w-4 absolute animate-pulse" />
-            </div>
 
-            <h3 className="text-base font-bold text-foreground mb-2 flex items-center gap-1.5 justify-center">
-              <Sparkles className="h-4 w-4 text-brand animate-pulse" />
-              AI Receipt Scanner
-            </h3>
-            
-            <div className="w-full bg-secondary/50 rounded-full h-1.5 overflow-hidden mb-4">
-              <div 
-                className="bg-brand h-full transition-all duration-500 rounded-full" 
-                style={{ width: `${((scanStep + 1) / scanSteps.length) * 100}%` }}
-              />
-            </div>
-
-            <p className="text-xs text-muted-foreground font-semibold min-h-[16px] animate-pulse">
-              {scanSteps[scanStep]}
-            </p>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
