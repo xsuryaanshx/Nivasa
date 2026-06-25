@@ -89,8 +89,8 @@ export async function downloadMonthlyReportPdf(data: any, ownerName: string = "N
     startY: 94, // Increased startY for margin
     head: [["Building Name", "Occupied Rooms", "Vacant Rooms", "Total Rooms"]],
     body: summaryBody,
-    theme: "plain",
-    headStyles: { fillColor: [241, 245, 249], textColor: primaryColor as any },
+    theme: "striped", // Changed from plain to striped so it's easier to read like a grid
+    headStyles: { fillColor: [15, 23, 42], textColor: 255 }, // Match the main table header
     styles: { fontSize: 10, cellPadding: 6 }, // Increased padding and font
     margin: { left: 14, right: 14 }
   });
@@ -119,8 +119,8 @@ export async function downloadMonthlyReportPdf(data: any, ownerName: string = "N
 
       // Only add the building sub-header if there are rooms to show, OR if all rooms are vacant, show a placeholder
       if (activeOrRecentRooms.length > 0) {
-        // Sub-header with extra top padding for visual separation
-        roomBody.push([{ content: `Building: ${bName}`, colSpan: 6, styles: { fillColor: [241, 245, 249], fontStyle: "bold", textColor: [15, 23, 42], cellPadding: 8 } }]);
+        // Sub-header with dark slate background and white text for high contrast separation
+        roomBody.push([{ content: `Building: ${bName}`, colSpan: 6, styles: { fillColor: [51, 65, 85], fontStyle: "bold", textColor: 255, cellPadding: 8 } }]);
         
         activeOrRecentRooms.forEach((r: any) => {
           const roomPayments = data.recent.filter((p: any) => p.unit_id === r.id || p.roomId === r.id);
