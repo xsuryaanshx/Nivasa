@@ -3,7 +3,7 @@ import { Download, X, Building2, Home, Users, ReceiptIndianRupee } from "lucide-
 import { useTranslation } from "react-i18next";
 import { nivasaApi } from "@/lib/api";
 import { downloadExcel } from "@/lib/export";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import { useState } from "react";
 
 export function ExportDataModal({ open, onClose }: { open: boolean; onClose: () => void }) {
