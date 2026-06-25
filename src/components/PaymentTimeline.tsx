@@ -24,9 +24,10 @@ interface Props {
   dense?: boolean;
   /** Group by month with sub-totals (default true) */
   grouped?: boolean;
+  onVerifyClick?: (payment: Payment) => void;
 }
 
-export function PaymentTimeline({ payments, dense = false, grouped = true }: Props) {
+export function PaymentTimeline({ payments, dense = false, grouped = true, onVerifyClick }: Props) {
   const { currency } = useCurrency();
   const { t } = useLanguage();
   const { user } = useAuth();
@@ -123,10 +124,25 @@ export function PaymentTimeline({ payments, dense = false, grouped = true }: Pro
                               }}
                               className="inline-flex h-7 shrink-0 items-center gap-1 rounded-lg border border-border bg-card/70 px-2 text-[11px] font-medium text-blue-500 hover:bg-blue-500/5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
                             >
-                              <FileText className="h-3 w-3" /> Receipt
+                              <FileText className="h-3 w-3" /> Receipt PDF
                             </button>
                           )}
                         </>
+                      )}
+                      {p.note && p.note.includes("Receipt: http") && onVerifyClick && (
+                        <button
+                          type="button"
+                          onClick={() => onVerifyClick(p)}
+                          className={cn(
+                            "inline-flex h-7 shrink-0 items-center gap-1 rounded-lg border px-2 text-[11px] font-bold transition-all shrink-0",
+                            p.status === "pending"
+                              ? "border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-600 hover:text-white"
+                              : "border-border bg-card/70 text-muted-foreground hover:bg-secondary hover:text-foreground opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+                          )}
+                        >
+                          <FileText className="h-3 w-3" />
+                          {p.status === "pending" ? "Verify Screenshot" : "View Image"}
+                        </button>
                       )}
                       <StatusPill status={p.status} />
                     </div>

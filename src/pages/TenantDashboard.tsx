@@ -150,6 +150,16 @@ export default function TenantDashboard() {
       .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
   }, [activeInvoice, payments]);
 
+  const activeInvoicePending = useMemo(() => {
+    if (!activeInvoice) return 0;
+    return payments
+      .filter(p => {
+        const pMonth = p.paid_date ? p.paid_date.slice(0, 7) : "";
+        return pMonth === activeInvoice.billing_month && p.status === "pending";
+      })
+      .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+  }, [activeInvoice, payments]);
+
   const activeInvoiceTotal = useMemo(() => {
     if (!activeInvoice) return 0;
     return Number(activeInvoice.total_amount || 0) + Number(activeInvoice.electricity_cost || 0);
@@ -333,6 +343,23 @@ Return ONLY a raw JSON object (no conversational text, no markdown fences):
         .getPublicUrl(filePath);
 
       const cleanDate = manualDate || new Date().toISOString().slice(0, 10);
+      
+      let noteText = `Auto-verified via UPI Screenshot OCR. Receipt: ${publicUrl}`;
+      const warnings = [];
+      const originalAmount = ocrResult.amount;
+      const originalUtr = ocrResult.utr;
+
+      if (originalAmount !== undefined && Number(originalAmount) !== amt) {
+        warnings.push(`Scanned amount ₹${originalAmount} changed to ₹${amt}`);
+      }
+      if (originalUtr !== undefined && (originalUtr || "").trim() !== (manualUtr || "").trim()) {
+        warnings.push(`Scanned UTR "${originalUtr}" changed to "${manualUtr || ""}"`);
+      }
+
+      if (warnings.length > 0) {
+        noteText = `[⚠️ FRAUD WARNING: ${warnings.join(", ")}] ` + noteText;
+      }
+
       const { error: insertErr } = await supabase
         .from('payments')
         .insert([{
@@ -342,15 +369,15 @@ Return ONLY a raw JSON object (no conversational text, no markdown fences):
           user_id: tenant?.building?.user_id,
           amount: amt,
           method: 'upi',
-          status: 'paid',
+          status: 'pending',
           paid_date: cleanDate,
           reference_number: manualUtr || null,
-          note: `Auto-verified via UPI Screenshot OCR. Receipt: ${publicUrl}`
+          note: noteText
         }]);
 
       if (insertErr) throw insertErr;
 
-      toast.success("Receipt verified! Payment recorded successfully.");
+      toast.success("Receipt uploaded successfully! Payment is pending landlord verification.");
       setOcrConfirmOpen(false);
       setOcrResult(null);
       fetchTenantData();
@@ -485,6 +512,12 @@ Return ONLY a raw JSON object (no conversational text, no markdown fences):
                       <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                       ₹{activeInvoicePaid.toLocaleString()} paid this month
                     </p>
+                  )}
+                  {activeInvoicePending > 0 && (
+                    <div className="mt-2 rounded-xl bg-amber-500/10 border border-amber-500/20 p-2.5 text-xs text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-2">
+                      <AlertCircle className="h-4 w-4 shrink-0 text-amber-500" />
+                      <span>Payment of ₹{activeInvoicePending.toLocaleString()} is pending verification.</span>
+                    </div>
                   )}
                 </div>
                 

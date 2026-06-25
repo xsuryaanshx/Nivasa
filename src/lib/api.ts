@@ -1921,6 +1921,49 @@ async function logFeatureUsage(featureKey: string, action?: string, metadata: an
   }
 }
 
+async function updatePaymentStatus(paymentId: string, status: string, note?: string) {
+  try {
+    const user_id = await requireAuthUserId();
+    const validStatuses = ["paid", "pending", "late"];
+    const statusNorm = status.toLowerCase();
+    if (!validStatuses.includes(statusNorm)) throw new Error("Invalid payment status");
+
+    const updates: any = { status: statusNorm };
+    if (note !== undefined) updates.note = note;
+
+    const { data, error } = await supabase
+      .from("payments")
+      .update(updates)
+      .eq("id", paymentId)
+      .eq("user_id", user_id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    safeLog("updatePaymentStatus", error);
+    throw error;
+  }
+}
+
+async function deletePayment(paymentId: string) {
+  try {
+    const user_id = await requireAuthUserId();
+    const { error } = await supabase
+      .from("payments")
+      .delete()
+      .eq("id", paymentId)
+      .eq("user_id", user_id);
+
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    safeLog("deletePayment", error);
+    throw error;
+  }
+}
+
 export const nivasaApi = {
   logFeatureUsage,
   getUserSettings,
@@ -1949,6 +1992,8 @@ export const nivasaApi = {
   addPayment,
   addPaymentsBulk,
   getRecentPayments,
+  updatePaymentStatus,
+  deletePayment,
   saveElectricityReading,
   getElectricityRate,
   updateElectricityRate,

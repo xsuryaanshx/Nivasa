@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { MagneticButton } from "@/components/MagneticButton";
 import { PaymentTimeline } from "@/components/PaymentTimeline";
 import { AddPaymentModal } from "@/components/AddPaymentModal";
+import { VerifyPaymentModal } from "@/components/VerifyPaymentModal";
 import { Money } from "@/components/Money";
 import { type PaymentStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -40,6 +41,8 @@ export default function Payments() {
   const [open, setOpen] = useState(false);
   const [paymentsList, setPaymentsList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [verifyOpen, setVerifyOpen] = useState(false);
+  const [selectedPayment, setSelectedPayment] = useState<any>(null);
 
   const fetchPayments = async () => {
     try {
@@ -139,7 +142,13 @@ export default function Payments() {
         {loading ? (
           <div className="h-64 flex items-center justify-center text-muted-foreground italic">{t("loading_payments")}</div>
         ) : (
-          <PaymentTimeline payments={filtered} />
+          <PaymentTimeline 
+            payments={filtered} 
+            onVerifyClick={(p) => {
+              setSelectedPayment(p);
+              setVerifyOpen(true);
+            }} 
+          />
         )}
       </div>
 
@@ -149,6 +158,16 @@ export default function Payments() {
           setOpen(false);
           fetchPayments();
         }} 
+      />
+
+      <VerifyPaymentModal
+        open={verifyOpen}
+        onClose={() => {
+          setVerifyOpen(false);
+          setSelectedPayment(null);
+        }}
+        payment={selectedPayment}
+        onSuccess={fetchPayments}
       />
     </div>
   );

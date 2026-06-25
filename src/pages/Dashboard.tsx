@@ -10,6 +10,7 @@ import { AddPaymentModal } from "@/components/AddPaymentModal";
 import { AddBuildingModal } from "@/components/AddBuildingModal";
 import { AddRoomModal } from "@/components/AddRoomModal";
 import { AddTenantModal } from "@/components/AddTenantModal";
+import { VerifyPaymentModal } from "@/components/VerifyPaymentModal";
 import { RevenueChart } from "@/components/RevenueChart";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -42,6 +43,8 @@ export default function Dashboard() {
   const [addBuildingOpen, setAddBuildingOpen] = useState(false);
   const [addRoomOpen, setAddRoomOpen] = useState(false);
   const [addTenantOpen, setAddTenantOpen] = useState(false);
+  const [verifyPaymentOpen, setVerifyPaymentOpen] = useState(false);
+  const [selectedVerifyPayment, setSelectedVerifyPayment] = useState<any>(null);
 
   const fetchData = async () => {
     try {
@@ -86,7 +89,7 @@ export default function Dashboard() {
   const rooms = data.rooms || [];
   const attentionItems: {
     id: string;
-    type: "late_rent" | "vacant_room" | "lease_expiring";
+    type: "late_rent" | "vacant_room" | "lease_expiring" | "verify_payment";
     title: string;
     description: string;
     actionLabel: string;
@@ -176,6 +179,25 @@ export default function Dashboard() {
               action: () => navigate(`/app/rooms/${room.id}`),
             });
           }
+        }
+      });
+    }
+  });
+
+  // 4. Pending Payment Verification
+  (recent || []).forEach((payment: any) => {
+    if (payment.status === "pending") {
+      const isFlagged = payment.note?.includes("FRAUD WARNING");
+      attentionItems.push({
+        id: `verify-payment-${payment.id}`,
+        type: "verify_payment",
+        title: isFlagged ? `⚠️ Flagged Payment: Room ${payment.roomNumber}` : `Verify Payment: Room ${payment.roomNumber}`,
+        description: `${payment.tenantName} uploaded screenshot claiming ₹${payment.amount.toLocaleString()}.`,
+        actionLabel: "Verify",
+        severity: isFlagged ? "high" : "medium",
+        action: () => {
+          setSelectedVerifyPayment(payment);
+          setVerifyPaymentOpen(true);
         }
       });
     }
@@ -402,6 +424,9 @@ export default function Dashboard() {
               {attentionItems.filter(i => i.type === 'lease_expiring').length > 0 && (
                 <span className="text-brand font-bold">{attentionItems.filter(i => i.type === 'lease_expiring').length} Lease Expiry</span>
               )}
+              {attentionItems.filter(i => i.type === 'verify_payment').length > 0 && (
+                <span className="text-blue-500 font-bold">{attentionItems.filter(i => i.type === 'verify_payment').length} Pending Verify</span>
+              )}
             </div>
           )}
         </div>
@@ -426,12 +451,16 @@ export default function Dashboard() {
                       ? 'bg-destructive/10 text-destructive dark:bg-destructive/20' 
                       : item.type === 'vacant_room' 
                         ? 'bg-amber-500/10 text-amber-600 dark:text-amber-500 dark:bg-amber-500/20' 
-                        : 'bg-brand/10 text-brand dark:bg-brand/20'
+                        : item.type === 'verify_payment'
+                          ? 'bg-blue-500/10 text-blue-600 dark:bg-blue-500/20'
+                          : 'bg-brand/10 text-brand dark:bg-brand/20'
                   }`}>
                     {item.type === 'late_rent' ? (
                       <IndianRupee className="h-3.5 w-3.5" />
                     ) : item.type === 'vacant_room' ? (
                       <Home className="h-3.5 w-3.5" />
+                    ) : item.type === 'verify_payment' ? (
+                      <ReceiptIndianRupee className="h-3.5 w-3.5" />
                     ) : (
                       <CalendarClock className="h-3.5 w-3.5" />
                     )}
@@ -451,12 +480,15 @@ export default function Dashboard() {
                   className={`inline-flex h-8 items-center gap-1.5 rounded-xl px-3 text-[11px] font-semibold transition-all shrink-0 ${
                     item.type === 'late_rent'
                       ? 'bg-destructive text-white hover:bg-destructive/90 shadow-[0_2px_8px_rgba(239,68,68,0.2)]'
-                      : 'bg-secondary hover:bg-secondary/80 text-foreground border border-border/40'
+                      : item.type === 'verify_payment'
+                        ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-[0_2px_8px_rgba(59,130,246,0.2)]'
+                        : 'bg-secondary hover:bg-secondary/80 text-foreground border border-border/40'
                   }`}
                 >
                   {item.type === 'late_rent' && <Send className="h-3 w-3" />}
                   {item.actionLabel}
-                  {item.type !== 'late_rent' && <ArrowRight className="h-3 w-3" />}
+                  {item.type !== 'late_rent' && item.type !== 'verify_payment' && <ArrowRight className="h-3 w-3" />}
+                  {item.type === 'verify_payment' && <CheckCircle2 className="h-3 w-3" />}
                 </button>
               </div>
             ))}
@@ -546,7 +578,14 @@ export default function Dashboard() {
             {loading ? (
               <div className="h-40 flex items-center justify-center text-muted-foreground">{t("loading_payments")}</div>
             ) : (
-              <PaymentTimeline payments={recent.slice(0, 8)} dense />
+              <PaymentTimeline 
+                payments={recent.slice(0, 8)} 
+                dense 
+                onVerifyClick={(p) => {
+                  setSelectedVerifyPayment(p);
+                  setVerifyPaymentOpen(true);
+                }} 
+              />
             )}
           </div>
         </div>
@@ -579,6 +618,15 @@ export default function Dashboard() {
           setAddTenantOpen(false);
           fetchData();
         }}
+      />
+      <VerifyPaymentModal
+        open={verifyPaymentOpen}
+        onClose={() => {
+          setVerifyPaymentOpen(false);
+          setSelectedVerifyPayment(null);
+        }}
+        payment={selectedVerifyPayment}
+        onSuccess={fetchData}
       />
     </div>
   );
