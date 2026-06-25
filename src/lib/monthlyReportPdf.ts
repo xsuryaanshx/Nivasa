@@ -34,10 +34,10 @@ export async function downloadMonthlyReportPdf(data: any, ownerName: string = "N
   
   doc.setDrawColor(226, 232, 240);
   doc.setFillColor(248, 250, 252);
-  doc.roundedRect(14, 46, 182, 24, 2, 2, "FD");
+  doc.roundedRect(14, 46, 182, 30, 3, 3, "FD"); // Increased height to 30 and border radius to 3
 
   doc.setFont("Helvetica", "bold");
-  doc.setFontSize(9);
+  doc.setFontSize(10); // Increased font size slightly
   doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
   
   const totalCollected = data.recent.reduce((acc: number, p: any) => acc + (p.amount || 0), 0);
@@ -46,29 +46,30 @@ export async function downloadMonthlyReportPdf(data: any, ownerName: string = "N
   const netProfit = data.profitStats.netProfit || 0;
   const totalExpenses = totalCollected - netProfit;
 
-  doc.text("Total Expected", 20, 54);
-  doc.text("Total Collected", 55, 54);
-  doc.text("Pending Dues", 95, 54);
-  doc.text("Total Expenses", 135, 54);
-  doc.text("Net Profit", 175, 54);
+  // Adjusted Y positions for more vertical margin inside the box
+  doc.text("Total Expected", 20, 56);
+  doc.text("Total Collected", 55, 56);
+  doc.text("Pending Dues", 95, 56);
+  doc.text("Total Expenses", 135, 56);
+  doc.text("Net Profit", 175, 56);
 
   doc.setFont("Helvetica", "normal");
-  doc.setFontSize(10);
+  doc.setFontSize(11); // Increased font size slightly
   doc.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
   
-  doc.text(formatInr(totalExpected), 20, 62);
-  doc.text(formatInr(totalCollected), 55, 62);
-  doc.text(formatInr(totalPending), 95, 62);
-  doc.text(formatInr(totalExpenses), 135, 62);
+  doc.text(formatInr(totalExpected), 20, 66);
+  doc.text(formatInr(totalCollected), 55, 66);
+  doc.text(formatInr(totalPending), 95, 66);
+  doc.text(formatInr(totalExpenses), 135, 66);
   doc.setFont("Helvetica", "bold");
   doc.setTextColor(16, 185, 129); // Emerald 500 for Profit
-  doc.text(formatInr(netProfit), 175, 62);
+  doc.text(formatInr(netProfit), 175, 66);
 
   // 3. Building Summary
   doc.setFont("Helvetica", "bold");
   doc.setFontSize(14);
   doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.text("Occupancy Summary by Building", 14, 82);
+  doc.text("Occupancy Summary by Building", 14, 88); // Increased top margin
 
   const buildings = Array.from(new Set(data.rooms.map((r: any) => r.buildingName || "Unknown")));
   
@@ -85,16 +86,17 @@ export async function downloadMonthlyReportPdf(data: any, ownerName: string = "N
   }
 
   autoTable(doc, {
-    startY: 86,
+    startY: 94, // Increased startY for margin
     head: [["Building Name", "Occupied Rooms", "Vacant Rooms", "Total Rooms"]],
     body: summaryBody,
     theme: "plain",
     headStyles: { fillColor: [241, 245, 249], textColor: primaryColor as any },
-    styles: { fontSize: 9, cellPadding: 4 },
+    styles: { fontSize: 10, cellPadding: 6 }, // Increased padding and font
+    margin: { left: 14, right: 14 }
   });
 
   // 4. Room-by-Room Breakdown (Grouped by Building)
-  const finalY = (doc as any).lastAutoTable.finalY + 15;
+  const finalY = (doc as any).lastAutoTable.finalY + 20; // Increased spacing between tables
   doc.setFont("Helvetica", "bold");
   doc.setFontSize(14);
   doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
@@ -117,7 +119,8 @@ export async function downloadMonthlyReportPdf(data: any, ownerName: string = "N
 
       // Only add the building sub-header if there are rooms to show, OR if all rooms are vacant, show a placeholder
       if (activeOrRecentRooms.length > 0) {
-        roomBody.push([{ content: `Building: ${bName}`, colSpan: 6, styles: { fillColor: [226, 232, 240], fontStyle: "bold", textColor: [15, 23, 42] } }]);
+        // Sub-header with extra top padding for visual separation
+        roomBody.push([{ content: `Building: ${bName}`, colSpan: 6, styles: { fillColor: [241, 245, 249], fontStyle: "bold", textColor: [15, 23, 42], cellPadding: 8 } }]);
         
         activeOrRecentRooms.forEach((r: any) => {
           const roomPayments = data.recent.filter((p: any) => p.unit_id === r.id || p.roomId === r.id);
@@ -159,18 +162,18 @@ export async function downloadMonthlyReportPdf(data: any, ownerName: string = "N
     });
 
     if (roomBody.length === 0) {
-      // Meaning ALL buildings had ONLY purely vacant rooms with no payments
       roomBody.push([{ content: "All rooms are currently vacant with no recent payments.", colSpan: 6, styles: { halign: "center", fontStyle: "italic", textColor: [100, 116, 139] } }]);
     }
   }
 
   autoTable(doc, {
-    startY: finalY + 4,
+    startY: finalY + 6, // Added more top margin
     head: [["Room", "Tenant Name", "Rent", "Status", "Paid On", "Arrears"]],
     body: roomBody,
     theme: "striped",
     headStyles: { fillColor: primaryColor as any, textColor: 255 },
-    styles: { fontSize: 9, cellPadding: 4 },
+    styles: { fontSize: 9, cellPadding: 6 }, // Increased cell padding to 6
+    margin: { left: 14, right: 14 }
   });
 
   // 5. Signature Footer
