@@ -163,7 +163,13 @@ export default function TenantDashboard() {
         throw new Error("Gemini API Key is missing. If you recently updated your .env file, you MUST stop your terminal server and run 'npm run dev' again to restart it.");
       }
 
-      const prompt = `You are a UPI payment receipt parser. Analyze this payment screenshot carefully and extract these fields.`;
+      const prompt = `You are a UPI payment receipt parser. Analyze this payment screenshot carefully and extract these fields:
+1. "amount": The rupee amount paid (number, e.g. 2000.00). Look for the ₹ symbol or "Rs." followed by a number.
+2. "utr": The 12-digit transaction reference number (string). Labeled as UTR, Ref No, Transaction ID, UPI Ref, or similar.
+3. "date": The payment date in YYYY-MM-DD format.
+
+Return ONLY a raw JSON object (no conversational text, no markdown fences):
+{"amount": 2000.00, "utr": "612345678901", "date": "2026-06-25"}`;
 
       const makeGeminiRequest = async (modelName: string) => {
         return await fetch(
@@ -225,7 +231,15 @@ export default function TenantDashboard() {
       const rawText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
       console.log("Gemini Vision response:", rawText);
 
-      const parsed = JSON.parse(rawText.trim());
+      // Robustly extract the JSON object by finding the first '{' and last '}'
+      let jsonStr = rawText.trim();
+      const firstBrace = jsonStr.indexOf("{");
+      const lastBrace = jsonStr.lastIndexOf("}");
+      if (firstBrace !== -1 && lastBrace !== -1) {
+        jsonStr = jsonStr.slice(firstBrace, lastBrace + 1);
+      }
+
+      const parsed = JSON.parse(jsonStr);
 
       const detectedAmount: number | undefined = parsed.amount != null && parsed.amount > 0 ? Number(parsed.amount) : undefined;
       const detectedUtr: string | undefined = parsed.utr ? String(parsed.utr) : undefined;

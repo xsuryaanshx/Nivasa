@@ -171,7 +171,14 @@ export default function Maintenance() {
             const result = await response.json();
             const textResponse = result.candidates?.[0]?.content?.parts?.[0]?.text;
             if (textResponse) {
-              const parsed = JSON.parse(textResponse.trim());
+              let jsonStr = textResponse.trim();
+              const firstBrace = jsonStr.indexOf("{");
+              const lastBrace = jsonStr.lastIndexOf("}");
+              if (firstBrace !== -1 && lastBrace !== -1) {
+                jsonStr = jsonStr.slice(firstBrace, lastBrace + 1);
+              }
+
+              const parsed = JSON.parse(jsonStr);
               prefilledData = {
                 title: parsed.title || "Scanned Expense",
                 cost: Number(parsed.cost) || 0,
