@@ -71,12 +71,18 @@ export async function downloadMonthlyReportPdf(data: any, ownerName: string = "N
   doc.text("Occupancy Summary by Building", 14, 82);
 
   const buildings = Array.from(new Set(data.rooms.map((r: any) => r.buildingName || "Unknown")));
-  const summaryBody = buildings.map((bName) => {
-    const bRooms = data.rooms.filter((r: any) => (r.buildingName || "Unknown") === bName);
-    const occupied = bRooms.filter((r: any) => r.status === "occupied").length;
-    const vacant = bRooms.filter((r: any) => r.status === "vacant" || r.status === "maintenance").length;
-    return [bName, occupied.toString(), vacant.toString(), bRooms.length.toString()];
-  });
+  
+  let summaryBody: any[] = [];
+  if (buildings.length === 0) {
+    summaryBody = [["No buildings found", "0", "0", "0"]];
+  } else {
+    summaryBody = buildings.map((bName) => {
+      const bRooms = data.rooms.filter((r: any) => (r.buildingName || "Unknown") === bName);
+      const occupied = bRooms.filter((r: any) => r.status === "occupied").length;
+      const vacant = bRooms.filter((r: any) => r.status === "vacant" || r.status === "maintenance").length;
+      return [bName, occupied.toString(), vacant.toString(), bRooms.length.toString()];
+    });
+  }
 
   autoTable(doc, {
     startY: 86,
@@ -96,61 +102,67 @@ export async function downloadMonthlyReportPdf(data: any, ownerName: string = "N
 
   const roomBody: any[] = [];
   
-  buildings.forEach((bName) => {
-    // Add a sub-header row for the Building
-    roomBody.push([{ content: `Building: ${bName}`, colSpan: 6, styles: { fillColor: [226, 232, 240], fontStyle: "bold", textColor: [15, 23, 42] } }]);
-    
-    const bRooms = data.rooms.filter((r: any) => (r.buildingName || "Unknown") === bName);
-    
-    // Sort rooms by number
-    bRooms.sort((a: any, b: any) => String(a.number).localeCompare(String(b.number)));
+  if (buildings.length === 0) {
+    roomBody.push([{ content: "No rooms available.", colSpan: 6, styles: { halign: "center", fontStyle: "italic", textColor: [100, 116, 139] } }]);
+  } else {
+    buildings.forEach((bName) => {
+      const bRooms = data.rooms.filter((r: any) => (r.buildingName || "Unknown") === bName);
+      bRooms.sort((a: any, b: any) => String(a.number).localeCompare(String(b.number)));
 
-    bRooms.forEach((r: any) => {
-      const roomPayments = data.recent.filter((p: any) => p.unit_id === r.id || p.roomId === r.id);
-      const isOccupied = r.status === "occupied";
-      const hasRecentPayment = roomPayments.length > 0;
-      
-      // Do not list vacant rooms unless they had a payment this month
-      if (!isOccupied && !hasRecentPayment) return;
+      const activeOrRecentRooms = bRooms.filter((r: any) => {
+        const isOccupied = r.status === "occupied";
+        const hasRecentPayment = data.recent.some((p: any) => p.unit_id === r.id || p.roomId === r.id);
+        return isOccupied || hasRecentPayment;
+      });
 
-      let tenantName = "-";
-      let statusNote = "";
-      
-      if (r.tenants && r.tenants.length > 0) {
-        tenantName = r.tenants.map((t: any) => t.name).join(", ");
-      } else if (hasRecentPayment && r.pastTenants && r.pastTenants.length > 0) {
-        // Find the past tenant who paid
-        const paidPastTenantId = roomPayments[0].tenant_id || roomPayments[0].tenantId;
-        const pt = r.pastTenants.find((t: any) => t.id === paidPastTenantId);
-        if (pt) {
-          tenantName = pt.name;
-        } else {
-          tenantName = r.pastTenants[0].name; // fallback to last past tenant
-        }
-        statusNote = " (Moved Out)";
-      } else {
-        tenantName = "Unknown";
+      // Only add the building sub-header if there are rooms to show, OR if all rooms are vacant, show a placeholder
+      if (activeOrRecentRooms.length > 0) {
+        roomBody.push([{ content: `Building: ${bName}`, colSpan: 6, styles: { fillColor: [226, 232, 240], fontStyle: "bold", textColor: [15, 23, 42] } }]);
+        
+        activeOrRecentRooms.forEach((r: any) => {
+          const roomPayments = data.recent.filter((p: any) => p.unit_id === r.id || p.roomId === r.id);
+          const hasRecentPayment = roomPayments.length > 0;
+          
+          let tenantName = "-";
+          let statusNote = "";
+          
+          if (r.tenants && r.tenants.length > 0) {
+            tenantName = r.tenants.map((t: any) => t.name).join(", ");
+          } else if (hasRecentPayment && r.pastTenants && r.pastTenants.length > 0) {
+            const paidPastTenantId = roomPayments[0].tenant_id || roomPayments[0].tenantId;
+            const pt = r.pastTenants.find((t: any) => t.id === paidPastTenantId);
+            tenantName = pt ? pt.name : r.pastTenants[0].name;
+            statusNote = " (Moved Out)";
+          } else {
+            tenantName = "Unknown";
+          }
+
+          let pStatus = "Pending";
+          let pDate = "-";
+          
+          if (hasRecentPayment) {
+            pStatus = roomPayments[0].status || "Paid";
+            const dateStr = roomPayments[0].date || roomPayments[0].paid_date;
+            pDate = dateStr ? new Date(dateStr).toLocaleDateString() : "-";
+          }
+
+          roomBody.push([
+            r.number,
+            tenantName + statusNote,
+            formatInr(r.rent || 0),
+            pStatus.charAt(0).toUpperCase() + pStatus.slice(1),
+            pDate,
+            "-"
+          ]);
+        });
       }
-
-      let pStatus = "Pending";
-      let pDate = "-";
-      
-      if (hasRecentPayment) {
-        pStatus = roomPayments[0].status || "Paid";
-        const dateStr = roomPayments[0].date || roomPayments[0].paid_date;
-        pDate = dateStr ? new Date(dateStr).toLocaleDateString() : "-";
-      }
-
-      roomBody.push([
-        r.number,
-        tenantName + statusNote,
-        formatInr(r.rent || 0),
-        pStatus.charAt(0).toUpperCase() + pStatus.slice(1),
-        pDate,
-        "-" // Arrears not tracked per-room in this data
-      ]);
     });
-  });
+
+    if (roomBody.length === 0) {
+      // Meaning ALL buildings had ONLY purely vacant rooms with no payments
+      roomBody.push([{ content: "All rooms are currently vacant with no recent payments.", colSpan: 6, styles: { halign: "center", fontStyle: "italic", textColor: [100, 116, 139] } }]);
+    }
+  }
 
   autoTable(doc, {
     startY: finalY + 4,
