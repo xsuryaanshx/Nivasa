@@ -316,7 +316,11 @@ export async function downloadInvoicePdf(invoice: any, tenant: any, room: any, l
 
     try {
       const qrImg = await loadImage(qrUrl);
-      doc.addImage(qrImg, "PNG", 145, nextY, 26, 26);
+      if (qrImg && qrImg.naturalWidth > 0) {
+        doc.addImage(qrImg, "PNG", 145, nextY, 26, 26);
+      } else {
+        console.warn("QR code image loaded but has 0 size (blocked by CSP/CORS)");
+      }
     } catch (err) {
       console.warn("Failed to load QR code inside PDF invoice:", err);
     }

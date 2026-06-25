@@ -1,6 +1,6 @@
 import { nivasaApi } from "@/lib/api";
 import { useEffect, useState, useMemo } from "react";
-import { CheckCircle2, FileText, Loader2, Calendar, Banknote, Zap, Plus, X } from "lucide-react";
+import { CheckCircle2, FileText, Loader2, Calendar, Banknote, Zap, Plus, X, AlertCircle } from "lucide-react";
 import { GlassModal } from "./GlassModal";
 import { MagneticButton } from "./MagneticButton";
 import { cn, calculateTenantShare } from "@/lib/utils";
@@ -95,6 +95,35 @@ export function InvoiceGeneratorModal({ open, onClose, tenant, room, roomPayment
       }).catch(e => console.error("Could not fetch user settings", e));
     }
   }, [open, tenant, room, electricityCost, roomPayments]);
+
+  const [paidThisMonth, setPaidThisMonth] = useState(0);
+
+  useEffect(() => {
+    if (open && tenant && roomPayments) {
+      let paid = 0;
+      try {
+        const parts = monthYear.split(" ");
+        if (parts.length === 2) {
+          const monthName = parts[0];
+          const year = parts[1];
+          const monthIndex = new Date(`${monthName} 1, 2000`).getMonth(); // 0-indexed
+          const yearNum = parseInt(year, 10);
+          
+          paid = roomPayments
+            .filter(p => {
+              if (p.tenantId !== tenant.id) return false;
+              if (p.status !== "paid") return false;
+              const pDate = new Date(p.date);
+              return pDate.getFullYear() === yearNum && pDate.getMonth() === monthIndex;
+            })
+            .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+        }
+      } catch (err) {
+        console.error("Failed to calculate paidThisMonth in modal", err);
+      }
+      setPaidThisMonth(paid);
+    }
+  }, [open, tenant, roomPayments, monthYear]);
 
   const handleAddCustom = () => {
     if (!customAddonName.trim()) return;
@@ -250,6 +279,18 @@ export function InvoiceGeneratorModal({ open, onClose, tenant, room, roomPayment
               className="w-full rounded-xl bg-background/50 px-4 py-3 text-sm border border-border focus:border-brand focus:outline-none"
             />
           </div>
+
+          {paidThisMonth > 0 && (
+            <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3.5 text-xs text-amber-600 dark:text-amber-500 space-y-1.5 animate-fade-in">
+              <p className="font-semibold flex items-center gap-1.5">
+                <AlertCircle className="h-4 w-4 shrink-0" />
+                Tenant has already paid {formatMoney(paidThisMonth, currency)} this month
+              </p>
+              <p className="leading-relaxed text-[11px] text-muted-foreground/80">
+                Please make sure to keep the full **Base Rent** (e.g. {formatMoney(calculateTenantShare(room), currency)}) and all expenses in this invoice. The {formatMoney(paidThisMonth, currency)} already paid will be automatically deducted, so they will only be asked to pay the remaining balance. **Do not set Base Rent to 0 to account for their payment.**
+              </p>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
