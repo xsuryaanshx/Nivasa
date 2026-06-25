@@ -135,6 +135,8 @@ export function InvoiceGeneratorModal({ open, onClose, tenant, room, roomPayment
       // Dispatch refresh event to update landlord dashboard/room details immediately
       window.dispatchEvent(new CustomEvent("nivasa:refresh"));
 
+      const upiId = tenant?.building?.upi_id || "amishatiwari100@oksbi";
+
       // Download the PDF Invoice
       try {
         await downloadInvoicePdf(invoiceData, tenant, room, user?.fullName || "Nivasa Landlord", upiId);
@@ -142,14 +144,57 @@ export function InvoiceGeneratorModal({ open, onClose, tenant, room, roomPayment
         console.error("Failed to generate and download PDF invoice:", err);
       }
       
-      // WhatsApp message
+      // Calculate amount already paid this month to show in the breakdown
+      let paidForMonth = 0;
+      try {
+        const parts = monthYear.split(" ");
+        if (parts.length === 2) {
+          const monthName = parts[0];
+          const year = parts[1];
+          const monthIndex = new Date(`${monthName} 1, 2000`).getMonth(); // 0-indexed
+          const yearNum = parseInt(year, 10);
+          
+          paidForMonth = roomPayments
+            .filter(p => {
+              if (p.tenantId !== tenant.id) return false;
+              if (p.status !== "paid") return false;
+              const pDate = new Date(p.date);
+              return pDate.getFullYear() === yearNum && pDate.getMonth() === monthIndex;
+            })
+            .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+        }
+      } catch (err) {
+        console.error("Failed to calculate paidForMonth for WhatsApp message", err);
+      }
+
+      const remainingBalance = Math.max(0, totalDue - paidForMonth);
       const portalUrl = `${window.location.origin}/register`;
+
+      const breakdownLines: string[] = [
+        `*Dues Breakdown:*`,
+        `- Base Rent: ${formatMoney(baseRent, currency, { decimals: 0 })}`,
+        elecCost > 0 ? `- Electricity: ${formatMoney(elecCost, currency, { decimals: 0 })}` : null,
+        ...activeAddons.map(a => `- ${a.name}: ${formatMoney(a.cost, currency, { decimals: 0 })}`),
+        previousDues > 0 ? `- Previous Dues: ${formatMoney(previousDues, currency, { decimals: 0 })}` : null,
+      ].filter(Boolean) as string[];
+
+      if (paidForMonth > 0) {
+        breakdownLines.push(
+          `- Total Invoice: ${formatMoney(totalDue, currency, { decimals: 0 })}`,
+          `- Paid Already: -${formatMoney(paidForMonth, currency, { decimals: 0 })}`,
+          `*Remaining Balance: ${formatMoney(remainingBalance, currency, { decimals: 0 })}*`
+        );
+      } else {
+        breakdownLines.push(`*Total Outstanding: ${formatMoney(totalDue, currency, { decimals: 0 })}*`);
+      }
 
       const lines = [
         `*Nivasa · Payment Reminder*`,
         ``,
         `Hi ${tenant.name},`,
-        `Please clear your outstanding dues of *${formatMoney(totalDue, currency, { decimals: 2 })}* for *${monthYear}*.`,
+        `Please clear your outstanding dues for *${monthYear}*.`,
+        ``,
+        ...breakdownLines,
         ``,
         `🔗 *View details & pay/upload receipt here:* ${portalUrl}`,
         ``,
