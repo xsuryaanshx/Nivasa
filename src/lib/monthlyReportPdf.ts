@@ -64,23 +64,96 @@ export async function downloadMonthlyReportPdf(data: any, ownerName: string = "N
   doc.setTextColor(16, 185, 129); // Emerald 500 for Profit
   doc.text(formatInr(netProfit), 175, 62);
 
-  // 3. Room-by-Room Breakdown
+  // 3. Building Summary
   doc.setFont("Helvetica", "bold");
   doc.setFontSize(14);
   doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.text("Room Breakdown", 14, 82);
+  doc.text("Occupancy Summary by Building", 14, 82);
 
-  const roomBody = data.rooms.map((r: any) => [
-    `${r.building_name} - ${r.room_number}`,
-    r.tenant_name || "Vacant",
-    formatInr(r.rent_amount || 0),
-    r.payment_status || (r.tenant_name ? "Pending" : "-"),
-    r.payment_date ? new Date(r.payment_date).toLocaleDateString() : "-",
-    formatInr(r.arrears || 0)
-  ]);
+  const buildings = Array.from(new Set(data.rooms.map((r: any) => r.buildingName || "Unknown")));
+  const summaryBody = buildings.map((bName) => {
+    const bRooms = data.rooms.filter((r: any) => (r.buildingName || "Unknown") === bName);
+    const occupied = bRooms.filter((r: any) => r.status === "occupied").length;
+    const vacant = bRooms.filter((r: any) => r.status === "vacant" || r.status === "maintenance").length;
+    return [bName, occupied.toString(), vacant.toString(), bRooms.length.toString()];
+  });
 
   autoTable(doc, {
     startY: 86,
+    head: [["Building Name", "Occupied Rooms", "Vacant Rooms", "Total Rooms"]],
+    body: summaryBody,
+    theme: "plain",
+    headStyles: { fillColor: [241, 245, 249], textColor: primaryColor as any },
+    styles: { fontSize: 9, cellPadding: 4 },
+  });
+
+  // 4. Room-by-Room Breakdown (Grouped by Building)
+  const finalY = (doc as any).lastAutoTable.finalY + 15;
+  doc.setFont("Helvetica", "bold");
+  doc.setFontSize(14);
+  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.text("Room Breakdown", 14, finalY);
+
+  const roomBody: any[] = [];
+  
+  buildings.forEach((bName) => {
+    // Add a sub-header row for the Building
+    roomBody.push([{ content: `Building: ${bName}`, colSpan: 6, styles: { fillColor: [226, 232, 240], fontStyle: "bold", textColor: [15, 23, 42] } }]);
+    
+    const bRooms = data.rooms.filter((r: any) => (r.buildingName || "Unknown") === bName);
+    
+    // Sort rooms by number
+    bRooms.sort((a: any, b: any) => String(a.number).localeCompare(String(b.number)));
+
+    bRooms.forEach((r: any) => {
+      const roomPayments = data.recent.filter((p: any) => p.unit_id === r.id || p.roomId === r.id);
+      const isOccupied = r.status === "occupied";
+      const hasRecentPayment = roomPayments.length > 0;
+      
+      // Do not list vacant rooms unless they had a payment this month
+      if (!isOccupied && !hasRecentPayment) return;
+
+      let tenantName = "-";
+      let statusNote = "";
+      
+      if (r.tenants && r.tenants.length > 0) {
+        tenantName = r.tenants.map((t: any) => t.name).join(", ");
+      } else if (hasRecentPayment && r.pastTenants && r.pastTenants.length > 0) {
+        // Find the past tenant who paid
+        const paidPastTenantId = roomPayments[0].tenant_id || roomPayments[0].tenantId;
+        const pt = r.pastTenants.find((t: any) => t.id === paidPastTenantId);
+        if (pt) {
+          tenantName = pt.name;
+        } else {
+          tenantName = r.pastTenants[0].name; // fallback to last past tenant
+        }
+        statusNote = " (Moved Out)";
+      } else {
+        tenantName = "Unknown";
+      }
+
+      let pStatus = "Pending";
+      let pDate = "-";
+      
+      if (hasRecentPayment) {
+        pStatus = roomPayments[0].status || "Paid";
+        const dateStr = roomPayments[0].date || roomPayments[0].paid_date;
+        pDate = dateStr ? new Date(dateStr).toLocaleDateString() : "-";
+      }
+
+      roomBody.push([
+        r.number,
+        tenantName + statusNote,
+        formatInr(r.rent || 0),
+        pStatus.charAt(0).toUpperCase() + pStatus.slice(1),
+        pDate,
+        "-" // Arrears not tracked per-room in this data
+      ]);
+    });
+  });
+
+  autoTable(doc, {
+    startY: finalY + 4,
     head: [["Room", "Tenant Name", "Rent", "Status", "Paid On", "Arrears"]],
     body: roomBody,
     theme: "striped",
@@ -88,41 +161,16 @@ export async function downloadMonthlyReportPdf(data: any, ownerName: string = "N
     styles: { fontSize: 9, cellPadding: 4 },
   });
 
-  // 4. Vacancy Report
-  const finalY = (doc as any).lastAutoTable.finalY + 15;
-  doc.setFont("Helvetica", "bold");
-  doc.setFontSize(14);
-  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.text("Vacancy Report", 14, finalY);
-
-  const vacantRooms = data.rooms.filter((r: any) => !r.tenant_name);
-  if (vacantRooms.length === 0) {
+  // 5. Signature Footer
+  const sigY = (doc as any).lastAutoTable.finalY + 30;
+  const pageHeight = doc.internal.pageSize.height;
+  
+  if (sigY < pageHeight - 40) {
     doc.setFont("Helvetica", "normal");
     doc.setFontSize(10);
-    doc.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
-    doc.text("No vacant rooms. Fully occupied!", 14, finalY + 8);
-  } else {
-    const vacancyBody = vacantRooms.map((r: any) => [
-      r.building_name,
-      r.room_number,
-      formatInr(r.rent_amount || 0)
-    ]);
-    autoTable(doc, {
-      startY: finalY + 4,
-      head: [["Building", "Room Number", "Expected Rent"]],
-      body: vacancyBody,
-      theme: "plain",
-      headStyles: { fillColor: [241, 245, 249], textColor: primaryColor as any },
-      styles: { fontSize: 9, cellPadding: 4 },
-    });
+    doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+    doc.text("Signature: ___________________________", 14, sigY);
   }
-
-  // 5. Signature Footer
-  const pageHeight = doc.internal.pageSize.height;
-  doc.setFont("Helvetica", "normal");
-  doc.setFontSize(10);
-  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.text("Signature: ___________________________", 14, pageHeight - 30);
 
   // 6. Universal Watermark (Nivasa by Ami Group.)
   const pageCount = doc.getNumberOfPages();
