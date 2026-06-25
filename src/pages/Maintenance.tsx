@@ -145,7 +145,7 @@ export default function Maintenance() {
                           },
                           description: { type: "STRING", description: "Itemized list of items with individual costs, total, date" }
                         },
-                        required: ["title", "cost", "category", "description"]
+                        required: []
                       }
                     }
                   })

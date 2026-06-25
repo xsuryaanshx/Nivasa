@@ -205,7 +205,7 @@ Return ONLY a raw JSON object (no conversational text, no markdown fences):
                     utr: { type: "STRING", description: "The 12-digit UPI transaction reference number / UTR" },
                     date: { type: "STRING", description: "The payment date in YYYY-MM-DD format" }
                   },
-                  required: ["amount", "utr", "date"]
+                  required: []
                 }
               }
             })
