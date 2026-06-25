@@ -416,7 +416,7 @@ export default function RoomDetails() {
 
       <div className="grid gap-4 lg:grid-cols-3">
         {/* Tenants Section */}
-        <div className="rounded-2xl border border-border bg-card p-5 shadow-soft">
+        <div className="overflow-hidden rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-soft">
           <div className="flex items-center justify-between mb-3">
             <div className="text-xs font-semibold text-muted-foreground">Tenants</div>
             <div className="text-xs text-muted-foreground">
@@ -655,7 +655,7 @@ export default function RoomDetails() {
         </div>
 
         {/* Electricity — meter readings */}
-        <div className="rounded-2xl border border-border bg-card p-5 shadow-soft lg:col-span-2">
+        <div className="overflow-hidden rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-soft lg:col-span-2">
           <div className="flex items-center justify-between">
             <div>
               <div className="text-xs font-semibold text-muted-foreground">Electricity billing</div>
@@ -937,9 +937,9 @@ export default function RoomDetails() {
 
 function CalcCell({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
   return (
-    <div className={cn("rounded-xl p-3", accent ? "bg-gradient-brand text-white" : "bg-secondary/50")}>
-      <div className={cn("text-[10px] uppercase tracking-wider", accent ? "text-white/70" : "text-muted-foreground")}>{label}</div>
-      <div className="mt-1 text-sm font-semibold tnum">{value}</div>
+    <div className={cn("rounded-xl p-2.5 sm:p-3", accent ? "bg-gradient-brand text-white" : "bg-secondary/50")}>
+      <div className={cn("text-[9px] sm:text-[10px] uppercase tracking-wider leading-tight", accent ? "text-white/70" : "text-muted-foreground")}>{label}</div>
+      <div className="mt-1 text-xs sm:text-sm font-semibold tnum">{value}</div>
     </div>
   );
 }
@@ -958,9 +958,9 @@ function NumberField({
 }) {
   return (
     <label className="block">
-      <div className="mb-1.5 flex items-center justify-between">
+      <div className="mb-1.5">
         <span className="text-xs font-medium text-muted-foreground">{label}</span>
-        {hint && <span className="text-[10px] text-muted-foreground tnum">{hint}</span>}
+        {hint && <span className="ml-1.5 text-[10px] text-muted-foreground/70 tnum">({hint})</span>}
       </div>
       <div className="relative">
         {prefix && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground tnum">{prefix}</span>}

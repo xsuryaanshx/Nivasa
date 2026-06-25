@@ -87,7 +87,7 @@ function AppShell() {
       
       <div 
         ref={scrollRef}
-        className="app-cover flex min-w-0 flex-1 flex-col bg-background shadow-2xl pb-[env(safe-area-inset-bottom)]"
+        className="app-cover flex min-w-0 flex-1 flex-col overflow-x-hidden bg-background shadow-2xl pb-[env(safe-area-inset-bottom)]"
       >
         <div className="flex flex-1">
           <div className="hidden lg:block">
@@ -102,7 +102,7 @@ function AppShell() {
               onOpenMobileDrawer={() => setMobileDrawerOpen(true)}
             />
 
-        <main className="relative flex-1 px-4 py-5 pb-28 sm:px-5 sm:py-6 lg:px-10 lg:py-8 lg:pb-8">
+        <main className="relative flex-1 overflow-x-hidden px-4 py-5 pb-28 sm:px-5 sm:py-6 lg:px-10 lg:py-8 lg:pb-8">
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}
