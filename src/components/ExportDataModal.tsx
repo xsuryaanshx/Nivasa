@@ -1,13 +1,11 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Download, X, Building2, Home, Users, ReceiptIndianRupee } from "lucide-react";
-import { useTranslation } from "react-i18next";
 import { nivasaApi } from "@/lib/api";
 import { downloadExcel } from "@/lib/export";
 import { toast } from "sonner";
 import { useState } from "react";
 
 export function ExportDataModal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { t } = useTranslation();
   const [exporting, setExporting] = useState<string | null>(null);
 
   if (!open) return null;
