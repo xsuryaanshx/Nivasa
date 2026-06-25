@@ -14,9 +14,46 @@ export function calculateTenantShare(room: Room): number {
   return totalRent / occupants;
 }
 
-export function getTenantPaymentStatus(tenant: Tenant, roomPayments: any[]): PaymentStatus {
+export function getTenantPaymentStatus(
+  tenant: Tenant, 
+  roomPayments: any[], 
+  tenantInvoices?: any[]
+): PaymentStatus {
   // Check the most recent payment for this tenant in the current month
   const currentMonth = new Date().toISOString().slice(0, 7);
+  
+  if (tenantInvoices) {
+    const invoicesForTenant = tenantInvoices.filter(i => i.tenant_id === tenant.id);
+    const currentInvoice = invoicesForTenant.find(i => i.billing_month === currentMonth);
+    
+    // Sum up historical invoices (base_rent + addons_total) and their electricity_cost column
+    let totalDueHistorical = invoicesForTenant.reduce(
+      (sum, i) => sum + (Number(i.total_amount) || 0) + (Number(i.electricity_cost) || 0), 
+      0
+    );
+    
+    // Add deposit amount to the total due
+    totalDueHistorical += Number(tenant.depositAmount || tenant.deposit_amount || 0);
+    
+    // If current invoice hasn't generated, assume they owe at least this month's base rent
+    if (!currentInvoice) {
+      totalDueHistorical += Number(tenant.rent_amount || 0);
+    }
+    
+    const allTenantPayments = roomPayments.filter(p => p.tenantId === tenant.id && p.status === "paid");
+    const totalPaidHistorical = allTenantPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+    
+    const netBalance = totalDueHistorical - totalPaidHistorical;
+    
+    if (netBalance <= 0) {
+      return "paid";
+    }
+    
+    // If they have an outstanding balance, check if they are late or pending
+    const dayOfMonth = new Date().getDate();
+    return dayOfMonth > 10 ? "late" : "pending";
+  }
+
   const recentPayment = roomPayments.find(p => p.tenantId === tenant.id && p.date.startsWith(currentMonth));
   
   if (recentPayment) {
@@ -27,3 +64,4 @@ export function getTenantPaymentStatus(tenant: Tenant, roomPayments: any[]): Pay
   const dayOfMonth = new Date().getDate();
   return dayOfMonth > 10 ? "late" : "pending";
 }
+

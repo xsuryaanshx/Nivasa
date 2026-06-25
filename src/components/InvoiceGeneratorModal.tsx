@@ -131,6 +131,9 @@ export function InvoiceGeneratorModal({ open, onClose, tenant, room, roomPayment
         total_due: totalDue
       };
       await nivasaApi.createInvoice(invoiceData);
+      
+      // Dispatch refresh event to update landlord dashboard/room details immediately
+      window.dispatchEvent(new CustomEvent("nivasa:refresh"));
 
       // Download the PDF Invoice
       try {

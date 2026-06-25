@@ -35,7 +35,8 @@ export default function Dashboard() {
     stats: { totalBuildings: 0, totalRooms: 0, occupied: 0, pending: 0, monthlyRevenue: 0 },
     recent: [],
     profitStats: { netProfit: 0 },
-    rooms: []
+    rooms: [],
+    tenantInvoices: []
   });
   const [addOpen, setAddOpen] = useState(false);
   const [addBuildingOpen, setAddBuildingOpen] = useState(false);
@@ -47,14 +48,15 @@ export default function Dashboard() {
       setLoading(true);
       if (!nivasaApi) return;
 
-      const [stats, recent, profitStats, rooms] = await Promise.all([
+      const [stats, recent, profitStats, rooms, tenantInvoices] = await Promise.all([
         nivasaApi.getDashboardStats(),
         nivasaApi.getRecentPayments(1000),
         nivasaApi.getProfitStats(),
-        nivasaApi.getRooms()
+        nivasaApi.getRooms(),
+        nivasaApi.getTenantInvoices()
       ]);
 
-      setData({ stats, recent, profitStats, rooms });
+      setData({ stats, recent, profitStats, rooms, tenantInvoices });
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
     } finally {
@@ -98,7 +100,7 @@ export default function Dashboard() {
     // 1. Late Rent (calculated dynamically for active tenants using getTenantPaymentStatus)
     if (room.tenants && room.tenants.length > 0) {
       room.tenants.forEach((tenant: any) => {
-        const paymentStatus = getTenantPaymentStatus(tenant, recent);
+        const paymentStatus = getTenantPaymentStatus(tenant, recent, data.tenantInvoices);
         if (paymentStatus === "late" || paymentStatus === "pending") {
           const rentAmount = tenant.rent_amount || room.rent || 0;
           const isLate = paymentStatus === "late";

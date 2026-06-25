@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -128,13 +128,34 @@ export default function TenantDashboard() {
 
   // Derived state helpers
   const unpaidInvoices = invoices.filter(inv => {
-    const isPaid = payments.some(p => {
-      const pMonth = p.paid_date ? p.paid_date.slice(0, 7) : "";
-      return pMonth === inv.billing_month && p.status === "paid";
-    });
-    return !isPaid;
+    const totalDue = Number(inv.total_amount || 0) + Number(inv.electricity_cost || 0);
+    const paidForMonth = payments
+      .filter(p => {
+        const pMonth = p.paid_date ? p.paid_date.slice(0, 7) : "";
+        return pMonth === inv.billing_month && p.status === "paid";
+      })
+      .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+    return paidForMonth < totalDue;
   });
+  
   const activeInvoice = unpaidInvoices[0];
+
+  const activeInvoicePaid = useMemo(() => {
+    if (!activeInvoice) return 0;
+    return payments
+      .filter(p => {
+        const pMonth = p.paid_date ? p.paid_date.slice(0, 7) : "";
+        return pMonth === activeInvoice.billing_month && p.status === "paid";
+      })
+      .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+  }, [activeInvoice, payments]);
+
+  const activeInvoiceTotal = useMemo(() => {
+    if (!activeInvoice) return 0;
+    return Number(activeInvoice.total_amount || 0) + Number(activeInvoice.electricity_cost || 0);
+  }, [activeInvoice]);
+
+  const activeInvoiceRemaining = Math.max(0, activeInvoiceTotal - activeInvoicePaid);
 
   const handleScreenshotUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -357,7 +378,16 @@ Return ONLY a raw JSON object (no conversational text, no markdown fences):
   const handlePayClick = (invoice: any) => {
     const upiId = tenant?.building?.upi_id || "amishatiwari100@oksbi"; 
     const landlordName = tenant?.building?.landlord_name || "Amisha";
-    const amount = Number(invoice.total_amount || 0) + Number(invoice.electricity_cost || 0);
+    
+    const paidForInvoice = payments
+      .filter(p => {
+        const pMonth = p.paid_date ? p.paid_date.slice(0, 7) : "";
+        return pMonth === invoice.billing_month && p.status === "paid";
+      })
+      .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+    
+    const totalDue = Number(invoice.total_amount || 0) + Number(invoice.electricity_cost || 0);
+    const amount = Math.max(0, totalDue - paidForInvoice);
     
     // Construct transaction note (purpose) containing the building name
     const buildingNameSafe = (tenant?.building?.name || "Maduvan").replace(/\s+/g, "_");
@@ -440,10 +470,18 @@ Return ONLY a raw JSON object (no conversational text, no markdown fences):
             <CardContent className="p-6 space-y-4">
               <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between">
                 <div>
-                  <div className="text-xs text-muted-foreground uppercase font-semibold tracking-wider">Total Amount Due</div>
-                  <div className="text-3xl font-extrabold text-foreground mt-0.5">
-                    ₹{(Number(activeInvoice.total_amount || 0) + Number(activeInvoice.electricity_cost || 0)).toLocaleString()}
+                  <div className="text-xs text-muted-foreground uppercase font-semibold tracking-wider">
+                    {activeInvoicePaid > 0 ? "Remaining Balance Due" : "Total Amount Due"}
                   </div>
+                  <div className="text-3xl font-extrabold text-foreground mt-0.5">
+                    ₹{activeInvoiceRemaining.toLocaleString()}
+                  </div>
+                  {activeInvoicePaid > 0 && (
+                    <p className="text-xs text-emerald-500 font-semibold mt-1 flex items-center gap-1">
+                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                      ₹{activeInvoicePaid.toLocaleString()} paid this month
+                    </p>
+                  )}
                 </div>
                 
                 <div className="flex flex-col xs:flex-row gap-2">
@@ -584,10 +622,10 @@ Return ONLY a raw JSON object (no conversational text, no markdown fences):
             </div>
 
             <div className="p-5 space-y-4 flex-1 overflow-y-auto">
-              {ocrResult?.amount === (Number(activeInvoice?.total_amount || 0) + Number(activeInvoice?.electricity_cost || 0)) ? (
+              {ocrResult?.amount === activeInvoiceRemaining ? (
                 <div className="rounded-xl p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-xs font-semibold flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 shrink-0" />
-                  Exact match found for your outstanding rent invoice!
+                  Exact match found for your outstanding balance!
                 </div>
               ) : (
                 <div className="rounded-xl p-3 bg-amber-500/10 border border-amber-500/20 text-amber-600 text-xs font-medium flex items-center gap-2">

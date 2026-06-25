@@ -42,6 +42,7 @@ export default function Tenants() {
 
   const [tenantsList, setTenantsList] = useState<any[]>([]);
   const [paymentsList, setPaymentsList] = useState<any[]>([]);
+  const [tenantInvoicesList, setTenantInvoicesList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [selectedTenantIds, setSelectedTenantIds] = useState<string[]>([]);
@@ -53,12 +54,14 @@ export default function Tenants() {
     try {
       setLoading(true);
       if (!nivasaApi) return;
-      const [data, payments] = await Promise.all([
+      const [data, payments, tenantInvoices] = await Promise.all([
         nivasaApi.getTenants(),
-        nivasaApi.getRecentPayments(1000)
+        nivasaApi.getRecentPayments(1000),
+        nivasaApi.getTenantInvoices()
       ]);
       setTenantsList(data);
       setPaymentsList(payments);
+      setTenantInvoicesList(tenantInvoices);
     } catch (error) {
       console.error("Error fetching tenants:", error);
     } finally {
@@ -98,9 +101,9 @@ export default function Tenants() {
   const tenantsWithStatus = useMemo(() => {
     return tenantsList.map(tenant => ({
       ...tenant,
-      paymentStatus: getTenantPaymentStatus(tenant, paymentsList)
+      paymentStatus: getTenantPaymentStatus(tenant, paymentsList, tenantInvoicesList)
     }));
-  }, [tenantsList, paymentsList]);
+  }, [tenantsList, paymentsList, tenantInvoicesList]);
 
   const filtered = useMemo(() => {
     let result = tenantsWithStatus.filter(t => {
