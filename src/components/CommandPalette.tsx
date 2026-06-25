@@ -8,7 +8,6 @@ import { forwardRef, useEffect, useMemo, useState, type ComponentPropsWithoutRef
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { useTheme } from "next-themes";
-import { useTheme } from "next-themes";
 
 import { toast } from "sonner";
 
