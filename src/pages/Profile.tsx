@@ -30,6 +30,7 @@ import {
   Calendar,
   TrendingUp,
   Wrench,
+  Download,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
@@ -41,6 +42,7 @@ import { ProfitPanel } from "@/components/ProfitPanel";
 import { EditProfileModal } from "@/components/EditProfileModal";
 import { NotificationsPanel } from "@/components/NotificationsPanel";
 import { StaffManagementPanel } from "@/components/StaffManagementPanel";
+import { ExportDataModal } from "@/components/ExportDataModal";
 import { useLanguage } from "@/components/LanguageProvider";
 import { cn } from "@/lib/utils";
 import type { Language } from "@/lib/translations";
@@ -88,25 +90,11 @@ const PLAN_FEATURES = {
 
 const APP_FEATURES = [
   {
-    icon: Building2,
-    label: "Buildings",
-    desc: "Manage multiple properties",
+    icon: Download,
+    label: "Export Data",
+    desc: "Export properties to Excel",
     color: "text-blue-400",
     bg: "bg-blue-500/10",
-  },
-  {
-    icon: Home,
-    label: "Rooms",
-    desc: "Track room occupancy & tenants",
-    color: "text-violet-400",
-    bg: "bg-violet-500/10",
-  },
-  {
-    icon: ReceiptIndianRupee,
-    label: "Payments",
-    desc: "Rent & payment history",
-    color: "text-emerald-400",
-    bg: "bg-emerald-500/10",
   },
   {
     icon: Zap,
@@ -114,13 +102,6 @@ const APP_FEATURES = [
     desc: "Utility billing automation",
     color: "text-amber-400",
     bg: "bg-amber-500/10",
-  },
-  {
-    icon: BarChart3,
-    label: "Analytics",
-    desc: "Revenue & occupancy insights",
-    color: "text-rose-400",
-    bg: "bg-rose-500/10",
   },
   {
     icon: Banknote,
@@ -506,6 +487,7 @@ export default function Profile() {
   const [staffOpen, setStaffOpen] = useState(false);
   const [profitOpen, setProfitOpen] = useState(false);
   const [editProfileOpen, setEditProfileOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
   const { t } = useLanguage();
 
   const activePlanName = subscription?.plans?.plan_name || "silver";
@@ -650,9 +632,7 @@ export default function Profile() {
                     const scroller = document.querySelector('.app-cover');
                     if (scroller) scroller.scrollTop = 0;
                     
-                    if (feat.label === "Buildings") navigate("/app/buildings");
-                    else if (feat.label === "Rooms") navigate("/app/rooms");
-                    else if (feat.label === "Payments") navigate("/app/payments");
+                    if (feat.label === "Export Data") setExportOpen(true);
                     else if (feat.label === "Facilities" || feat.label === "Expenses") navigate("/app/expenses");
                     else if (feat.label === "Staff") setStaffOpen(true);
                     else if (feat.label === "Billing Cycle") setRentDateOpen(true);
@@ -734,6 +714,7 @@ export default function Profile() {
 
       {/* ── Modals & Panels ── */}
       <EditProfileModal open={editProfileOpen} onClose={() => setEditProfileOpen(false)} />
+      <ExportDataModal open={exportOpen} onClose={() => setExportOpen(false)} />
       <SecurityModal open={securityOpen} onClose={() => setSecurityOpen(false)} />
       <NotificationsPanel open={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
       <StaffManagementPanel open={staffOpen} onClose={() => setStaffOpen(false)} />
