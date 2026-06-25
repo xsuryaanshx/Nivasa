@@ -83,6 +83,12 @@ const auth = {
   signIn: async (email: string, password: string) => {
     return await supabase.auth.signInWithPassword({ email, password });
   },
+  signInWithOtp: async (phone: string) => {
+    return await supabase.auth.signInWithOtp({ phone });
+  },
+  verifyOtp: async (phone: string, token: string) => {
+    return await supabase.auth.verifyOtp({ phone, token, type: 'sms' });
+  },
   signOut: async () => {
     return await supabase.auth.signOut();
   },
