@@ -393,7 +393,7 @@ export default function Dashboard() {
       </div>
 
       {/* Needs Attention Widget */}
-      <div className="mb-6 overflow-hidden rounded-2xl border border-brand/20 bg-card p-6 shadow-soft animate-fade-in">
+      <div className="mt-3 sm:mt-4 mb-6 overflow-hidden rounded-2xl border border-brand/20 bg-card p-6 shadow-soft animate-fade-in">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-border/50 gap-2">
           <div className="flex items-center gap-2.5">
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-destructive/10 text-destructive dark:bg-destructive/20">
