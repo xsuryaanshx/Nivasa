@@ -165,35 +165,48 @@ export default function TenantDashboard() {
 
       const prompt = `You are a UPI payment receipt parser. Analyze this payment screenshot carefully and extract these fields.`;
 
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{
-              parts: [
-                { text: prompt },
-                { inline_data: { mime_type: mimeType, data: base64Image } }
-              ]
-            }],
-            generationConfig: { 
-              temperature: 0, 
-              maxOutputTokens: 256,
-              responseMimeType: "application/json",
-              responseSchema: {
-                type: "OBJECT",
-                properties: {
-                  amount: { type: "NUMBER", description: "The rupee amount paid (e.g. 1.00)" },
-                  utr: { type: "STRING", description: "The 12-digit UPI transaction reference number / UTR" },
-                  date: { type: "STRING", description: "The payment date in YYYY-MM-DD format" }
-                },
-                required: ["amount", "utr", "date"]
+      const makeGeminiRequest = async (modelName: string) => {
+        return await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{
+                parts: [
+                  { text: prompt },
+                  { inline_data: { mime_type: mimeType, data: base64Image } }
+                ]
+              }],
+              generationConfig: { 
+                temperature: 0, 
+                maxOutputTokens: 256,
+                responseMimeType: "application/json",
+                responseSchema: {
+                  type: "OBJECT",
+                  properties: {
+                    amount: { type: "NUMBER", description: "The rupee amount paid (e.g. 1.00)" },
+                    utr: { type: "STRING", description: "The 12-digit UPI transaction reference number / UTR" },
+                    date: { type: "STRING", description: "The payment date in YYYY-MM-DD format" }
+                  },
+                  required: ["amount", "utr", "date"]
+                }
               }
-            }
-          })
+            })
+          }
+        );
+      };
+
+      let response = await makeGeminiRequest("gemini-2.5-flash");
+
+      // Auto-fallback to gemini-2.5-flash-lite if the primary model is busy/rate-limited or down
+      if (!response.ok || response.status === 503 || response.status === 429) {
+        console.warn(`Primary model gemini-2.5-flash failed with status ${response.status}. Retrying with gemini-2.5-flash-lite...`);
+        const fallbackResponse = await makeGeminiRequest("gemini-2.5-flash-lite");
+        if (fallbackResponse.ok) {
+          response = fallbackResponse;
         }
-      );
+      }
 
       if (response.status === 429) {
         throw new Error("RATE_LIMITED");

@@ -100,50 +100,63 @@ export default function Maintenance() {
               reader.onerror = (error) => reject(error);
             });
 
-            const response = await fetch(
-              `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${GEMINI_API_KEY}`,
-              {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  contents: [
-                    {
-                      parts: [
-                        {
-                          text: "Analyze this receipt or bill image and extract information."
-                        },
-                        {
-                          inlineData: {
-                            mimeType: file.type || "image/png",
-                            data: base64Data
+            const makeGeminiRequest = async (modelName: string) => {
+              return await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${GEMINI_API_KEY}`,
+                {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    contents: [
+                      {
+                        parts: [
+                          {
+                            text: "Analyze this receipt or bill image and extract information."
+                          },
+                          {
+                            inlineData: {
+                              mimeType: file.type || "image/png",
+                              data: base64Data
+                            }
                           }
-                        }
-                      ]
-                    }
-                  ],
-                  generationConfig: {
-                    temperature: 0,
-                    responseMimeType: "application/json",
-                    responseSchema: {
-                      type: "OBJECT",
-                      properties: {
-                        title: { type: "STRING", description: "Short descriptive title of the expense (like merchant name)" },
-                        cost: { type: "NUMBER", description: "The total amount paid after taxes" },
-                        category: { 
-                          type: "STRING", 
-                          enum: ["maintenance", "facility", "utility", "other"],
-                          description: "The expense category"
+                        ]
+                      }
+                    ],
+                    generationConfig: {
+                      temperature: 0,
+                      responseMimeType: "application/json",
+                      responseSchema: {
+                        type: "OBJECT",
+                        properties: {
+                          title: { type: "STRING", description: "Short descriptive title of the expense (like merchant name)" },
+                          cost: { type: "NUMBER", description: "The total amount paid after taxes" },
+                          category: { 
+                            type: "STRING", 
+                            enum: ["maintenance", "facility", "utility", "other"],
+                            description: "The expense category"
+                          },
+                          description: { type: "STRING", description: "Itemized list of items with individual costs, total, date" }
                         },
-                        description: { type: "STRING", description: "Itemized list of items with individual costs, total, date" }
-                      },
-                      required: ["title", "cost", "category", "description"]
+                        required: ["title", "cost", "category", "description"]
+                      }
                     }
-                  }
-                })
+                  })
+                }
+              );
+            };
+
+            let response = await makeGeminiRequest("gemini-2.5-flash-lite");
+
+            // Auto-fallback to gemini-2.5-flash if the lite model is rate-limited or busy/unavailable
+            if (!response.ok || response.status === 503 || response.status === 429) {
+              console.warn(`Primary model gemini-2.5-flash-lite failed with status ${response.status}. Retrying with gemini-2.5-flash...`);
+              const fallbackResponse = await makeGeminiRequest("gemini-2.5-flash");
+              if (fallbackResponse.ok) {
+                response = fallbackResponse;
               }
-            );
+            }
 
             if (!response.ok) {
               const errorText = await response.text();
