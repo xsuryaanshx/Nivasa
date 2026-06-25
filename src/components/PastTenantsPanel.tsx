@@ -4,7 +4,7 @@ import { X, Search, Users, Download, FileSpreadsheet } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { nivasaApi } from "@/lib/api";
 import { downloadExcel } from "@/lib/export";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import { format } from "date-fns";
 
 export function PastTenantsPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
