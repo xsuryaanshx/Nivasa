@@ -1,3 +1,5 @@
+import { nivasaApi } from "./api";
+
 // Build a wa.me deep-link with sanitized phone + URL-encoded message.
 export function buildWhatsAppUrl(phone: string, message: string) {
   const digits = phone.replace(/[^\d]/g, "");
@@ -10,6 +12,7 @@ export function buildWhatsAppUrl(phone: string, message: string) {
 export function openWhatsApp(phone: string, message: string) {
   if (!phone) return false;
   const url = buildWhatsAppUrl(phone, message);
+  nivasaApi.logFeatureUsage("whatsapp_reminders", "send_reminder", { messageSnippet: message.slice(0, 30) });
   window.open(url, "_blank", "noopener,noreferrer");
   return true;
 }

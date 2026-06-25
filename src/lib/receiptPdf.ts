@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { nivasaApi } from "./api";
 
 // Helper function to load local or remote images asynchronously into HTMLImageElement
 const loadImage = (url: string): Promise<HTMLImageElement> => {
@@ -152,6 +153,7 @@ export async function downloadReceiptPdf(p: any, landlordName: string = "Nivasa 
 
   const safeTenantName = p.tenantName.replace(/\s+/g, "_");
   const receiptFilename = `Receipt_${safeTenantName}_${p.date.split("T")[0]}.pdf`;
+  nivasaApi.logFeatureUsage("pdf_exports", "receipt_export", { tenantName: p.tenantName });
   doc.save(receiptFilename);
 }
 
@@ -352,5 +354,6 @@ export async function downloadInvoicePdf(invoice: any, tenant: any, room: any, l
   // Save the PDF
   const safeTenantName = tenant.name.replace(/\s+/g, "_");
   const invoiceFilename = `Invoice_${safeTenantName}_${invoice.month_year.replace(/\s+/g, "_")}.pdf`;
+  nivasaApi.logFeatureUsage("pdf_exports", "invoice_export", { tenantName: tenant.name, monthYear: invoice.month_year });
   doc.save(invoiceFilename);
 }

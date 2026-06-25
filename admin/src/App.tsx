@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { 
   Shield, 
   Users, 
@@ -21,8 +21,15 @@ import {
   Home,
   UserCheck,
   CreditCard,
-  ChevronsUpDown,
-  Upload
+  Upload,
+  Sparkles,
+  Activity,
+  Zap,
+  FileText,
+  FileSpreadsheet,
+  Wrench,
+  Scale,
+  ChevronsUpDown
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from "recharts";
@@ -190,8 +197,9 @@ export default function App() {
   const [theme, setTheme] = useState<"light" | "dark">("dark");
 
   // Dashboard state
-  const [activeTab, setActiveTab] = useState<"overview" | "buildings" | "rooms" | "tenants">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "buildings" | "rooms" | "tenants" | "features">("overview");
   const [users, setUsers] = useState<any[]>([]);
+  const [featureEvents, setFeatureEvents] = useState<any[]>([]);
   const [allBuildings, setAllBuildings] = useState<any[]>([]);
   const [allRooms, setAllRooms] = useState<any[]>([]);
   const [allTenants, setAllTenants] = useState<any[]>([]);
@@ -330,6 +338,21 @@ export default function App() {
         .select("*");
       if (tError) console.error("Error fetching tenants:", tError);
 
+      let eventsData: any[] = [];
+      try {
+        const { data: fEvents, error: fError } = await supabase
+          .from("feature_usage_events")
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (fError) {
+          console.warn("Error fetching feature_usage_events:", fError.message);
+        } else if (fEvents) {
+          eventsData = fEvents;
+        }
+      } catch (e) {
+        console.warn("Could not fetch feature_usage_events, table may not exist yet.", e);
+      }
+
       // Retrieve Landlord profile details securely
       let usersDetailsMap: Record<string, { email: string; full_name: string }> = {};
       try {
@@ -427,6 +450,16 @@ export default function App() {
           roomNumber: (roomsData || []).find(r => r.id === t.room_id)?.name || "—"
         })));
       }
+
+      setFeatureEvents(eventsData.map(e => {
+        const landlord = mappedUsers.find(u => u.user_id === e.user_id);
+        return {
+          ...e,
+          landlordName: landlord ? landlord.fullName : `Landlord (${e.user_id.slice(0, 8)})`,
+          landlordEmail: landlord ? landlord.email : "—",
+          landlordPlan: landlord ? landlord.planName : "silver"
+        };
+      }));
 
     } catch (err) {
       console.error("Error fetching data:", err);
@@ -966,7 +999,8 @@ export default function App() {
               { id: "overview", label: "Overview", icon: TrendingUp },
               { id: "buildings", label: "Properties", icon: Building2 },
               { id: "rooms", label: "Rooms", icon: Home },
-              { id: "tenants", label: "Tenants", icon: Users }
+              { id: "tenants", label: "Tenants", icon: Users },
+              { id: "features", label: "Feature Usage", icon: Sparkles }
             ].map(tab => {
               const Icon = tab.icon;
               const active = activeTab === tab.id;
@@ -1375,6 +1409,14 @@ export default function App() {
                   </table>
                 </div>
               </motion.section>
+            )}
+
+            {/* Feature Usage Tab */}
+            {activeTab === "features" && (
+              <FeatureUsageView 
+                featureEvents={featureEvents} 
+                theme={theme} 
+              />
             )}
           </motion.div>
         </AnimatePresence>
@@ -1922,6 +1964,461 @@ Gokul Dham,"Powai, Mumbai",102,12000,Daya Gada,9876543211,9876543211,,2026-06-05
           </motion.div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Feature Usage Analytics Dashboard View Component
+// ─────────────────────────────────────────────────────────────
+
+const FEATURE_NAMES: Record<string, string> = {
+  payment_tracking: "Payment Tracking",
+  whatsapp_reminders: "WhatsApp Reminders",
+  pdf_exports: "PDF Exports",
+  excel_exports: "Excel Exports",
+  expense_management: "Expense Management",
+  maintenance_tracking: "Maintenance Tracking",
+  staff_management: "Staff Management",
+  tenant_trust_score: "Tenant Trust Score"
+};
+
+const FEATURE_ICONS: Record<string, any> = {
+  payment_tracking: IndianRupee,
+  whatsapp_reminders: Zap,
+  pdf_exports: FileText,
+  excel_exports: FileSpreadsheet,
+  expense_management: CreditCard,
+  maintenance_tracking: Wrench,
+  staff_management: Users,
+  tenant_trust_score: Scale
+};
+
+const PLAN_COLORS: Record<string, string> = {
+  platinum: "text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20",
+  gold: "text-yellow-600 dark:text-yellow-400 bg-yellow-500/10 border-yellow-500/20",
+  silver: "text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-zinc-800 border-slate-200 dark:border-zinc-700"
+};
+
+interface FeatureUsageViewProps {
+  featureEvents: any[];
+  theme: "light" | "dark";
+}
+
+function GlassTooltip({ active, payload, label }: any) {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white/80 dark:bg-zinc-950/85 backdrop-blur-xl border border-slate-200/50 dark:border-zinc-800/80 p-4 rounded-2xl shadow-xl">
+        <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">{label}</p>
+        <p className="text-lg font-bold text-indigo-655 dark:text-indigo-400 mt-1">
+          {payload[0].value} <span className="text-xs font-normal text-slate-500">actions</span>
+        </p>
+      </div>
+    );
+  }
+  return null;
+}
+
+function FeatureUsageView({ featureEvents, theme }: FeatureUsageViewProps) {
+  const [selectedFeature, setSelectedFeature] = useState<string>("all");
+  const [selectedPlan, setSelectedPlan] = useState<string>("all");
+  const [search, setSearch] = useState<string>("");
+  const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
+
+  // Summary stats
+  const totalEvents = featureEvents.length;
+
+  const activeUsers30Days = useMemo(() => {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const uniqueUsers = new Set(
+      featureEvents
+        .filter(e => e.created_at && new Date(e.created_at) > thirtyDaysAgo)
+        .map(e => e.user_id)
+    );
+    return uniqueUsers.size;
+  }, [featureEvents]);
+
+  const popularityData = useMemo(() => {
+    const counts: Record<string, number> = {
+      payment_tracking: 0,
+      whatsapp_reminders: 0,
+      pdf_exports: 0,
+      excel_exports: 0,
+      expense_management: 0,
+      maintenance_tracking: 0,
+      staff_management: 0,
+      tenant_trust_score: 0
+    };
+
+    featureEvents.forEach(e => {
+      if (counts[e.feature_key] !== undefined) {
+        counts[e.feature_key]++;
+      }
+    });
+
+    return Object.entries(counts)
+      .map(([key, count]) => ({
+        key,
+        name: FEATURE_NAMES[key] || key,
+        count
+      }))
+      .sort((a, b) => b.count - a.count);
+  }, [featureEvents]);
+
+  const mostPopular = popularityData[0]?.count > 0 ? popularityData[0].name : "None yet";
+
+  const growthRate = useMemo(() => {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const fourteenDaysAgo = new Date();
+    fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+
+    const thisWeek = featureEvents.filter(e => e.created_at && new Date(e.created_at) > sevenDaysAgo).length;
+    const lastWeek = featureEvents.filter(e => e.created_at && new Date(e.created_at) > fourteenDaysAgo && new Date(e.created_at) <= sevenDaysAgo).length;
+
+    if (lastWeek === 0) return thisWeek > 0 ? "+100%" : "0%";
+    const pct = ((thisWeek - lastWeek) / lastWeek) * 100;
+    return `${pct >= 0 ? "+" : ""}${pct.toFixed(0)}%`;
+  }, [featureEvents]);
+
+  // Group events by date for line/area chart (last 14 days)
+  const dailyTrends = useMemo(() => {
+    const datesMap: Record<string, number> = {};
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().split("T")[0];
+      datesMap[dateStr] = 0;
+    }
+
+    featureEvents.forEach(e => {
+      if (e.created_at) {
+        const dateStr = new Date(e.created_at).toISOString().split("T")[0];
+        if (datesMap[dateStr] !== undefined) {
+          datesMap[dateStr]++;
+        }
+      }
+    });
+
+    return Object.entries(datesMap).map(([date, count]) => {
+      const formattedDate = new Date(date).toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short"
+      });
+      return { name: formattedDate, count };
+    });
+  }, [featureEvents]);
+
+  // Filtered logs
+  const filteredEvents = useMemo(() => {
+    return featureEvents
+      .filter(e => {
+        const matchesFeature = selectedFeature === "all" || e.feature_key === selectedFeature;
+        const matchesPlan = selectedPlan === "all" || e.landlordPlan === selectedPlan;
+        
+        const term = search.toLowerCase();
+        const matchesSearch = !search || 
+          e.landlordName.toLowerCase().includes(term) ||
+          e.landlordEmail.toLowerCase().includes(term) ||
+          (e.action && e.action.toLowerCase().includes(term));
+
+        return matchesFeature && matchesPlan && matchesSearch;
+      })
+      .sort((a, b) => {
+        const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+        return sortOrder === "desc" ? dateB - dateA : dateA - dateB;
+      });
+  }, [featureEvents, selectedFeature, selectedPlan, search, sortOrder]);
+
+  const handleExportCSV = () => {
+    const csvRows = [
+      ["Date", "Landlord Name", "Email", "Plan", "Feature", "Action", "Details"]
+    ];
+
+    filteredEvents.forEach(e => {
+      csvRows.push([
+        new Date(e.created_at).toLocaleString(),
+        e.landlordName,
+        e.landlordEmail,
+        e.landlordPlan,
+        FEATURE_NAMES[e.feature_key] || e.feature_key,
+        e.action || "—",
+        JSON.stringify(e.metadata || {})
+      ]);
+    });
+
+    const csvContent = "data:text/csv;charset=utf-8," 
+      + csvRows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `nivasa_feature_usage_${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  return (
+    <div className="space-y-8 relative">
+      {/* Decorative blurred iOS gradient circles in background */}
+      <div className="absolute top-1/3 left-1/4 w-96 h-96 rounded-full bg-indigo-500/10 dark:bg-indigo-500/15 blur-3xl pointer-events-none -z-10 animate-pulse duration-5000" />
+      <div className="absolute top-2/3 right-1/4 w-[500px] h-[500px] rounded-full bg-purple-500/5 dark:bg-purple-500/10 blur-3xl pointer-events-none -z-10 animate-pulse duration-7000" />
+
+      {/* Stats Cards Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[
+          { label: "Total Feature Actions", value: totalEvents, sub: `${growthRate} this week`, color: "from-blue-600/20 to-indigo-600/20", icon: Activity },
+          { label: "Active Landlords (30d)", value: activeUsers30Days, sub: "Unique landlords active", color: "from-purple-600/20 to-pink-600/20", icon: Users },
+          { label: "Most Popular Feature", value: mostPopular, sub: "Highest cumulative usage", color: "from-amber-600/20 to-orange-600/20", icon: Sparkles },
+          { label: "Retention Growth", value: growthRate, sub: "Week over week activity", color: "from-emerald-600/20 to-teal-600/20", icon: TrendingUp }
+        ].map((card, i) => {
+          const Icon = card.icon;
+          return (
+            <motion.div
+              key={card.label}
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05 }}
+              className="glass-panel glass-panel-hover rounded-3xl p-6 relative overflow-hidden group border border-white/20 dark:border-zinc-800/80 bg-white/40 dark:bg-zinc-900/40 shadow-xl"
+            >
+              <div className={`absolute -right-4 -top-4 h-24 w-24 rounded-full bg-gradient-to-br ${card.color} opacity-40 blur-2xl group-hover:scale-125 transition-transform duration-500`} />
+              <div className="flex justify-between items-start z-10 relative">
+                <div className="space-y-1">
+                  <span className="text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">{card.label}</span>
+                  <div className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mt-1">
+                    {card.value}
+                  </div>
+                  <p className="text-[11px] font-medium text-slate-400 dark:text-zinc-500 mt-1">{card.sub}</p>
+                </div>
+                <div className="h-10 w-10 rounded-2xl bg-white dark:bg-zinc-950 flex items-center justify-center shadow-soft border border-slate-100 dark:border-zinc-800">
+                  <Icon className="h-5 w-5 text-indigo-500" />
+                </div>
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
+
+      {/* Analytics Charts Section */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        {/* Trend Area Chart (2 Cols) */}
+        <div className="lg:col-span-2 glass-panel rounded-3xl p-6 bg-white/40 dark:bg-zinc-900/40 border border-white/20 dark:border-zinc-800/80 shadow-xl">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-base font-bold text-slate-805 dark:text-zinc-100 flex items-center gap-2">
+                <Activity className="h-4 w-4 text-indigo-500" />
+                Feature Usage Trend
+              </h2>
+              <p className="text-xs text-slate-400 mt-0.5 font-medium">Daily occurrences over the last 14 days</p>
+            </div>
+            <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-full border border-indigo-500/20">
+              Live Monitor
+            </span>
+          </div>
+
+          <div className="h-64">
+            {totalEvents === 0 ? (
+              <div className="h-full flex items-center justify-center text-slate-400 dark:text-zinc-600 text-xs">
+                No events recorded yet to plot trend
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={dailyTrends}>
+                  <defs>
+                    <linearGradient id="colorFeatureUsage" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#818cf8" stopOpacity={0.35}/>
+                      <stop offset="95%" stopColor="#818cf8" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} />
+                  <Tooltip content={<GlassTooltip theme={theme} />} />
+                  <Area type="monotone" dataKey="count" stroke="#818cf8" strokeWidth={2.5} fillOpacity={1} fill="url(#colorFeatureUsage)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
+
+        {/* Feature Breakdown Bar Chart */}
+        <div className="glass-panel rounded-3xl p-6 bg-white/40 dark:bg-zinc-900/40 border border-white/20 dark:border-zinc-800/80 shadow-xl">
+          <div>
+            <h2 className="text-base font-bold text-slate-805 dark:text-zinc-100 flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-purple-500" />
+              Popularity Breakdown
+            </h2>
+            <p className="text-xs text-slate-400 mt-0.5 font-medium mb-6">Distribution by feature category</p>
+          </div>
+
+          <div className="h-64">
+            {totalEvents === 0 ? (
+              <div className="h-full flex items-center justify-center text-slate-400 dark:text-zinc-600 text-xs">
+                No feature events logged
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={popularityData} layout="vertical">
+                  <XAxis type="number" stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} hide />
+                  <YAxis dataKey="name" type="category" stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} width={100} />
+                  <Tooltip 
+                    cursor={{ fill: 'rgba(99,102,241,0.04)' }}
+                    contentStyle={{ 
+                      background: theme === "dark" ? "rgba(24, 24, 27, 0.8)" : "rgba(255, 255, 255, 0.8)", 
+                      backdropFilter: "blur(12px)",
+                      border: "1px solid rgba(255, 255, 255, 0.1)", 
+                      borderRadius: "16px",
+                      fontSize: "11px",
+                      color: theme === "dark" ? "white" : "black" 
+                    }} 
+                  />
+                  <Bar dataKey="count" fill="#a78bfa" radius={[0, 6, 6, 0]} barSize={14}>
+                    {popularityData.map((_entry, index) => (
+                      <Cell key={`cell-${index}`} fill={index === 0 ? "#6366f1" : index === 1 ? "#818cf8" : index === 2 ? "#a78bfa" : "#c084fc"} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Logs and Filters Card */}
+      <div className="glass-panel rounded-3xl bg-white/40 dark:bg-zinc-900/40 border border-white/20 dark:border-zinc-800/80 shadow-xl overflow-hidden">
+        {/* Filter Toolbar */}
+        <div className="p-6 border-b border-white/10 dark:border-zinc-800/50 flex flex-col md:flex-row gap-4 items-center justify-between bg-white/10 dark:bg-zinc-950/10">
+          <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+            {/* Search Input */}
+            <div className="relative w-full sm:w-60">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search logs..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-white/50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800/60 rounded-2xl text-xs outline-none focus:border-indigo-500 text-slate-800 dark:text-white transition"
+              />
+            </div>
+
+            {/* Feature Filter */}
+            <select
+              value={selectedFeature}
+              onChange={e => setSelectedFeature(e.target.value)}
+              className="px-3 py-2 bg-white/50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800/60 rounded-2xl text-xs text-slate-700 dark:text-zinc-300 outline-none focus:border-indigo-500 cursor-pointer"
+            >
+              <option value="all">All Features</option>
+              {Object.entries(FEATURE_NAMES).map(([key, value]) => (
+                <option key={key} value={key}>{value}</option>
+              ))}
+            </select>
+
+            {/* Plan Filter */}
+            <select
+              value={selectedPlan}
+              onChange={e => setSelectedPlan(e.target.value)}
+              className="px-3 py-2 bg-white/50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800/60 rounded-2xl text-xs text-slate-700 dark:text-zinc-300 outline-none focus:border-indigo-500 cursor-pointer"
+            >
+              <option value="all">All Plans</option>
+              <option value="silver">Silver</option>
+              <option value="gold">Gold</option>
+              <option value="platinum">Platinum</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-3 w-full md:w-auto justify-end">
+            {/* Sort Toggle */}
+            <button
+              onClick={() => setSortOrder(order => order === "desc" ? "asc" : "desc")}
+              className="px-3 py-2 bg-white/50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800/60 rounded-2xl text-xs font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-100/50 dark:hover:bg-zinc-800/50 transition cursor-pointer"
+            >
+              Sort: {sortOrder === "desc" ? "Newest First" : "Oldest First"}
+            </button>
+
+            {/* Export CSV Button */}
+            <button
+              onClick={handleExportCSV}
+              disabled={filteredEvents.length === 0}
+              className="px-4 py-2 bg-indigo-650 hover:bg-indigo-550 disabled:opacity-50 disabled:pointer-events-none text-white text-xs font-semibold rounded-2xl shadow-lg shadow-indigo-600/15 transition active:scale-95 flex items-center gap-2 cursor-pointer"
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              Export CSV ({filteredEvents.length})
+            </button>
+          </div>
+        </div>
+
+        {/* Logs Table */}
+        <div className="overflow-x-auto scrollbar-thin">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50/20 dark:bg-zinc-950/20 border-b border-white/10 dark:border-zinc-800/50 text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
+                <th className="px-6 py-4">Landlord</th>
+                <th className="px-6 py-4">Plan</th>
+                <th className="px-6 py-4">Feature</th>
+                <th className="px-6 py-4">Action</th>
+                <th className="px-6 py-4">Metadata</th>
+                <th className="px-6 py-4">Timestamp</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5 dark:divide-zinc-800/50 text-xs">
+              {filteredEvents.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-16 text-center text-slate-400 dark:text-zinc-500 font-medium">
+                    No matching activity events found
+                  </td>
+                </tr>
+              ) : (
+                filteredEvents.map(e => {
+                  const Icon = FEATURE_ICONS[e.feature_key] || Activity;
+                  const dateStr = new Date(e.created_at).toLocaleString("en-IN", {
+                    day: "numeric",
+                    month: "short",
+                    hour: "numeric",
+                    minute: "2-digit"
+                  });
+
+                  return (
+                    <tr key={e.id} className="hover:bg-white/5 dark:hover:bg-zinc-850/20 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="font-bold text-slate-900 dark:text-white">{e.landlordName}</div>
+                        <div className="text-[10px] text-slate-405 mt-0.5">{e.landlordEmail}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-bold border capitalize ${PLAN_COLORS[e.landlordPlan] || PLAN_COLORS.silver}`}>
+                          {e.landlordPlan}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <div className="h-6 w-6 rounded-lg bg-slate-100 dark:bg-zinc-800 flex items-center justify-center border border-slate-200/50 dark:border-zinc-700/50">
+                            <Icon className="h-3.5 w-3.5 text-indigo-500" />
+                          </div>
+                          <span className="font-semibold text-slate-700 dark:text-zinc-300">
+                            {FEATURE_NAMES[e.feature_key] || e.feature_key}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="font-mono bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded text-[10px]">
+                          {e.action || "—"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 max-w-xs truncate font-mono text-[10px] text-slate-400 dark:text-zinc-500">
+                        {e.metadata ? JSON.stringify(e.metadata) : "—"}
+                      </td>
+                      <td className="px-6 py-4 text-slate-450 dark:text-zinc-400 font-medium">
+                        {dateStr}
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }

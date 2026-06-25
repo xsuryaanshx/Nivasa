@@ -111,6 +111,7 @@ export default function Dashboard() {
             severity: isLate ? "high" : "medium",
             action: () => {
               const msg = `Hi ${tenant.name}, this is a gentle reminder that your rent of ₹${rentAmount} for Room ${room.number} is currently ${isLate ? 'late' : 'pending'}. Please complete the payment at your earliest convenience.`;
+              nivasaApi.logFeatureUsage("whatsapp_reminders", "send_reminder", { tenantName: tenant.name, status: paymentStatus });
               window.open(
                 `https://wa.me/91${(tenant.whatsapp_number || tenant.phone || '').replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`,
                 "_blank"

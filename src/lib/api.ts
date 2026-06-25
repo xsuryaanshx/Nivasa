@@ -1080,6 +1080,7 @@ async function addPayment(input: any) {
       .single();
     if (error) throw error;
     
+    await logFeatureUsage("payment_tracking", "add_payment", { amount: input.amount, status: statusNorm });
     return data;
   } catch (error) {
     safeLog("addPayment", error);
@@ -1135,6 +1136,7 @@ async function addPaymentsBulk(payments: any[]) {
       await syncUnitEffectiveRent(roomId, user_id);
     }
 
+    await logFeatureUsage("payment_tracking", "add_payments_bulk", { count: payments.length });
     return data;
   } catch (error) {
     safeLog("addPaymentsBulk", error);
@@ -1356,6 +1358,7 @@ async function addStaff(input: any) {
       await supabase.from("staff_buildings").insert(allocations);
     }
 
+    await logFeatureUsage("staff_management", "add_staff", { role: input.role });
     return data;
   } catch (error) {
     safeLog("addStaff", error);
@@ -1699,6 +1702,7 @@ async function addMaintenanceRequest(request: Partial<MaintenanceRequest>): Prom
       .select()
       .single();
     if (error) throw error;
+    await logFeatureUsage("maintenance_tracking", "add_maintenance_request", { category: request.priority, cost: (request as any).cost });
     return data as MaintenanceRequest;
   } catch (error) {
     safeLog("addMaintenanceRequest", error);
@@ -1836,6 +1840,7 @@ async function getTrustScore(aadhar: string): Promise<{ score: number, name: str
       .eq("aadhar", aadhar)
       .maybeSingle();
     if (error) throw error;
+    await logFeatureUsage("tenant_trust_score", "get_trust_score");
     return data ? { score: data.score, name: data.name } : null;
   } catch (error) {
     safeLog("getTrustScore", error);
@@ -1878,6 +1883,7 @@ async function reportTrustIncident(payload: {
         description: payload.description || null,
       }]);
     if (error) throw error;
+    await logFeatureUsage("tenant_trust_score", "report_incident", { type: payload.incident_type, score_change: payload.score_change });
   } catch (error) {
     safeLog("reportTrustIncident", error);
     throw error;
@@ -1899,7 +1905,24 @@ export async function getPublicBuilding(slug: string) {
   return data;
 }
 
+async function logFeatureUsage(featureKey: string, action?: string, metadata: any = {}) {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) return;
+    const { error } = await supabase.from("feature_usage_events").insert({
+      user_id: session.user.id,
+      feature_key: featureKey,
+      action: action || null,
+      metadata
+    });
+    if (error) throw error;
+  } catch (error) {
+    safeLog("logFeatureUsage", error);
+  }
+}
+
 export const nivasaApi = {
+  logFeatureUsage,
   getUserSettings,
   updateUserSettings,
   getInvoices,

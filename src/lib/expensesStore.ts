@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { nivasaApi } from "./api";
 
 export interface CustomExpense {
   id: string;
@@ -22,9 +23,9 @@ export function getCustomExpenses(): CustomExpense[] {
         Array.isArray(parsed) &&
         parsed.every(
           (e) =>
-            typeof e.id === "string" &&
-            typeof e.name === "string" &&
-            typeof e.cost === "number"
+              typeof e.id === "string" &&
+              typeof e.name === "string" &&
+              typeof e.cost === "number"
         )
       ) {
         return parsed;
@@ -44,6 +45,7 @@ export function addCustomExpense(name: string, cost: number) {
   const id = "exp_" + Date.now().toString(36);
   current.push({ id, name, cost });
   saveCustomExpenses(current);
+  nivasaApi.logFeatureUsage("expense_management", "add_custom_expense", { name, cost });
 }
 
 export function updateCustomExpense(id: string, name: string, cost: number) {
@@ -52,12 +54,14 @@ export function updateCustomExpense(id: string, name: string, cost: number) {
   if (index !== -1) {
     current[index] = { id, name, cost };
     saveCustomExpenses(current);
+    nivasaApi.logFeatureUsage("expense_management", "update_custom_expense", { name, cost });
   }
 }
 
 export function deleteCustomExpense(id: string) {
   const current = getCustomExpenses();
   saveCustomExpenses(current.filter((e) => e.id !== id));
+  nivasaApi.logFeatureUsage("expense_management", "delete_custom_expense", { id });
 }
 
 export function useCustomExpenses() {
