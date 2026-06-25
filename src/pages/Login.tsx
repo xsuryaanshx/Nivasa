@@ -14,6 +14,7 @@ export default function Login() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
+  const [role, setRole] = useState<"landlord" | "tenant">("landlord");
 
   useEffect(() => {
     const checkUser = async () => {
@@ -122,7 +123,35 @@ export default function Login() {
         <h1 className="text-2xl font-semibold tracking-tight">Sign in to your workspace</h1>
         <p className="mt-1.5 text-sm text-muted-foreground">Manage buildings, rooms, and tenants in one calm place.</p>
 
-        <form onSubmit={submit} className="mt-7 space-y-4">
+        <form onSubmit={submit} className="mt-7 space-y-5">
+          <div className="block">
+            <span className="mb-2 block text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Login as *
+            </span>
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div
+                onClick={() => setRole("landlord")}
+                className={`cursor-pointer rounded-xl border p-3.5 text-center font-medium text-sm transition-all select-none ${
+                  role === "landlord"
+                    ? "border-primary bg-primary/5 text-primary scale-[1.01] shadow-[0_0_0_1px_rgba(255,255,255,0.05)]"
+                    : "border-border/60 bg-card/45 hover:bg-card/75 text-muted-foreground"
+                }`}
+              >
+                Landlord / Owner
+              </div>
+              <div
+                onClick={() => setRole("tenant")}
+                className={`cursor-pointer rounded-xl border p-3.5 text-center font-medium text-sm transition-all select-none ${
+                  role === "tenant"
+                    ? "border-primary bg-primary/5 text-primary scale-[1.01] shadow-[0_0_0_1px_rgba(255,255,255,0.05)]"
+                    : "border-border/60 bg-card/45 hover:bg-card/75 text-muted-foreground"
+                }`}
+              >
+                Tenant / Resident
+              </div>
+            </div>
+          </div>
+
           <Field label="Email">
             <input
               type="email"
