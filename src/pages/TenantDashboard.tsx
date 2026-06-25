@@ -275,6 +275,8 @@ Return ONLY a raw JSON object (no conversational text, no markdown fences):
       const lastBrace = jsonStr.lastIndexOf("}");
       if (firstBrace !== -1 && lastBrace !== -1) {
         jsonStr = jsonStr.slice(firstBrace, lastBrace + 1);
+      } else {
+        throw new SyntaxError("No JSON braces found in Gemini response");
       }
 
       const parsed = JSON.parse(jsonStr);
@@ -293,6 +295,8 @@ Return ONLY a raw JSON object (no conversational text, no markdown fences):
       console.error("OCR Scan failed:", err);
       if (err.message === "RATE_LIMITED") {
         toast.error("Too many scans — please wait a moment and try again.");
+      } else if (err instanceof SyntaxError) {
+        toast.info("Could not auto-detect details from the image. Please enter them manually.");
       } else {
         toast.error(`Scan failed: ${err.message || "Unknown error"}. Please check your settings.`);
       }

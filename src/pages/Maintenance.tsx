@@ -189,6 +189,8 @@ export default function Maintenance() {
               const lastBrace = jsonStr.lastIndexOf("}");
               if (firstBrace !== -1 && lastBrace !== -1) {
                 jsonStr = jsonStr.slice(firstBrace, lastBrace + 1);
+              } else {
+                throw new SyntaxError("No JSON braces found in Gemini response");
               }
 
               const parsed = JSON.parse(jsonStr);
@@ -203,7 +205,11 @@ export default function Maintenance() {
             }
           } catch (error: any) {
             console.error("AI scanning failed:", error);
-            toast.error(`Failed to scan receipt: ${error.message || "Unknown error"}. Please check settings.`);
+            if (error instanceof SyntaxError) {
+              toast.info("Could not auto-detect details from the image. Please enter them manually.");
+            } else {
+              toast.error(`Failed to scan receipt: ${error.message || "Unknown error"}. Please check settings.`);
+            }
           }
         } else {
           toast.error("AI Receipt Scanner is not configured. If you recently updated your .env file, please restart your Vite development server.");
