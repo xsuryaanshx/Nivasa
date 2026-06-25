@@ -616,6 +616,47 @@ async function getTenants(): Promise<any[]> {
   }
 }
 
+async function getPastTenants(): Promise<any[]> {
+  try {
+    const user_id = await requireAuthUserId();
+    
+    // First get all units for this user to ensure we only get their tenants
+    const { data: units, error: unitsError } = await supabase
+      .from("units")
+      .select("*, buildings(name)")
+      .eq("user_id", user_id);
+      
+    if (unitsError) throw unitsError;
+    const unitIds = (units || []).map((u) => u.id);
+    if (unitIds.length === 0) return [];
+    
+    // Then get all tenants in these units
+    const { data: tenants, error } = await supabase
+      .from("tenants")
+      .select("*")
+      .in("room_id", unitIds);
+      
+    if (error) throw error;
+    
+    const pastTenants = (tenants || []).filter(t => t.status === "vacated");
+    
+    return pastTenants.map((t) => {
+      const unit = units?.find(u => u.id === t.room_id);
+      return {
+        ...mapTenantFromRow(t),
+        buildingName: unit?.buildings?.name || "Unknown",
+        buildingId: unit?.building_id,
+        roomId: t.room_id,
+        roomNumber: unit?.name || unit?.number || "Unknown",
+        roomRent: unit?.rent_amount || 0,
+      };
+    });
+  } catch (error) {
+    safeLog("getPastTenants", error);
+    throw error;
+  }
+}
+
 async function getTenantInvoices(): Promise<any[]> {
   try {
     const user_id = await requireAuthUserId();
@@ -2018,5 +2059,6 @@ export const nivasaApi = {
   getTrustScore,
   getTrustIncidents,
   reportTrustIncident,
+  getPastTenants,
 };
 export type NivasaApi = typeof nivasaApi;

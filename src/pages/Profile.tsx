@@ -42,6 +42,7 @@ import { ProfitPanel } from "@/components/ProfitPanel";
 import { EditProfileModal } from "@/components/EditProfileModal";
 import { NotificationsPanel } from "@/components/NotificationsPanel";
 import { StaffManagementPanel } from "@/components/StaffManagementPanel";
+import { PastTenantsPanel } from "@/components/PastTenantsPanel";
 import { ExportDataModal } from "@/components/ExportDataModal";
 import { useLanguage } from "@/components/LanguageProvider";
 import { cn } from "@/lib/utils";
@@ -95,6 +96,13 @@ const APP_FEATURES = [
     desc: "Export properties to Excel",
     color: "text-blue-400",
     bg: "bg-blue-500/10",
+  },
+  {
+    icon: Users,
+    label: "Past Tenants",
+    desc: "Search and export past tenants",
+    color: "text-rose-400",
+    bg: "bg-rose-500/10",
   },
   {
     icon: Zap,
@@ -488,6 +496,7 @@ export default function Profile() {
   const [profitOpen, setProfitOpen] = useState(false);
   const [editProfileOpen, setEditProfileOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
+  const [pastTenantsOpen, setPastTenantsOpen] = useState(false);
   const { t } = useLanguage();
 
   const activePlanName = subscription?.plans?.plan_name || "silver";
@@ -633,6 +642,7 @@ export default function Profile() {
                     if (scroller) scroller.scrollTop = 0;
                     
                     if (feat.label === "Export Data") setExportOpen(true);
+                    else if (feat.label === "Past Tenants") setPastTenantsOpen(true);
                     else if (feat.label === "Facilities" || feat.label === "Expenses") navigate("/app/expenses");
                     else if (feat.label === "Staff") setStaffOpen(true);
                     else if (feat.label === "Billing Cycle") setRentDateOpen(true);
@@ -718,6 +728,7 @@ export default function Profile() {
       <SecurityModal open={securityOpen} onClose={() => setSecurityOpen(false)} />
       <NotificationsPanel open={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
       <StaffManagementPanel open={staffOpen} onClose={() => setStaffOpen(false)} />
+      <PastTenantsPanel open={pastTenantsOpen} onClose={() => setPastTenantsOpen(false)} />
       <ThemePanel open={themeOpen} onClose={() => setThemeOpen(false)} />
       <LanguageRegionPanel open={languageOpen} onClose={() => setLanguageOpen(false)} />
       <RentSettingsModal open={rentDateOpen} onClose={() => setRentDateOpen(false)} />
