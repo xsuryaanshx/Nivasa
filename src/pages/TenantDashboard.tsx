@@ -140,6 +140,8 @@ export default function TenantDashboard() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    console.log("OCR Scanner Version: 2.1 (With Safety override & robust brace parser)");
+
     if (file.size > 5 * 1024 * 1024) {
       toast.error("File is too large. Max size is 5MB.");
       return;
