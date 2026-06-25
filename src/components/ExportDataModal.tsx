@@ -26,7 +26,17 @@ export function ExportDataModal({ open, onClose }: { open: boolean; onClose: () 
         data = await nivasaApi.getTenants();
         filename = "Tenants_Export";
       } else if (type === "payments") {
-        data = await nivasaApi.getPayments();
+        const rawPayments = await nivasaApi.getRecentPayments(10000);
+        data = rawPayments.map((p: any) => ({
+          ID: p.id,
+          Amount: p.amount,
+          Status: p.status,
+          Method: p.method,
+          Date: p.date,
+          TenantName: p.tenant_name,
+          RoomNumber: p.room_number,
+          BuildingName: p.building_name
+        }));
         filename = "Payments_Export";
       }
 
