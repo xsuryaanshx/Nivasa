@@ -171,6 +171,8 @@ export default function TenantDashboard() {
 Return ONLY a raw JSON object (no conversational text, no markdown fences):
 {"amount": 2000.00, "utr": "612345678901", "date": "2026-06-25"}`;
 
+      console.log("Base64 Image length:", base64Image.length);
+
       const makeGeminiRequest = async (modelName: string) => {
         return await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`,
@@ -184,6 +186,12 @@ Return ONLY a raw JSON object (no conversational text, no markdown fences):
                   { inline_data: { mime_type: mimeType, data: base64Image } }
                 ]
               }],
+              safetySettings: [
+                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+                { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+                { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+              ],
               generationConfig: { 
                 temperature: 0, 
                 maxOutputTokens: 256,
@@ -228,7 +236,14 @@ Return ONLY a raw JSON object (no conversational text, no markdown fences):
       }
 
       const geminiData = await response.json();
-      const rawText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+      console.log("Full Gemini response:", geminiData);
+
+      const candidate = geminiData.candidates?.[0];
+      if (candidate?.finishReason === "SAFETY") {
+        throw new Error("The receipt scan was blocked by Gemini safety filters. Please enter details manually.");
+      }
+
+      const rawText = candidate?.content?.parts?.[0]?.text || "{}";
       console.log("Gemini Vision response:", rawText);
 
       // Robustly extract the JSON object by finding the first '{' and last '}'

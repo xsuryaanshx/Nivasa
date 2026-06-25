@@ -124,6 +124,12 @@ export default function Maintenance() {
                         ]
                       }
                     ],
+                    safetySettings: [
+                      { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+                      { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+                      { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+                      { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+                    ],
                     generationConfig: {
                       temperature: 0,
                       responseMimeType: "application/json",
@@ -169,7 +175,14 @@ export default function Maintenance() {
             }
 
             const result = await response.json();
-            const textResponse = result.candidates?.[0]?.content?.parts?.[0]?.text;
+            console.log("Full Gemini response (Maintenance):", result);
+
+            const candidate = result.candidates?.[0];
+            if (candidate?.finishReason === "SAFETY") {
+              throw new Error("The receipt scan was blocked by Gemini safety filters. Please enter details manually.");
+            }
+
+            const textResponse = candidate?.content?.parts?.[0]?.text;
             if (textResponse) {
               let jsonStr = textResponse.trim();
               const firstBrace = jsonStr.indexOf("{");
