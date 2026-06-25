@@ -140,7 +140,7 @@ export default function Rooms() {
       />
 
       <div className="mb-5 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-        <div className="relative flex h-10 flex-1 min-w-0 items-center gap-2 rounded-xl border border-border bg-card px-3.5">
+        <div className="relative flex h-10 w-full sm:flex-1 min-w-0 items-center gap-2 rounded-xl border border-border bg-card px-3.5">
           <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
           <input
             value={q} onChange={e => setQ(e.target.value)}
@@ -149,13 +149,13 @@ export default function Rooms() {
           />
         </div>
 
-        <div className="flex items-center gap-1 rounded-xl border border-border bg-card p-1 overflow-x-auto hide-scrollbar">
+        <div className="flex w-full sm:w-auto items-center justify-between sm:justify-start gap-1 rounded-xl border border-border bg-card p-1 overflow-x-auto hide-scrollbar">
           {getFilters(t).map(f => (
             <button
               key={f.key}
               onClick={() => handleSetStatus(f.key)}
               className={cn(
-                "rounded-lg px-3 py-1.5 text-xs font-medium transition-colors whitespace-nowrap",
+                "flex-1 sm:flex-none rounded-lg px-3 py-1.5 text-xs font-medium transition-colors whitespace-nowrap text-center",
                 status === f.key ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground",
               )}
             >

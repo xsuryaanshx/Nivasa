@@ -208,7 +208,7 @@ export default function BuildingDetails() {
           </MagneticButton>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 mt-2">
+        <div className="grid grid-cols-4 gap-3 sm:gap-4 mt-2">
           {[...data.units].sort((a: any, b: any) => {
             const numA = String(a.number || a.name || "");
             const numB = String(b.number || b.name || "");
