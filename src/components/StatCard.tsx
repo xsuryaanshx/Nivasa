@@ -32,26 +32,26 @@ export function StatCard({ label, value, icon: Icon, money, suffix, delta, trend
       transition={{ duration: 0.5, delay, ease: [0.2, 0.7, 0.2, 1] }}
       onClick={onClick}
       className={cn(
-        "group relative overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-soft transition-all hover:shadow-elev",
+        "group relative overflow-hidden rounded-2xl border border-border bg-card p-3.5 sm:p-5 shadow-soft transition-all hover:shadow-elev",
         onClick && "cursor-pointer"
       )}
     >
       <div className="flex items-start justify-between">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-secondary/70 text-foreground/80">
-          <Icon className="h-4 w-4" />
+        <div className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-secondary/70 text-foreground/80">
+          <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
         </div>
         {delta && (
           <span className={cn(
-            "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium",
+            "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[9px] sm:text-[11px] font-medium",
             trend === "up"   && "pill-paid",
             trend === "down" && "pill-late",
             trend === "flat" && "pill-info",
           )}>{delta}</span>
         )}
       </div>
-      <div className="mt-5">
-        <div className="text-xs font-medium text-muted-foreground">{label}</div>
-        <div className="mt-1.5 text-3xl font-semibold tracking-tight tnum">
+      <div className="mt-3 sm:mt-5">
+        <div className="text-[10px] sm:text-xs font-medium text-muted-foreground truncate">{label}</div>
+        <div className="mt-1 sm:mt-1.5 text-xl sm:text-2xl lg:text-3xl font-semibold tracking-tight tnum">
           <AnimatedCounter value={animatedValue} suffix={suffix} format={formatter} />
         </div>
       </div>

@@ -394,20 +394,20 @@ export default function RoomDetails() {
           room.occupancyPrices?.length ? " (by current billing occupancy)" : ""
         }`}
         action={
-          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-            <MagneticButton variant="ghost" onClick={sendReminderAll} className="flex-1 sm:flex-initial text-xs py-2 px-3 bg-secondary/50 text-foreground hover:bg-secondary justify-center sm:justify-start">
+          <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+            <MagneticButton variant="ghost" onClick={sendReminderAll} className="flex-1 basis-[calc(50%-4px)] sm:flex-initial text-xs py-2 px-3 bg-secondary/50 text-foreground hover:bg-secondary justify-center">
               <BellRing className="h-3.5 w-3.5" /> Send reminder
             </MagneticButton>
-            <MagneticButton variant="ghost" onClick={() => setPastInvoicesRoomId(room.id)} className="flex-1 sm:flex-initial text-xs py-2 px-3 bg-secondary/50 text-foreground hover:bg-secondary justify-center sm:justify-start">
+            <MagneticButton variant="ghost" onClick={() => setPastInvoicesRoomId(room.id)} className="flex-1 basis-[calc(50%-4px)] sm:flex-initial text-xs py-2 px-3 bg-secondary/50 text-foreground hover:bg-secondary justify-center">
               <FileText className="h-3.5 w-3.5" /> Past Invoices
             </MagneticButton>
-            <MagneticButton variant="ghost" onClick={() => setElectricityOpen(true)} className="flex-1 sm:flex-initial text-xs py-2 px-3 bg-secondary/50 text-foreground hover:bg-secondary justify-center sm:justify-start">
+            <MagneticButton variant="ghost" onClick={() => setElectricityOpen(true)} className="flex-1 basis-[calc(50%-4px)] sm:flex-initial text-xs py-2 px-3 bg-secondary/50 text-foreground hover:bg-secondary justify-center">
               <Zap className="h-3.5 w-3.5" /> Enter Reading
             </MagneticButton>
-            <MagneticButton variant="ghost" onClick={() => navigate("/app/maintenance")} className="flex-1 sm:flex-initial text-xs py-2 px-3 bg-secondary/50 text-foreground hover:bg-secondary justify-center sm:justify-start">
+            <MagneticButton variant="ghost" onClick={() => navigate("/app/maintenance")} className="flex-1 basis-[calc(50%-4px)] sm:flex-initial text-xs py-2 px-3 bg-secondary/50 text-foreground hover:bg-secondary justify-center">
               <Wrench className="h-3.5 w-3.5" /> Maintenance
             </MagneticButton>
-            <MagneticButton onClick={() => { setPaymentTenantId(undefined); setPaymentDefaultAmount(undefined); setAddOpen(true); }} className="flex-1 sm:flex-initial text-xs py-2 px-3 justify-center sm:justify-start">
+            <MagneticButton onClick={() => { setPaymentTenantId(undefined); setPaymentDefaultAmount(undefined); setAddOpen(true); }} className="w-full sm:w-auto text-xs py-2 px-3 justify-center">
               <Plus className="h-3.5 w-3.5" /> Add payment
             </MagneticButton>
           </div>
@@ -666,7 +666,7 @@ export default function RoomDetails() {
             </div>
           </div>
 
-          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          <div className="mt-4 grid gap-3 grid-cols-1 sm:grid-cols-3">
             <NumberField
               label="Start reading"
               hint="At month start"
@@ -692,7 +692,7 @@ export default function RoomDetails() {
             />
           </div>
 
-          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          <div className="mt-4 grid gap-3 grid-cols-3">
             <CalcCell label="Units used" value={`${used.toLocaleString()} kWh`} />
             <CalcCell label="Per unit" value={`${currency.symbol}${formatNumeric(pricePerUnit, currency, 2)}`} />
             <CalcCell label="Electricity total" value={formatMoney(cost, currency, { decimals: 2 })} accent />
@@ -743,7 +743,7 @@ export default function RoomDetails() {
           Set the rent amount, number of beds, and whether rent applies to the entire room or per person.
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 items-end">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-end">
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground">Rent Amount</label>
             <input

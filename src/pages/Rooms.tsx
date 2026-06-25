@@ -140,7 +140,7 @@ export default function Rooms() {
       />
 
       <div className="mb-5 flex flex-wrap items-center gap-3">
-        <div className="relative flex h-10 flex-1 min-w-[240px] max-w-md items-center gap-2 rounded-xl border border-border bg-card px-3.5">
+        <div className="relative flex h-10 flex-1 min-w-0 items-center gap-2 rounded-xl border border-border bg-card px-3.5">
           <Search className="h-4 w-4 text-muted-foreground" />
           <input
             value={q} onChange={e => setQ(e.target.value)}
@@ -218,7 +218,7 @@ export default function Rooms() {
 
                 {!collapsedBuildings[buildingName] && (
                   <>
-                    <div className="grid grid-cols-4 gap-3 sm:gap-4 mt-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 mt-2">
                   {rooms.map((room: any) => {
                     const isOccupied = room.status === 'occupied' || (room.tenants && room.tenants.length > 0);
                     return (

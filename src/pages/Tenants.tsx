@@ -242,37 +242,39 @@ export default function Tenants() {
         }
       />
 
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-3 flex-1">
-          <div className="relative flex h-10 flex-1 min-w-[240px] max-w-md items-center gap-2 rounded-xl border border-border bg-card px-3.5">
-            <Search className="h-4 w-4 text-muted-foreground" />
+      <div className="mb-5 flex flex-col gap-3">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex h-10 flex-1 min-w-0 items-center gap-2 rounded-xl border border-border bg-card px-3.5">
+            <Search className="h-4 w-4 text-muted-foreground shrink-0" />
             <input
               value={q} onChange={e => setQ(e.target.value)}
               placeholder={"Search tenants by name, phone, or room..."}
-              className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+              className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground min-w-0"
             />
           </div>
           
-          <select 
-            value={selectedBuilding} 
-            onChange={(e) => handleSetBuilding(e.target.value)}
-            className="h-10 rounded-xl border border-border bg-card px-3 py-1.5 text-sm outline-none focus:border-brand min-w-[140px]"
-          >
-            <option value="all">All Buildings</option>
-            {buildingsList.map(b => (
-              <option key={b as string} value={b as string}>{b as string}</option>
-            ))}
-          </select>
+          <div className="flex gap-2">
+            <select 
+              value={selectedBuilding} 
+              onChange={(e) => handleSetBuilding(e.target.value)}
+              className="h-10 flex-1 rounded-xl border border-border bg-card px-3 py-1.5 text-sm outline-none focus:border-brand"
+            >
+              <option value="all">All Buildings</option>
+              {buildingsList.map(b => (
+                <option key={b as string} value={b as string}>{b as string}</option>
+              ))}
+            </select>
 
-          <select 
-            value={status} 
-            onChange={(e) => handleSetStatus(e.target.value as any)}
-            className="h-10 rounded-xl border border-border bg-card px-3 py-1.5 text-sm outline-none focus:border-brand min-w-[140px]"
-          >
-            {getFilters(t).map(f => (
-              <option key={f.key} value={f.key}>{f.label}</option>
-            ))}
-          </select>
+            <select 
+              value={status} 
+              onChange={(e) => handleSetStatus(e.target.value as any)}
+              className="h-10 flex-1 rounded-xl border border-border bg-card px-3 py-1.5 text-sm outline-none focus:border-brand"
+            >
+              {getFilters(t).map(f => (
+                <option key={f.key} value={f.key}>{f.label}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {filtered.length > 0 && (
@@ -280,17 +282,17 @@ export default function Tenants() {
             {lateTenantsCount > 0 && (
               <button
                 onClick={handleSelectAllLate}
-                className="h-10 px-4 rounded-xl text-xs font-semibold bg-amber-500/10 text-amber-600 border border-amber-500/20 hover:bg-amber-500/20 transition-all flex items-center gap-1.5"
+                className="h-9 px-3 rounded-xl text-xs font-semibold bg-amber-500/10 text-amber-600 border border-amber-500/20 hover:bg-amber-500/20 transition-all flex items-center gap-1.5"
               >
                 <AlertCircle className="h-3.5 w-3.5" />
-                Select All Late ({lateTenantsCount})
+                <span className="hidden sm:inline">Select All Late </span>({lateTenantsCount})
               </button>
             )}
             <button
               onClick={selectedTenantIds.length === filtered.length ? () => setSelectedTenantIds([]) : handleSelectAll}
-              className="h-10 px-4 rounded-xl text-xs font-semibold bg-secondary text-secondary-foreground border border-border hover:bg-secondary/80 transition-all"
+              className="h-9 px-3 rounded-xl text-xs font-semibold bg-secondary text-secondary-foreground border border-border hover:bg-secondary/80 transition-all"
             >
-              {selectedTenantIds.length === filtered.length ? "Deselect All" : "Select All"}
+              {selectedTenantIds.length === filtered.length ? "Deselect" : "Select All"}
             </button>
           </div>
         )}

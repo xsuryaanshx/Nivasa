@@ -102,7 +102,7 @@ function AppShell() {
               onOpenMobileDrawer={() => setMobileDrawerOpen(true)}
             />
 
-        <main className="relative flex-1 px-5 py-8 pb-28 lg:px-10 lg:pb-8">
+        <main className="relative flex-1 px-4 py-5 pb-28 sm:px-5 sm:py-6 lg:px-10 lg:py-8 lg:pb-8">
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}

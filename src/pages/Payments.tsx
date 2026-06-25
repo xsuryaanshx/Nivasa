@@ -114,14 +114,14 @@ export default function Payments() {
         }
       />
 
-      <div className="mb-5 grid gap-3 md:grid-cols-3">
+      <div className="mb-5 grid grid-cols-3 gap-2 sm:gap-3">
         <Stat label={t("filtered_total")} value={<Money value={total} />} />
         <Stat label={t("records")} value={loading ? "..." : filtered.length.toString()} />
         <Stat label={t("outstanding")} value={<Money value={outstanding} />} accent />
       </div>
 
       <div className="mb-5 flex flex-wrap items-center gap-3">
-        <div className="relative flex h-10 flex-1 min-w-[240px] max-w-md items-center gap-2 rounded-xl border border-border bg-card px-3.5">
+        <div className="relative flex h-10 flex-1 min-w-0 items-center gap-2 rounded-xl border border-border bg-card px-3.5">
           <Search className="h-4 w-4 text-muted-foreground" />
           <input value={q} onChange={e => setQ(e.target.value)} placeholder={t("search_tenant_method")}
             className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground" />
@@ -176,11 +176,11 @@ export default function Payments() {
 function Stat({ label, value, accent }: { label: string; value: React.ReactNode; accent?: boolean }) {
   return (
     <div className={cn(
-      "rounded-2xl border p-4 shadow-soft",
+      "rounded-2xl border p-3 sm:p-4 shadow-soft",
       accent ? "border-transparent bg-gradient-brand text-white" : "border-border bg-card",
     )}>
-      <div className={cn("text-[11px] font-medium", accent ? "text-white/70" : "text-muted-foreground")}>{label}</div>
-      <div className="mt-1 text-xl font-semibold tnum tracking-tight">{value}</div>
+      <div className={cn("text-[9px] sm:text-[11px] font-medium uppercase tracking-wide truncate", accent ? "text-white/70" : "text-muted-foreground")}>{label}</div>
+      <div className="mt-1 text-sm sm:text-xl font-semibold tnum tracking-tight">{value}</div>
     </div>
   );
 }

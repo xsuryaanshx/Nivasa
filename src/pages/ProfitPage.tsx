@@ -111,7 +111,7 @@ export default function ProfitPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6 p-6 pb-24 md:p-8 md:pb-8 max-w-7xl mx-auto w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="flex flex-col gap-6 pb-24 md:pb-8 max-w-7xl mx-auto w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">

@@ -163,7 +163,7 @@ export default function Maintenance() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Expense Register</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Expense Register</h1>
           <p className="text-muted-foreground">Track and manage service requests and facility expenses.</p>
         </div>
 
@@ -295,7 +295,7 @@ export default function Maintenance() {
           <p className="text-muted-foreground mt-1">All properties are in good condition.</p>
         </Card>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {requests?.map((request) => {
             const building = buildings?.find((b) => b.id === request.property_id);
             return (
