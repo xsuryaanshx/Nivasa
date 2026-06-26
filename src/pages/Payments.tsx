@@ -121,10 +121,10 @@ export default function Payments() {
       </div>
 
       <div className="mb-5 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-        <div className="relative flex h-10 w-full sm:flex-1 min-w-0 items-center gap-2 rounded-xl border border-border bg-card px-3.5">
+        <div className="relative flex h-12 w-full sm:flex-1 min-w-0 items-center gap-2 rounded-xl border border-border bg-card px-3.5 py-2">
           <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
           <input value={q} onChange={e => setQ(e.target.value)} placeholder={t("search_tenant_method")}
-            className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground min-w-0" />
+            className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground min-w-0 h-full" />
         </div>
         <div className="flex w-full sm:w-auto items-center justify-between sm:justify-start gap-1 rounded-xl border border-border bg-card p-1 overflow-x-auto hide-scrollbar">
           {getFilters(t).map(f => (

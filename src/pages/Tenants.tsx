@@ -245,12 +245,12 @@ export default function Tenants() {
 
       <div className="mb-5 flex flex-col gap-3">
         <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex h-10 flex-1 min-w-0 items-center gap-2 rounded-xl border border-border bg-card px-3.5">
+          <div className="relative flex h-12 flex-1 min-w-0 items-center gap-2 rounded-xl border border-border bg-card px-3.5 py-2">
             <Search className="h-4 w-4 text-muted-foreground shrink-0" />
             <input
               value={q} onChange={e => setQ(e.target.value)}
               placeholder={"Search tenants..."}
-              className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground min-w-0"
+              className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground min-w-0 h-full"
             />
           </div>
           
@@ -258,7 +258,7 @@ export default function Tenants() {
             <select 
               value={selectedBuilding} 
               onChange={(e) => handleSetBuilding(e.target.value)}
-              className="h-10 flex-1 rounded-xl border border-border bg-card px-3 py-1.5 text-sm outline-none focus:border-brand"
+              className="h-12 flex-1 rounded-xl border border-border bg-card px-3 py-1.5 text-sm outline-none focus:border-brand"
             >
               <option value="all">All Buildings</option>
               {buildingsList.map(b => (
@@ -269,7 +269,7 @@ export default function Tenants() {
             <select 
               value={status} 
               onChange={(e) => handleSetStatus(e.target.value as any)}
-              className="h-10 flex-1 rounded-xl border border-border bg-card px-3 py-1.5 text-sm outline-none focus:border-brand"
+              className="h-12 flex-1 rounded-xl border border-border bg-card px-3 py-1.5 text-sm outline-none focus:border-brand"
             >
               {getFilters(t).map(f => (
                 <option key={f.key} value={f.key}>{f.label}</option>
