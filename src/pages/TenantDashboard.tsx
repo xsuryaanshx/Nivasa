@@ -62,8 +62,10 @@ export default function TenantDashboard() {
           status,
           rent_amount,
           joined_at,
-          room:room_id (id, name, rent_amount),
-          building:buildings!tenants_building_id_fkey (id, name, address, upi_id, contact_phone, user_id, landlord_name)
+          room:room_id (
+            id, name, rent_amount,
+            buildings (id, name, address, upi_id, contact_phone, user_id, landlord_name)
+          )
         `)
         .eq("id", tenantId)
         .single();
@@ -79,8 +81,10 @@ export default function TenantDashboard() {
             status,
             rent_amount,
             joined_at,
-            room:room_id (id, name, rent_amount),
-            building:buildings!tenants_building_id_fkey (id, name, address, upi_id, contact_phone, user_id)
+            room:room_id (
+              id, name, rent_amount,
+              buildings (id, name, address, upi_id, contact_phone, user_id)
+            )
           `)
           .eq("id", tenantId)
           .single();
@@ -90,6 +94,10 @@ export default function TenantDashboard() {
         throw tenantErr;
       } else {
         tenantData = firstTryData;
+      }
+
+      if (tenantData?.room?.buildings) {
+        tenantData.building = tenantData.room.buildings;
       }
 
       setTenant(tenantData);
