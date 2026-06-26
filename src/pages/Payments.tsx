@@ -120,17 +120,17 @@ export default function Payments() {
         <Stat label={t("outstanding")} value={<Money value={outstanding} />} accent />
       </div>
 
-      <div className="mb-5 flex flex-wrap items-center gap-3">
-        <div className="relative flex h-10 flex-1 min-w-0 items-center gap-2 rounded-xl border border-border bg-card px-3.5">
-          <Search className="h-4 w-4 text-muted-foreground" />
+      <div className="mb-5 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+        <div className="relative flex h-10 w-full sm:flex-1 min-w-0 items-center gap-2 rounded-xl border border-border bg-card px-3.5">
+          <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
           <input value={q} onChange={e => setQ(e.target.value)} placeholder={t("search_tenant_method")}
-            className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground" />
+            className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground min-w-0" />
         </div>
-        <div className="flex items-center gap-1 rounded-xl border border-border bg-card p-1">
+        <div className="flex w-full sm:w-auto items-center justify-between sm:justify-start gap-1 rounded-xl border border-border bg-card p-1 overflow-x-auto hide-scrollbar">
           {getFilters(t).map(f => (
             <button key={f.key} onClick={() => handleSetStatus(f.key)}
               className={cn(
-                "rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
+                "rounded-lg px-3 py-1.5 text-xs font-medium transition-colors shrink-0",
                 status === f.key ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground",
               )}
             >{f.label}</button>

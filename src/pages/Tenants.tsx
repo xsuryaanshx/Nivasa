@@ -249,7 +249,7 @@ export default function Tenants() {
             <Search className="h-4 w-4 text-muted-foreground shrink-0" />
             <input
               value={q} onChange={e => setQ(e.target.value)}
-              placeholder={"Search tenants by name, phone, or room..."}
+              placeholder={"Search tenants..."}
               className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground min-w-0"
             />
           </div>
