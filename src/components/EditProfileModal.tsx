@@ -33,8 +33,6 @@ export function EditProfileModal({ open, onClose }: { open: boolean; onClose: ()
             window.location.reload();
           }, 1000);
         } else {
-          localStorage.setItem("nivasa_user_name", name);
-          localStorage.setItem("nivasa_user_upi_id", upiId);
           toast.success("Profile updated (local)!");
           setTimeout(() => {
             window.location.reload();

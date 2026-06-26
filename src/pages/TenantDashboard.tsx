@@ -171,7 +171,9 @@ export default function TenantDashboard() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    console.log("OCR Scanner Version: 2.1 (With Safety override & robust brace parser)");
+    if (import.meta.env.DEV) {
+      console.log("OCR Scanner Version: 2.1 (With Safety override & robust brace parser)");
+    }
 
     if (file.size > 5 * 1024 * 1024) {
       toast.error("File is too large. Max size is 5MB.");
@@ -190,70 +192,26 @@ export default function TenantDashboard() {
         });
       const base64Image = await toBase64(file);
       const mimeType = file.type || "image/jpeg";
-
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-      if (!apiKey || apiKey.trim() === "") {
-        throw new Error("Gemini API Key is missing. If you recently updated your .env file, you MUST stop your terminal server and run 'npm run dev' again to restart it.");
-      }
-
-      const prompt = `You are a UPI payment receipt parser. Analyze this payment screenshot carefully and extract these fields:
-1. "amount": The rupee amount paid (number, e.g. 2000.00). Look for the ₹ symbol or "Rs." followed by a number.
-2. "utr": The 12-digit transaction reference number (string). Labeled as UTR, Ref No, Transaction ID, UPI Ref, or similar.
-3. "date": The payment date in YYYY-MM-DD format.
-
-Return ONLY a raw JSON object (no conversational text, no markdown fences):
-{"amount": 2000.00, "utr": "612345678901", "date": "2026-06-25"}`;
-
-      console.log("Base64 Image length:", base64Image.length);
-
-      const makeGeminiRequest = async (modelName: string) => {
+      
+      const makeBackendRequest = async () => {
+        const { data: { session } } = await supabase.auth.getSession();
         return await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`,
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ocr-receipt`,
           {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { 
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${session?.access_token}`
+            },
             body: JSON.stringify({
-              contents: [{
-                parts: [
-                  { text: prompt },
-                  { inline_data: { mime_type: mimeType, data: base64Image } }
-                ]
-              }],
-              safetySettings: [
-                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-                { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-                { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
-              ],
-              generationConfig: { 
-                temperature: 0, 
-                maxOutputTokens: 2048,
-                responseMimeType: "application/json",
-                responseSchema: {
-                  type: "OBJECT",
-                  properties: {
-                    amount: { type: "NUMBER", description: "The rupee amount paid (e.g. 1.00)" },
-                    utr: { type: "STRING", description: "The 12-digit UPI transaction reference number / UTR" },
-                    date: { type: "STRING", description: "The payment date in YYYY-MM-DD format" }
-                  },
-                  required: []
-                }
-              }
+              mimeType,
+              base64Image
             })
           }
         );
       };
 
-      let response = await makeGeminiRequest("gemini-2.5-flash");
-
-      // Auto-fallback to gemini-2.5-flash-lite if the primary model is busy/rate-limited or down
-      if (!response.ok || response.status === 503 || response.status === 429) {
-        console.warn(`Primary model gemini-2.5-flash failed with status ${response.status}. Retrying with gemini-2.5-flash-lite...`);
-        const fallbackResponse = await makeGeminiRequest("gemini-2.5-flash-lite");
-        if (fallbackResponse.ok) {
-          response = fallbackResponse;
-        }
-      }
+      let response = await makeBackendRequest();
 
       if (response.status === 429) {
         throw new Error("RATE_LIMITED");
@@ -269,15 +227,16 @@ Return ONLY a raw JSON object (no conversational text, no markdown fences):
       }
 
       const geminiData = await response.json();
-      console.log("Full Gemini response:", geminiData);
-
-      const candidate = geminiData.candidates?.[0];
-      if (candidate?.finishReason === "SAFETY") {
-        throw new Error("The receipt scan was blocked by Gemini safety filters. Please enter details manually.");
+      
+      if (import.meta.env.DEV) {
+        console.log("Full Gemini response:", geminiData);
       }
+      
+      let rawText = geminiData.rawText || "{}";
 
-      const rawText = candidate?.content?.parts?.[0]?.text || "{}";
-      console.log("Gemini Vision response:", rawText);
+      if (import.meta.env.DEV) {
+        console.log("Gemini Vision response:", rawText);
+      }
 
       // Robustly extract the JSON object by finding the first '{' and last '}'
       let jsonStr = rawText.trim();

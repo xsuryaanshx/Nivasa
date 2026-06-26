@@ -601,10 +601,8 @@ export default function RoomDetails() {
                           return;
                         }
                         const signupUrl = `${window.location.origin}/register`;
-                        const msg = encodeURIComponent(
-                          `Hi ${t.name},\n\nWelcome to Nivasa! Your landlord has added you to the system. You can now register and set up your login credentials to view your room details, invoices, and pay rent directly.\n\n👉 Sign up here: ${signupUrl}\n\n*Important:* Please register using your phone number (${phone}) as it is linked to your profile.\n\nThank you!`
-                        );
-                        window.open(`https://wa.me/91${phone.replace(/\D/g, '')}?text=${msg}`, '_blank');
+                        const msg = `Hi ${t.name},\n\nWelcome to Nivasa! Your landlord has added you to the system. You can now register and set up your login credentials to view your room details, invoices, and pay rent directly.\n\n👉 Sign up here: ${signupUrl}\n\n*Important:* Please register using your phone number (${phone}) as it is linked to your profile.\n\nThank you!`;
+                        openWhatsApp(phone, msg);
                         toast.success("Opening WhatsApp invite...");
                       }}
                       className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-brand/10 text-brand py-1.5 text-xs font-medium hover:bg-brand/20 transition-colors w-full sm:w-auto"

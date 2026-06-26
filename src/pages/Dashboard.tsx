@@ -18,6 +18,7 @@ import { useLanguage } from "@/components/LanguageProvider";
 import { useSubscriptionData } from "@/hooks/useSubscriptionData";
 import { getTenantPaymentStatus } from "@/lib/utils";
 import { downloadMonthlyReportPdf } from "@/lib/monthlyReportPdf";
+import { openWhatsApp } from "@/lib/whatsapp";
 
 function getGreetingKey() {
   const hour = new Date().getHours();
@@ -117,10 +118,7 @@ export default function Dashboard() {
             action: () => {
               const msg = `Hi ${tenant.name}, this is a gentle reminder that your rent of ₹${rentAmount} for Room ${room.number} is currently ${isLate ? 'late' : 'pending'}. Please complete the payment at your earliest convenience.`;
               nivasaApi.logFeatureUsage("whatsapp_reminders", "send_reminder", { tenantName: tenant.name, status: paymentStatus });
-              window.open(
-                `https://wa.me/91${(tenant.whatsapp_number || tenant.phone || '').replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`,
-                "_blank"
-              );
+              openWhatsApp((tenant.whatsapp_number || tenant.phone || '').replace(/\D/g, ''), msg);
             },
           });
         }

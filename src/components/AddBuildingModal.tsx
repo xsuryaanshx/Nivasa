@@ -132,6 +132,7 @@ export function AddBuildingModal({ open, onClose, onSuccess }: Props) {
                 <input
                   id="building-name"
                   type="text"
+                  maxLength={100}
                   placeholder="e.g. Aurora Heights"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -155,6 +156,7 @@ export function AddBuildingModal({ open, onClose, onSuccess }: Props) {
                 <input
                   id="building-address"
                   type="text"
+                  maxLength={500}
                   placeholder="e.g. Scheme No 54, Indore, MP or Google Maps URL"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}

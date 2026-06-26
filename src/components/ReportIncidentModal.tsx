@@ -4,7 +4,7 @@ import { X, ShieldAlert, CheckCircle2 } from "lucide-react";
 import { MagneticButton } from "./MagneticButton";
 import { nivasaApi } from "@/lib/api";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { cn, maskAadhar } from "@/lib/utils";
 
 interface ReportIncidentModalProps {
   open: boolean;
@@ -119,6 +119,7 @@ export function ReportIncidentModal({ open, tenant, buildingId, onClose }: Repor
                 <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Description</label>
                 <textarea
                   required
+                  maxLength={500}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Provide brief details about the incident..."
@@ -128,7 +129,7 @@ export function ReportIncidentModal({ open, tenant, buildingId, onClose }: Repor
             </form>
 
             <div className="mt-8">
-              <div className="text-xs font-semibold text-muted-foreground mb-3">Incident History for {tenant.aadhar}</div>
+              <div className="text-xs font-semibold text-muted-foreground mb-3">Incident History for {maskAadhar(tenant.aadhar)}</div>
               {loadingHistory ? (
                 <div className="text-xs text-muted-foreground animate-pulse">Loading history...</div>
               ) : incidents.length === 0 ? (

@@ -14,6 +14,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useSubscriptionData } from "@/hooks/useSubscriptionData";
 import { downloadExcel } from "@/lib/export";
 import { FileSpreadsheet } from "lucide-react";
+import { openWhatsApp } from "@/lib/whatsapp";
 
 const getFilters = (t: any): ({ key: PaymentStatus | "all"; label: string })[] => [
   { key: "all",     label: t('all') || "All" },
@@ -143,7 +144,7 @@ export default function Tenants() {
   const triggerSingleReminder = (tenant: any) => {
     const url = getReminderUrl(tenant);
     if (url) {
-      window.open(url, '_blank');
+      window.open(url, '_blank', 'noopener,noreferrer');
       setSentStatus(prev => ({ ...prev, [tenant.id]: true }));
     } else {
       toast.error(`No phone number for ${tenant.name}`);
@@ -546,7 +547,7 @@ function TenantCard({
     }
     const msg = encodeURIComponent(`Hi ${tenant.name}, this is a gentle reminder that your rent of ₹${tenant.roomRent} is currently pending. Please complete the payment at your earliest convenience.`);
     nivasaApi.logFeatureUsage("whatsapp_reminders", "send_reminder", { tenantName: tenant.name, status: "pending" });
-    window.open(`https://wa.me/91${phone.replace(/\D/g, '')}?text=${msg}`, '_blank');
+    openWhatsApp(phone, msg);
     controls.start({ x: 0 });
   };
 
@@ -561,7 +562,7 @@ function TenantCard({
       `Hi ${tenant.name},\n\nWelcome to Nivasa! Your landlord has added you to the system. You can now register and set up your login credentials to view your room details, invoices, and pay rent directly.\n\n👉 Sign up here: ${signupUrl}\n\n*Important:* Please register using your phone number (${phone}) as it is linked to your profile.\n\nThank you!`
     );
     nivasaApi.logFeatureUsage("whatsapp_reminders", "send_invite", { tenantName: tenant.name });
-    window.open(`https://wa.me/91${phone.replace(/\D/g, '')}?text=${msg}`, '_blank');
+    openWhatsApp(phone, msg);
     toast.success("Opening WhatsApp invite...");
   };
 
