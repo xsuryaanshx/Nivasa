@@ -18,6 +18,7 @@ import { useLanguage } from "@/components/LanguageProvider";
 import { useSubscriptionData } from "@/hooks/useSubscriptionData";
 import { getTenantPaymentStatus } from "@/lib/utils";
 import { downloadMonthlyReportPdf } from "@/lib/monthlyReportPdf";
+import { openWhatsApp } from "@/lib/whatsapp";
 
 function getGreetingKey() {
   const hour = new Date().getHours();
@@ -117,10 +118,7 @@ export default function Dashboard() {
             action: () => {
               const msg = `Hi ${tenant.name}, this is a gentle reminder that your rent of ₹${rentAmount} for Room ${room.number} is currently ${isLate ? 'late' : 'pending'}. Please complete the payment at your earliest convenience.`;
               nivasaApi.logFeatureUsage("whatsapp_reminders", "send_reminder", { tenantName: tenant.name, status: paymentStatus });
-              window.open(
-                `https://wa.me/91${(tenant.whatsapp_number || tenant.phone || '').replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`,
-                "_blank"
-              );
+              openWhatsApp((tenant.whatsapp_number || tenant.phone || '').replace(/\D/g, ''), msg);
             },
           });
         }
@@ -444,7 +442,7 @@ export default function Dashboard() {
         ) : (
           <div className="divide-y divide-border/50 max-h-[300px] overflow-y-auto mt-2 pr-1 custom-scrollbar">
             {attentionItems.map((item) => (
-              <div key={item.id} className="flex items-center justify-between py-3 gap-4 first:pt-1.5 last:pb-1.5 animate-fade-in">
+              <div key={item.id} className={`flex ${item.type === 'verify_payment' ? 'flex-col sm:flex-row items-start sm:items-center' : 'items-center'} justify-between py-3 gap-4 first:pt-1.5 last:pb-1.5 animate-fade-in`}>
                 <div className="flex items-start gap-3 min-w-0">
                   <div className={`mt-0.5 flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-xl ${
                     item.type === 'late_rent' 
@@ -477,18 +475,20 @@ export default function Dashboard() {
                 </div>
                 <button
                   onClick={item.action}
-                  className={`inline-flex h-8 items-center gap-1.5 rounded-xl px-3 text-[11px] font-semibold transition-all shrink-0 ${
-                    item.type === 'late_rent'
-                      ? 'bg-destructive text-white hover:bg-destructive/90 shadow-[0_2px_8px_rgba(239,68,68,0.2)]'
-                      : item.type === 'verify_payment'
-                        ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-[0_2px_8px_rgba(59,130,246,0.2)]'
-                        : 'bg-secondary hover:bg-secondary/80 text-foreground border border-border/40'
+                  className={`inline-flex items-center justify-center gap-1.5 rounded-xl font-semibold transition-all shrink-0 ${
+                    item.type === 'verify_payment'
+                      ? 'h-10 px-5 text-xs bg-blue-600 text-white hover:bg-blue-700 shadow-[0_4px_12px_rgba(59,130,246,0.3)] ring-2 ring-blue-500/30 w-full sm:w-auto'
+                      : 'h-8 px-3 text-[11px] ' + (
+                          item.type === 'late_rent'
+                            ? 'bg-destructive text-white hover:bg-destructive/90 shadow-[0_2px_8px_rgba(239,68,68,0.2)]'
+                            : 'bg-secondary hover:bg-secondary/80 text-foreground border border-border/40'
+                        )
                   }`}
                 >
                   {item.type === 'late_rent' && <Send className="h-3 w-3" />}
                   {item.actionLabel}
                   {item.type !== 'late_rent' && item.type !== 'verify_payment' && <ArrowRight className="h-3 w-3" />}
-                  {item.type === 'verify_payment' && <CheckCircle2 className="h-3 w-3" />}
+                  {item.type === 'verify_payment' && <CheckCircle2 className="h-4 w-4" />}
                 </button>
               </div>
             ))}

@@ -124,7 +124,7 @@ const auth = {
             }
           }
         } catch (dbErr) {
-          console.error("Failed to sync profile updates to buildings table:", dbErr);
+          safeLog("Failed to sync profile updates to buildings table", dbErr);
         }
       }
     }
@@ -237,7 +237,7 @@ async function addBuilding(input: {
         .from("units")
         .insert(unitsToInsert);
       if (unitsError)
-        console.error("Error inserting auto-generated units:", unitsError);
+        safeLog("Error inserting auto-generated units", unitsError);
     }
     return data;
   } catch (error) {
@@ -659,8 +659,14 @@ async function getPastTenants(): Promise<any[]> {
 
 async function getTenantInvoices(): Promise<any[]> {
   try {
-    const user_id = await requireAuthUserId();
-    const { data, error } = await supabase.from("tenant_invoices").select("*");
+    const rooms = await getRooms();
+    const roomIds = rooms.map(r => r.id);
+    if (roomIds.length === 0) return [];
+    
+    const { data, error } = await supabase
+      .from("tenant_invoices")
+      .select("*")
+      .in("room_id", roomIds);
     if (error) throw error;
     return data || [];
   } catch (error) {
@@ -1245,6 +1251,15 @@ async function saveElectricityReading(input: {
       .eq("id", input.room_id)
       .eq("user_id", user_id);
     if (error) throw error;
+
+    // Also update this month's tenant invoices so tenants can see the charge
+    const electricity_cost = Math.max(0, (input.curr_reading - input.prev_reading) * input.rate_per_unit);
+    await supabase
+      .from("tenant_invoices")
+      .update({ electricity_cost })
+      .eq("room_id", input.room_id)
+      .eq("billing_month", input.month);
+
     return true;
   } catch (error) {
     safeLog("saveElectricityReading", error);
@@ -1675,7 +1690,7 @@ async function createInvoice(invoice: any) {
         billingMonth = `${year}-${monthStr}`;
       }
     } catch (e) {
-      console.error("Failed to parse billing month from month_year:", e);
+      safeLog("Failed to parse billing month from month_year", e);
     }
 
     const addonsTotal = (invoice.add_ons || []).reduce((sum: number, a: any) => sum + Number(a.cost || 0), 0);
@@ -1694,7 +1709,7 @@ async function createInvoice(invoice: any) {
       });
 
     if (tenantInvError) {
-      console.error("Error upserting tenant_invoice:", tenantInvError);
+      safeLog("Error upserting tenant_invoice", tenantInvError);
     }
 
     return data;
@@ -1875,6 +1890,7 @@ async function getProfitStats() {
  * ───────────────────────────────────────────────────────────── */
 async function getTrustScore(aadhar: string): Promise<{ score: number, name: string | null } | null> {
   try {
+    await requireAuthUserId();
     const { data, error } = await supabase
       .from("tenant_trust_scores")
       .select("score, name")
@@ -1891,6 +1907,7 @@ async function getTrustScore(aadhar: string): Promise<{ score: number, name: str
 
 async function getTrustIncidents(aadhar: string): Promise<any[]> {
   try {
+    await requireAuthUserId();
     const { data, error } = await supabase
       .from("trust_incidents")
       .select("*")
@@ -1934,13 +1951,13 @@ async function reportTrustIncident(payload: {
 export async function getPublicBuilding(slug: string) {
   const { data, error } = await supabase
     .from("buildings")
-    .select("*")
+    .select("id, name, address, slug, public_description, public_amenities, contact_phone, cover_image_url, images")
     .eq("slug", slug)
     .eq("is_public", true)
     .maybeSingle();
 
   if (error) {
-    console.error("Error fetching public building:", error);
+    safeLog("Error fetching public building", error);
     return null;
   }
   return data;

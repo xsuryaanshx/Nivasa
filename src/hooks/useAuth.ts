@@ -41,7 +41,7 @@ export function useAuth() {
       const session = await nivasaApi.auth.getSession();
       if (session?.user) {
         const fullName = session.user.user_metadata?.full_name || session.user.email?.split("@")[0] || "User";
-        const upiId = session.user.user_metadata?.upi_id || localStorage.getItem("nivasa_user_upi_id") || undefined;
+        const upiId = session.user.user_metadata?.upi_id || undefined;
         setUser(buildUser({ id: session.user.id, email: session.user.email || "", fullName, upiId }));
       } else {
         setUser(null);
@@ -59,7 +59,7 @@ export function useAuth() {
             session.user.user_metadata?.full_name ||
             session.user.email?.split("@")[0] ||
             "User";
-          const upiId = session.user.user_metadata?.upi_id || localStorage.getItem("nivasa_user_upi_id") || undefined;
+          const upiId = session.user.user_metadata?.upi_id || undefined;
           setUser(buildUser({ id: session.user.id, email: session.user.email || "", fullName, upiId }));
         } else {
           setUser(null);
@@ -76,7 +76,6 @@ export function useAuth() {
   const clearNivasaStorage = () => {
     const keysToRemove = [
       "nivasa_user_name",
-      "nivasa_user_upi_id",
       "nivasa_no_remember",
       "nivasa_fail_count",
       "nivasa_lock_until",

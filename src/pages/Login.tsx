@@ -28,30 +28,12 @@ export default function Login() {
     checkUser();
   }, [navigate]);
 
-  /* SECURITY FIX #10: Rate limiting — progressive delays on failed attempts.
-   * HIGH-01 fix: State is now persisted in localStorage so it survives page refreshes.
-   * An attacker can no longer bypass lockout by simply reloading the tab. */
-  const [failCount, setFailCount] = useState<number>(() => {
-    try { return parseInt(localStorage.getItem("nivasa_fail_count") || "0", 10) || 0; } catch { return 0; }
-  });
-  const [lockUntil, setLockUntil] = useState<number | null>(() => {
-    try {
-      const v = localStorage.getItem("nivasa_lock_until");
-      return v ? parseInt(v, 10) : null;
-    } catch { return null; }
-  });
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     if (!user || !pwd) { setError("Please fill in both fields."); return; }
     
-    // Check lockout
-    if (lockUntil && Date.now() < lockUntil) {
-      const secsLeft = Math.ceil((lockUntil - Date.now()) / 1000);
-      setError(`Too many failed attempts. Try again in ${secsLeft}s.`);
-      return;
-    }
     
     setLoading(true);
     try {
@@ -65,34 +47,9 @@ export default function Login() {
 
       const { data, error } = await nivasaApi.auth.signIn(user, pwd);
       if (error) throw error;
-      
-      setFailCount(0);
-      setLockUntil(null);
-      localStorage.removeItem("nivasa_fail_count");
-      localStorage.removeItem("nivasa_lock_until");
       navigate("/app");
     } catch (err: any) {
-      const nextFail = failCount + 1;
-      setFailCount(nextFail);
-      localStorage.setItem("nivasa_fail_count", String(nextFail));
-      if (nextFail >= 7) {
-        const until = Date.now() + 15000;
-        setLockUntil(until);
-        localStorage.setItem("nivasa_lock_until", String(until));
-        setError("Too many failed attempts. Account locked for 15 seconds.");
-      } else if (nextFail >= 5) {
-        const until = Date.now() + 5000;
-        setLockUntil(until);
-        localStorage.setItem("nivasa_lock_until", String(until));
-        setError("Too many failed attempts. Try again in 5 seconds.");
-      } else if (nextFail >= 3) {
-        const until = Date.now() + 2000;
-        setLockUntil(until);
-        localStorage.setItem("nivasa_lock_until", String(until));
-        setError(err.message || "Invalid email or password. Please wait before retrying.");
-      } else {
-        setError(err.message || "Invalid email or password");
-      }
+      setError("Invalid email or password. Please try again.");
     } finally {
       setLoading(false);
     }

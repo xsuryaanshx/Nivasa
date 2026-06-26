@@ -4,7 +4,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, IdCard, Phone, Smartphone, User, Loader2, Banknote, CreditCard } from "lucide-react";
 import { GlassModal } from "./GlassModal";
 import { MagneticButton } from "./MagneticButton";
-import { cn } from "@/lib/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn, maskAadhar } from "@/lib/utils";
 import { toast } from "sonner";
 import { isValidMobile, isValidAadhar } from "@/lib/tenantStore";
 import { type Tenant } from "@/lib/types";
@@ -171,7 +172,7 @@ export function EditTenantModal({ open, tenant, onClose, onUpdated }: Props) {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <div className="text-[10px] uppercase text-muted-foreground font-semibold mb-1">Aadhar</div>
-                    <div className="text-sm font-medium">{tenant.aadhar ? formatAadhar(tenant.aadhar) : "-"}</div>
+                    <div className="text-sm font-medium">{tenant.aadhar ? maskAadhar(tenant.aadhar) : "-"}</div>
                   </div>
                   <div>
                     <div className="text-[10px] uppercase text-muted-foreground font-semibold mb-1">Deposit</div>

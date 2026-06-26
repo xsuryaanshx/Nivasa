@@ -65,3 +65,9 @@ export function getTenantPaymentStatus(
   return dayOfMonth > 10 ? "late" : "pending";
 }
 
+export function maskAadhar(aadhar: string | undefined | null): string {
+  if (!aadhar) return "-";
+  const clean = aadhar.replace(/\D/g, "");
+  if (clean.length < 4) return clean;
+  return `XXXX-XXXX-${clean.slice(-4)}`;
+}
