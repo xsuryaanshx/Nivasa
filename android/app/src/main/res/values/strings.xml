@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Nivasa</string>
+    <string name="title_activity_main">Nivasa</string>
+    <string name="package_name">com.nivasa.app</string>
+    <string name="custom_url_scheme">com.nivasa.app</string>
+</resources>
