@@ -1,7 +1,7 @@
 import { nivasaApi } from "@/lib/api";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, IdCard, Phone, Smartphone, User, Loader2, Calendar, Banknote, CreditCard, FileText } from "lucide-react";
+import { CheckCircle2, IdCard, Phone, Smartphone, User, Loader2, Calendar, Banknote, CreditCard, FileText, AlertTriangle, X } from "lucide-react";
 import { GlassModal } from "./GlassModal";
 import { MagneticButton } from "./MagneticButton";
 import { cn } from "@/lib/utils";
@@ -52,6 +52,10 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
 
+  // Aadhar duplicate detection
+  const [aadharWarning, setAadharWarning] = useState<{ roomNumber: string; buildingName: string; tenantName: string } | null>(null);
+  const [checkingAadhar, setCheckingAadhar] = useState(false);
+
   const fetchRooms = async () => {
     try {
       setLoadingRooms(true);
@@ -89,9 +93,48 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
       const d = new Date();
       setJoinedAt(`${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`);
       setSelectedFile(null);
+      setAadharWarning(null);
 
     }
   }, [open, defaultRoomId]);
+
+  // Real-time Aadhar duplicate check
+  useEffect(() => {
+    const clean = aadhar.replace(/\D/g, "");
+    if (clean.length !== 12) {
+      setAadharWarning(null);
+      return;
+    }
+    let cancelled = false;
+    const check = async () => {
+      try {
+        setCheckingAadhar(true);
+        const allRooms = await nivasaApi.getRooms();
+        for (const room of allRooms) {
+          for (const t of (room.tenants || [])) {
+            if ((t.aadhar || "").replace(/\D/g, "") === clean && t.status !== "vacated") {
+              // Found a duplicate — but skip if it's the same room we're adding to
+              if (!cancelled) {
+                setAadharWarning({
+                  roomNumber: room.number,
+                  buildingName: room.buildingName,
+                  tenantName: t.name,
+                });
+              }
+              return;
+            }
+          }
+        }
+        if (!cancelled) setAadharWarning(null);
+      } catch {
+        // silently fail — just don't show warning
+      } finally {
+        if (!cancelled) setCheckingAadhar(false);
+      }
+    };
+    check();
+    return () => { cancelled = true; };
+  }, [aadhar]);
 
   const validate = () => {
     const e: Record<string, string> = {};
@@ -335,16 +378,56 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
               </div>
 
               <Field label="Aadhar Number" hint="12 digits (Required)" error={errors.aadhar}>
-                <IconInput 
-                  icon={<IdCard className="h-4 w-4" />}
-                  value={formatAadhar(aadhar)}
-                  onChange={(v) => setAadhar(v.replace(/\D/g, ""))}
-                  placeholder="1234 5678 9012" 
-                  inputMode="numeric" 
-                  maxLength={14}
-                  disabled={submitting}
-                />
-                {aadhar.length === 12 && (
+                <div className="relative">
+                  <IconInput 
+                    icon={<IdCard className="h-4 w-4" />}
+                    value={formatAadhar(aadhar)}
+                    onChange={(v) => setAadhar(v.replace(/\D/g, ""))}
+                    placeholder="1234 5678 9012" 
+                    inputMode="numeric" 
+                    maxLength={14}
+                    disabled={submitting}
+                  />
+                  {checkingAadhar && (
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2">
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    </span>
+                  )}
+                </div>
+
+                {/* Duplicate Aadhar Warning */}
+                <AnimatePresence>
+                  {aadharWarning && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -4, height: 0 }}
+                      animate={{ opacity: 1, y: 0, height: "auto" }}
+                      exit={{ opacity: 0, y: -4, height: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="mt-2 flex items-start gap-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3"
+                    >
+                      <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-amber-700 dark:text-amber-400">
+                          Aadhar already registered!
+                        </p>
+                        <p className="text-[11px] text-amber-600 dark:text-amber-500 mt-0.5">
+                          <span className="font-medium">{aadharWarning.tenantName}</span> is already in{" "}
+                          <span className="font-medium">Room {aadharWarning.roomNumber}</span> ({aadharWarning.buildingName}).
+                          Adding the same Aadhar to another room may be a mistake.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setAadharWarning(null)}
+                        className="shrink-0 text-amber-500 hover:text-amber-700 transition-colors"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {aadhar.length === 12 && !aadharWarning && (
                   <div className="mt-2">
                     <TrustScoreBadge aadhar={aadhar} showLabel />
                   </div>

@@ -107,12 +107,28 @@ export default function Tenants() {
   }, [tenantsList, paymentsList, tenantInvoicesList]);
 
   const filtered = useMemo(() => {
+    const qClean = q.trim().toLowerCase();
+    const qDigits = qClean.replace(/\D/g, ""); // strip non-digits for phone/aadhar matching
+
     let result = tenantsWithStatus.filter(t => {
       if (status !== "all" && t.paymentStatus !== status) return false;
       if (selectedBuilding !== "all" && t.buildingName !== selectedBuilding) return false;
-      if (!q) return true;
-      const hay = `${t.name} ${t.roomNumber} ${t.buildingName} ${t.phone || ""} ${t.whatsapp_number || ""}`.toLowerCase();
-      return hay.includes(q.toLowerCase());
+      if (!qClean) return true;
+
+      // Text haystack: name, room number, building
+      const textHay = `${t.name ?? ""} ${t.roomNumber ?? ""} ${t.buildingName ?? ""}`.toLowerCase();
+      if (textHay.includes(qClean)) return true;
+
+      // Phone number search (strip non-digits for fuzzy matching)
+      const phoneDigits = (t.phone || "").replace(/\D/g, "");
+      const waDigits   = (t.whatsapp_number || "").replace(/\D/g, "");
+      if (qDigits.length >= 4 && (phoneDigits.includes(qDigits) || waDigits.includes(qDigits))) return true;
+
+      // Aadhar search (strip spaces for matching)
+      const aadharDigits = (t.aadhar || "").replace(/\D/g, "");
+      if (qDigits.length >= 4 && aadharDigits.includes(qDigits)) return true;
+
+      return false;
     });
 
     const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
@@ -245,13 +261,23 @@ export default function Tenants() {
 
       <div className="mb-5 flex flex-col gap-3">
         <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex h-12 flex-1 min-w-0 items-center gap-2 rounded-xl border border-border bg-card px-3.5 py-2">
+          <div className="relative flex h-12 flex-1 min-w-0 items-center gap-2 rounded-xl border border-border bg-card px-3.5 py-2 focus-within:border-brand focus-within:ring-4 focus-within:ring-brand/10 transition-all">
             <Search className="h-4 w-4 text-muted-foreground shrink-0" />
             <input
               value={q} onChange={e => setQ(e.target.value)}
-              placeholder={"Search tenants..."}
+              placeholder={"Search by name, phone, or Aadhar…"}
               className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground min-w-0 h-full"
             />
+            {q && (
+              <button
+                onClick={() => setQ("")}
+                className="shrink-0 flex items-center justify-center h-5 w-5 rounded-full bg-muted-foreground/20 text-muted-foreground hover:bg-muted-foreground/30 transition-colors"
+              >
+                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
           </div>
           
           <div className="flex gap-2">
