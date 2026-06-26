@@ -139,7 +139,7 @@ export default function RoomDetails() {
       const now = new Date();
       const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
       await nivasaApi.saveElectricityReading({
-        room_number: "Room Name / Number",
+        room_id: room.id,
         month,
         prev_reading: Number(startReading) || 0,
         curr_reading: Number(endReading) || 0,
