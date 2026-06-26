@@ -147,10 +147,10 @@ export function CommandPalette({ open, onOpenChange, onShowHelp }: Props) {
 
                 {tenantRooms.length > 0 && (
                   <Command.Group heading="Tenants">
-                    {tenantRooms.slice(0, 6).flatMap(r => (r.tenants || []).map((t: any) => (
-                      <Item key={t.id} value={`tenant ${t.name} ${r.number}`}
+                    {tenantRooms.slice(0, 8).flatMap(r => (r.tenants || []).map((t: any) => (
+                      <Item key={t.id} value={`tenant ${t.name} ${r.number} ${r.buildingName} ${(t.phone || "").replace(/\D/g, "")} ${(t.whatsapp_number || "").replace(/\D/g, "")} ${(t.aadhar || "").replace(/\D/g, "")}`}
                         onSelect={() => go(`/app/rooms/${r.id}`)} icon={<User className="h-4 w-4" />}>
-                        {t.name} <span className="text-muted-foreground">· Room {r.number}</span>
+                        {t.name} <span className="text-muted-foreground">· Room {r.number} · {r.buildingName}</span>
                       </Item>
                     )))}
                   </Command.Group>
