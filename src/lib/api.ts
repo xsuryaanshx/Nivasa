@@ -659,11 +659,14 @@ async function getPastTenants(): Promise<any[]> {
 
 async function getTenantInvoices(): Promise<any[]> {
   try {
-    const user_id = await requireAuthUserId();
+    const rooms = await getRooms();
+    const roomIds = rooms.map(r => r.id);
+    if (roomIds.length === 0) return [];
+    
     const { data, error } = await supabase
       .from("tenant_invoices")
       .select("*")
-      .eq("user_id", user_id);
+      .in("room_id", roomIds);
     if (error) throw error;
     return data || [];
   } catch (error) {
@@ -1248,6 +1251,15 @@ async function saveElectricityReading(input: {
       .eq("id", input.room_id)
       .eq("user_id", user_id);
     if (error) throw error;
+
+    // Also update this month's tenant invoices so tenants can see the charge
+    const electricity_cost = Math.max(0, (input.curr_reading - input.prev_reading) * input.rate_per_unit);
+    await supabase
+      .from("tenant_invoices")
+      .update({ electricity_cost })
+      .eq("room_id", input.room_id)
+      .eq("billing_month", input.month);
+
     return true;
   } catch (error) {
     safeLog("saveElectricityReading", error);
