@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { useSubscriptionData } from "@/hooks/useSubscriptionData";
 import { Progress } from "@/components/ui/progress";
@@ -12,13 +13,14 @@ import { useAuth } from "@/hooks/useAuth";
 export default function SubscriptionPage() {
   const { user } = useAuth();
   const { subscription, usage, limits, refetch, isLoading } = useSubscriptionData();
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
 
   const handleSelectPlan = (planKey: string) => {
     if (!user) return;
 
     const email = user.email || "";
     const currentPlan = subscription?.plans?.display_name || "Silver";
-    const requestedPlan = planKey.charAt(0).toUpperCase() + planKey.slice(1);
+    const requestedPlan = `${planKey.charAt(0).toUpperCase() + planKey.slice(1)} (${billingCycle === "yearly" ? "Billed Annually" : "Billed Monthly"})`;
     
     const message = `Hi Nivasa Support,\n\nI would like to change my Nivasa subscription plan.\n\nAccount Email: ${email}\nCurrent Plan: ${currentPlan}\nRequested Plan: ${requestedPlan}`;
     
@@ -50,8 +52,10 @@ export default function SubscriptionPage() {
     {
       key: "silver",
       name: "Silver",
-      price: "₹499",
+      price: billingCycle === "monthly" ? "₹499" : "₹415",
       period: "/month",
+      yearlyText: billingCycle === "yearly" ? "Billed ₹4,990 annually" : null,
+      savings: billingCycle === "yearly" ? "Save ₹998 (2 Months Free!)" : null,
       desc: "Perfect for individual landlords managing single properties.",
       features: [
         "Up to 10 rooms limit",
@@ -66,8 +70,10 @@ export default function SubscriptionPage() {
     {
       key: "gold",
       name: "Gold",
-      price: "₹899",
+      price: billingCycle === "monthly" ? "₹899" : "₹749",
       period: "/month",
+      yearlyText: billingCycle === "yearly" ? "Billed ₹8,990 annually" : null,
+      savings: billingCycle === "yearly" ? "Save ₹1,798 (2 Months Free!)" : null,
       desc: "Great for growing landlords with multi-unit buildings.",
       features: [
         "Up to 50 rooms limit",
@@ -86,8 +92,10 @@ export default function SubscriptionPage() {
     {
       key: "platinum",
       name: "Platinum",
-      price: "₹1199",
+      price: billingCycle === "monthly" ? "₹1199" : "₹999",
       period: "/month",
+      yearlyText: billingCycle === "yearly" ? "Billed ₹11,990 annually" : null,
+      savings: billingCycle === "yearly" ? "Save ₹2,398 (2 Months Free!)" : null,
       desc: "Fully-featured plan for multi-property managers & teams.",
       features: [
         "Unlimited rooms limit",
@@ -218,11 +226,37 @@ export default function SubscriptionPage() {
       </div>
 
       {/* Pricing Comparison */}
-      <div className="text-center mb-8">
+      <div className="text-center mb-6">
         <h2 className="text-2xl font-bold tracking-tight">Flexible SaaS Pricing Plans</h2>
         <p className="text-sm text-muted-foreground mt-1.5">
           Select the best plan matching your property management scale. Upgrade or downgrade anytime.
         </p>
+      </div>
+
+      {/* Monthly/Yearly Toggle */}
+      <div className="flex justify-center items-center gap-3.5 mb-10">
+        <span className={`text-sm font-semibold transition-colors ${billingCycle === "monthly" ? "text-foreground font-bold" : "text-muted-foreground"}`}>
+          Monthly Billing
+        </span>
+        <button
+          type="button"
+          onClick={() => setBillingCycle(c => c === "monthly" ? "yearly" : "monthly")}
+          className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-250 focus:outline-none ${
+            billingCycle === "yearly" ? "bg-primary" : "bg-muted-foreground/30"
+          }`}
+        >
+          <span
+            className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-background shadow-md transition duration-250 ease-in-out ${
+              billingCycle === "yearly" ? "translate-x-5" : "translate-x-0"
+            }`}
+          />
+        </button>
+        <span className={`text-sm font-semibold flex items-center gap-1.5 transition-colors ${billingCycle === "yearly" ? "text-foreground font-bold" : "text-muted-foreground"}`}>
+          Yearly Saving
+          <span className="inline-flex items-center rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+            2 MONTHS FREE! 🎁
+          </span>
+        </span>
       </div>
 
       <div className="grid gap-6 md:grid-cols-3 items-stretch">
@@ -252,9 +286,21 @@ export default function SubscriptionPage() {
                 <CardDescription className="min-h-[40px] mt-1.5 text-xs text-muted-foreground px-2">
                   {plan.desc}
                 </CardDescription>
-                <div className="mt-4 flex items-baseline justify-center text-foreground">
-                  <span className="text-4xl font-extrabold tracking-tight">{plan.price}</span>
-                  <span className="ml-1 text-sm font-semibold text-muted-foreground">{plan.period}</span>
+                <div className="mt-4 flex flex-col items-center justify-center text-foreground">
+                  <div className="flex items-baseline">
+                    <span className="text-4xl font-extrabold tracking-tight">{plan.price}</span>
+                    <span className="ml-1 text-sm font-semibold text-muted-foreground">{plan.period}</span>
+                  </div>
+                  {plan.yearlyText && (
+                    <span className="text-[10px] text-muted-foreground font-medium mt-1">
+                      {plan.yearlyText}
+                    </span>
+                  )}
+                  {plan.savings && (
+                    <span className="mt-1.5 inline-flex items-center rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                      {plan.savings}
+                    </span>
+                  )}
                 </div>
               </CardHeader>
 

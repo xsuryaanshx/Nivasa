@@ -213,6 +213,7 @@ export default function App() {
     totalUsers: 0,
     activeSubs: 0,
     pausedSubs: 0,
+    trialSubs: 0,
     totalRooms: 0,
     estimatedRevenue: 0
   });
@@ -221,6 +222,7 @@ export default function App() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [planFilter, setPlanFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   // Bulk Import state
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -373,6 +375,7 @@ export default function App() {
       const totalRooms = usagesData?.reduce((acc, curr) => acc + (curr.rooms_count || 0), 0) || 0;
       const activeSubs = subsData?.filter(s => s.status === "active").length || 0;
       const pausedSubs = subsData?.filter(s => s.status === "paused").length || 0;
+      const trialSubs = subsData?.filter(s => s.status === "trial").length || 0;
 
       let revenue = 0;
       const mappedUsers = (subsData || []).map((sub: any) => {
@@ -417,6 +420,7 @@ export default function App() {
         totalUsers: mappedUsers.length,
         activeSubs,
         pausedSubs,
+        trialSubs,
         totalRooms,
         estimatedRevenue: revenue
       });
@@ -777,7 +781,8 @@ export default function App() {
     const matchesSearch = u.email.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           u.fullName.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesPlan = planFilter === "all" || u.planName === planFilter;
-    return matchesSearch && matchesPlan;
+    const matchesStatus = statusFilter === "all" || u.status === statusFilter;
+    return matchesSearch && matchesPlan && matchesStatus;
   });
 
   const filteredBuildings = allBuildings.filter(b => 
@@ -960,7 +965,7 @@ export default function App() {
         >
           {[
             { label: "Total Landlords", value: stats.totalUsers, icon: Users, color: "from-blue-500 to-indigo-500", text: "Verified managers" },
-            { label: "Active Subscriptions", value: stats.activeSubs, icon: Check, color: "from-emerald-500 to-teal-500", text: `${stats.pausedSubs} paused` },
+            { label: "Active Subscriptions", value: stats.activeSubs, icon: Check, color: "from-emerald-500 to-teal-500", text: `${stats.pausedSubs} paused, ${stats.trialSubs} trial` },
             { label: "Managed Rooms", value: stats.totalRooms, icon: Home, color: "from-amber-500 to-orange-500", text: "Across properties" },
             { label: "Estimated Revenue", value: `₹${stats.estimatedRevenue}`, icon: IndianRupee, color: "from-pink-500 to-rose-500", text: "Monthly MRR projection" }
           ].map((card) => {
@@ -1036,7 +1041,6 @@ export default function App() {
               />
             </div>
 
-            {activeTab === "overview" && (
               <select 
                 value={planFilter}
                 onChange={e => setPlanFilter(e.target.value)}
@@ -1046,6 +1050,20 @@ export default function App() {
                 <option value="silver">Silver</option>
                 <option value="gold">Gold</option>
                 <option value="platinum">Platinum</option>
+              </select>
+            )}
+
+            {activeTab === "overview" && (
+              <select 
+                value={statusFilter}
+                onChange={e => setStatusFilter(e.target.value)}
+                className="rounded-xl px-3 py-2 text-xs border border-slate-200 dark:border-zinc-850 bg-white dark:bg-zinc-900 text-slate-850 dark:text-white focus:border-indigo-500 focus:outline-none"
+              >
+                <option value="all">All Statuses</option>
+                <option value="active">Active</option>
+                <option value="trial">Free Trial</option>
+                <option value="paused">Paused</option>
+                <option value="expired">Expired</option>
               </select>
             )}
           </div>
@@ -1536,6 +1554,49 @@ export default function App() {
                     );
                   })}
                 </div>
+
+                {selectedLandlord.status === "trial" && (
+                  <div className="border border-amber-500/20 bg-amber-500/5 p-4.5 rounded-2xl space-y-3">
+                    <div>
+                      <h4 className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Free Trial Sandbox Active</h4>
+                      <p className="text-[11px] text-slate-500 dark:text-zinc-400 mt-1">
+                        This user is exploring Nivasa with trial/mock data. Activating subscription will automatically clean up mock entries and unlock live management.
+                      </p>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        if (confirm("Are you sure you want to activate this user subscription and clear all trial mock data?")) {
+                          setActionLoading(selectedLandlord.id);
+                          try {
+                            // 1. Clear mock data from DB
+                            const { error: clearErr } = await supabase.rpc("clear_mock_data", { target_user_id: selectedLandlord.user_id });
+                            if (clearErr) throw clearErr;
+
+                            // 2. Change subscription status to active
+                            const { error: subErr } = await supabase
+                              .from("subscriptions")
+                              .update({ status: "active", updated_at: new Date().toISOString() })
+                              .eq("id", selectedLandlord.id);
+                            if (subErr) throw subErr;
+
+                            alert("Landlord subscription activated and trial sandbox data cleaned successfully!");
+                            await fetchDashboardData();
+                            setSelectedLandlord((prev: any) => ({ ...prev, status: "active" }));
+                          } catch (err: any) {
+                            alert("Activation failed: " + err.message);
+                          } finally {
+                            setActionLoading(null);
+                          }
+                        }
+                      }}
+                      disabled={actionLoading === selectedLandlord.id}
+                      className="w-full flex items-center justify-center gap-2 rounded-xl bg-amber-600 hover:bg-amber-550 text-white py-2.5 text-xs font-semibold shadow-md shadow-amber-600/10 hover:shadow-lg transition active:scale-95 disabled:opacity-55 cursor-pointer border-none"
+                    >
+                      <Check className="h-3.5 w-3.5" />
+                      Activate & Clear Mock Data
+                    </button>
+                  </div>
+                )}
 
                 <div className="border border-indigo-500/20 bg-indigo-500/5 p-4.5 rounded-2xl space-y-3">
                   <div>
