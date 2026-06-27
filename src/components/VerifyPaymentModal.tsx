@@ -111,7 +111,7 @@ export function VerifyPaymentModal({ open, onClose, payment, onSuccess }: Props)
           </DialogTitle>
         </DialogHeader>
 
-        <div className="p-6 space-y-4 overflow-y-auto flex-1 custom-scrollbar">
+        <div className="p-6 space-y-4 overflow-y-auto flex-1 no-scrollbar">
           {/* Fraud warning block */}
           {fraudWarning && (
             <div className="flex items-start gap-2.5 rounded-xl border border-destructive/20 bg-destructive/5 p-3.5 text-xs text-destructive font-semibold shadow-sm animate-pulse">

@@ -445,7 +445,7 @@ export default function Dashboard() {
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-border/50 max-h-[300px] overflow-y-auto mt-2 pr-1 custom-scrollbar">
+          <div className="divide-y divide-border/50 max-h-[300px] overflow-y-auto mt-2 pr-1 no-scrollbar">
             {attentionItems.map((item) => (
               <div key={item.id} className={`flex ${item.type === 'verify_payment' ? 'flex-col sm:flex-row items-start sm:items-center' : 'items-center'} justify-between py-3 gap-4 first:pt-1.5 last:pb-1.5 animate-fade-in`}>
                 <div className="flex items-start gap-3 min-w-0">
