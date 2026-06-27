@@ -1,7 +1,7 @@
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Keyboard } from "lucide-react";
+import { Keyboard, Sparkles, Trash2, ArrowRight, ShieldAlert, Loader2 } from "lucide-react";
 import { AppSidebar } from "./AppSidebar";
 import { Topbar } from "./Topbar";
 import { CommandPalette } from "./CommandPalette";
@@ -13,6 +13,140 @@ import { ElectricityBillingModal } from "./ElectricityBillingModal";
 import { MobileDrawerMenu } from "./MobileDrawerMenu";
 import { LanguageProvider } from "./LanguageProvider";
 import { PremiumUpgradeModal } from "./PremiumUpgradeModal";
+import { useSubscriptionData } from "@/hooks/useSubscriptionData";
+import { useAuth } from "@/hooks/useAuth";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/lib/api";
+import { toast } from "sonner";
+
+function TrialBanner() {
+  const { user } = useAuth();
+  const { subscription, refetch } = useSubscriptionData();
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const [isActionLoading, setIsActionLoading] = useState(false);
+
+  const { data: hasMockData } = useQuery({
+    queryKey: ["hasMockData", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return false;
+      const { count } = await supabase
+        .from("buildings")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .eq("is_mock", true);
+      return (count || 0) > 0;
+    },
+    enabled: !!user?.id,
+  });
+
+  if (!subscription) return null;
+
+  const isTrial = subscription.status === "trial";
+  const expiryDate = subscription.expiry_date ? new Date(subscription.expiry_date) : null;
+  const isExpired = isTrial && expiryDate && expiryDate < new Date();
+
+  const handleSeed = async () => {
+    if (!user?.id) return;
+    setIsActionLoading(true);
+    try {
+      const { error } = await supabase.rpc("seed_mock_data", { target_user_id: user.id });
+      if (error) throw error;
+      toast.success("Demo sandbox data loaded!");
+      await queryClient.invalidateQueries();
+      await refetch();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to load demo data");
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  const handleClear = async () => {
+    if (!user?.id) return;
+    setIsActionLoading(true);
+    try {
+      const { error } = await supabase.rpc("clear_mock_data", { target_user_id: user.id });
+      if (error) throw error;
+      toast.success("Demo sandbox data cleared.");
+      await queryClient.invalidateQueries();
+      await refetch();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to clear data");
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  if (isExpired) {
+    return (
+      <div className="bg-destructive/15 border-b border-destructive/20 px-4 py-3 text-center sm:px-6">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 text-sm font-medium text-destructive">
+          <span className="flex items-center gap-1.5 font-bold">
+            <ShieldAlert className="h-4.5 w-4.5 animate-pulse" />
+            Your 7-Day Free Trial Has Expired
+          </span>
+          <p className="text-destructive/90 text-xs sm:text-sm">
+            Subscribe now to reactivate access and continue managing your properties.
+          </p>
+          <button
+            onClick={() => navigate("/app/subscription")}
+            className="inline-flex items-center gap-1 rounded-md bg-destructive px-3.5 py-1.5 text-xs font-bold text-destructive-foreground shadow hover:bg-destructive/90 transition-all cursor-pointer"
+          >
+            Choose Plan
+            <ArrowRight className="h-3 w-3" />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (isTrial) {
+    return (
+      <div className="bg-primary/10 border-b border-primary/20 px-4 py-2 text-center sm:px-6">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs sm:text-sm font-medium text-primary w-full">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-primary animate-pulse" />
+            <span>
+              You are currently on a <strong>7-Day Free Trial</strong>.
+            </span>
+          </div>
+          <div className="flex items-center gap-3">
+            {isActionLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin text-primary" />
+            ) : hasMockData ? (
+              <button
+                onClick={handleClear}
+                className="inline-flex items-center gap-1 text-xs font-bold text-destructive hover:underline cursor-pointer border-none bg-transparent"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Clear Demo Data
+              </button>
+            ) : (
+              <button
+                onClick={handleSeed}
+                className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline cursor-pointer border-none bg-transparent"
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                Load Demo Sandbox Data
+              </button>
+            )}
+            <span className="text-muted-foreground/40">|</span>
+            <button
+              onClick={() => navigate("/app/subscription")}
+              className="inline-flex items-center gap-1 rounded-md bg-primary px-3 py-1 text-xs font-bold text-primary-foreground shadow hover:bg-primary/90 transition-all cursor-pointer"
+            >
+              Choose Plan
+              <ArrowRight className="h-3 w-3" />
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}
 
 function AppShell() {
   const [collapsed, setCollapsed] = useState(false);
@@ -101,6 +235,7 @@ function AppShell() {
               onOpenPalette={() => setPaletteOpen(true)}
               onOpenMobileDrawer={() => setMobileDrawerOpen(true)}
             />
+            <TrialBanner />
 
         <main className="relative flex-1 overflow-x-hidden px-4 py-5 pb-28 sm:px-5 sm:py-6 lg:px-10 lg:py-8 lg:pb-8">
           <AnimatePresence mode="wait">

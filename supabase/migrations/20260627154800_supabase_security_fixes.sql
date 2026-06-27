@@ -4,15 +4,35 @@ RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
+DECLARE
+  clean_user_phone text;
 BEGIN
-  UPDATE public.tenants
-  SET tenant_user_id = auth.uid()
-  WHERE id = tenant_id_input
-    AND tenant_user_id IS NULL
-    AND (
-      regexp_replace(phone, '\D', '', 'g') = regexp_replace(coalesce(auth.jwt()->'user_metadata'->>'phone', ''), '\D', '', 'g')
-      OR regexp_replace(whatsapp_number, '\D', '', 'g') = regexp_replace(coalesce(auth.jwt()->'user_metadata'->>'phone', ''), '\D', '', 'g')
-    );
+  -- Strip non-numeric characters from the user metadata phone number
+  clean_user_phone := regexp_replace(coalesce(auth.jwt()->'user_metadata'->>'phone', ''), '\D', '', 'g');
+  
+  -- Match standard Indian 10-digit format (with or without '91' prefix)
+  IF length(clean_user_phone) = 10 THEN
+    UPDATE public.tenants
+    SET tenant_user_id = auth.uid()
+    WHERE id = tenant_id_input
+      AND tenant_user_id IS NULL
+      AND (
+        regexp_replace(phone, '\D', '', 'g') = clean_user_phone
+        OR regexp_replace(phone, '\D', '', 'g') = '91' || clean_user_phone
+        OR regexp_replace(whatsapp_number, '\D', '', 'g') = clean_user_phone
+        OR regexp_replace(whatsapp_number, '\D', '', 'g') = '91' || clean_user_phone
+      );
+  ELSE
+    -- Generic exact numeric fallback
+    UPDATE public.tenants
+    SET tenant_user_id = auth.uid()
+    WHERE id = tenant_id_input
+      AND tenant_user_id IS NULL
+      AND (
+        regexp_replace(phone, '\D', '', 'g') = clean_user_phone
+        OR regexp_replace(whatsapp_number, '\D', '', 'g') = clean_user_phone
+      );
+  END IF;
 END;
 $$;
 
@@ -20,16 +40,17 @@ $$;
 GRANT EXECUTE ON FUNCTION public.link_tenant_account(uuid) TO authenticated;
 
 -- 2. Drop and recreate policies to remove unsafe user_metadata calls
+-- Note: Wrapping auth.uid() and auth.jwt() inside a subquery (e.g. `(select auth.uid())`) 
+-- prevents the "Auth RLS Initialization Plan" performance warning.
 
 -- Tenants Policies
 DROP POLICY IF EXISTS "tenants_tenant_select" ON public.tenants;
 CREATE POLICY "tenants_tenant_select" ON public.tenants
   FOR SELECT
   TO authenticated
-  USING (tenant_user_id = auth.uid());
+  USING (tenant_user_id = (SELECT auth.uid()));
 
 DROP POLICY IF EXISTS "tenants_tenant_link" ON public.tenants;
--- (Note: Link policy is no longer needed since linking is handled securely by the link_tenant_account RPC)
 
 -- Units (Rooms) Policies
 DROP POLICY IF EXISTS "units_tenant_select" ON public.units;
@@ -40,7 +61,7 @@ CREATE POLICY "units_tenant_select" ON public.units
     EXISTS (
       SELECT 1 FROM public.tenants t
       WHERE t.room_id = units.id
-      AND t.tenant_user_id = auth.uid()
+      AND t.tenant_user_id = (SELECT auth.uid())
     )
   );
 
@@ -53,7 +74,7 @@ CREATE POLICY "buildings_tenant_select" ON public.buildings
     EXISTS (
       SELECT 1 FROM public.tenants t
       WHERE t.building_id = buildings.id
-      AND t.tenant_user_id = auth.uid()
+      AND t.tenant_user_id = (SELECT auth.uid())
     )
   );
 
@@ -66,7 +87,7 @@ CREATE POLICY "invoices_tenant_select" ON public.tenant_invoices
     EXISTS (
       SELECT 1 FROM public.tenants t
       WHERE t.id = tenant_invoices.tenant_id
-      AND t.tenant_user_id = auth.uid()
+      AND t.tenant_user_id = (SELECT auth.uid())
     )
   );
 
@@ -79,7 +100,7 @@ CREATE POLICY "payments_tenant_select" ON public.payments
     EXISTS (
       SELECT 1 FROM public.tenants t
       WHERE t.id = payments.tenant_id
-      AND t.tenant_user_id = auth.uid()
+      AND t.tenant_user_id = (SELECT auth.uid())
     )
   );
 
@@ -91,7 +112,7 @@ CREATE POLICY "payments_tenant_insert" ON public.payments
     EXISTS (
       SELECT 1 FROM public.tenants t
       WHERE t.id = payments.tenant_id
-      AND t.tenant_user_id = auth.uid()
+      AND t.tenant_user_id = (SELECT auth.uid())
     )
   );
 
@@ -99,8 +120,8 @@ CREATE POLICY "payments_tenant_insert" ON public.payments
 DROP POLICY IF EXISTS "Allow admin all access to feature events" ON public.feature_usage_events;
 CREATE POLICY "Allow admin all access to feature events" ON public.feature_usage_events
   FOR ALL TO authenticated
-  USING ((auth.jwt() -> 'app_metadata' ->> 'is_admin')::boolean = true)
-  WITH CHECK ((auth.jwt() -> 'app_metadata' ->> 'is_admin')::boolean = true);
+  USING (((SELECT auth.jwt()) -> 'app_metadata' ->> 'is_admin')::boolean = true)
+  WITH CHECK (((SELECT auth.jwt()) -> 'app_metadata' ->> 'is_admin')::boolean = true);
 
 -- 3. Fix Security Definer Views (change to Security Invoker)
 ALTER VIEW IF EXISTS public.landlord_growth_monthly SET (security_invoker = on);

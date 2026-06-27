@@ -57,20 +57,27 @@ export function useSubscriptionData() {
   const hasMultiProperty = !!limits.features.multi_property?.enabled;
   const hasStaffManagement = !!limits.features.staff_management?.enabled;
 
+  const expiryDate = subscription?.expiry_date ? new Date(subscription.expiry_date) : null;
+  const isTrial = subscription?.status === "trial";
+  const isExpired = subscription?.status === "expired" || 
+    (isTrial && expiryDate && expiryDate < new Date());
+
   return {
     subscription,
     usage,
     overrides,
     limits,
     isLoading,
+    isExpired,
     refetch: refetchAll,
     
     // Helper checks
-    canCreateRoom: canCreateRoom(usage.rooms_count, limits.roomLimit),
-    canCreateTenant: canCreateTenant(usage.tenants_count, limits.tenantLimit),
-    canCreateProperty: canCreateProperty(usage.properties_count, hasMultiProperty),
-    canAddStaff: canAddStaff(hasStaffManagement),
+    canCreateRoom: !isExpired && canCreateRoom(usage.rooms_count, limits.roomLimit),
+    canCreateTenant: !isExpired && canCreateTenant(usage.tenants_count, limits.tenantLimit),
+    canCreateProperty: !isExpired && canCreateProperty(usage.properties_count, hasMultiProperty),
+    canAddStaff: !isExpired && canAddStaff(hasStaffManagement),
     canAccessFeature: (featureKey: string) =>
-      canAccessFeature(featureKey, limits.features, subscription?.status),
+      !isExpired && canAccessFeature(featureKey, limits.features, subscription?.status),
   };
 }
+
