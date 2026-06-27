@@ -208,6 +208,11 @@ export default function Dashboard() {
 
   const completedCount = [isStep1Completed, isStep2Completed, isStep3Completed].filter(Boolean).length;
 
+  // Hide the self-setup tutorial for trial users (they see mock data or admin migrates their data).
+  // Only show it for active subscribers who are setting up their own data for the first time.
+  const isTrial = subscription?.status === "trial";
+  const showOnboarding = !isTrial && !isAllOnboardingCompleted;
+
   return (
     <div>
       <PageHeader
@@ -225,7 +230,7 @@ export default function Dashboard() {
         }
       />
 
-      {!isAllOnboardingCompleted && (
+      {showOnboarding && (
         <div className="mb-6 overflow-hidden rounded-2xl border border-brand/20 bg-card p-6 shadow-soft">
           {/* Onboarding Header */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-border/50">
