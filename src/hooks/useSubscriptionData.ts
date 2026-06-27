@@ -62,22 +62,32 @@ export function useSubscriptionData() {
   const isExpired = subscription?.status === "expired" || 
     (isTrial && expiryDate && expiryDate < new Date());
 
+  // During active trial, give full Gold/Platinum tier access to allow testing all features
+  const hasAccessToAll = isTrial && !isExpired;
+
+  const hasMultiProperty = hasAccessToAll || !!limits.features.multi_property?.enabled;
+  const hasStaffManagement = hasAccessToAll || !!limits.features.staff_management?.enabled;
+
   return {
     subscription,
     usage,
     overrides,
-    limits,
+    limits: hasAccessToAll ? {
+      ...limits,
+      roomLimit: 50,
+      tenantLimit: 300,
+    } : limits,
     isLoading,
     isExpired,
     refetch: refetchAll,
     
     // Helper checks
-    canCreateRoom: !isExpired && canCreateRoom(usage.rooms_count, limits.roomLimit),
-    canCreateTenant: !isExpired && canCreateTenant(usage.tenants_count, limits.tenantLimit),
-    canCreateProperty: !isExpired && canCreateProperty(usage.properties_count, hasMultiProperty),
-    canAddStaff: !isExpired && canAddStaff(hasStaffManagement),
+    canCreateRoom: !isExpired && (hasAccessToAll || canCreateRoom(usage.rooms_count, limits.roomLimit)),
+    canCreateTenant: !isExpired && (hasAccessToAll || canCreateTenant(usage.tenants_count, limits.tenantLimit)),
+    canCreateProperty: !isExpired && (hasAccessToAll || canCreateProperty(usage.properties_count, hasMultiProperty)),
+    canAddStaff: !isExpired && (hasAccessToAll || canAddStaff(hasStaffManagement)),
     canAccessFeature: (featureKey: string) =>
-      !isExpired && canAccessFeature(featureKey, limits.features, subscription?.status),
+      !isExpired && (hasAccessToAll || canAccessFeature(featureKey, limits.features, subscription?.status)),
   };
 }
 
