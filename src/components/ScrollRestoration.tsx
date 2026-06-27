@@ -7,32 +7,60 @@ export function ScrollRestoration() {
 
   useEffect(() => {
     const handleScroll = () => {
-      sessionStorage.setItem(`scroll-pos-${location.key}`, window.scrollY.toString());
+      const cover = document.querySelector('.app-cover');
+      const main = document.querySelector('main');
+      const scrollY = window.scrollY || document.documentElement.scrollTop || cover?.scrollTop || main?.scrollTop || 0;
+      sessionStorage.setItem(`scroll-pos-${location.pathname}`, scrollY.toString());
     };
     
-    window.addEventListener("scroll", handleScroll, { passive: true });
+    // Listen on all possible scroll containers
+    window.addEventListener("scroll", handleScroll, { passive: true, capture: true });
     
     return () => {
-      window.removeEventListener("scroll", handleScroll);
-      sessionStorage.setItem(`scroll-pos-${location.key}`, window.scrollY.toString());
+      window.removeEventListener("scroll", handleScroll, { capture: true });
     };
-  }, [location.key]);
+  }, [location.pathname]);
 
   useEffect(() => {
     if (navType === "POP") {
-      const saved = sessionStorage.getItem(`scroll-pos-${location.key}`);
+      const saved = sessionStorage.getItem(`scroll-pos-${location.pathname}`);
       if (saved) {
-        requestAnimationFrame(() => {
-          // Wait for render, then scroll
-          setTimeout(() => {
-            window.scrollTo(0, parseInt(saved, 10));
-          }, 100);
-        });
+        const targetScroll = parseInt(saved, 10);
+        
+        const tryScroll = () => {
+          window.scrollTo(0, targetScroll);
+          document.documentElement.scrollTo?.({ top: targetScroll });
+          document.querySelector('.app-cover')?.scrollTo?.({ top: targetScroll });
+          document.querySelector('main')?.scrollTo?.({ top: targetScroll });
+        };
+
+        tryScroll();
+        
+        let attempts = 0;
+        const interval = setInterval(() => {
+          const cover = document.querySelector('.app-cover');
+          const main = document.querySelector('main');
+          const currentY = window.scrollY || document.documentElement.scrollTop || cover?.scrollTop || main?.scrollTop || 0;
+          
+          if (currentY < targetScroll) {
+            tryScroll();
+          }
+          attempts++;
+          if (attempts > 15) clearInterval(interval);
+        }, 100);
+
+        return () => clearInterval(interval);
       }
     } else {
-      window.scrollTo(0, 0);
+      const toTop = () => {
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTo?.({ top: 0 });
+        document.querySelector('.app-cover')?.scrollTo?.({ top: 0 });
+        document.querySelector('main')?.scrollTo?.({ top: 0 });
+      };
+      toTop();
     }
-  }, [location.pathname, location.key, navType]);
+  }, [location.pathname, navType]);
 
   return null;
 }

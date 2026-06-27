@@ -54,7 +54,13 @@ export function Topbar({ collapsed, onToggle, onOpenPalette, onOpenMobileDrawer 
           if (target.closest('button') || target.closest('input') || target.closest('a')) {
             return;
           }
-          window.scrollTo({ top: 0, behavior: 'smooth' });
+          // Brute force scroll to top on all possible containers
+          const opts: ScrollToOptions = { top: 0, behavior: 'smooth' };
+          window.scrollTo(opts);
+          document.documentElement.scrollTo?.(opts);
+          document.body.scrollTo?.(opts);
+          document.querySelector('.app-cover')?.scrollTo?.(opts);
+          document.querySelector('main')?.scrollTo?.(opts);
         }}
       >
         <div className="flex h-20 lg:h-16 items-center gap-3 px-5 lg:px-8">
