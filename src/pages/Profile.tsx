@@ -501,24 +501,27 @@ export default function Profile() {
   const { t } = useLanguage();
 
   const activePlanName = subscription?.plans?.plan_name || "silver";
-  const displayPlanName = subscription?.plans?.display_name || "Silver";
+  const isTrial = subscription?.status === "trial";
+  const displayPlanName = isTrial ? "Free Trial" : (subscription?.plans?.display_name || "Silver");
   const displayPrice = subscription?.plans?.monthly_price 
     ? `₹${subscription.plans.monthly_price} / month`
     : activePlanName === "platinum" ? "₹1199 / month" : activePlanName === "gold" ? "₹899 / month" : "₹499 / month";
 
   const getPlanColor = (pName: string) => {
+    if (isTrial) return "from-slate-500 to-slate-600";
     if (pName === "platinum") return "from-violet-600 to-indigo-600";
     if (pName === "gold") return "from-amber-500 to-yellow-600";
     return "from-slate-500 to-slate-600";
   };
 
   const getPlanBadgeColor = (pName: string) => {
+    if (isTrial) return "bg-emerald-500/15 text-emerald-400 border-emerald-500/30";
     if (pName === "platinum") return "bg-violet-500/20 text-violet-400 border-violet-500/30";
     if (pName === "gold") return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
     return "bg-slate-500/20 text-slate-400 border-slate-500/30";
   };
 
-  const PlanIcon = activePlanName === "platinum" ? Crown : activePlanName === "gold" ? Zap : Star;
+  const PlanIcon = isTrial ? Star : (activePlanName === "platinum" ? Crown : (activePlanName === "gold" ? Zap : Star));
 
   // Resolve dynamic features list
   const featuresList = Object.entries(limits.features).map(([key, feat]) => {
