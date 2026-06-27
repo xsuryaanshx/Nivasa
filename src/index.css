@@ -198,7 +198,7 @@ body.is-native {
 }
 
 body.is-native #root,
-body.is-native .bg-secondary\\/30,
+body.is-native [class*="bg-secondary/30"],
 body.is-native .app-cover {
   background-color: transparent !important;
   box-shadow: none !important;
