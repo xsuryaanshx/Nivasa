@@ -211,7 +211,7 @@ export default function Dashboard() {
   // Hide the self-setup tutorial for trial users (they see mock data or admin migrates their data).
   // Only show it for active subscribers who are setting up their own data for the first time.
   const isTrial = subscription?.status === "trial";
-  const showOnboarding = !isTrial && !isAllOnboardingCompleted;
+  const showOnboarding = !loading && !isTrial && !isAllOnboardingCompleted;
 
   return (
     <div>

@@ -7,6 +7,7 @@ import { MagneticButton } from "@/components/MagneticButton";
 import { PaymentTimeline } from "@/components/PaymentTimeline";
 import { AddPaymentModal } from "@/components/AddPaymentModal";
 import { VerifyPaymentModal } from "@/components/VerifyPaymentModal";
+import { EditTenantModal } from "@/components/EditTenantModal";
 import { Money } from "@/components/Money";
 import { type PaymentStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -43,6 +44,7 @@ export default function Payments() {
   const [loading, setLoading] = useState(true);
   const [verifyOpen, setVerifyOpen] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<any>(null);
+  const [editingTenant, setEditingTenant] = useState<any | null>(null);
 
   const fetchPayments = async () => {
     try {
@@ -54,6 +56,18 @@ export default function Payments() {
       console.error("Error fetching payments:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleTenantClick = async (tenantId: string) => {
+    try {
+      const tenants = await nivasaApi.getTenants();
+      const tenant = tenants.find(t => t.id === tenantId);
+      if (tenant) {
+        setEditingTenant(tenant);
+      }
+    } catch (err) {
+      console.error("Failed to fetch tenant", err);
     }
   };
 
@@ -148,6 +162,7 @@ export default function Payments() {
               setSelectedPayment(p);
               setVerifyOpen(true);
             }} 
+            onTenantClick={handleTenantClick}
           />
         )}
       </div>
@@ -168,6 +183,12 @@ export default function Payments() {
         }}
         payment={selectedPayment}
         onSuccess={fetchPayments}
+      />
+
+      <EditTenantModal 
+        open={!!editingTenant} 
+        tenant={editingTenant} 
+        onClose={() => setEditingTenant(null)} 
       />
     </div>
   );

@@ -3,6 +3,14 @@
 @tailwind components;
 @tailwind utilities;
 
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+*::-webkit-scrollbar {
+  display: none;
+}
+
 /* Nivasa — Premium Rental Management Design System */
 
 @layer base {

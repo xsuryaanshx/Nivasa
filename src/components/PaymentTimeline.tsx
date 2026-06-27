@@ -25,9 +25,10 @@ interface Props {
   /** Group by month with sub-totals (default true) */
   grouped?: boolean;
   onVerifyClick?: (payment: Payment) => void;
+  onTenantClick?: (tenantId: string) => void;
 }
 
-export function PaymentTimeline({ payments, dense = false, grouped = true, onVerifyClick }: Props) {
+export function PaymentTimeline({ payments, dense = false, grouped = true, onVerifyClick, onTenantClick }: Props) {
   const { currency } = useCurrency();
   const { t } = useLanguage();
   const { user } = useAuth();
@@ -88,7 +89,12 @@ export function PaymentTimeline({ payments, dense = false, grouped = true, onVer
                 )} />
                 <div className="grid min-w-0 grid-cols-1 gap-2.5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-3">
                   <div className="min-w-0">
-                    <div className="truncate text-sm font-medium">{p.tenantName}</div>
+                    <div 
+                      className={cn("truncate text-sm font-medium", onTenantClick && "cursor-pointer hover:text-brand hover:underline")}
+                      onClick={() => onTenantClick?.(p.tenantId)}
+                    >
+                      {p.tenantName}
+                    </div>
                     <div className="mt-0.5 truncate text-xs text-muted-foreground">
                       {fmtDate(p.date)} · {p.method}{p.note ? ` · ${p.note}` : ""}
                     </div>

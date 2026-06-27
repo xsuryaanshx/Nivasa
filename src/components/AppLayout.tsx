@@ -268,9 +268,6 @@ function AppShell() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
               transition={{ duration: 0.28, ease: [0.2, 0.7, 0.2, 1] }}
-              onAnimationStart={() => {
-                window.scrollTo(0, 0);
-              }}
               className="mx-auto w-full max-w-[1280px]"
             >
               <Outlet />

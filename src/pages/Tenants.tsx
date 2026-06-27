@@ -15,6 +15,7 @@ import { useSubscriptionData } from "@/hooks/useSubscriptionData";
 import { downloadExcel } from "@/lib/export";
 import { FileSpreadsheet } from "lucide-react";
 import { openWhatsApp } from "@/lib/whatsapp";
+import { EditTenantModal } from "@/components/EditTenantModal";
 
 const getFilters = (t: any): ({ key: PaymentStatus | "all"; label: string })[] => [
   { key: "all",     label: t('all') || "All" },
@@ -50,6 +51,7 @@ export default function Tenants() {
   const [actionLoading, setActionLoading] = useState(false);
   const [remindersOpen, setRemindersOpen] = useState(false);
   const [sentStatus, setSentStatus] = useState<Record<string, boolean>>({});
+  const [editingTenant, setEditingTenant] = useState<any | null>(null);
 
   const fetchTenants = async () => {
     try {
@@ -347,6 +349,7 @@ export default function Tenants() {
                    prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
                  );
                }}
+               onEdit={() => setEditingTenant(tenant)}
              />
           ))}
         </div>
@@ -503,6 +506,13 @@ export default function Tenants() {
           </motion.div>
         </div>
       )}
+
+      <EditTenantModal 
+        open={!!editingTenant} 
+        tenant={editingTenant} 
+        onClose={() => setEditingTenant(null)} 
+        onUpdated={fetchTenants} 
+      />
     </div>
   );
 }
@@ -512,13 +522,15 @@ function TenantCard({
   index,
   isSelected,
   isSelectionMode,
-  onToggleSelect
+  onToggleSelect,
+  onEdit
 }: { 
   tenant: any; 
   index: number;
   isSelected: boolean;
   isSelectionMode: boolean;
   onToggleSelect: (id: string) => void;
+  onEdit: () => void;
 }) {
   const [submitting, setSubmitting] = useState(false);
   const controls = useAnimation();
@@ -671,6 +683,8 @@ function TenantCard({
         onClick={() => {
           if (isSelectionMode) {
             onToggleSelect(tenant.id);
+          } else {
+            onEdit();
           }
         }}
         className={cn(
