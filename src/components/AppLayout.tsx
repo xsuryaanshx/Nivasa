@@ -103,23 +103,30 @@ function TrialBanner() {
     }
   };
 
+  const daysLeft = expiryDate
+    ? Math.max(0, Math.ceil((expiryDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+    : 7;
+
   if (isExpired) {
     return (
-      <div className="bg-destructive/15 border-b border-destructive/20 px-4 py-3 text-center sm:px-6">
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 text-sm font-medium text-destructive">
-          <span className="flex items-center gap-1.5 font-bold">
-            <ShieldAlert className="h-4.5 w-4.5 animate-pulse" />
-            Your 7-Day Free Trial Has Expired
+      <div className="relative overflow-hidden border-b border-rose-500/20 bg-gradient-to-r from-rose-950/40 via-rose-900/20 to-zinc-950/40 px-4 py-3.5 text-center sm:px-6 backdrop-blur-md">
+        {/* Subtle background highlight */}
+        <div className="absolute -left-10 top-1/2 h-16 w-32 -translate-y-1/2 rounded-full bg-rose-500/10 blur-xl pointer-events-none" />
+        
+        <div className="relative flex flex-col sm:flex-row items-center justify-center gap-3 text-sm font-medium text-rose-200">
+          <span className="flex items-center gap-2 rounded-full bg-rose-500/10 border border-rose-500/30 px-3 py-1 text-xs font-bold uppercase tracking-wider text-rose-400">
+            <ShieldAlert className="h-4 w-4 animate-pulse" />
+            Trial Expired
           </span>
-          <p className="text-destructive/90 text-xs sm:text-sm">
-            Subscribe now to reactivate access and continue managing your properties.
+          <p className="text-rose-200/90 text-xs sm:text-sm max-w-xl">
+            Your 7-day sandbox trial has ended. Subscribe now to reactivate access and import your real property data.
           </p>
           <button
             onClick={() => navigate("/app/subscription")}
-            className="inline-flex items-center gap-1 rounded-md bg-destructive px-3.5 py-1.5 text-xs font-bold text-destructive-foreground shadow hover:bg-destructive/90 transition-all cursor-pointer"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-rose-500 to-rose-600 px-4 py-1.5 text-xs font-bold text-white shadow-lg shadow-rose-500/20 hover:brightness-110 active:scale-95 transition-all cursor-pointer border-none"
           >
-            Choose Plan
-            <ArrowRight className="h-3 w-3" />
+            Upgrade Now
+            <ArrowRight className="h-3.5 w-3.5" />
           </button>
         </div>
       </div>
@@ -128,21 +135,32 @@ function TrialBanner() {
 
   if (isTrial) {
     return (
-      <div className="bg-primary/10 border-b border-primary/20 px-4 py-2 text-center sm:px-6">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs sm:text-sm font-medium text-primary w-full">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-primary animate-pulse" />
-            <span>
-              You are currently on a <strong>7-Day Free Trial</strong>.
+      <div className="relative overflow-hidden border-b border-primary/20 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent px-4 py-3 text-center sm:px-6 backdrop-blur-sm">
+        {/* Glowing aura */}
+        <div className="absolute -right-20 top-1/2 h-20 w-40 -translate-y-1/2 rounded-full bg-primary/10 blur-2xl pointer-events-none" />
+        
+        <div className="relative flex flex-col sm:flex-row items-center justify-between gap-3 text-xs sm:text-sm font-medium w-full max-w-7xl mx-auto">
+          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 text-foreground/90">
+            <div className="flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/20 px-2.5 py-0.5 text-[11px] font-bold text-primary tracking-wide">
+              <Sparkles className="h-3.5 w-3.5 text-primary animate-pulse" />
+              Trial Active
+            </div>
+            <span className="text-center sm:text-left text-muted-foreground">
+              You're exploring Nivasa with full features and sandbox data.
             </span>
           </div>
+
           <div className="flex items-center gap-3">
+            <span className="text-[11px] sm:text-xs font-semibold px-2.5 py-1 rounded-lg bg-secondary/80 border border-border/80 text-muted-foreground flex items-center gap-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping" />
+              <strong>{daysLeft}</strong> day{daysLeft !== 1 ? "s" : ""} remaining
+            </span>
             <button
               onClick={() => navigate("/app/subscription")}
-              className="inline-flex items-center gap-1 rounded-md bg-primary px-3 py-1 text-xs font-bold text-primary-foreground shadow hover:bg-primary/90 transition-all cursor-pointer"
+              className="inline-flex items-center gap-1 rounded-xl bg-primary px-3.5 py-1.5 text-xs font-bold text-primary-foreground shadow-md shadow-primary/10 hover:bg-primary/95 hover:shadow-primary/20 active:scale-95 transition-all cursor-pointer border-none"
             >
               Choose Plan
-              <ArrowRight className="h-3 w-3" />
+              <ArrowRight className="h-3.5 w-3.5" />
             </button>
           </div>
         </div>
