@@ -135,7 +135,12 @@ BEGIN
 
   -- AUTO-SEED mock sandbox data on user registration (only for landlords)
   IF coalesce(NEW.raw_user_meta_data ->> 'role', 'landlord') = 'landlord' THEN
-    PERFORM public.seed_mock_data(NEW.id);
+    BEGIN
+      PERFORM public.seed_mock_data(NEW.id);
+    EXCEPTION WHEN OTHERS THEN
+      -- Safety guard: Do not fail the user's signup if the mock seeder fails
+      NULL;
+    END;
   END IF;
 
   RETURN NEW;
