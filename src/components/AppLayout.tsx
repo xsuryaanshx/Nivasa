@@ -53,18 +53,23 @@ function TrialBanner() {
     enabled: !!user?.id,
   });
 
+  // Auto-seed mock data on first load/login if user is on active trial and has 0 buildings
+  useEffect(() => {
+    if (!subscription) return;
+    const isTrial = subscription.status === "trial";
+    const expiryDate = subscription.expiry_date ? new Date(subscription.expiry_date) : null;
+    const isExpired = isTrial && expiryDate && expiryDate < new Date();
+    
+    if (isTrial && !isExpired && totalBuildings === 0 && !isActionLoading) {
+      handleSeed();
+    }
+  }, [subscription, totalBuildings]);
+
   if (!subscription) return null;
 
   const isTrial = subscription.status === "trial";
   const expiryDate = subscription.expiry_date ? new Date(subscription.expiry_date) : null;
   const isExpired = isTrial && expiryDate && expiryDate < new Date();
-
-  // Auto-seed mock data on first load/login if user is on active trial and has 0 buildings
-  useEffect(() => {
-    if (isTrial && !isExpired && totalBuildings === 0 && !isActionLoading) {
-      handleSeed();
-    }
-  }, [isTrial, isExpired, totalBuildings]);
 
   const handleSeed = async () => {
     if (!user?.id) return;
