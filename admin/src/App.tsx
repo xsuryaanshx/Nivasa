@@ -483,6 +483,7 @@ export default function App() {
         .from("subscriptions")
         .update({ 
           plan_id: targetPlanId,
+          status: "active", // Promote user from trial to active upon plan change
           updated_at: new Date().toISOString()
         })
         .eq("id", subId);
@@ -509,7 +510,8 @@ export default function App() {
           ...prev,
           planId: targetPlanId,
           planName: nextPlan.name,
-          planDisplayName: nextPlan.displayName
+          planDisplayName: nextPlan.displayName,
+          status: "active" // Update status locally in sidebar panel
         }));
       }
     } catch (err) {
@@ -1041,6 +1043,7 @@ export default function App() {
               />
             </div>
 
+            {activeTab === "overview" && (
               <select 
                 value={planFilter}
                 onChange={e => setPlanFilter(e.target.value)}
