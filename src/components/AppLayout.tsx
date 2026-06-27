@@ -112,18 +112,6 @@ function TrialBanner() {
             </span>
           </div>
           <div className="flex items-center gap-3">
-            {isActionLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin text-primary" />
-            ) : hasMockData ? (
-              <button
-                onClick={handleClear}
-                className="inline-flex items-center gap-1 text-xs font-bold text-destructive hover:underline cursor-pointer border-none bg-transparent"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-                Clear Demo Data
-              </button>
-            ) : null}
-            {hasMockData && <span className="text-muted-foreground/40">|</span>}
             <button
               onClick={() => navigate("/app/subscription")}
               className="inline-flex items-center gap-1 rounded-md bg-primary px-3 py-1 text-xs font-bold text-primary-foreground shadow hover:bg-primary/90 transition-all cursor-pointer"
