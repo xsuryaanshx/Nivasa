@@ -1,34 +1,12 @@
 import { nivasaApi, supabase } from "@/lib/api";
 import { motion } from "framer-motion";
-import { ArrowRight, Eye, EyeOff, Sparkles, User, Check, Phone } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, Sparkles, User, Phone, CalendarDays } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { MagneticButton } from "@/components/MagneticButton";
 import { toast } from "sonner";
 
-const PLANS = [
-  {
-    id: "silver",
-    name: "Silver",
-    price: "₹499",
-    desc: "Up to 10 rooms, 50 tenants.",
-    badge: "",
-  },
-  {
-    id: "gold",
-    name: "Gold",
-    price: "₹899",
-    desc: "Up to 50 rooms, 300 tenants.",
-    badge: "Popular",
-  },
-  {
-    id: "platinum",
-    name: "Platinum",
-    price: "₹1199",
-    desc: "Unlimited rooms & tenants.",
-    badge: "Premium",
-  },
-];
+
 
 export default function Register() {
   const navigate = useNavigate();
@@ -38,7 +16,6 @@ export default function Register() {
   const [pwd, setPwd] = useState("");
   const [role, setRole] = useState<"landlord" | "tenant">("landlord");
   const [phone, setPhone] = useState("");
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -79,8 +56,6 @@ export default function Register() {
         setLoading(false);
         return;
       }
-    } else {
-      if (!selectedPlan) { setError("Please select a plan to continue."); return; }
     }
 
     setLoading(true);
@@ -90,10 +65,10 @@ export default function Register() {
         : { role: "landlord" };
         
       const { data, error } = await nivasaApi.auth.signUp(
-        email, 
-        pwd, 
-        fullName.trim(), 
-        role === "landlord" ? selectedPlan : null,
+        email,
+        pwd,
+        fullName.trim(),
+        null, // No plan at signup — trial starts automatically
         metadata
       );
       if (error) throw error;
@@ -166,44 +141,15 @@ export default function Register() {
           </div>
 
           {role === "landlord" ? (
-            <div className="block">
-              <span className="mb-2 block text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Choose your Plan *
-              </span>
-              <div className="grid grid-cols-3 gap-3">
-                {PLANS.map((plan) => {
-                  const isSelected = selectedPlan === plan.id;
-                  return (
-                    <div
-                      key={plan.id}
-                      onClick={() => setSelectedPlan(plan.id)}
-                      className={`relative cursor-pointer rounded-xl border p-4 transition-all duration-300 flex flex-col justify-between select-none ${
-                        isSelected
-                          ? "border-primary bg-primary/5 shadow-[0_0_0_1px_rgba(255,255,255,0.1)] scale-[1.02]"
-                          : "border-border/60 bg-card/45 hover:bg-card/70 hover:border-border"
-                      }`}
-                    >
-                      {plan.badge && (
-                        <span className="absolute -top-2 left-1/2 -translate-x-1/2 rounded-full bg-primary/10 dark:bg-primary/20 px-2 py-0.5 text-[9px] font-bold text-primary uppercase tracking-wider scale-90">
-                          {plan.badge}
-                        </span>
-                      )}
-                      <div className="space-y-1">
-                        <div className="font-semibold text-sm text-foreground">{plan.name}</div>
-                        <div className="flex items-baseline">
-                          <span className="text-base font-bold tracking-tight text-foreground">{plan.price}</span>
-                          <span className="text-[10px] text-muted-foreground ml-0.5">/mo</span>
-                        </div>
-                        <p className="text-[10px] text-muted-foreground leading-normal pt-1">{plan.desc}</p>
-                      </div>
-                      {isSelected && (
-                        <div className="absolute right-2 top-2 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                          <Check className="h-2.5 w-2.5" />
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+            <div className="flex items-start gap-3 rounded-xl border border-primary/25 bg-primary/5 px-4 py-3.5">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/15">
+                <CalendarDays className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-foreground">7-Day Free Trial — No card needed</p>
+                <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed">
+                  Explore everything with demo data. Pick a plan only after you love it.
+                </p>
               </div>
             </div>
           ) : (
