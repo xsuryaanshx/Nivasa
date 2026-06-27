@@ -197,8 +197,11 @@ body.is-native {
   background-attachment: fixed;
 }
 
-body.is-native #root {
+body.is-native #root,
+body.is-native .bg-secondary\\/30,
+body.is-native .app-cover {
   background-color: transparent !important;
+  box-shadow: none !important;
 }
 
 body.is-native.dark {
@@ -232,6 +235,8 @@ body.is-native.dark .bg-card {
 body.is-native .bg-card.cursor-pointer,
 body.is-native .bg-card[role="button"] {
   transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 body.is-native .bg-card.cursor-pointer:active,
