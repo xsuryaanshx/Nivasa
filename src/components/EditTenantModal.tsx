@@ -208,11 +208,17 @@ export function EditTenantModal({ open, tenant, onClose, onUpdated }: Props) {
                 <div className="grid grid-cols-2 gap-4 pt-2">
                   <div>
                     <div className="text-[10px] uppercase text-muted-foreground font-semibold mb-1">Mobile</div>
-                    <div className="text-sm font-medium">{tenant.phone}</div>
+                    <a href={`tel:${tenant.phone}`} className="text-sm font-medium hover:text-brand hover:underline block">{tenant.phone}</a>
                   </div>
                   <div>
                     <div className="text-[10px] uppercase text-muted-foreground font-semibold mb-1">WhatsApp</div>
-                    <div className="text-sm font-medium">{tenant.whatsapp_number || "-"}</div>
+                    {tenant.whatsapp_number ? (
+                      <a href={`https://wa.me/${tenant.whatsapp_number.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="text-sm font-medium hover:text-brand hover:underline block">
+                        {tenant.whatsapp_number}
+                      </a>
+                    ) : (
+                      <div className="text-sm font-medium">-</div>
+                    )}
                   </div>
                 </div>
 
