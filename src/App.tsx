@@ -35,6 +35,7 @@ import ForgotPassword from "./pages/ForgotPassword.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
 import UpiPay from "./pages/UpiPay.tsx";
 import TenantDashboard from "./pages/TenantDashboard.tsx";
+import { BackButtonHandler } from "./components/BackButtonHandler";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -103,6 +104,7 @@ const App = () => {
             className="w-full min-h-screen"
           >
             <BrowserRouter>
+              <BackButtonHandler />
               <AnalyticsTracker />
               <Routes>
                 <Route path="/" element={<Index />} />
