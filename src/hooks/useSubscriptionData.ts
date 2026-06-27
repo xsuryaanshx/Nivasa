@@ -54,9 +54,6 @@ export function useSubscriptionData() {
     await Promise.all([refetchSub(), refetchUsage(), refetchOverrides()]);
   };
 
-  const hasMultiProperty = !!limits.features.multi_property?.enabled;
-  const hasStaffManagement = !!limits.features.staff_management?.enabled;
-
   const expiryDate = subscription?.expiry_date ? new Date(subscription.expiry_date) : null;
   const isTrial = subscription?.status === "trial";
   const isExpired = subscription?.status === "expired" || 
