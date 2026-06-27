@@ -40,11 +40,31 @@ function TrialBanner() {
     enabled: !!user?.id,
   });
 
+  const { data: totalBuildings } = useQuery({
+    queryKey: ["totalBuildings", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return 0;
+      const { count } = await supabase
+        .from("buildings")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id);
+      return count || 0;
+    },
+    enabled: !!user?.id,
+  });
+
   if (!subscription) return null;
 
   const isTrial = subscription.status === "trial";
   const expiryDate = subscription.expiry_date ? new Date(subscription.expiry_date) : null;
   const isExpired = isTrial && expiryDate && expiryDate < new Date();
+
+  // Auto-seed mock data on first load/login if user is on active trial and has 0 buildings
+  useEffect(() => {
+    if (isTrial && !isExpired && totalBuildings === 0 && !isActionLoading) {
+      handleSeed();
+    }
+  }, [isTrial, isExpired, totalBuildings]);
 
   const handleSeed = async () => {
     if (!user?.id) return;
