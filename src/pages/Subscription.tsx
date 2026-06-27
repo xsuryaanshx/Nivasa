@@ -47,6 +47,12 @@ export default function SubscriptionPage() {
   };
 
   const currentPlanName = subscription?.plans?.plan_name || "silver";
+  const isTrial = subscription?.status === "trial";
+
+  // Days remaining in trial
+  const trialDaysLeft = isTrial && subscription?.expiry_date
+    ? Math.max(0, Math.ceil((new Date(subscription.expiry_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+    : null;
 
   const plansList = [
     {
@@ -136,33 +142,66 @@ export default function SubscriptionPage() {
             </CardDescription>
             <div className="flex items-center justify-between mt-1">
               <CardTitle className="text-2xl font-bold">
-                {subscription?.plans?.display_name || "Silver"}
+                {isTrial ? "Free Trial" : (subscription?.plans?.display_name || "Silver")}
               </CardTitle>
-              <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide ${getPlanBadgeColor(currentPlanName)}`}>
-                {subscription?.status || "trial"}
+              <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide ${
+                isTrial
+                  ? "bg-emerald-500/15 text-emerald-500 border border-emerald-500/25"
+                  : getPlanBadgeColor(currentPlanName)
+              }`}>
+                {isTrial ? "Active" : (subscription?.status || "active")}
               </span>
             </div>
           </CardHeader>
           <CardContent className="space-y-3.5 text-sm">
-            <div className="flex justify-between items-center py-1 border-b border-border/30">
-              <span className="text-muted-foreground font-medium">Billing Cycle</span>
-              <span className="font-semibold text-foreground capitalize">{subscription?.billing_cycle || "monthly"}</span>
-            </div>
-            <div className="flex justify-between items-center py-1 border-b border-border/30">
-              <span className="text-muted-foreground font-medium">Expiry Date</span>
-              <span className="font-semibold text-foreground">
-                {subscription?.expiry_date
-                  ? format(new Date(subscription.expiry_date), "MMM dd, yyyy")
-                  : "Never (Lifetime)"}
-              </span>
-            </div>
-            <div className="flex justify-between items-center py-1 border-b border-border/30">
-              <span className="text-muted-foreground font-medium">Payment Method</span>
-              <span className="font-semibold text-foreground capitalize">{subscription?.payment_provider || "manual"}</span>
-            </div>
+            {isTrial ? (
+              // Trial view: show days left + expiry, hide billing/payment details
+              <>
+                <div className="flex justify-between items-center py-1 border-b border-border/30">
+                  <span className="text-muted-foreground font-medium">Trial Expires</span>
+                  <span className="font-semibold text-foreground">
+                    {subscription?.expiry_date
+                      ? format(new Date(subscription.expiry_date), "MMM dd, yyyy")
+                      : "—"}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center py-1 border-b border-border/30">
+                  <span className="text-muted-foreground font-medium">Days Remaining</span>
+                  <span className={`font-bold ${
+                    (trialDaysLeft ?? 0) <= 2 ? "text-red-500" : "text-emerald-500"
+                  }`}>
+                    {trialDaysLeft} day{trialDaysLeft !== 1 ? "s" : ""}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center py-1 border-b border-border/30">
+                  <span className="text-muted-foreground font-medium">Access Level</span>
+                  <span className="font-semibold text-foreground">Full Access</span>
+                </div>
+              </>
+            ) : (
+              // Paid plan view: show billing cycle + payment method
+              <>
+                <div className="flex justify-between items-center py-1 border-b border-border/30">
+                  <span className="text-muted-foreground font-medium">Billing Cycle</span>
+                  <span className="font-semibold text-foreground capitalize">{subscription?.billing_cycle || "monthly"}</span>
+                </div>
+                <div className="flex justify-between items-center py-1 border-b border-border/30">
+                  <span className="text-muted-foreground font-medium">Expiry Date</span>
+                  <span className="font-semibold text-foreground">
+                    {subscription?.expiry_date
+                      ? format(new Date(subscription.expiry_date), "MMM dd, yyyy")
+                      : "Never (Lifetime)"}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center py-1 border-b border-border/30">
+                  <span className="text-muted-foreground font-medium">Payment Method</span>
+                  <span className="font-semibold text-foreground capitalize">{subscription?.payment_provider || "manual"}</span>
+                </div>
+              </>
+            )}
           </CardContent>
           <CardFooter className="pt-2">
-            {subscription?.status === "trial" && (
+            {isTrial && (
               <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 text-xs font-medium bg-amber-500/10 p-2.5 rounded-lg border border-amber-500/20 w-full">
                 <ShieldAlert className="h-4 w-4 shrink-0" />
                 <span>Your free trial will expire soon. Please select a plan below.</span>
