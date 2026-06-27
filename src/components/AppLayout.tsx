@@ -122,16 +122,8 @@ function TrialBanner() {
                 <Trash2 className="h-3.5 w-3.5" />
                 Clear Demo Data
               </button>
-            ) : (
-              <button
-                onClick={handleSeed}
-                className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline cursor-pointer border-none bg-transparent"
-              >
-                <Sparkles className="h-3.5 w-3.5" />
-                Load Demo Sandbox Data
-              </button>
-            )}
-            <span className="text-muted-foreground/40">|</span>
+            ) : null}
+            {hasMockData && <span className="text-muted-foreground/40">|</span>}
             <button
               onClick={() => navigate("/app/subscription")}
               className="inline-flex items-center gap-1 rounded-md bg-primary px-3 py-1 text-xs font-bold text-primary-foreground shadow hover:bg-primary/90 transition-all cursor-pointer"
