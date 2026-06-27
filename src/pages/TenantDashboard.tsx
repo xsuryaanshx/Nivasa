@@ -44,12 +44,8 @@ export default function TenantDashboard() {
         return;
       }
 
-      // 1. Link account on first load if tenant_user_id is not set
-      await supabase
-        .from("tenants")
-        .update({ tenant_user_id: user.id })
-        .eq("id", tenantId)
-        .is("tenant_user_id", null);
+      // 1. Link account on first load if tenant_user_id is not set (using secure RPC)
+      await supabase.rpc("link_tenant_account", { tenant_id_input: tenantId });
 
       // 2. Fetch tenant profile details including room and building info
       let tenantData = null;
