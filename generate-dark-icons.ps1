@@ -10,12 +10,12 @@ $bg.Save("$assetsDir\icon-background.png", [System.Drawing.Imaging.ImageFormat]:
 $g.Dispose()
 $bg.Dispose()
 
-$src = [System.Drawing.Image]::FromFile("$publicDir\logo-dark.png")
+$src = [System.Drawing.Image]::FromFile("$publicDir\logo-dark-cropped.png")
 $fgSize = 1024
 $fg = New-Object System.Drawing.Bitmap($fgSize, $fgSize)
 $g2 = [System.Drawing.Graphics]::FromImage($fg)
 $g2.Clear([System.Drawing.Color]::Transparent)
-$scale = 0.6
+$scale = 0.85
 $ratio = [Math]::Min(($fgSize * $scale) / $src.Width, ($fgSize * $scale) / $src.Height)
 $finalWidth = $src.Width * $ratio
 $finalHeight = $src.Height * $ratio
