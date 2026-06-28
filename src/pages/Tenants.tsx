@@ -233,6 +233,22 @@ export default function Tenants() {
     }
   };
 
+  const handleBulkMarkUnpaid = async () => {
+    try {
+      if (selectedTenantIds.length !== 1) return;
+      setActionLoading(true);
+      await nivasaApi.revertLastPayment(selectedTenantIds[0]);
+      toast.success("Successfully reverted to unpaid status!");
+      setSelectedTenantIds([]);
+      window.dispatchEvent(new CustomEvent("nivasa:refresh"));
+    } catch (err) {
+      toast.error("Failed to mark as unpaid");
+      console.error(err);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const handleExport = () => {
     if (!canExport) return;
     const dataToExport = filtered.map(t => ({
@@ -364,33 +380,54 @@ export default function Tenants() {
       <AnimatePresence>
         {selectedTenantIds.length > 0 && (
           <div className="fixed bottom-28 lg:bottom-6 left-0 right-0 z-[60] flex justify-center pointer-events-none px-4">
-            <motion.div
-              initial={{ opacity: 0, y: 100 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 100 }}
-              transition={{ type: "spring", stiffness: 260, damping: 20 }}
-              className="pointer-events-auto flex items-center justify-between gap-2.5 sm:gap-3 px-3 py-2.5 sm:px-6 sm:py-4 rounded-2xl bg-card/85 border border-border/80 backdrop-blur-lg shadow-2xl w-full max-w-lg"
-            >
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="flex h-5 w-5 items-center justify-center rounded-md bg-brand text-white shrink-0">
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold truncate">{selectedTenantIds.length} Selected</p>
-                  <p className="text-[10px] text-muted-foreground hidden sm:block">Perform bulk actions</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                <button
-                  onClick={handleBulkMarkPaid}
-                  disabled={actionLoading}
-                  className="h-9 px-3 sm:px-4 xs-px-2 rounded-xl text-xs font-semibold bg-emerald-500 text-white hover:bg-emerald-600 transition-colors flex items-center gap-1.5 shadow-md shadow-emerald-500/20 disabled:opacity-50"
+            {(() => {
+              const isSingleSelected = selectedTenantIds.length === 1;
+              const singleSelectedTenant = isSingleSelected ? tenantsList.find(t => t.id === selectedTenantIds[0]) : null;
+              const isSingleSelectedPaid = singleSelectedTenant ? singleSelectedTenant.paymentStatus === 'paid' : false;
+
+              return (
+                <motion.div
+                  initial={{ opacity: 0, y: 100 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 100 }}
+                  transition={{ type: "spring", stiffness: 260, damping: 20 }}
+                  className="pointer-events-auto flex items-center justify-between gap-2.5 sm:gap-3 px-3 py-2.5 sm:px-6 sm:py-4 rounded-2xl bg-card/85 border border-border/80 backdrop-blur-lg shadow-2xl w-full max-w-lg"
                 >
-                  <CheckCircle2 className="h-3.5 w-3.5 sm:hidden" />
-                  <span className="hidden sm:inline">Mark Paid</span>
-                  <span className="sm:hidden xs-hide-text">Paid</span>
-                </button>
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="flex h-5 w-5 items-center justify-center rounded-md bg-brand text-white shrink-0">
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold truncate">{selectedTenantIds.length} Selected</p>
+                      <p className="text-[10px] text-muted-foreground hidden sm:block">Perform bulk actions</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                    <button
+                      onClick={isSingleSelectedPaid ? handleBulkMarkUnpaid : handleBulkMarkPaid}
+                      disabled={actionLoading}
+                      className={cn(
+                        "h-9 px-3 sm:px-4 xs-px-2 rounded-xl text-xs font-semibold text-white transition-colors flex items-center gap-1.5 shadow-md disabled:opacity-50",
+                        isSingleSelectedPaid 
+                          ? "bg-amber-500 hover:bg-amber-600 shadow-amber-500/20" 
+                          : "bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20"
+                      )}
+                    >
+                      {isSingleSelectedPaid ? (
+                        <>
+                          <Clock className="h-3.5 w-3.5 sm:hidden" />
+                          <span className="hidden sm:inline">Mark Unpaid</span>
+                          <span className="sm:hidden xs-hide-text">Unpaid</span>
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 className="h-3.5 w-3.5 sm:hidden" />
+                          <span className="hidden sm:inline">Mark Paid</span>
+                          <span className="sm:hidden xs-hide-text">Paid</span>
+                        </>
+                      )}
+                    </button>
                 
                 <button
                   onClick={handleOpenRemindersModal}
@@ -401,16 +438,18 @@ export default function Tenants() {
                   <span className="sm:hidden xs-hide-text">Remind</span>
                 </button>
                 
-                <button
-                  onClick={() => setSelectedTenantIds([])}
-                  className="h-9 w-9 rounded-xl border border-border bg-secondary hover:bg-secondary/80 transition-colors flex items-center justify-center text-muted-foreground shrink-0"
-                >
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            </motion.div>
+                    <button
+                      onClick={() => setSelectedTenantIds([])}
+                      className="h-9 w-9 rounded-xl border border-border bg-secondary hover:bg-secondary/80 transition-colors flex items-center justify-center text-muted-foreground shrink-0"
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                </motion.div>
+              );
+            })()}
           </div>
         )}
       </AnimatePresence>
@@ -731,7 +770,7 @@ const TenantCard = memo(function TenantCard({
           !isSelectionMode && "hover:shadow-md",
           isSelected && "bg-brand/[0.02]"
         )}
-        whileTap={{ scale: 0.94, boxShadow: "0px 0px 30px rgba(59, 130, 246, 0.5)", borderColor: "rgba(59, 130, 246, 0.8)", filter: "brightness(1.05)" }}
+        whileTap={{ scale: 0.94, boxShadow: "inset 0px 0px 60px rgba(59, 130, 246, 0.4)", borderColor: "rgba(59, 130, 246, 0.8)", filter: "brightness(1.05)" }}
         transition={{ type: "spring", stiffness: 400, damping: 25 }}
       >
       <div className="flex items-start gap-4">
