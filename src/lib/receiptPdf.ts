@@ -173,7 +173,9 @@ export async function downloadReceiptPdf(p: any, landlordName: string = "Nivasa 
   const safeTenantName = p.tenantName.replace(/\s+/g, "_");
   const receiptFilename = `Receipt_${safeTenantName}_${p.date.split("T")[0]}.pdf`;
   nivasaApi.logFeatureUsage("pdf_exports", "receipt_export", { tenantName: p.tenantName });
-  doc.save(receiptFilename);
+  
+  const blob = doc.output("blob");
+  import("@/lib/export").then(m => m.shareOrPreviewFile(receiptFilename, blob));
 }
 
 /**
@@ -384,5 +386,7 @@ export async function downloadInvoicePdf(invoice: any, tenant: any, room: any, l
   const safeTenantName = tenant.name.replace(/\s+/g, "_");
   const invoiceFilename = `Invoice_${safeTenantName}_${invoice.month_year.replace(/\s+/g, "_")}.pdf`;
   nivasaApi.logFeatureUsage("pdf_exports", "invoice_export", { tenantName: tenant.name, monthYear: invoice.month_year });
-  doc.save(invoiceFilename);
+  
+  const blob = doc.output("blob");
+  import("@/lib/export").then(m => m.shareOrPreviewFile(invoiceFilename, blob));
 }
