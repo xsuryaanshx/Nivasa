@@ -24,7 +24,43 @@ export function downloadExcel(data: any[], filename: string) {
   shareOrPreviewFile(finalFilename, blob);
 }
 
+import { Capacitor } from "@capacitor/core";
+import { Filesystem, Directory } from "@capacitor/filesystem";
+import { Share } from "@capacitor/share";
+
+const blobToBase64 = (blob: Blob): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = () => {
+      resolve(reader.result as string);
+    };
+    reader.readAsDataURL(blob);
+  });
+};
+
 export async function shareOrPreviewFile(filename: string, blob: Blob) {
+  if (Capacitor.isNativePlatform()) {
+    try {
+      const base64Data = await blobToBase64(blob);
+      const base64String = base64Data.split(',')[1];
+      
+      const savedFile = await Filesystem.writeFile({
+        path: filename,
+        data: base64String,
+        directory: Directory.Cache
+      });
+      
+      await Share.share({
+        title: filename,
+        url: savedFile.uri,
+      });
+      return;
+    } catch (e) {
+      console.error("Capacitor native share failed:", e);
+    }
+  }
+
   if (navigator.canShare) {
     const file = new File([blob], filename, { type: blob.type });
     if (navigator.canShare({ files: [file] })) {
