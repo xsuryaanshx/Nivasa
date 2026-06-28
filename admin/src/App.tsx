@@ -1134,8 +1134,101 @@ export default function App() {
           >
             {activeTab === "overview" && (
               <div className="space-y-8">
+                {/* Collapsible Analytics Charts */}
+                <AnimatePresence initial={false}>
+                  {!searchQuery && (
+                    <motion.div
+                      key="overview-analytics-wrapper"
+                      initial={{ height: 0, opacity: 0, marginBottom: 0 }}
+                      animate={{ height: "auto", opacity: 1, marginBottom: 32 }}
+                      exit={{ height: 0, opacity: 0, marginBottom: 0 }}
+                      transition={{ type: "spring", stiffness: 220, damping: 26 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                        <motion.div 
+                          whileHover={{ scale: 1.01 }}
+                          className="lg:col-span-2 rounded-3xl border border-white/20 dark:border-zinc-800/80 bg-white/40 dark:bg-zinc-900/40 p-6 shadow-xl backdrop-blur-md"
+                        >
+                          <div className="flex items-center justify-between mb-6">
+                            <div>
+                              <h2 className="text-base font-bold flex items-center gap-2">
+                                <TrendingUp className="h-4 w-4 text-indigo-500" />
+                                Monthly Recurring Revenue (MRR)
+                              </h2>
+                              <p className="text-xs text-slate-400 mt-0.5 font-medium">Estimated growth trajectory</p>
+                            </div>
+                            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-450 bg-emerald-500/10 px-2.5 py-1 rounded-full">
+                              <ArrowUpRight className="h-3.5 w-3.5" />
+                              Live Estimate
+                            </span>
+                          </div>
+
+                          <div className="h-64">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <AreaChart data={chartData}>
+                                <defs>
+                                  <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.2}/>
+                                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                                  </linearGradient>
+                                </defs>
+                                <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
+                                <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
+                                <Tooltip 
+                                  contentStyle={{ background: theme === "dark" ? "#18181b" : "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "8px", color: theme === "dark" ? "white" : "black" }} 
+                                />
+                                <Area type="monotone" dataKey="revenue" stroke="#6366f1" strokeWidth={2} fillOpacity={1} fill="url(#colorRevenue)" />
+                              </AreaChart>
+                            </ResponsiveContainer>
+                          </div>
+                        </motion.div>
+
+                        <motion.div 
+                          whileHover={{ scale: 1.01 }}
+                          className="rounded-3xl border border-white/20 dark:border-zinc-800/80 bg-white/40 dark:bg-zinc-900/40 p-6 shadow-xl backdrop-blur-md"
+                        >
+                          <h2 className="text-base font-bold mb-1">Plan Distribution</h2>
+                          <p className="text-xs text-slate-400 mb-6 font-medium">Proportion of Silver, Gold, Platinum plans</p>
+
+                          <div className="h-48 flex items-center justify-center">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <BarChart data={planStats}>
+                                <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
+                                <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
+                                <Tooltip 
+                                  cursor={{ fill: 'rgba(99,102,241,0.04)' }}
+                                  contentStyle={{ background: theme === "dark" ? "#18181b" : "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "8px", color: theme === "dark" ? "white" : "black" }} 
+                                />
+                                <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                                  {planStats.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={entry.color} />
+                                  ))}
+                                </Bar>
+                              </BarChart>
+                            </ResponsiveContainer>
+                          </div>
+
+                          <div className="mt-4 space-y-2">
+                            {planStats.map(stat => (
+                              <div key={stat.name} className="flex items-center justify-between text-xs">
+                                <div className="flex items-center gap-2">
+                                  <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: stat.color }} />
+                                  <span className="font-semibold">{stat.name}</span>
+                                </div>
+                                <span className="font-bold">{stat.count} accounts</span>
+                              </div>
+                            ))}
+                          </div>
+                        </motion.div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
                 {/* Landlords Accounts Table */}
                 <motion.section 
+                  layout
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 }}
@@ -1186,7 +1279,7 @@ export default function App() {
                                           ? "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20" 
                                           : u.planName === "gold"
                                           ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
-                                          : "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20"
+                                          : "bg-slate-500/10 text-slate-655 dark:text-slate-400 border-slate-500/20"
                                       }`}
                                     >
                                       {PLANS.map(p => (
@@ -1201,10 +1294,10 @@ export default function App() {
                                     u.status === "active"
                                       ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-450 border-emerald-500/20"
                                       : u.status === "paused"
-                                      ? "bg-amber-500/10 text-amber-650 dark:text-amber-450 border-amber-500/20"
+                                      ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
                                       : u.status === "trial"
-                                      ? "bg-blue-500/10 text-blue-650 dark:text-blue-450 border-blue-500/20"
-                                      : "bg-rose-500/10 text-rose-650 dark:text-rose-455 border-rose-500/20"
+                                      ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
+                                      : "bg-rose-500/10 text-rose-600 dark:text-rose-455 border-rose-500/20"
                                   }`}>
                                     <span className={`h-1.5 w-1.5 rounded-full ${
                                       u.status === "active"
@@ -1264,90 +1357,6 @@ export default function App() {
                       </tbody>
                     </table>
                   </div>
-                </motion.section>
-
-                {/* Analytics Charts */}
-                <motion.section 
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                  className="grid grid-cols-1 gap-6 lg:grid-cols-3"
-                >
-                  <motion.div 
-                    whileHover={{ scale: 1.01 }}
-                    className="lg:col-span-2 rounded-3xl border border-white/20 dark:border-zinc-800/80 bg-white/40 dark:bg-zinc-900/40 p-6 shadow-xl backdrop-blur-md"
-                  >
-                    <div className="flex items-center justify-between mb-6">
-                      <div>
-                        <h2 className="text-base font-bold flex items-center gap-2">
-                          <TrendingUp className="h-4 w-4 text-indigo-500" />
-                          Monthly Recurring Revenue (MRR)
-                        </h2>
-                        <p className="text-xs text-slate-400 mt-0.5 font-medium">Estimated growth trajectory</p>
-                      </div>
-                      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-450 bg-emerald-500/10 px-2.5 py-1 rounded-full">
-                        <ArrowUpRight className="h-3.5 w-3.5" />
-                        Live Estimate
-                      </span>
-                    </div>
-
-                    <div className="h-64">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={chartData}>
-                          <defs>
-                            <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#6366f1" stopOpacity={0.2}/>
-                              <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
-                            </linearGradient>
-                          </defs>
-                          <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
-                          <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
-                          <Tooltip 
-                            contentStyle={{ background: theme === "dark" ? "#18181b" : "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "8px", color: theme === "dark" ? "white" : "black" }} 
-                          />
-                          <Area type="monotone" dataKey="revenue" stroke="#6366f1" strokeWidth={2} fillOpacity={1} fill="url(#colorRevenue)" />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </motion.div>
-
-                  <motion.div 
-                    whileHover={{ scale: 1.01 }}
-                    className="rounded-3xl border border-white/20 dark:border-zinc-800/80 bg-white/40 dark:bg-zinc-900/40 p-6 shadow-xl backdrop-blur-md"
-                  >
-                    <h2 className="text-base font-bold mb-1">Plan Distribution</h2>
-                    <p className="text-xs text-slate-400 mb-6 font-medium">Proportion of Silver, Gold, Platinum plans</p>
-
-                    <div className="h-48 flex items-center justify-center">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={planStats}>
-                          <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
-                          <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
-                          <Tooltip 
-                            cursor={{ fill: 'rgba(99,102,241,0.04)' }}
-                            contentStyle={{ background: theme === "dark" ? "#18181b" : "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "8px", color: theme === "dark" ? "white" : "black" }} 
-                          />
-                          <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                            {planStats.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Bar>
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-
-                    <div className="mt-4 space-y-2">
-                      {planStats.map(stat => (
-                        <div key={stat.name} className="flex items-center justify-between text-xs">
-                          <div className="flex items-center gap-2">
-                            <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: stat.color }} />
-                            <span className="font-semibold">{stat.name}</span>
-                          </div>
-                          <span className="font-bold">{stat.count} accounts</span>
-                        </div>
-                      ))}
-                    </div>
-                  </motion.div>
                 </motion.section>
               </div>
             )}
