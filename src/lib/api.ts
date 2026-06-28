@@ -2022,6 +2022,39 @@ async function deletePayment(paymentId: string) {
   }
 }
 
+async function revertLastPayment(tenantId: string) {
+  try {
+    const user_id = await requireAuthUserId();
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    
+    // Find the most recent payment for this tenant this month
+    const { data: payments, error: fetchError } = await supabase
+      .from("payments")
+      .select("id")
+      .eq("tenant_id", tenantId)
+      .eq("user_id", user_id)
+      .gte("paid_date", `${currentMonth}-01`)
+      .order("paid_date", { ascending: false })
+      .limit(1);
+      
+    if (fetchError) throw fetchError;
+    if (!payments || payments.length === 0) return; // Nothing to revert
+    
+    const paymentId = payments[0].id;
+    const { error: deleteError } = await supabase
+      .from("payments")
+      .delete()
+      .eq("id", paymentId)
+      .eq("user_id", user_id);
+      
+    if (deleteError) throw deleteError;
+    return true;
+  } catch (error) {
+    safeLog("revertLastPayment", error);
+    throw error;
+  }
+}
+
 export const nivasaApi = {
   logFeatureUsage,
   getUserSettings,
@@ -2052,6 +2085,7 @@ export const nivasaApi = {
   getRecentPayments,
   updatePaymentStatus,
   deletePayment,
+  revertLastPayment,
   saveElectricityReading,
   getElectricityRate,
   updateElectricityRate,

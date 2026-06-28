@@ -90,7 +90,20 @@ function buildNotifications(rooms: any[], t: (key: string) => string): AppNotifi
     });
   }
 
-  return notifs;
+  // Apply persisted states
+  let dismissed: string[] = [];
+  let readNotifs: string[] = [];
+  try {
+    dismissed = JSON.parse(localStorage.getItem("nivasa:dismissed-notifs") || "[]");
+    readNotifs = JSON.parse(localStorage.getItem("nivasa:read-notifs") || "[]");
+  } catch (e) {}
+
+  return notifs
+    .filter(n => !dismissed.includes(n.id))
+    .map(n => ({
+      ...n,
+      read: n.read || readNotifs.includes(n.id)
+    }));
 }
 
 const ICON_MAP = {
@@ -146,11 +159,26 @@ export function NotificationsPanel({ open, onClose }: Props) {
     };
   }, [open, onClose]);
 
-  const markAllRead = () =>
-    setNotifs((prev) => prev.map((n) => ({ ...n, read: true })));
+  const markAllRead = () => {
+    setNotifs((prev) => {
+      const updated = prev.map((n) => ({ ...n, read: true }));
+      try {
+        localStorage.setItem("nivasa:read-notifs", JSON.stringify(updated.map(n => n.id)));
+      } catch (e) {}
+      return updated;
+    });
+  };
 
-  const dismiss = (id: string) =>
-    setNotifs((prev) => prev.filter((n) => n.id !== id));
+  const dismiss = (id: string) => {
+    setNotifs((prev) => {
+      const filtered = prev.filter((n) => n.id !== id);
+      try {
+        const dismissed = JSON.parse(localStorage.getItem("nivasa:dismissed-notifs") || "[]");
+        localStorage.setItem("nivasa:dismissed-notifs", JSON.stringify([...dismissed, id]));
+      } catch (e) {}
+      return filtered;
+    });
+  };
 
   const unread = notifs.filter((n) => !n.read).length;
 
@@ -261,12 +289,12 @@ export function NotificationsPanel({ open, onClose }: Props) {
                         )}
 
                         <div
-                          className={cn(
-                            "mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
-                            bg,
-                          )}
+                          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+                          style={{ backgroundColor: `hsl(var(--background))` }}
                         >
-                          <Icon className={cn("h-4 w-4", color)} />
+                          <div className={cn("flex h-full w-full items-center justify-center rounded-xl", bg)}>
+                            <Icon className={cn("h-4.5 w-4.5", color)} />
+                          </div>
                         </div>
 
                         <div className="min-w-0 flex-1 pr-4">

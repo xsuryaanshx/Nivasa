@@ -586,6 +586,21 @@ const TenantCard = memo(function TenantCard({
     }
   };
 
+  const handleMarkUnpaid = async () => {
+    try {
+      setSubmitting(true);
+      await nivasaApi.revertLastPayment(tenant.id);
+      setOptimisticStatus("pending");
+      toast.success("Reverted to unpaid status");
+      window.dispatchEvent(new CustomEvent("nivasa:refresh-silent"));
+    } catch (err) {
+      toast.error("Failed to revert payment");
+    } finally {
+      setSubmitting(false);
+      controls.start({ x: 0 });
+    }
+  };
+
   const handleSendReminder = () => {
     const phone = tenant.whatsapp_number || tenant.phone;
     if (!phone) {
@@ -617,8 +632,12 @@ const TenantCard = memo(function TenantCard({
   const handleDragEnd = (e: any, info: any) => {
     if (submitting || isSelectionMode) return;
     const offset = info.offset.x;
-    if (offset > 80 && tenant.paymentStatus !== "paid") {
-      handleMarkPaid();
+    if (offset > 80) {
+      if (currentStatus === "paid") {
+        handleMarkUnpaid();
+      } else {
+        handleMarkPaid();
+      }
     } else if (offset < -80) {
       handleSendReminder();
     } else {
@@ -643,10 +662,10 @@ const TenantCard = memo(function TenantCard({
           onToggleSelect(tenant.id);
         }}
         className={cn(
-          "absolute top-4 right-4 z-20 flex h-5 w-5 cursor-pointer items-center justify-center rounded-md border transition-all duration-200",
+          "absolute top-4 right-4 z-20 flex h-5 w-5 cursor-pointer items-center justify-center rounded-md transition-all duration-200 border-2",
           isSelected 
             ? "bg-brand border-brand text-white scale-110 opacity-100" 
-            : "border-border/50 bg-card hover:border-brand/50 opacity-40 group-hover:opacity-100 shadow-sm",
+            : "border-border bg-card/80 hover:border-brand/50 opacity-100 shadow-sm",
           isSelectionMode && "opacity-100"
         )}
       >
@@ -662,11 +681,20 @@ const TenantCard = memo(function TenantCard({
         <div className="absolute inset-0 z-0 flex select-none items-center justify-between px-6 font-semibold">
           <motion.div 
             style={{ opacity: paidOpacity }} 
-            className="flex h-full w-1/2 items-center justify-start text-emerald-500"
+            className={cn("flex h-full w-1/2 items-center justify-start", currentStatus === "paid" ? "text-amber-500" : "text-emerald-500")}
           >
             <div className="flex flex-col items-start gap-1">
-              <CheckCircle2 className="h-6 w-6" />
-              <span className="text-[10px] uppercase tracking-wider">Mark Paid</span>
+              {currentStatus === "paid" ? (
+                <>
+                  <Clock className="h-6 w-6" />
+                  <span className="text-[10px] uppercase tracking-wider">Mark Unpaid</span>
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="h-6 w-6" />
+                  <span className="text-[10px] uppercase tracking-wider">Mark Paid</span>
+                </>
+              )}
             </div>
           </motion.div>
           
@@ -703,6 +731,8 @@ const TenantCard = memo(function TenantCard({
           !isSelectionMode && "hover:shadow-md",
           isSelected && "bg-brand/[0.02]"
         )}
+        whileTap={{ scale: 0.96, boxShadow: "0px 0px 20px rgba(59, 130, 246, 0.4)", borderColor: "rgba(59, 130, 246, 0.6)" }}
+        transition={{ type: "spring", stiffness: 400, damping: 25 }}
       >
       <div className="flex items-start gap-4">
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-brand text-lg font-bold text-white shadow-glow">
