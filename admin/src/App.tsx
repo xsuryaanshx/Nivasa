@@ -1732,6 +1732,43 @@ export default function App() {
                   )}
                 </div>
 
+                <div className="space-y-3">
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <Users className="h-4 w-4 text-indigo-500" />
+                    Landlord's Tenants
+                  </h4>
+                  
+                  {allTenants.filter(t => t.user_id === selectedLandlord.user_id).length === 0 ? (
+                    <p className="text-xs text-slate-500 text-center py-6 border border-dashed border-slate-200 dark:border-zinc-800 rounded-xl">
+                      No tenants found for this landlord.
+                    </p>
+                  ) : (
+                    <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                      {allTenants.filter(t => t.user_id === selectedLandlord.user_id).map((t: any) => (
+                        <div key={t.id} className="border border-slate-200 dark:border-zinc-800 p-3 rounded-xl flex items-center justify-between text-xs hover:bg-slate-50 dark:hover:bg-zinc-950 transition">
+                          <div>
+                            <span className="font-bold block text-slate-900 dark:text-white">
+                              {t.name}
+                            </span>
+                            <span className="text-[10px] text-slate-400 block mt-0.5">
+                              Room {t.roomNumber} ({t.buildingName})
+                            </span>
+                          </div>
+
+                          <div className="text-right">
+                            <span className="font-mono block text-slate-500 dark:text-zinc-400">{t.phone}</span>
+                            <span className={`inline-flex items-center gap-0.5 font-semibold text-[10px] uppercase mt-0.5 ${
+                              t.status === "active" ? "text-emerald-500" : "text-amber-500"
+                            }`}>
+                              {t.status}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
               </div>
 
               <div className="p-6 border-t border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950 flex items-center justify-between gap-3">
