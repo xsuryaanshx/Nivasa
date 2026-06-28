@@ -1175,9 +1175,7 @@ export default function App() {
                                 </defs>
                                 <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
                                 <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
-                                <Tooltip 
-                                  contentStyle={{ background: theme === "dark" ? "#18181b" : "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "8px", color: theme === "dark" ? "white" : "black" }} 
-                                />
+                                <Tooltip content={<RevenueTooltip />} />
                                 <Area type="monotone" dataKey="revenue" stroke="#6366f1" strokeWidth={2} fillOpacity={1} fill="url(#colorRevenue)" />
                               </AreaChart>
                             </ResponsiveContainer>
@@ -1196,10 +1194,7 @@ export default function App() {
                               <BarChart data={planStats}>
                                 <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
                                 <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
-                                <Tooltip 
-                                  cursor={{ fill: 'rgba(99,102,241,0.04)' }}
-                                  contentStyle={{ background: theme === "dark" ? "#18181b" : "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "8px", color: theme === "dark" ? "white" : "black" }} 
-                                />
+                                <Tooltip cursor={{ fill: 'rgba(99,102,241,0.04)' }} content={<PlanTooltip />} />
                                 <Bar dataKey="count" radius={[4, 4, 0, 0]}>
                                   {planStats.map((entry, index) => (
                                     <Cell key={`cell-${index}`} fill={entry.color} />
@@ -2284,6 +2279,48 @@ const PLAN_COLORS: Record<string, string> = {
   silver: "text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-zinc-800 border-slate-200 dark:border-zinc-700"
 };
 
+function RevenueTooltip({ active, payload, label }: any) {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white/95 dark:bg-zinc-950/95 backdrop-blur-xl border border-slate-200/50 dark:border-zinc-800/80 px-4 py-3 rounded-2xl shadow-xl text-xs">
+        <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">{label}</p>
+        <p className="text-base font-bold text-indigo-600 dark:text-indigo-400 mt-1">
+          ₹{payload[0].value} <span className="text-[11px] font-normal text-slate-500">revenue</span>
+        </p>
+      </div>
+    );
+  }
+  return null;
+}
+
+function PlanTooltip({ active, payload, label }: any) {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white/95 dark:bg-zinc-950/95 backdrop-blur-xl border border-slate-200/50 dark:border-zinc-800/80 px-4 py-3 rounded-2xl shadow-xl text-xs">
+        <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">{label}</p>
+        <p className="text-base font-bold text-indigo-600 dark:text-indigo-400 mt-1">
+          {payload[0].value} <span className="text-[11px] font-normal text-slate-500">accounts</span>
+        </p>
+      </div>
+    );
+  }
+  return null;
+}
+
+function FeatureTooltip({ active, payload, label }: any) {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white/95 dark:bg-zinc-950/95 backdrop-blur-xl border border-slate-200/50 dark:border-zinc-800/80 px-4 py-3 rounded-2xl shadow-xl text-xs">
+        <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">{label}</p>
+        <p className="text-base font-bold text-indigo-600 dark:text-indigo-400 mt-1">
+          {payload[0].value} <span className="text-[11px] font-normal text-slate-500">actions</span>
+        </p>
+      </div>
+    );
+  }
+  return null;
+}
+
 interface FeatureUsageViewProps {
   featureEvents: any[];
   theme: "light" | "dark";
@@ -2292,9 +2329,9 @@ interface FeatureUsageViewProps {
 function GlassTooltip({ active, payload, label }: any) {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white/80 dark:bg-zinc-950/85 backdrop-blur-xl border border-slate-200/50 dark:border-zinc-800/80 p-4 rounded-2xl shadow-xl">
+      <div className="bg-white/95 dark:bg-zinc-950/95 backdrop-blur-xl border border-slate-200/50 dark:border-zinc-800/80 p-4 rounded-2xl shadow-xl">
         <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">{label}</p>
-        <p className="text-lg font-bold text-indigo-655 dark:text-indigo-400 mt-1">
+        <p className="text-lg font-bold text-indigo-600 dark:text-indigo-400 mt-1">
           {payload[0].value} <span className="text-xs font-normal text-slate-500">actions</span>
         </p>
       </div>
@@ -2681,17 +2718,7 @@ function FeatureUsageView({ featureEvents, theme }: FeatureUsageViewProps) {
                 <BarChart data={popularityData} layout="vertical">
                   <XAxis type="number" stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} hide />
                   <YAxis dataKey="name" type="category" stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} width={100} />
-                  <Tooltip 
-                    cursor={{ fill: 'rgba(99,102,241,0.04)' }}
-                    contentStyle={{ 
-                      background: theme === "dark" ? "rgba(24, 24, 27, 0.8)" : "rgba(255, 255, 255, 0.8)", 
-                      backdropFilter: "blur(12px)",
-                      border: "1px solid rgba(255, 255, 255, 0.1)", 
-                      borderRadius: "16px",
-                      fontSize: "11px",
-                      color: theme === "dark" ? "white" : "black" 
-                    }} 
-                  />
+                  <Tooltip cursor={{ fill: 'rgba(99,102,241,0.04)' }} content={<FeatureTooltip />} />
                   <Bar dataKey="count" fill="#a78bfa" radius={[0, 6, 6, 0]} barSize={14}>
                     {popularityData.map((_entry, index) => (
                       <Cell key={`cell-${index}`} fill={index === 0 ? "#6366f1" : index === 1 ? "#818cf8" : index === 2 ? "#a78bfa" : "#c084fc"} />
