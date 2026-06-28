@@ -75,9 +75,8 @@ export function RoomCard({ room, index, payments = [] }: { room: Room; index: nu
         }}
         style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
         whileHover={{ y: -4 }}
-        whileTap={{ scale: 0.94, boxShadow: "inset 0px 0px 60px rgba(59, 130, 246, 0.4)", borderColor: "rgba(59, 130, 246, 0.8)", filter: "brightness(1.05)" }}
-        transition={{ type: "spring", stiffness: 400, damping: 25 }}
-        className="group relative cursor-pointer overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-soft transition-shadow duration-300 hover:shadow-elev"
+        transition={{ type: "spring", stiffness: 250, damping: 22 }}
+        className="group relative cursor-pointer overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-soft transition-shadow duration-300 hover:shadow-elev hover:border-brand/30"
       >
         {/* Cursor-tracking glow */}
         <motion.div

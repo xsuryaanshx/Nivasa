@@ -286,7 +286,6 @@ export function NotificationsPanel({ open, onClose }: Props) {
                             dismiss(n.id);
                           }
                         }}
-                        whileTap={n.link ? { scale: 0.96, boxShadow: "0px 0px 20px rgba(59, 130, 246, 0.4)", filter: "brightness(1.1)" } : undefined}
                         onClick={() => {
                           if (n.link) {
                             navigate(n.link);
@@ -294,13 +293,18 @@ export function NotificationsPanel({ open, onClose }: Props) {
                           }
                         }}
                         className={cn(
-                          "group relative flex gap-3 rounded-2xl border p-4 transition-colors",
+                          "group relative flex gap-3 rounded-2xl border p-4 transition-all overflow-hidden",
                           n.link && "cursor-pointer hover:border-brand/40 hover:shadow-glow-sm",
                           n.read
                             ? "border-border/50 bg-secondary/30"
                             : "border-border bg-card shadow-soft",
                         )}
                       >
+                        {/* Permanent Tap/Hover Glow */}
+                        {n.link && (
+                          <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.12),transparent_70%)]" />
+                        )}
+
                         {/* Unread dot */}
                         {!n.read && (
                           <span className="absolute right-4 top-4 h-2 w-2 rounded-full bg-brand" />

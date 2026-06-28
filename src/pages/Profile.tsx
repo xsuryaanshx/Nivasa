@@ -658,9 +658,9 @@ export default function Profile() {
                     else if (feat.label === "Notifications") setNotificationsOpen(true);
                     else if (feat.label === "Tenant Score") navigate("/app/tenant-score");
                   }}
-                  className="flex flex-col gap-3 rounded-2xl border border-border/50 bg-card p-5 shadow-soft transition-colors hover:border-border hover:bg-secondary/50 text-left relative overflow-hidden group"
+                  className="flex flex-col gap-3 rounded-2xl border border-border/50 bg-card p-5 shadow-soft transition-all hover:border-brand/30 hover:shadow-elev text-left relative overflow-hidden group"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.12),transparent_70%)]" />
                   <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${feat.bg}`}>
                     <Icon className={`h-5 w-5 ${feat.color}`} />
                   </div>

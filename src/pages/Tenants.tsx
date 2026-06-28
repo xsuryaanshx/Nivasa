@@ -50,6 +50,7 @@ export default function Tenants() {
   const [selectedTenantIds, setSelectedTenantIds] = useState<string[]>([]);
   const [actionLoading, setActionLoading] = useState(false);
   const [remindersOpen, setRemindersOpen] = useState(false);
+  const [optimisticStatuses, setOptimisticStatuses] = useState<Record<string, string>>({});
   const [sentStatus, setSentStatus] = useState<Record<string, boolean>>({});
   const [editingTenant, setEditingTenant] = useState<any | null>(null);
 
@@ -371,6 +372,7 @@ export default function Tenants() {
                  );
                }}
                onEdit={() => setEditingTenant(tenant)}
+               onStatusChange={(status) => setOptimisticStatuses(prev => ({ ...prev, [tenant.id]: status }))}
              />
           ))}
         </div>
@@ -383,7 +385,9 @@ export default function Tenants() {
             {(() => {
               const isSingleSelected = selectedTenantIds.length === 1;
               const singleSelectedTenant = isSingleSelected ? tenantsList.find(t => t.id === selectedTenantIds[0]) : null;
-              const isSingleSelectedPaid = singleSelectedTenant ? singleSelectedTenant.paymentStatus === 'paid' : false;
+              const isSingleSelectedPaid = singleSelectedTenant 
+                ? (optimisticStatuses[singleSelectedTenant.id] || singleSelectedTenant.paymentStatus) === 'paid' 
+                : false;
 
               return (
                 <motion.div
@@ -563,18 +567,20 @@ export default function Tenants() {
 
 const TenantCard = memo(function TenantCard({ 
   tenant, 
-  index,
-  isSelected,
-  isSelectionMode,
-  onToggleSelect,
-  onEdit
+  index, 
+  isSelected, 
+  isSelectionMode, 
+  onToggleSelect, 
+  onEdit,
+  onStatusChange 
 }: { 
-  tenant: any; 
-  index: number;
-  isSelected: boolean;
+  tenant: Tenant; 
+  index: number; 
+  isSelected: boolean; 
   isSelectionMode: boolean;
   onToggleSelect: (id: string) => void;
   onEdit: () => void;
+  onStatusChange?: (status: string) => void;
 }) {
   const [submitting, setSubmitting] = useState(false);
   const controls = useAnimation();
@@ -615,6 +621,7 @@ const TenantCard = memo(function TenantCard({
         status: "paid"
       });
       setOptimisticStatus("paid");
+      if (onStatusChange) onStatusChange("paid");
       toast.success("Rent marked as paid!");
       window.dispatchEvent(new CustomEvent("nivasa:refresh-silent"));
     } catch (err) {
@@ -630,6 +637,7 @@ const TenantCard = memo(function TenantCard({
       setSubmitting(true);
       await nivasaApi.revertLastPayment(tenant.id);
       setOptimisticStatus("pending");
+      if (onStatusChange) onStatusChange("pending");
       toast.success("Reverted to unpaid status");
       window.dispatchEvent(new CustomEvent("nivasa:refresh-silent"));
     } catch (err) {
@@ -765,15 +773,16 @@ const TenantCard = memo(function TenantCard({
           }
         }}
         className={cn(
-          "relative z-10 flex h-full w-full flex-col justify-between bg-card p-5 transition-shadow",
+          "relative z-10 flex h-full w-full flex-col justify-between bg-card p-5 transition-all group",
           isSelectionMode ? "cursor-pointer select-none" : "cursor-grab active:cursor-grabbing",
-          !isSelectionMode && "hover:shadow-md",
+          !isSelectionMode && "hover:shadow-elev hover:border-brand/30",
           isSelected && "bg-brand/[0.02]"
         )}
-        whileTap={{ scale: 0.94, boxShadow: "inset 0px 0px 60px rgba(59, 130, 246, 0.4)", borderColor: "rgba(59, 130, 246, 0.8)", filter: "brightness(1.05)" }}
-        transition={{ type: "spring", stiffness: 400, damping: 25 }}
       >
-      <div className="flex items-start gap-4">
+      {/* Permanent Tap/Hover Glow */}
+      <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.12),transparent_70%)]" />
+
+      <div className="flex items-start gap-4 relative z-10">
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-brand text-lg font-bold text-white shadow-glow">
           {initials(tenant.name)}
         </div>

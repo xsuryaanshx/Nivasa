@@ -118,10 +118,12 @@ export default function Buildings() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: i * 0.05, ease: [0.2, 0.7, 0.2, 1] }}
                 onClick={() => navigate(`/app/buildings/${b.id}`)}
-                whileTap={{ scale: 0.94, boxShadow: "inset 0px 0px 60px rgba(59, 130, 246, 0.4)", borderColor: "rgba(59, 130, 246, 0.8)", filter: "brightness(1.05)" }}
-                className="group cursor-pointer rounded-2xl border border-border bg-card p-5 shadow-soft transition-all hover:border-brand/40 hover:shadow-glow"
+                className="group relative overflow-hidden cursor-pointer rounded-2xl border border-border bg-card p-5 shadow-soft transition-all hover:border-brand/30 hover:shadow-elev"
               >
-                <div className="flex items-start justify-between">
+                {/* Permanent Tap/Hover Glow */}
+                <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.12),transparent_70%)]" />
+
+                <div className="relative z-10 flex items-start justify-between">
                   <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-brand text-white shadow-glow">
                     <Building2 className="h-5 w-5" />
                   </div>
