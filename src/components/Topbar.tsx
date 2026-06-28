@@ -54,13 +54,20 @@ export function Topbar({ collapsed, onToggle, onOpenPalette, onOpenMobileDrawer 
           if (target.closest('button') || target.closest('input') || target.closest('a')) {
             return;
           }
-          // Brute force scroll to top on all possible containers
-          const opts: ScrollToOptions = { top: 0, behavior: 'smooth' };
-          window.scrollTo(opts);
-          document.documentElement.scrollTo?.(opts);
-          document.body.scrollTo?.(opts);
-          document.querySelector('.app-cover')?.scrollTo?.(opts);
-          document.querySelector('main')?.scrollTo?.(opts);
+          try {
+            // Extremely aggressive scroll to top for Android WebViews
+            window.scrollTo(0, 0);
+            if (document.documentElement) document.documentElement.scrollTop = 0;
+            if (document.body) document.body.scrollTop = 0;
+            
+            const cover = document.querySelector('.app-cover');
+            if (cover) cover.scrollTop = 0;
+            
+            const main = document.querySelector('main');
+            if (main) main.scrollTop = 0;
+          } catch (err) {
+            console.error("Scroll to top failed", err);
+          }
         }}
       >
         <div className="flex h-20 lg:h-16 items-center gap-3 px-5 lg:px-8">
