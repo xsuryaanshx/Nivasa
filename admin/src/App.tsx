@@ -1130,7 +1130,9 @@ export default function App() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            transitio            {activeTab === "overview" && (
+            transition={{ duration: 0.2 }}
+          >
+            {activeTab === "overview" && (
               <div className="space-y-8">
                 {/* Landlords Accounts Table */}
                 <motion.section 
@@ -1348,7 +1350,6 @@ export default function App() {
                   </motion.div>
                 </motion.section>
               </div>
-            )}             </div>
             )}
 
             {/* Properties Tab */}
