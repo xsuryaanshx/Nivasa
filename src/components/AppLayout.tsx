@@ -261,7 +261,7 @@ function AppShell() {
             <TrialBanner />
 
         <main className="relative flex-1 overflow-x-hidden px-4 py-5 pb-28 sm:px-5 sm:py-6 lg:px-10 lg:py-8 lg:pb-8 no-scrollbar">
-          <AnimatePresence mode="wait">
+          <AnimatePresence mode={Capacitor.isNativePlatform() ? "wait" : "popLayout"}>
             <motion.div
               key={location.pathname}
               initial={{ opacity: 0, y: 8 }}

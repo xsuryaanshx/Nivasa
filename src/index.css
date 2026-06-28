@@ -57,6 +57,10 @@ body::-webkit-scrollbar {
     --radius: 1rem;
     --shadow-soft: 0 10px 30px -10px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
     --shadow-float: 0 20px 40px -15px rgba(0, 0, 0, 0.1);
+    
+    --gradient-brand: linear-gradient(135deg, hsl(221, 83%, 53%), hsl(221, 83%, 45%));
+    --gradient-aurora: linear-gradient(135deg, hsl(221, 83%, 53%), hsl(199, 89%, 48%), hsl(262, 83%, 58%));
+    --gradient-glass: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
   }
 
   .dark {
@@ -83,6 +87,10 @@ body::-webkit-scrollbar {
     --ring: 217 91% 60%;
     --shadow-soft: 0 10px 30px -10px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
     --shadow-float: 0 20px 40px -15px rgba(0, 0, 0, 0.6);
+    
+    --gradient-brand: linear-gradient(135deg, hsl(217, 91%, 60%), hsl(217, 91%, 50%));
+    --gradient-aurora: linear-gradient(135deg, hsl(217, 91%, 60%), hsl(199, 89%, 48%), hsl(262, 83%, 68%));
+    --gradient-glass: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
   }
   .theme {
     --animate-aurora: aurora 8s ease-in-out infinite alternate;

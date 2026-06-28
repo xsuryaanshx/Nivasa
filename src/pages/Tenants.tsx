@@ -53,9 +53,9 @@ export default function Tenants() {
   const [sentStatus, setSentStatus] = useState<Record<string, boolean>>({});
   const [editingTenant, setEditingTenant] = useState<any | null>(null);
 
-  const fetchTenants = async () => {
+  const fetchTenants = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       if (!nivasaApi) return;
       const [data, payments, tenantInvoices] = await Promise.all([
         nivasaApi.getTenants(),
@@ -68,15 +68,20 @@ export default function Tenants() {
     } catch (error) {
       console.error("Error fetching tenants:", error);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchTenants();
     const handler = () => fetchTenants();
+    const silentHandler = () => fetchTenants(true);
     window.addEventListener("nivasa:refresh", handler);
-    return () => window.removeEventListener("nivasa:refresh", handler);
+    window.addEventListener("nivasa:refresh-silent", silentHandler);
+    return () => {
+      window.removeEventListener("nivasa:refresh", handler);
+      window.removeEventListener("nivasa:refresh-silent", silentHandler);
+    };
   }, []);
 
   const handleSetStatus = (s: PaymentStatus | "all") => {
@@ -567,7 +572,7 @@ function TenantCard({
         status: "paid"
       });
       toast.success("Rent marked as paid!");
-      window.dispatchEvent(new CustomEvent("nivasa:refresh"));
+      window.dispatchEvent(new CustomEvent("nivasa:refresh-silent"));
     } catch (err) {
       toast.error("Failed to mark as paid");
     } finally {

@@ -22,6 +22,7 @@ interface AppNotification {
   body: string;
   time: string;
   read: boolean;
+  link?: string;
 }
 
 function buildNotifications(rooms: any[], t: (key: string) => string): AppNotification[] {
@@ -51,6 +52,7 @@ function buildNotifications(rooms: any[], t: (key: string) => string): AppNotifi
         body: `${room.buildingName} · This room has no tenants assigned. Consider listing it.`,
         time: "Now",
         read: false,
+        link: `/app/buildings/${room.buildingId}`,
       });
     } else if (room.status === "pending") {
       notifs.push({
@@ -60,6 +62,7 @@ function buildNotifications(rooms: any[], t: (key: string) => string): AppNotifi
         body: `${room.buildingName} · Payment not yet received this month.`,
         time: "This month",
         read: false,
+        link: `/app/tenants?status=pending`,
       });
     }
   });
@@ -102,8 +105,11 @@ interface Props {
   onClose: () => void;
 }
 
+import { useNavigate } from "react-router-dom";
+
 export function NotificationsPanel({ open, onClose }: Props) {
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const [notifs, setNotifs] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -235,8 +241,15 @@ export function NotificationsPanel({ open, onClose }: Props) {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.96 }}
                         transition={{ duration: 0.22 }}
+                        onClick={() => {
+                          if (n.link) {
+                            navigate(n.link);
+                            onClose();
+                          }
+                        }}
                         className={cn(
                           "group relative flex gap-3 rounded-2xl border p-4 transition-colors",
+                          n.link && "cursor-pointer hover:border-brand/40 hover:shadow-glow-sm",
                           n.read
                             ? "border-border/50 bg-secondary/30"
                             : "border-border bg-card shadow-soft",
