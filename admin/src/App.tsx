@@ -846,78 +846,83 @@ export default function App() {
   // Admin login screen
   if (!session || !isAdmin) {
     return (
-      <div className="relative flex min-h-screen items-center justify-center p-4 bg-slate-950">
-        <div className="absolute top-1/4 left-1/4 h-72 w-72 rounded-full bg-indigo-500/10 blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 h-72 w-72 rounded-full bg-pink-500/10 blur-3xl" />
+      <div className="relative flex min-h-screen items-center justify-center p-4 bg-slate-950 overflow-hidden">
+        {/* Soft background light beams */}
+        <div className="absolute top-1/4 left-1/4 h-96 w-96 rounded-full bg-indigo-500/10 blur-[120px] animate-pulse duration-4000" />
+        <div className="absolute bottom-1/4 right-1/4 h-96 w-96 rounded-full bg-violet-500/10 blur-[120px] animate-pulse duration-6000" />
 
         <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="w-full max-w-md overflow-hidden rounded-2xl border border-white/10 bg-slate-900/60 backdrop-blur-xl p-6 sm:p-8 shadow-2xl relative z-10"
+          initial={{ opacity: 0, scale: 0.95, y: 15 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ type: "spring", damping: 25, stiffness: 140 }}
+          className="w-full max-w-md overflow-hidden rounded-3xl border border-white/10 bg-zinc-900/40 backdrop-blur-2xl p-8 sm:p-10 shadow-2xl relative z-10"
         >
           <div className="flex flex-col items-center mb-8">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-500/10 border border-indigo-500/20 mb-4 shadow-lg shadow-indigo-500/5">
-              <Shield className="h-7 w-7 text-indigo-450" />
-            </div>
-            <h1 className="text-2xl font-bold tracking-tight text-white">Nivasa Control Tower</h1>
-            <p className="text-sm text-slate-400 mt-1">Super-Admin Authentication</p>
+            <motion.div 
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.15, type: "spring" }}
+              className="flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-500/10 border border-indigo-500/20 mb-5 shadow-lg shadow-indigo-500/5"
+            >
+              <Shield className="h-8 w-8 text-indigo-400" />
+            </motion.div>
+            <h1 className="text-2xl font-bold tracking-tight text-white text-center">Nivasa Admin Console</h1>
+            <p className="text-xs text-zinc-400 mt-1.5 uppercase tracking-widest font-semibold">Super-Admin Authentication</p>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-5 text-white">
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Admin Email</label>
+          <form onSubmit={handleLogin} className="space-y-6 text-white">
+            <div className="space-y-2">
+              <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Admin Email</label>
               <input 
                 type="email" 
                 required
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder="admin@nivasa.app"
-                className="w-full rounded-xl px-4 py-3 text-sm bg-slate-900 border border-white/10 text-white focus:border-indigo-500 focus:outline-none"
+                className="w-full rounded-2xl px-4 py-3.5 text-sm bg-zinc-950/40 border border-white/5 text-white focus:border-indigo-500 focus:bg-zinc-950/70 focus:outline-none transition-all duration-300 placeholder-zinc-650"
               />
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Secret Password</label>
+            <div className="space-y-2">
+              <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Secret Password</label>
               <input 
                 type="password" 
                 required
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder="••••••••••••"
-                className="w-full rounded-xl px-4 py-3 text-sm bg-slate-900 border border-white/10 text-white focus:border-indigo-500 focus:outline-none"
+                className="w-full rounded-2xl px-4 py-3.5 text-sm bg-zinc-950/40 border border-white/5 text-white focus:border-indigo-500 focus:bg-zinc-950/70 focus:outline-none transition-all duration-300 placeholder-zinc-650"
               />
             </div>
 
             <AnimatePresence>
               {authError && (
                 <motion.div 
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="flex items-start gap-2.5 rounded-xl bg-red-500/10 border border-red-500/20 p-3.5 text-xs text-red-400"
+                  initial={{ opacity: 0, y: -10, height: 0 }}
+                  animate={{ opacity: 1, y: 0, height: "auto" }}
+                  exit={{ opacity: 0, y: -10, height: 0 }}
+                  className="flex items-start gap-3 rounded-2xl bg-red-500/10 border border-red-500/20 p-4 text-xs text-red-400"
                 >
-                  <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+                  <AlertTriangle className="h-4.5 w-4.5 shrink-0 mt-0.5 text-red-400" />
                   <span>{authError}</span>
                 </motion.div>
               )}
             </AnimatePresence>
 
-            <button 
+            <motion.button 
+              whileHover={{ scale: 1.015 }}
+              whileTap={{ scale: 0.985 }}
               type="submit" 
               disabled={loginLoading}
-              className="w-full flex items-center justify-center gap-2 rounded-xl bg-indigo-600 py-3.5 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 hover:bg-indigo-500 transition active:scale-[0.98] disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 hover:bg-indigo-500 py-3.5 text-sm font-semibold text-white shadow-lg shadow-indigo-600/25 transition-all duration-300 disabled:opacity-50 cursor-pointer"
             >
               {loginLoading ? (
-                <RefreshCw className="h-4 w-4 animate-spin" />
+                <RefreshCw className="h-4.5 w-4.5 animate-spin" />
               ) : (
                 <>
                   <Lock className="h-4 w-4" />
-                  Unlock Tower
+                  Sign In
                 </>
-              )}
-            </button>
-          </form>
         </motion.div>
       </div>
     );
@@ -927,30 +932,30 @@ export default function App() {
     <div className="min-h-screen pb-12 transition-colors duration-300 bg-slate-50 dark:bg-zinc-950 text-slate-900 dark:text-zinc-100">
       
       {/* Navigation bar */}
-      <header className="sticky top-0 z-40 border-b border-slate-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md">
+      <header className="sticky top-0 z-40 border-b border-slate-200/50 dark:border-zinc-900/60 bg-white/70 dark:bg-zinc-950/70 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-500/10 border border-indigo-500/20">
-              <Shield className="h-4.5 w-4.5 text-indigo-600 dark:text-indigo-400" />
+              <Shield className="h-4.5 w-4.5 text-indigo-650 dark:text-indigo-455" />
             </div>
             <div>
               <span className="font-bold tracking-wide text-slate-900 dark:text-white">NIVASA</span>
-              <span className="hidden sm:inline-block text-[10px] font-semibold text-indigo-600 dark:text-indigo-450 bg-indigo-500/10 border border-indigo-500/25 px-1.5 py-0.5 rounded ml-2 uppercase tracking-widest">Control Tower</span>
+              <span className="hidden sm:inline-block text-[10px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-0.5 rounded-full ml-2 uppercase tracking-widest">Admin Portal</span>
             </div>
           </div>
 
           <div className="flex items-center gap-4">
             <button 
               onClick={toggleTheme}
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 transition active:scale-95"
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200/60 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50 text-slate-650 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 transition active:scale-95 cursor-pointer"
             >
-              {theme === "dark" ? <Sun className="h-4 w-4 text-amber-450" /> : <Moon className="h-4 w-4 text-indigo-650" />}
+              {theme === "dark" ? <Sun className="h-4 w-4 text-amber-450 animate-pulse" /> : <Moon className="h-4 w-4 text-indigo-650" />}
             </button>
 
             <button 
               onClick={fetchDashboardData}
               disabled={dbLoading}
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 transition active:scale-95"
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200/60 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50 text-slate-650 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 transition active:scale-95 cursor-pointer"
             >
               <RefreshCw className={`h-4 w-4 ${dbLoading ? "animate-spin text-indigo-600" : ""}`} />
             </button>
@@ -959,10 +964,10 @@ export default function App() {
 
             <button 
               onClick={handleSignOut}
-              className="flex items-center gap-2 rounded-xl border border-red-500/25 bg-red-500/5 px-4.5 py-2 text-xs font-semibold text-red-650 dark:text-red-400 hover:bg-red-500/10 transition active:scale-95"
+              className="flex items-center gap-2 rounded-xl border border-red-500/25 bg-red-50/50 dark:bg-red-500/5 px-4.5 py-2 text-xs font-semibold text-red-655 dark:text-red-450 hover:bg-red-500/10 transition active:scale-95 cursor-pointer"
             >
               <LogOut className="h-3.5 w-3.5" />
-              Lock
+              Sign Out
             </button>
           </div>
         </div>
@@ -977,38 +982,38 @@ export default function App() {
           animate="visible"
           variants={{
             hidden: { opacity: 0 },
-            visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+            visible: { opacity: 1, transition: { staggerChildren: 0.05 } }
           }}
           className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4"
         >
           {[
-            { label: "Total Landlords", value: stats.totalUsers, icon: Users, color: "from-blue-500 to-indigo-500", text: "Verified managers" },
-            { label: "Active Subscriptions", value: stats.activeSubs, icon: Check, color: "from-emerald-500 to-teal-500", text: `${stats.pausedSubs} paused, ${stats.trialSubs} trial` },
-            { label: "Managed Rooms", value: stats.totalRooms, icon: Home, color: "from-amber-500 to-orange-500", text: "Across properties" },
-            { label: "Estimated Revenue", value: `₹${stats.estimatedRevenue}`, icon: IndianRupee, color: "from-pink-500 to-rose-500", text: "Monthly MRR projection" }
-          ].map((card) => {
+            { label: "Total Landlords", value: stats.totalUsers, icon: Users, color: "from-blue-600/10 to-indigo-600/10", iconColor: "text-blue-500", text: "Verified managers" },
+            { label: "Active Subscriptions", value: stats.activeSubs, icon: Check, color: "from-emerald-600/10 to-teal-600/10", iconColor: "text-emerald-500", text: `${stats.pausedSubs} paused, ${stats.trialSubs} trial` },
+            { label: "Managed Rooms", value: stats.totalRooms, icon: Home, color: "from-amber-600/10 to-orange-600/10", iconColor: "text-amber-500", text: "Across properties" },
+            { label: "Estimated Revenue", value: `₹${stats.estimatedRevenue}`, icon: IndianRupee, color: "from-pink-600/10 to-rose-600/10", iconColor: "text-pink-500", text: "Monthly MRR projection" }
+          ].map((card, idx) => {
             const Icon = card.icon;
             return (
               <motion.div 
                 key={card.label}
                 variants={{
-                  hidden: { opacity: 0, y: 20 },
-                  visible: { opacity: 1, y: 0 }
+                  hidden: { opacity: 0, y: 15 },
+                  visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 120, damping: 18 } }
                 }}
-                whileHover={{ scale: 1.02, translateY: -2 }}
-                whileTap={{ scale: 0.98 }}
-                className="rounded-2xl border border-slate-200 dark:border-zinc-850 bg-white dark:bg-zinc-900 p-6 shadow-sm relative overflow-hidden transition-shadow hover:shadow-md cursor-default"
+                whileHover={{ scale: 1.025, y: -2 }}
+                whileTap={{ scale: 0.985 }}
+                className="rounded-3xl border border-white/20 dark:border-zinc-800/80 bg-white/40 dark:bg-zinc-900/40 p-6 shadow-xl relative overflow-hidden transition-all duration-300 backdrop-blur-md cursor-default group"
               >
-                <div className={`absolute -right-6 -top-6 h-20 w-20 rounded-full bg-gradient-to-br ${card.color} opacity-10 blur-xl`} />
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold text-slate-500 dark:text-zinc-400">{card.label}</span>
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700">
-                    <Icon className="h-4.5 w-4.5 text-slate-650 dark:text-zinc-300" />
+                <div className={`absolute -right-6 -top-6 h-24 w-24 rounded-full bg-gradient-to-br ${card.color} opacity-40 blur-xl group-hover:scale-125 transition-transform duration-500`} />
+                <div className="flex items-center justify-between relative z-10">
+                  <span className="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">{card.label}</span>
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white dark:bg-zinc-950 border border-slate-100 dark:border-zinc-850 shadow-soft">
+                    <Icon className={`h-4.5 w-4.5 ${card.iconColor}`} />
                   </div>
                 </div>
-                <div className="mt-4">
+                <div className="mt-5 relative z-10">
                   <span className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">{card.value}</span>
-                  <p className="text-xs text-slate-400 dark:text-zinc-500 mt-1">{card.text}</p>
+                  <p className="text-[11px] font-medium text-slate-400 dark:text-zinc-500 mt-1">{card.text}</p>
                 </div>
               </motion.div>
             );
@@ -1016,8 +1021,8 @@ export default function App() {
         </motion.section>
 
         {/* Global Navigation Tabs */}
-        <div className="border-b border-slate-200 dark:border-zinc-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 overflow-x-auto no-scrollbar">
-          <div className="flex gap-2 min-w-max pb-2 sm:pb-0 pt-1">
+        <div className="border-b border-slate-200/50 dark:border-zinc-900/60 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-2 md:pb-0 relative">
             {[
               { id: "overview", label: "Overview", icon: TrendingUp },
               { id: "buildings", label: "Properties", icon: Building2 },
@@ -1035,28 +1040,35 @@ export default function App() {
                     setActiveTab(tab.id as any);
                     setSearchQuery("");
                   }}
-                  className={`flex items-center gap-2 px-4 py-3 border-b-2 text-sm font-semibold transition-all ${
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all duration-300 relative cursor-pointer ${
                     active 
-                      ? "border-indigo-500 text-indigo-650 dark:text-indigo-400" 
-                      : "border-transparent text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
+                      ? "text-indigo-650 dark:text-indigo-400" 
+                      : "text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
                   }`}
                 >
-                  <Icon className="h-4 w-4" />
+                  {active && (
+                    <motion.div 
+                      layoutId="activeTabIndicator"
+                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                      className="absolute inset-0 bg-indigo-500/10 dark:bg-indigo-500/20 border border-indigo-500/20 dark:border-indigo-500/10 rounded-2xl -z-10"
+                    />
+                  )}
+                  <Icon className="h-4 w-4 shrink-0" />
                   {tab.label}
                 </button>
               );
             })}
           </div>
 
-          <div className="flex items-center gap-3 pb-2 w-full sm:w-auto">
-            <div className="relative flex-1 sm:flex-none">
+          <div className="flex items-center gap-3 pb-2 w-full md:w-auto">
+            <div className="relative flex-1 md:flex-none">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <input 
                 type="text"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder={`Search ${activeTab}...`}
-                className="rounded-xl pl-10 pr-4 py-2 text-xs border border-slate-200 dark:border-zinc-850 bg-white dark:bg-zinc-900 w-full sm:w-48 sm:focus:w-60 focus:outline-none focus:border-indigo-500 text-slate-800 dark:text-white transition-all"
+                className="rounded-2xl pl-10 pr-4 py-2 text-xs border border-slate-200/60 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50 w-full md:w-48 md:focus:w-60 focus:outline-none focus:border-indigo-500 text-slate-800 dark:text-white transition-all duration-300"
               />
             </div>
 
@@ -1064,7 +1076,7 @@ export default function App() {
               <select 
                 value={planFilter}
                 onChange={e => setPlanFilter(e.target.value)}
-                className="rounded-xl px-3 py-2 text-xs border border-slate-200 dark:border-zinc-850 bg-white dark:bg-zinc-900 text-slate-850 dark:text-white focus:border-indigo-500 focus:outline-none"
+                className="rounded-2xl px-3.5 py-2 text-xs border border-slate-200/60 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50 text-slate-850 dark:text-white focus:border-indigo-500 focus:outline-none cursor-pointer"
               >
                 <option value="all">All Plans</option>
                 <option value="silver">Silver</option>
@@ -1077,7 +1089,7 @@ export default function App() {
               <select 
                 value={statusFilter}
                 onChange={e => setStatusFilter(e.target.value)}
-                className="rounded-xl px-3 py-2 text-xs border border-slate-200 dark:border-zinc-850 bg-white dark:bg-zinc-900 text-slate-850 dark:text-white focus:border-indigo-500 focus:outline-none"
+                className="rounded-2xl px-3.5 py-2 text-xs border border-slate-200/60 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50 text-slate-850 dark:text-white focus:border-indigo-500 focus:outline-none cursor-pointer"
               >
                 <option value="all">All Statuses</option>
                 <option value="active">Active</option>
@@ -1086,6 +1098,8 @@ export default function App() {
                 <option value="expired">Expired</option>
               </select>
             )}
+          </div>
+        </div>)}
           </div>
         </div>
 
