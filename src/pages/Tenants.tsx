@@ -1,5 +1,5 @@
 import { nivasaApi } from "@/lib/api";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, memo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Search, UserPlus, Building2, MapPin, CheckCircle2, AlertCircle, Clock, MessageCircle, IndianRupee } from "lucide-react";
 import { toast } from "sonner";
@@ -522,7 +522,7 @@ export default function Tenants() {
   );
 }
 
-function TenantCard({ 
+const TenantCard = memo(function TenantCard({ 
   tenant, 
   index,
   isSelected,
@@ -549,11 +549,15 @@ function TenantCard({
   let statusText = "Pending";
   let statusColorClass = "text-orange-500 bg-orange-500/10 border-orange-500/20";
 
-  if (tenant.paymentStatus === "paid") {
+  const [optimisticStatus, setOptimisticStatus] = useState<any>(undefined);
+  
+  const currentStatus = optimisticStatus || tenant.paymentStatus;
+
+  if (currentStatus === "paid") {
     statusIcon = <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />;
     statusText = "Paid";
     statusColorClass = "text-emerald-500 bg-emerald-500/10 border-emerald-500/20";
-  } else if (tenant.paymentStatus === "late") {
+  } else if (currentStatus === "late") {
     statusIcon = <AlertCircle className="h-3.5 w-3.5 text-red-500" />;
     statusText = "Delayed";
     statusColorClass = "text-red-500 bg-red-500/10 border-red-500/20";
@@ -571,6 +575,7 @@ function TenantCard({
         date: new Date().toISOString(),
         status: "paid"
       });
+      setOptimisticStatus("paid");
       toast.success("Rent marked as paid!");
       window.dispatchEvent(new CustomEvent("nivasa:refresh-silent"));
     } catch (err) {
@@ -640,8 +645,8 @@ function TenantCard({
         className={cn(
           "absolute top-4 right-4 z-20 flex h-5 w-5 cursor-pointer items-center justify-center rounded-md border transition-all duration-200",
           isSelected 
-            ? "bg-brand border-brand text-white scale-110" 
-            : "border-border bg-card hover:border-brand/50 opacity-0 group-hover:opacity-100",
+            ? "bg-brand border-brand text-white scale-110 opacity-100" 
+            : "border-border/50 bg-card hover:border-brand/50 opacity-40 group-hover:opacity-100 shadow-sm",
           isSelectionMode && "opacity-100"
         )}
       >
@@ -740,7 +745,7 @@ function TenantCard({
       </motion.div>
     </motion.div>
   );
-}
+});
 
 function EmptyState() {
   return (

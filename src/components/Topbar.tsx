@@ -48,7 +48,7 @@ export function Topbar({ collapsed, onToggle, onOpenPalette, onOpenMobileDrawer 
   return (
     <>
       <header 
-        className="sticky top-0 z-30 border-b border-border bg-background/70 backdrop-blur-xl pt-safe"
+        className="sticky top-0 z-30 bg-transparent pt-safe"
         onClick={(e) => {
           const target = e.target as HTMLElement;
           if (target.closest('button') || target.closest('input') || target.closest('a')) {
