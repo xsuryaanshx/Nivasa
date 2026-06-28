@@ -211,6 +211,25 @@ export default function App() {
   const [landlordPayments, setLandlordPayments] = useState<any[]>([]);
   const [loadingPayments, setLoadingPayments] = useState(false);
 
+  // Compute month-wise revenue and landlord rooms
+  const monthWiseRevenue = useMemo(() => {
+    if (!landlordPayments) return [];
+    const revenueMap: Record<string, number> = {};
+    landlordPayments
+      .filter(p => p.status === "paid" && p.paid_date)
+      .forEach(p => {
+        const date = new Date(p.paid_date);
+        const monthName = date.toLocaleString("en-IN", { month: "long", year: "numeric" });
+        revenueMap[monthName] = (revenueMap[monthName] || 0) + (p.amount || 0);
+      });
+    return Object.entries(revenueMap).map(([month, total]) => ({ month, total }));
+  }, [landlordPayments]);
+
+  const landlordRoomsList = useMemo(() => {
+    if (!selectedLandlord) return [];
+    return allRooms.filter(r => r.user_id === selectedLandlord.user_id);
+  }, [selectedLandlord, allRooms]);
+
   const [stats, setStats] = useState({
     totalUsers: 0,
     activeSubs: 0,
@@ -1630,13 +1649,73 @@ export default function App() {
                   ].map(stat => {
                     const Icon = stat.icon;
                     return (
-                      <div key={stat.label} className="border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/60 p-4 rounded-xl text-center">
+                      <div key={stat.label} className="border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/60 p-4 rounded-xl text-center animate-fade-in">
                         <Icon className="h-4.5 w-4.5 text-indigo-500 mx-auto mb-1.5" />
                         <span className="text-sm font-bold text-slate-900 dark:text-white block">{stat.value}</span>
                         <span className="text-[10px] text-slate-400 block mt-0.5">{stat.label}</span>
                       </div>
                     );
                   })}
+                </div>
+
+                {/* Month-wise Collected Revenue */}
+                <div className="space-y-3">
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4 text-indigo-500" />
+                    Monthly Revenue Collections
+                  </h4>
+                  {loadingPayments ? (
+                    <div className="flex justify-center py-6">
+                      <RefreshCw className="h-5 w-5 animate-spin text-indigo-500" />
+                    </div>
+                  ) : monthWiseRevenue.length === 0 ? (
+                    <p className="text-xs text-slate-500 text-center py-6 border border-dashed border-slate-200 dark:border-zinc-800 rounded-xl">
+                      No paid revenue collections logged yet.
+                    </p>
+                  ) : (
+                    <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                      {monthWiseRevenue.map(({ month, total }) => (
+                        <div key={month} className="border border-slate-200/60 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950/30 px-4 py-3 rounded-2xl flex items-center justify-between text-xs hover:bg-slate-50 dark:hover:bg-zinc-950 transition">
+                          <span className="font-semibold text-slate-700 dark:text-zinc-300">{month}</span>
+                          <span className="font-bold text-indigo-650 dark:text-indigo-400 text-sm">₹{total}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Rooms and Rents Inventory */}
+                <div className="space-y-3">
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <Home className="h-4 w-4 text-indigo-500" />
+                    Rooms & Rental Inventory
+                  </h4>
+                  {landlordRoomsList.length === 0 ? (
+                    <p className="text-xs text-slate-500 text-center py-6 border border-dashed border-slate-200 dark:border-zinc-800 rounded-xl">
+                      No rooms listed under this landlord account.
+                    </p>
+                  ) : (
+                    <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                      {landlordRoomsList.map((r: any) => (
+                        <div key={r.id} className="border border-slate-200/60 dark:border-zinc-800 p-3.5 rounded-2xl flex items-center justify-between text-xs hover:bg-slate-50 dark:hover:bg-zinc-950 transition">
+                          <div>
+                            <span className="font-bold block text-slate-900 dark:text-white">Room {r.name}</span>
+                            <span className="text-[10px] text-slate-400 block mt-0.5">{r.buildingName}</span>
+                          </div>
+                          <div className="text-right">
+                            <span className="font-bold block text-indigo-655 dark:text-indigo-400">₹{r.rent_amount}</span>
+                            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase mt-1 border ${
+                              r.status === "occupied" 
+                                ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20" 
+                                : "bg-slate-500/10 text-slate-655 dark:text-slate-400 border-slate-500/20"
+                            }`}>
+                              {r.status}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {selectedLandlord.status === "trial" && (
