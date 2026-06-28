@@ -207,7 +207,7 @@ export function NotificationsPanel({ open, onClose }: Props) {
             className="fixed right-0 top-0 z-[100] flex h-[100dvh] w-full max-w-sm flex-col border-l border-border bg-card shadow-2xl pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
           >
             {/* Header */}
-            <div className="flex shrink-0 items-center justify-between border-b border-border px-5 py-4">
+            <div className="flex shrink-0 items-center justify-between border-b border-border px-4 py-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand/10">
                   <Bell className="h-4 w-4 text-brand" />
@@ -216,7 +216,7 @@ export function NotificationsPanel({ open, onClose }: Props) {
                   <p className="text-sm font-semibold text-foreground">Notifications</p>
                   {unread > 0 && (
                     <p className="text-[11px] text-muted-foreground">
-                      {unread} unread alert{unread > 1 ? "s" : ""}
+                      {unread} unread
                     </p>
                   )}
                 </div>
@@ -229,19 +229,28 @@ export function NotificationsPanel({ open, onClose }: Props) {
                 >
                   <RefreshCw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
                 </button>
-                {unread > 0 && (
+                {notifs.length > 0 && (
                   <button
-                    onClick={markAllRead}
-                    className="rounded-lg px-2.5 py-1.5 text-[11px] font-medium text-brand hover:bg-brand/10"
+                    onClick={() => {
+                      try {
+                        const dismissed = JSON.parse(localStorage.getItem("nivasa:dismissed-notifs") || "[]");
+                        const currentIds = notifs.map(n => n.id);
+                        localStorage.setItem("nivasa:dismissed-notifs", JSON.stringify([...dismissed, ...currentIds]));
+                      } catch (e) {}
+                      setNotifs([]);
+                    }}
+                    title="Clear All"
+                    className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-rose-500 text-xs font-medium px-2"
                   >
-                    Mark all read
+                    Clear All
                   </button>
                 )}
                 <button
                   onClick={onClose}
+                  title="Close"
                   className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-5 w-5" />
                 </button>
               </div>
             </div>
@@ -265,10 +274,19 @@ export function NotificationsPanel({ open, onClose }: Props) {
                       <motion.div
                         key={n.id}
                         layout
-                        initial={{ opacity: 0, y: -8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.96 }}
-                        transition={{ duration: 0.22 }}
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.15 } }}
+                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                        drag="x"
+                        dragConstraints={{ left: 0, right: 0 }}
+                        dragElastic={0.7}
+                        onDragEnd={(e, info) => {
+                          if (Math.abs(info.offset.x) > 80) {
+                            dismiss(n.id);
+                          }
+                        }}
+                        whileTap={n.link ? { scale: 0.96, boxShadow: "0px 0px 20px rgba(59, 130, 246, 0.4)", filter: "brightness(1.1)" } : undefined}
                         onClick={() => {
                           if (n.link) {
                             navigate(n.link);

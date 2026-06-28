@@ -31,6 +31,7 @@ export function StatCard({ label, value, icon: Icon, money, suffix, delta, trend
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay, ease: [0.2, 0.7, 0.2, 1] }}
       onClick={onClick}
+      whileTap={onClick ? { scale: 0.94, boxShadow: "0px 0px 30px rgba(59, 130, 246, 0.5)", borderColor: "rgba(59, 130, 246, 0.8)", filter: "brightness(1.05)" } : undefined}
       className={cn(
         "group relative overflow-hidden rounded-2xl border border-border bg-card p-3.5 sm:p-5 shadow-soft transition-all hover:shadow-elev",
         onClick && "cursor-pointer"

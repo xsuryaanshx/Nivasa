@@ -118,6 +118,7 @@ export default function Buildings() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: i * 0.05, ease: [0.2, 0.7, 0.2, 1] }}
                 onClick={() => navigate(`/app/buildings/${b.id}`)}
+                whileTap={{ scale: 0.94, boxShadow: "0px 0px 30px rgba(59, 130, 246, 0.5)", borderColor: "rgba(59, 130, 246, 0.8)", filter: "brightness(1.05)" }}
                 className="group cursor-pointer rounded-2xl border border-border bg-card p-5 shadow-soft transition-all hover:border-brand/40 hover:shadow-glow"
               >
                 <div className="flex items-start justify-between">

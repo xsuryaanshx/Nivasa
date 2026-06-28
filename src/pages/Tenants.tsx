@@ -731,7 +731,7 @@ const TenantCard = memo(function TenantCard({
           !isSelectionMode && "hover:shadow-md",
           isSelected && "bg-brand/[0.02]"
         )}
-        whileTap={{ scale: 0.96, boxShadow: "0px 0px 20px rgba(59, 130, 246, 0.4)", borderColor: "rgba(59, 130, 246, 0.6)" }}
+        whileTap={{ scale: 0.94, boxShadow: "0px 0px 30px rgba(59, 130, 246, 0.5)", borderColor: "rgba(59, 130, 246, 0.8)", filter: "brightness(1.05)" }}
         transition={{ type: "spring", stiffness: 400, damping: 25 }}
       >
       <div className="flex items-start gap-4">
