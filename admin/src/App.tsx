@@ -1009,10 +1009,10 @@ export default function App() {
           className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4"
         >
           {[
-            { label: "Total Landlords", value: stats.totalUsers, icon: Users, color: "from-blue-600/10 to-indigo-600/10", iconColor: "text-blue-500", text: "Verified managers" },
-            { label: "Active Subscriptions", value: stats.activeSubs, icon: Check, color: "from-emerald-600/10 to-teal-600/10", iconColor: "text-emerald-500", text: `${stats.pausedSubs} paused, ${stats.trialSubs} trial` },
-            { label: "Managed Rooms", value: stats.totalRooms, icon: Home, color: "from-amber-600/10 to-orange-600/10", iconColor: "text-amber-500", text: "Across properties" },
-            { label: "Estimated Revenue", value: `₹${stats.estimatedRevenue}`, icon: IndianRupee, color: "from-pink-600/10 to-rose-600/10", iconColor: "text-pink-500", text: "Monthly MRR projection" }
+            { label: "Total Landlords", value: stats.totalUsers, icon: Users, color: "from-blue-600/10 to-indigo-600/10", iconColor: "text-blue-500", bgAccent: "bg-blue-500/10 dark:bg-blue-500/20 border-blue-500/15 dark:border-blue-500/10", text: "Verified managers" },
+            { label: "Active Subscriptions", value: stats.activeSubs, icon: Check, color: "from-emerald-600/10 to-teal-600/10", iconColor: "text-emerald-500", bgAccent: "bg-emerald-500/10 dark:bg-emerald-500/20 border-emerald-500/15 dark:border-emerald-500/10", text: `${stats.pausedSubs} paused, ${stats.trialSubs} trial` },
+            { label: "Managed Rooms", value: stats.totalRooms, icon: Home, color: "from-amber-600/10 to-orange-600/10", iconColor: "text-amber-500", bgAccent: "bg-amber-500/10 dark:bg-amber-500/20 border-amber-500/15 dark:border-amber-500/10", text: "Across properties" },
+            { label: "Estimated Revenue", value: `₹${stats.estimatedRevenue}`, icon: IndianRupee, color: "from-pink-600/10 to-rose-600/10", iconColor: "text-pink-500", bgAccent: "bg-pink-500/10 dark:bg-pink-500/20 border-pink-500/15 dark:border-pink-500/10", text: "Monthly MRR projection" }
           ].map((card) => {
             const Icon = card.icon;
             return (
@@ -1029,7 +1029,7 @@ export default function App() {
                 <div className={`absolute -right-6 -top-6 h-24 w-24 rounded-full bg-gradient-to-br ${card.color} opacity-40 blur-xl group-hover:scale-125 transition-transform duration-500`} />
                 <div className="flex items-center justify-between relative z-10">
                   <span className="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">{card.label}</span>
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white dark:bg-zinc-950 border border-slate-100 dark:border-zinc-850 shadow-soft">
+                  <div className={`flex h-9 w-9 items-center justify-center rounded-xl border ${card.bgAccent} shadow-sm`}>
                     <Icon className={`h-4.5 w-4.5 ${card.iconColor}`} />
                   </div>
                 </div>
@@ -2491,10 +2491,10 @@ function FeatureUsageView({ featureEvents, theme }: FeatureUsageViewProps) {
       {/* Stats Cards Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-          { label: "Total Feature Actions", value: totalEvents, sub: `${growthRate} this week`, color: "from-blue-600/20 to-indigo-600/20", icon: Activity },
-          { label: "Active Landlords (30d)", value: activeUsers30Days, sub: "Unique landlords active", color: "from-purple-600/20 to-pink-600/20", icon: Users },
-          { label: "Most Popular Feature", value: mostPopular, sub: "Highest cumulative usage", color: "from-amber-600/20 to-orange-600/20", icon: Sparkles },
-          { label: "Retention Growth", value: growthRate, sub: "Week over week activity", color: "from-emerald-600/20 to-teal-600/20", icon: TrendingUp }
+          { label: "Total Feature Actions", value: totalEvents, sub: `${growthRate} this week`, color: "from-blue-600/20 to-indigo-600/20", icon: Activity, iconColor: "text-indigo-500", bgAccent: "bg-indigo-500/10 dark:bg-indigo-500/20 border-indigo-500/15 dark:border-indigo-500/10" },
+          { label: "Active Landlords (30d)", value: activeUsers30Days, sub: "Unique landlords active", color: "from-purple-600/20 to-pink-600/20", icon: Users, iconColor: "text-purple-500", bgAccent: "bg-purple-500/10 dark:bg-purple-500/20 border-purple-500/15 dark:border-purple-500/10" },
+          { label: "Most Popular Feature", value: mostPopular, sub: "Highest cumulative usage", color: "from-amber-600/20 to-orange-600/20", icon: Sparkles, iconColor: "text-amber-500", bgAccent: "bg-amber-500/10 dark:bg-amber-500/20 border-amber-500/15 dark:border-amber-500/10" },
+          { label: "Retention Growth", value: growthRate, sub: "Week over week activity", color: "from-emerald-600/20 to-teal-600/20", icon: TrendingUp, iconColor: "text-emerald-500", bgAccent: "bg-emerald-500/10 dark:bg-emerald-500/20 border-emerald-500/15 dark:border-emerald-500/10" }
         ].map((card, i) => {
           const Icon = card.icon;
           return (
@@ -2514,8 +2514,8 @@ function FeatureUsageView({ featureEvents, theme }: FeatureUsageViewProps) {
                   </div>
                   <p className="text-[11px] font-medium text-slate-400 dark:text-zinc-500 mt-1">{card.sub}</p>
                 </div>
-                <div className="h-10 w-10 rounded-2xl bg-white dark:bg-zinc-950 flex items-center justify-center shadow-soft border border-slate-100 dark:border-zinc-800">
-                  <Icon className="h-5 w-5 text-indigo-500" />
+                <div className={`h-10 w-10 rounded-2xl flex items-center justify-center border ${card.bgAccent} shadow-sm`}>
+                  <Icon className={`h-5 w-5 ${card.iconColor}`} />
                 </div>
               </div>
             </motion.div>
