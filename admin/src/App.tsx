@@ -923,6 +923,9 @@ export default function App() {
                   <Lock className="h-4 w-4" />
                   Sign In
                 </>
+              )}
+            </motion.button>
+          </form>
         </motion.div>
       </div>
     );
@@ -991,7 +994,7 @@ export default function App() {
             { label: "Active Subscriptions", value: stats.activeSubs, icon: Check, color: "from-emerald-600/10 to-teal-600/10", iconColor: "text-emerald-500", text: `${stats.pausedSubs} paused, ${stats.trialSubs} trial` },
             { label: "Managed Rooms", value: stats.totalRooms, icon: Home, color: "from-amber-600/10 to-orange-600/10", iconColor: "text-amber-500", text: "Across properties" },
             { label: "Estimated Revenue", value: `₹${stats.estimatedRevenue}`, icon: IndianRupee, color: "from-pink-600/10 to-rose-600/10", iconColor: "text-pink-500", text: "Monthly MRR projection" }
-          ].map((card, idx) => {
+          ].map((card) => {
             const Icon = card.icon;
             return (
               <motion.div 
@@ -1099,8 +1102,6 @@ export default function App() {
               </select>
             )}
           </div>
-        </div>)}
-          </div>
         </div>
 
         {/* Tab Contents */}
@@ -1123,7 +1124,7 @@ export default function App() {
                 >
                   <motion.div 
                     whileHover={{ scale: 1.01 }}
-                    className="lg:col-span-2 rounded-2xl border border-slate-200 dark:border-zinc-850 bg-white dark:bg-zinc-900 p-6 shadow-sm transition-shadow hover:shadow-md"
+                    className="lg:col-span-2 rounded-3xl border border-white/20 dark:border-zinc-800/80 bg-white/40 dark:bg-zinc-900/40 p-6 shadow-xl backdrop-blur-md"
                   >
                     <div className="flex items-center justify-between mb-6">
                       <div>
@@ -1161,7 +1162,7 @@ export default function App() {
 
                   <motion.div 
                     whileHover={{ scale: 1.01 }}
-                    className="rounded-2xl border border-slate-200 dark:border-zinc-850 bg-white dark:bg-zinc-900 p-6 shadow-sm transition-shadow hover:shadow-md"
+                    className="rounded-3xl border border-white/20 dark:border-zinc-800/80 bg-white/40 dark:bg-zinc-900/40 p-6 shadow-xl backdrop-blur-md"
                   >
                     <h2 className="text-base font-bold mb-1">Plan Distribution</h2>
                     <p className="text-xs text-slate-400 mb-6 font-medium">Proportion of Silver, Gold, Platinum plans</p>
@@ -1203,7 +1204,7 @@ export default function App() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
-                  className="rounded-2xl border border-slate-200 dark:border-zinc-850 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm"
+                  className="rounded-3xl border border-white/20 dark:border-zinc-800/80 bg-white/40 dark:bg-zinc-900/40 overflow-hidden shadow-xl backdrop-blur-md"
                 >
                   <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-zinc-700">
                     <table className="w-full text-left border-collapse">
@@ -1338,7 +1339,7 @@ export default function App() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="rounded-2xl border border-slate-200 dark:border-zinc-850 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm"
+                className="rounded-3xl border border-white/20 dark:border-zinc-800/80 bg-white/40 dark:bg-zinc-900/40 overflow-hidden shadow-xl backdrop-blur-md"
               >
                 <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-zinc-700">
                   <table className="w-full text-left border-collapse">
@@ -1379,7 +1380,7 @@ export default function App() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="rounded-2xl border border-slate-200 dark:border-zinc-850 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm"
+                className="rounded-3xl border border-white/20 dark:border-zinc-800/80 bg-white/40 dark:bg-zinc-900/40 overflow-hidden shadow-xl backdrop-blur-md"
               >
                 <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-zinc-700">
                   <table className="w-full text-left border-collapse">
@@ -1430,7 +1431,7 @@ export default function App() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="rounded-2xl border border-slate-200 dark:border-zinc-850 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm"
+                className="rounded-3xl border border-white/20 dark:border-zinc-800/80 bg-white/40 dark:bg-zinc-900/40 overflow-hidden shadow-xl backdrop-blur-md"
               >
                 <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-zinc-700">
                   <table className="w-full text-left border-collapse">
@@ -1491,7 +1492,7 @@ export default function App() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="rounded-2xl border border-slate-200 dark:border-zinc-850 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm"
+                className="rounded-3xl border border-white/20 dark:border-zinc-800/80 bg-white/40 dark:bg-zinc-900/40 overflow-hidden shadow-xl backdrop-blur-md"
               >
                 <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-zinc-700">
                   <table className="w-full text-left border-collapse">
