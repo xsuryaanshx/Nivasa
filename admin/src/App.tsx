@@ -2279,11 +2279,13 @@ const PLAN_COLORS: Record<string, string> = {
 
 function RevenueTooltip({ active, payload, label }: any) {
   if (active && payload && payload.length) {
+    const rawVal = payload[0].value;
+    const formattedVal = typeof rawVal === "number" ? Math.round(rawVal).toLocaleString("en-IN") : rawVal;
     return (
       <div className="bg-white/95 dark:bg-zinc-950/95 backdrop-blur-xl border border-slate-200/50 dark:border-zinc-800/80 px-4 py-3 rounded-2xl shadow-xl text-xs">
         <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">{label}</p>
         <p className="text-base font-bold text-indigo-600 dark:text-indigo-400 mt-1">
-          ₹{payload[0].value} <span className="text-[11px] font-normal text-slate-500">revenue</span>
+          ₹{formattedVal} <span className="text-[11px] font-normal text-slate-500">revenue</span>
         </p>
       </div>
     );
