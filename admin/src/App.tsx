@@ -2477,90 +2477,6 @@ function FeatureUsageView({ featureEvents, theme }: FeatureUsageViewProps) {
         })}
       </div>
 
-      {/* Analytics Charts Section */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Trend Area Chart (2 Cols) */}
-        <div className="lg:col-span-2 glass-panel rounded-3xl p-6 bg-white/40 dark:bg-zinc-900/40 border border-white/20 dark:border-zinc-800/80 shadow-xl">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-base font-bold text-slate-805 dark:text-zinc-100 flex items-center gap-2">
-                <Activity className="h-4 w-4 text-indigo-500" />
-                Feature Usage Trend
-              </h2>
-              <p className="text-xs text-slate-400 mt-0.5 font-medium">Daily occurrences over the last 14 days</p>
-            </div>
-            <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-full border border-indigo-500/20">
-              Live Monitor
-            </span>
-          </div>
-
-          <div className="h-64">
-            {totalEvents === 0 ? (
-              <div className="h-full flex items-center justify-center text-slate-400 dark:text-zinc-600 text-xs">
-                No events recorded yet to plot trend
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={dailyTrends}>
-                  <defs>
-                    <linearGradient id="colorFeatureUsage" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#818cf8" stopOpacity={0.35}/>
-                      <stop offset="95%" stopColor="#818cf8" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} />
-                  <YAxis stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} />
-                  <Tooltip content={<GlassTooltip theme={theme} />} />
-                  <Area type="monotone" dataKey="count" stroke="#818cf8" strokeWidth={2.5} fillOpacity={1} fill="url(#colorFeatureUsage)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            )}
-          </div>
-        </div>
-
-        {/* Feature Breakdown Bar Chart */}
-        <div className="glass-panel rounded-3xl p-6 bg-white/40 dark:bg-zinc-900/40 border border-white/20 dark:border-zinc-800/80 shadow-xl">
-          <div>
-            <h2 className="text-base font-bold text-slate-805 dark:text-zinc-100 flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-purple-500" />
-              Popularity Breakdown
-            </h2>
-            <p className="text-xs text-slate-400 mt-0.5 font-medium mb-6">Distribution by feature category</p>
-          </div>
-
-          <div className="h-64">
-            {totalEvents === 0 ? (
-              <div className="h-full flex items-center justify-center text-slate-400 dark:text-zinc-600 text-xs">
-                No feature events logged
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={popularityData} layout="vertical">
-                  <XAxis type="number" stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} hide />
-                  <YAxis dataKey="name" type="category" stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} width={100} />
-                  <Tooltip 
-                    cursor={{ fill: 'rgba(99,102,241,0.04)' }}
-                    contentStyle={{ 
-                      background: theme === "dark" ? "rgba(24, 24, 27, 0.8)" : "rgba(255, 255, 255, 0.8)", 
-                      backdropFilter: "blur(12px)",
-                      border: "1px solid rgba(255, 255, 255, 0.1)", 
-                      borderRadius: "16px",
-                      fontSize: "11px",
-                      color: theme === "dark" ? "white" : "black" 
-                    }} 
-                  />
-                  <Bar dataKey="count" fill="#a78bfa" radius={[0, 6, 6, 0]} barSize={14}>
-                    {popularityData.map((_entry, index) => (
-                      <Cell key={`cell-${index}`} fill={index === 0 ? "#6366f1" : index === 1 ? "#818cf8" : index === 2 ? "#a78bfa" : "#c084fc"} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </div>
-        </div>
-      </div>
-
       {/* Logs and Filters Card */}
       <div className="glass-panel rounded-3xl bg-white/40 dark:bg-zinc-900/40 border border-white/20 dark:border-zinc-800/80 shadow-xl overflow-hidden">
         {/* Filter Toolbar */}
@@ -2692,6 +2608,90 @@ function FeatureUsageView({ featureEvents, theme }: FeatureUsageViewProps) {
               )}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      {/* Analytics Charts Section */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        {/* Trend Area Chart (2 Cols) */}
+        <div className="lg:col-span-2 glass-panel rounded-3xl p-6 bg-white/40 dark:bg-zinc-900/40 border border-white/20 dark:border-zinc-800/80 shadow-xl">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-base font-bold text-slate-805 dark:text-zinc-100 flex items-center gap-2">
+                <Activity className="h-4 w-4 text-indigo-500" />
+                Feature Usage Trend
+              </h2>
+              <p className="text-xs text-slate-400 mt-0.5 font-medium">Daily occurrences over the last 14 days</p>
+            </div>
+            <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-full border border-indigo-500/20">
+              Live Monitor
+            </span>
+          </div>
+
+          <div className="h-64">
+            {totalEvents === 0 ? (
+              <div className="h-full flex items-center justify-center text-slate-400 dark:text-zinc-600 text-xs">
+                No events recorded yet to plot trend
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={dailyTrends}>
+                  <defs>
+                    <linearGradient id="colorFeatureUsage" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#818cf8" stopOpacity={0.35}/>
+                      <stop offset="95%" stopColor="#818cf8" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} />
+                  <Tooltip content={<GlassTooltip theme={theme} />} />
+                  <Area type="monotone" dataKey="count" stroke="#818cf8" strokeWidth={2.5} fillOpacity={1} fill="url(#colorFeatureUsage)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
+
+        {/* Feature Breakdown Bar Chart */}
+        <div className="glass-panel rounded-3xl p-6 bg-white/40 dark:bg-zinc-900/40 border border-white/20 dark:border-zinc-800/80 shadow-xl">
+          <div>
+            <h2 className="text-base font-bold text-slate-805 dark:text-zinc-100 flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-purple-500" />
+              Popularity Breakdown
+            </h2>
+            <p className="text-xs text-slate-400 mt-0.5 font-medium mb-6">Distribution by feature category</p>
+          </div>
+
+          <div className="h-64">
+            {totalEvents === 0 ? (
+              <div className="h-full flex items-center justify-center text-slate-400 dark:text-zinc-600 text-xs">
+                No feature events logged
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={popularityData} layout="vertical">
+                  <XAxis type="number" stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} hide />
+                  <YAxis dataKey="name" type="category" stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} width={100} />
+                  <Tooltip 
+                    cursor={{ fill: 'rgba(99,102,241,0.04)' }}
+                    contentStyle={{ 
+                      background: theme === "dark" ? "rgba(24, 24, 27, 0.8)" : "rgba(255, 255, 255, 0.8)", 
+                      backdropFilter: "blur(12px)",
+                      border: "1px solid rgba(255, 255, 255, 0.1)", 
+                      borderRadius: "16px",
+                      fontSize: "11px",
+                      color: theme === "dark" ? "white" : "black" 
+                    }} 
+                  />
+                  <Bar dataKey="count" fill="#a78bfa" radius={[0, 6, 6, 0]} barSize={14}>
+                    {popularityData.map((_entry, index) => (
+                      <Cell key={`cell-${index}`} fill={index === 0 ? "#6366f1" : index === 1 ? "#818cf8" : index === 2 ? "#a78bfa" : "#c084fc"} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </div>
         </div>
       </div>
     </div>
