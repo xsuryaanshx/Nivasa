@@ -243,7 +243,7 @@ export default function BuildingDetails() {
                       ? "bg-brand border-brand text-white shadow-sm hover:shadow-md hover:-translate-y-0.5" 
                       : isPartiallyOccupied
                       ? "bg-brand/10 border-brand/30 text-foreground hover:shadow-sm"
-                      : "border-dashed border-border/80 bg-transparent text-muted-foreground hover:border-border hover:bg-secondary/20"
+                      : "border-dashed border-foreground/15 dark:border-border/80 bg-transparent text-muted-foreground hover:border-foreground/30 hover:bg-secondary/20"
                   )}
                >
                   <DoorOpen className={cn("h-6 w-6 sm:h-7 sm:w-7 mb-1.5 sm:mb-2", isOccupied ? "opacity-90" : "opacity-40")} />

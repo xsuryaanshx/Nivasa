@@ -51,7 +51,26 @@ export default function Payments() {
       setLoading(true);
       if (!nivasaApi) return;
       const data = await nivasaApi.getRecentPayments(100); // Fetch more for the payments page
-      setPaymentsList(data);
+      const tenants = await nivasaApi.getTenants();
+      
+      const expectedPayments = tenants
+        .filter(t => t.paymentStatus === 'pending' || t.paymentStatus === 'late')
+        .map(t => ({
+          id: `expected-${t.id}`,
+          roomId: t.roomId,
+          tenantId: t.id,
+          tenantName: t.name,
+          tenantPhone: t.phone,
+          amount: t.roomRent,
+          date: new Date().toISOString(),
+          status: t.paymentStatus,
+          method: "Expected",
+          note: "Rent is due",
+          roomNumber: t.roomNumber || "N/A",
+          buildingName: t.buildingName || "N/A"
+        }));
+        
+      setPaymentsList([...data, ...expectedPayments]);
     } catch (error) {
       console.error("Error fetching payments:", error);
     } finally {
