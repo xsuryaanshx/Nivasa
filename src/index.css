@@ -114,52 +114,55 @@ body::-webkit-scrollbar {
 }
 
 @layer components {
-  /* Mobile bottom dock — Apple-style frosted glass */
+  /* Mobile bottom dock — iOS-style floating glass tab bar */
   .menu {
-    @apply relative mx-auto flex w-full max-w-md items-center justify-between gap-0.5 rounded-[2rem] px-2 py-2 sm:px-4 sm:py-2.5;
-    --component-active-color: hsl(var(--foreground));
-    background: hsl(0 0% 100% / 0.55);
-    -webkit-backdrop-filter: saturate(180%) blur(28px);
-    backdrop-filter: saturate(180%) blur(28px);
-    border: 1px solid hsl(0 0% 100% / 0.42);
-    box-shadow:
-      0 1px 0 hsl(0 0% 100% / 0.55) inset,
-      0 0 0 0.5px hsl(220 10% 10% / 0.04),
-      0 10px 40px -8px hsl(220 40% 2% / 0.18),
-      0 4px 14px -4px hsl(220 40% 2% / 0.08);
+    @apply relative mx-auto flex w-full max-w-sm items-center justify-between gap-1 rounded-full px-3 py-2;
+    --component-active-color: #6366f1; /* Brand Indigo */
+    background: rgba(255, 255, 255, 0.75);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 
+      0 10px 30px -10px rgba(0, 0, 0, 0.08), 
+      0 1px 0 rgba(255, 255, 255, 0.8) inset,
+      0 4px 12px -4px rgba(0, 0, 0, 0.05);
   }
 
   .dark .menu {
-    background: hsl(220 13% 9% / 0.62);
-    border: 1px solid hsl(0 0% 100% / 0.1);
-    box-shadow:
-      0 1px 0 hsl(0 0% 100% / 0.06) inset,
-      0 0 0 0.5px hsl(0 0% 0% / 0.35),
-      0 12px 48px -10px hsl(0 0% 0% / 0.55);
+    --component-active-color: #818cf8; /* Light Indigo */
+    background: rgba(18, 18, 22, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 
+      0 12px 36px -12px rgba(0, 0, 0, 0.5),
+      0 1px 0 rgba(255, 255, 255, 0.05) inset,
+      0 0 0 0.5px rgba(0, 0, 0, 0.4);
   }
 
   .menu__item {
-    @apply relative flex flex-col items-center justify-center transition-all duration-300 cursor-pointer border-none bg-transparent outline-none pt-2 pb-6;
+    @apply relative flex flex-col items-center justify-center transition-all duration-200 cursor-pointer border-none bg-transparent outline-none py-1.5 rounded-2xl;
     flex: 1;
     min-width: 0;
   }
 
+  .menu__item:active {
+    @apply scale-95 opacity-80;
+  }
+
   .menu__icon {
-    @apply z-10 text-muted-foreground/45 transition-all duration-500 dark:text-muted-foreground/35;
+    @apply z-10 text-zinc-400 dark:text-zinc-500 transition-all duration-200;
   }
 
   .menu__item.active .menu__icon {
-    @apply scale-110 -translate-y-1 transform text-[var(--component-active-color)];
+    @apply scale-105 text-[var(--component-active-color)];
   }
 
   .menu__text {
-    @apply absolute bottom-[4px] text-[9px] font-black uppercase tracking-[0.25em] opacity-0 transition-all duration-500 text-[var(--component-active-color)];
+    @apply mt-1 text-[10px] font-semibold tracking-wide text-zinc-400 dark:text-zinc-500 transition-all duration-200;
     pointer-events: none;
-    transform: translateY(12px);
   }
 
   .menu__item.active .menu__text {
-    @apply opacity-100 transform translate-y-0;
+    @apply text-[var(--component-active-color)] font-bold;
   }
 
   .glass-strong {
