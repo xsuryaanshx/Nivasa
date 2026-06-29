@@ -16,6 +16,14 @@ export function BackButtonHandler() {
     const listener = CapacitorApp.addListener('backButton', async () => {
       if (isDialogShowing) return;
 
+      // 1. Check if a Vaul Drawer (Bottom Sheet) is open
+      const activeDrawer = document.querySelector('[vaul-drawer]') || document.querySelector('[data-vaul-drawer]');
+      if (activeDrawer) {
+        // Dispatch Escape to let Vaul gracefully close the drawer
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+        return;
+      }
+
       const path = location.pathname;
       // Define all logical "root" endpoints where back button should ask to exit
       const isRootPath = path === '/app' || path === '/app/' || path === '/login' || path === '/';

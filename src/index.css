@@ -163,7 +163,10 @@ body::-webkit-scrollbar {
   }
 
   .glass-strong {
-    @apply backdrop-blur-3xl bg-white/80 dark:bg-black/80 border border-white/20 dark:border-white/10;
+    @apply backdrop-blur-[40px] bg-white/50 dark:bg-[#0a0a0a]/45 border border-white/40 dark:border-white/10;
+    box-shadow: 
+      0 4px 30px rgba(0, 0, 0, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
   }
 }
 
@@ -257,8 +260,8 @@ body.dark {
   animation: aurora-shift 15s ease-in-out infinite alternate;
 }
 
-/* Frosted Glass Cards for Native App */
-body.is-native .bg-card {
+/* Frosted Glass Cards for All Platforms */
+body .bg-card {
   background: hsl(var(--card) / 0.65) !important;
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
@@ -268,7 +271,7 @@ body.is-native .bg-card {
     0 8px 30px rgba(0, 0, 0, 0.04);
 }
 
-body.is-native.dark .bg-card {
+body.dark .bg-card {
   background: hsl(var(--card) / 0.45) !important;
   border: 1px solid hsl(0 0% 100% / 0.08) !important;
   box-shadow: 
@@ -276,15 +279,15 @@ body.is-native.dark .bg-card {
     0 8px 30px rgba(0, 0, 0, 0.2);
 }
 
-/* Add slight micro-animation to clickable cards in Native */
-body.is-native .bg-card.cursor-pointer,
-body.is-native .bg-card[role="button"] {
+/* Add slight micro-animation to clickable cards in All Platforms */
+body .bg-card.cursor-pointer,
+body .bg-card[role="button"] {
   transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
   user-select: none;
   -webkit-user-select: none;
 }
 
-body.is-native .bg-card.cursor-pointer:active,
-body.is-native .bg-card[role="button"]:active {
+body .bg-card.cursor-pointer:active,
+body .bg-card[role="button"]:active {
   transform: scale(0.96) !important;
 }
