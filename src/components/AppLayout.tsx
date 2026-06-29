@@ -171,6 +171,8 @@ function TrialBanner() {
   return null;
 }
 
+import { ParallaxBackground } from "./ParallaxBackground";
+
 function AppShell() {
   const [collapsed, setCollapsed] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
@@ -234,8 +236,9 @@ function AppShell() {
   }, []);
 
   return (
-    <div className="relative min-h-[100dvh] w-full bg-secondary/30 flex flex-col">
-      <div className="flex-1 flex w-full relative">
+    <div className="relative min-h-[100dvh] w-full flex flex-col bg-transparent">
+      <ParallaxBackground />
+      <div className="flex-1 flex w-full relative z-0">
         <MobileDrawerMenu
         open={mobileDrawerOpen}
         onOpenChange={setMobileDrawerOpen}
