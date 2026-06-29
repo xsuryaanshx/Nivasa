@@ -79,7 +79,10 @@ export function Topbar({ collapsed, onToggle, onOpenPalette, onOpenMobileDrawer 
             {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
           </button>
 
-          <div className="flex shrink-0 items-center md:hidden pr-2">
+          <div 
+            onClick={() => navigate("/app")}
+            className="flex shrink-0 items-center md:hidden pr-2 cursor-pointer hover:opacity-80 transition-opacity"
+          >
             <img src={logoSrc} alt="Nivasa" className="h-14 w-auto object-contain" />
           </div>
 

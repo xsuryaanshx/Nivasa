@@ -1,5 +1,4 @@
-import { nivasaApi } from "@/lib/api";
-import { NavLink, useLocation } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import { Building2, Home, LayoutDashboard, ReceiptIndianRupee, Sparkles, UserCircle2, Zap, LogOut, Briefcase, Wrench } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "./LanguageProvider";
@@ -31,14 +30,14 @@ export function AppSidebar({ collapsed }: Props) {
         collapsed ? "w-[72px]" : "w-[244px]",
       )}
     >
-      <div className="flex h-16 items-center gap-2.5 px-5">
+      <Link to="/app" className="flex h-16 items-center gap-2.5 px-5 cursor-pointer hover:opacity-80 transition-opacity">
         <NivasaLogo className="h-14 w-14 rounded-lg" />
         {!collapsed && (
           <div className="leading-tight">
             <div className="text-xl font-semibold tracking-tight">Nivasa</div>
           </div>
         )}
-      </div>
+      </Link>
 
       <nav className="mt-2 flex flex-col gap-0.5 px-3">
         {items.map((item) => {
