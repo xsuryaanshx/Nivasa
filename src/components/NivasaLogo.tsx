@@ -26,8 +26,8 @@ export function NivasaLogo({ className, imgClassName, alt = "Nivasa Logo" }: Niv
   // While not yet mounted fall back to light logo to avoid layout shift
   const src =
     mounted && resolvedTheme === "dark"
-      ? "/nivasa-logo-dark-v2.png"
-      : "/nivasa-logo-light-v2.png";
+      ? "nivasa-logo-dark-v2.png"
+      : "nivasa-logo-light-v2.png";
 
   return (
     <div className={cn("flex items-center justify-center overflow-hidden", className)}>

@@ -81,7 +81,7 @@ export const glowVariants: Variants = {
   exit: {
     opacity: 0,
     scale: 1.1,
-    transition: { duration: SPLASH_TIMELINE.exit.duration },
+    transition: { duration: SPLASH_TOTAL_MS * 0.001 },
   },
 };
 
@@ -110,9 +110,16 @@ export function useSplashAnimation({
   const [phase, setPhase] = useState<"visible" | "exit">("visible");
   const [isVisible, setIsVisible] = useState(true);
   const [progress, setProgress] = useState(0);
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(
-    () => typeof window !== "undefined" && window.matchMedia(REDUCED_MOTION_QUERY).matches,
-  );
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(() => {
+    if (typeof window !== "undefined" && typeof window.matchMedia === "function") {
+      try {
+        return window.matchMedia(REDUCED_MOTION_QUERY).matches;
+      } catch (e) {
+        console.warn("matchMedia check failed:", e);
+      }
+    }
+    return false;
+  });
   const completedRef = useRef(false);
   const timersRef = useRef<number[]>([]);
 
@@ -124,11 +131,16 @@ export function useSplashAnimation({
   }, [onComplete]);
 
   useEffect(() => {
-    const media = window.matchMedia(REDUCED_MOTION_QUERY);
-    const syncPreference = () => setPrefersReducedMotion(media.matches);
-    syncPreference();
-    media.addEventListener("change", syncPreference);
-    return () => media.removeEventListener("change", syncPreference);
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
+    try {
+      const media = window.matchMedia(REDUCED_MOTION_QUERY);
+      const syncPreference = () => setPrefersReducedMotion(media.matches);
+      syncPreference();
+      media.addEventListener("change", syncPreference);
+      return () => media.removeEventListener("change", syncPreference);
+    } catch (e) {
+      console.warn("matchMedia event listener failed:", e);
+    }
   }, []);
 
   useEffect(() => {
@@ -191,7 +203,8 @@ export function SplashScreen({ isReady = true, onComplete, onFinished, className
 
   if (!isVisible || prefersReducedMotion) return null;
 
-  const logoSrc = isDark ? "/logo-dark.png" : "/logo.png";
+  // Use relative paths to make assets load correctly under file:// protocol
+  const logoSrc = isDark ? "logo-dark.png" : "logo.png";
   const glowColor = isDark 
     ? "radial-gradient(circle, rgba(99,102,241,0.15) 0%, rgba(168,85,247,0.05) 50%, transparent 100%)" 
     : "radial-gradient(circle, rgba(99,102,241,0.12) 0%, rgba(168,85,247,0.04) 50%, transparent 100%)";
