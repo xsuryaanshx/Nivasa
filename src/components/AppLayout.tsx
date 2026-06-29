@@ -171,6 +171,8 @@ function TrialBanner() {
   return null;
 }
 
+import { Capacitor } from "@capacitor/core";
+
 function AppShell() {
   const [collapsed, setCollapsed] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
@@ -182,6 +184,18 @@ function AppShell() {
   const [upgradeModalProps, setUpgradeModalProps] = useState({ title: "", message: "" });
   const location = useLocation();
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Parallax background listener
+  useEffect(() => {
+    const handleScroll = () => {
+      // Small optimization: requestAnimationFrame prevents layout thrashing
+      requestAnimationFrame(() => {
+        document.body.style.setProperty('--scroll-offset', `${window.scrollY}px`);
+      });
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     const currentPath = location.pathname;
