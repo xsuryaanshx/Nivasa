@@ -1,14 +1,46 @@
 import * as XLSX from "xlsx";
 import { nivasaApi } from "./api";
 
-export function downloadExcel(data: any[], filename: string) {
+export function downloadExcel(data: any[], filename: string, title?: string) {
   if (!data || !data.length) return;
+
+  const displayTitle = title || filename.replace(".xlsx", "").replace(/_/g, " ");
 
   // Create a new workbook
   const wb = XLSX.utils.book_new();
   
-  // Convert JSON data to worksheet
-  const ws = XLSX.utils.json_to_sheet(data);
+  // Convert JSON data to worksheet starting at row 4 (A4)
+  const ws = XLSX.utils.json_to_sheet(data, { origin: "A4" });
+
+  // Add Nivasa branding and metadata at the top
+  XLSX.utils.sheet_add_aoa(ws, [
+    [`NIVASA - ${displayTitle.toUpperCase()}`],
+    [`Generated on: ${new Date().toLocaleDateString()} | System: Nivasa`]
+  ], { origin: "A1" });
+
+  // Merge the header columns (A1-G1 and A2-G2)
+  if (!ws["!merges"]) ws["!merges"] = [];
+  ws["!merges"].push(
+    { s: { r: 0, c: 0 }, e: { r: 0, c: 6 } },
+    { s: { r: 1, c: 0 }, e: { r: 1, c: 6 } }
+  );
+
+  // Auto-fit column widths to prevent text cut-off
+  const keys = Object.keys(data[0]);
+  const colWidths = keys.map(key => {
+    let maxLen = key.length;
+    data.forEach(row => {
+      const val = row[key];
+      if (val !== null && val !== undefined) {
+        const strVal = String(val);
+        if (strVal.length > maxLen) {
+          maxLen = strVal.length;
+        }
+      }
+    });
+    return { wch: Math.max(maxLen + 3, 10) };
+  });
+  ws["!cols"] = colWidths;
   
   // Add worksheet to workbook
   XLSX.utils.book_append_sheet(wb, ws, "Sheet1");

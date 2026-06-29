@@ -54,74 +54,78 @@ export function ExportDataModal({ open, onClose }: { open: boolean; onClose: () 
         ? `_${selectedMonth !== "all" ? MONTHS.find(m => m.value === selectedMonth)?.label : "All"}_${selectedYear !== "all" ? selectedYear : "All"}`
         : "";
 
+      let exportTitle = "";
       if (type === "buildings") {
         const rawBuildings = await nivasaApi.getBuildings();
         const filtered = filterByDate(rawBuildings, "created_at");
         data = filtered.map((b: any) => ({
-          ID: b.id,
-          Name: b.name,
-          Address: b.address || "",
-          City: b.city || "",
-          State: b.state || "",
-          ZipCode: b.zip_code || "",
-          Status: b.status,
-          TotalRooms: b.total_rooms,
-          CreatedAt: b.created_at
+          "Building ID": b.id,
+          "Name": b.name,
+          "Address": b.address || "",
+          "Total Rooms": b.rooms || 0,
+          "Occupied Rooms": b.occupied || 0,
+          "Occupancy Rate": b.occupancyRate !== undefined ? `${b.occupancyRate}%` : "0%",
+          "Monthly Revenue": b.monthlyRevenue || 0,
+          "Created At": b.created_at ? new Date(b.created_at).toLocaleDateString() : ""
         }));
         filename = `Buildings_Export${suffix}`;
+        exportTitle = "Buildings Report";
       } else if (type === "rooms") {
         const rawRooms = await nivasaApi.getRooms();
         const filtered = filterByDate(rawRooms, "createdAt");
         data = filtered.map((r: any) => ({
-          RoomID: r.id,
-          BuildingName: r.buildingName,
-          RoomNumber: r.number,
-          RoomType: r.roomType || "",
-          Rent: r.rent,
-          Capacity: r.capacity,
-          Status: r.status,
-          CurrentTenants: (r.tenants || []).map((t: any) => t.name).join(", ") || "None",
-          TenantPhones: (r.tenants || []).map((t: any) => t.phone).join(", ") || "",
-          PreviousReading: r.prevReading,
-          CurrentReading: r.currReading,
-          CreatedAt: r.createdAt
+          "Room ID": r.id,
+          "Building Name": r.buildingName,
+          "Room Number": r.number,
+          "Room Type": r.roomType || "",
+          "Rent": r.rent,
+          "Capacity": r.capacity,
+          "Status": r.status,
+          "Current Tenants": (r.tenants || []).map((t: any) => t.name).join(", ") || "None",
+          "Tenant Phones": (r.tenants || []).map((t: any) => t.phone).join(", ") || "",
+          "Previous Reading": r.prevReading || 0,
+          "Current Reading": r.currReading || 0,
+          "Created At": r.createdAt ? new Date(r.createdAt).toLocaleDateString() : ""
         }));
         filename = `Rooms_Export${suffix}`;
+        exportTitle = "Rooms Configuration";
       } else if (type === "tenants") {
         const rawTenants = await nivasaApi.getTenants();
-        const filtered = filterByDate(rawTenants, "joinedAt");
+        const filtered = filterByDate(rawTenants, "joined_at");
         data = filtered.map((t: any) => ({
-          TenantID: t.id,
-          Name: t.name,
-          Phone: t.phone,
-          WhatsApp: t.whatsapp || "",
-          AadharNumber: t.aadharNumber || "",
-          Status: t.status,
-          JoinedAt: t.joinedAt,
-          LeftAt: t.leftAt || "",
-          DepositAmount: t.depositAmount || 0,
-          RentAmount: t.rent_amount || 0
+          "Tenant ID": t.id,
+          "Name": t.name,
+          "Phone": t.phone,
+          "WhatsApp": t.whatsapp_number || t.phone || "",
+          "Aadhar Number": t.aadhar || "",
+          "Status": t.status,
+          "Joined At": t.joined_at ? new Date(t.joined_at).toLocaleDateString() : "",
+          "Left At": t.leftAt ? new Date(t.leftAt).toLocaleDateString() : "",
+          "Deposit Amount": t.depositAmount || 0,
+          "Rent Amount": t.rent_amount ?? t.roomRent ?? 0
         }));
         filename = `Tenants_Export${suffix}`;
+        exportTitle = "Tenants Directory";
       } else if (type === "payments") {
         const rawPayments = await nivasaApi.getRecentPayments(10000);
         const filtered = filterByDate(rawPayments, "date");
         data = filtered.map((p: any) => ({
-          ID: p.id,
-          Date: p.date,
-          BuildingName: p.buildingName,
-          RoomNumber: p.roomNumber,
-          TenantName: p.tenantName,
-          Amount: p.amount,
-          Method: p.method,
-          Status: p.status,
-          Note: p.note || ""
+          "Payment ID": p.id,
+          "Date": p.date ? new Date(p.date).toLocaleDateString() : "",
+          "Building Name": p.buildingName,
+          "Room Number": p.roomNumber,
+          "Tenant Name": p.tenantName,
+          "Amount": p.amount,
+          "Method": p.method,
+          "Status": p.status,
+          "Note": p.note || ""
         }));
         filename = `Payments_Export${suffix}`;
+        exportTitle = "Payments History";
       }
 
       if (data && data.length > 0) {
-        downloadExcel(data, filename);
+        downloadExcel(data, filename, exportTitle);
         toast.success(`Exported ${data.length} records successfully`);
       } else {
         toast.error(`No records found for the selected criteria`);

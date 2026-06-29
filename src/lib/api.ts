@@ -168,6 +168,9 @@ async function getBuildings(): Promise<
         monthlyRevenue: monthlyRevenue,
         occupancyRate:
           totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0,
+        created_at: b.created_at,
+        upi_id: b.upi_id,
+        landlord_name: b.landlord_name,
       };
     });
   } catch (error) {
