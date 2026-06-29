@@ -71,3 +71,19 @@ export function maskAadhar(aadhar: string | undefined | null): string {
   if (clean.length < 4) return clean;
   return `XXXX-XXXX-${clean.slice(-4)}`;
 }
+
+export function getAssetUrl(path: string): string {
+  if (typeof window === "undefined") return path;
+  const cleanPath = path.startsWith("/") ? path.slice(1) : path;
+  
+  // Under Capacitor / Cordova, window.Capacitor is defined, or we run on file:// protocol,
+  // or inside an android_asset folder. On those platforms, we want relative paths (e.g. "./logo.png")
+  const isNative = 
+    !!(window as any).Capacitor || 
+    window.location.protocol === "file:" ||
+    window.location.href.includes("android_asset") ||
+    !window.location.origin ||
+    window.location.origin === "null";
+    
+  return isNative ? `./${cleanPath}` : `/${cleanPath}`;
+}

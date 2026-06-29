@@ -180,6 +180,8 @@ export function useSplashAnimation({
 // SECTION 3 — COMPONENT
 // ---------------------------------------------------------------------------
 
+import { getAssetUrl } from "@/lib/utils";
+
 export interface SplashScreenProps {
   isReady?: boolean;
   onComplete?: () => void;
@@ -204,7 +206,7 @@ export function SplashScreen({ isReady = true, onComplete, onFinished, className
   if (!isVisible || prefersReducedMotion) return null;
 
   // Use relative paths to make assets load correctly under file:// protocol
-  const logoSrc = isDark ? "logo-dark.png" : "logo.png";
+  const logoSrc = isDark ? getAssetUrl("logo-dark.png") : getAssetUrl("logo.png");
   const glowColor = isDark 
     ? "radial-gradient(circle, rgba(99,102,241,0.15) 0%, rgba(168,85,247,0.05) 50%, transparent 100%)" 
     : "radial-gradient(circle, rgba(99,102,241,0.12) 0%, rgba(168,85,247,0.04) 50%, transparent 100%)";

@@ -2,7 +2,7 @@ import { nivasaApi } from "@/lib/api";
 import { Bell, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Search } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 import { useAuth } from "@/hooks/useAuth";
-import { cn } from "@/lib/utils";
+import { cn, getAssetUrl } from "@/lib/utils";
 import { useLanguage } from "./LanguageProvider";
 import { NotificationsPanel } from "./NotificationsPanel";
 import { useState, useEffect } from "react";
@@ -43,7 +43,9 @@ export function Topbar({ collapsed, onToggle, onOpenPalette, onOpenMobileDrawer 
     loadCount();
   }, []);
 
-  const logoSrc = mounted && resolvedTheme === "dark" ? "logo-dark-v2.png" : "logo-v2.png";
+  const logoSrc = mounted && resolvedTheme === "dark"
+    ? getAssetUrl("logo-dark-v2.png")
+    : getAssetUrl("logo-v2.png");
 
   return (
     <>
