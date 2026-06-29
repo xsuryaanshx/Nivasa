@@ -1,3 +1,4 @@
+import { PullToRefreshWrapper } from "@/components/PullToRefreshWrapper";
 import { nivasaApi } from "@/lib/api";
 import { useEffect, useMemo, useState, memo } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -265,8 +266,11 @@ export default function Tenants() {
   };
 
   return (
-    <div>
-      <PageHeader
+    <PullToRefreshWrapper onRefresh={async () => {
+      await fetchTenants(true);
+    }}>
+      <div>
+        <PageHeader
         title={t('tenants') || "Tenants"}
         subtitle={"Manage all your property tenants and monitor their payment status"}
         action={
@@ -561,7 +565,8 @@ export default function Tenants() {
         onClose={() => setEditingTenant(null)} 
         onUpdated={fetchTenants} 
       />
-    </div>
+      </div>
+    </PullToRefreshWrapper>
   );
 }
 

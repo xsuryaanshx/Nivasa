@@ -1,3 +1,4 @@
+import { PullToRefreshWrapper } from "@/components/PullToRefreshWrapper";
 import { nivasaApi } from "@/lib/api";
 import { Download, Building2, IndianRupee, Home, ReceiptIndianRupee, Users, Plus, TrendingUp, Sparkles, CheckCircle2, Circle, Lock, ArrowRight, AlertCircle, CalendarClock, Send } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -214,7 +215,10 @@ export default function Dashboard() {
   const showOnboarding = !loading && !isTrial && !isAllOnboardingCompleted;
 
   return (
-    <div>
+    <PullToRefreshWrapper onRefresh={async () => {
+      await fetchData();
+    }}>
+      <div>
       <PageHeader
         title={`${t(getGreetingKey() as any)}, ${user?.fullName || t('user')}`}
         subtitle={t("dashboard_subtitle")}
@@ -634,5 +638,6 @@ export default function Dashboard() {
         onSuccess={fetchData}
       />
     </div>
+    </PullToRefreshWrapper>
   );
 }
