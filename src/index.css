@@ -232,7 +232,14 @@ body::-webkit-scrollbar {
 }
 
 body {
+  background: 
+    radial-gradient(circle at 15% 30%, rgba(37, 99, 235, 0.18), transparent 40%),
+    radial-gradient(circle at 85% 20%, rgba(14, 165, 233, 0.22), transparent 40%),
+    radial-gradient(circle at 50% 80%, rgba(139, 92, 246, 0.18), transparent 40%);
   background-color: hsl(var(--background));
+  background-attachment: fixed;
+  background-size: 200% 200%;
+  animation: aurora-shift 15s ease-in-out infinite alternate;
 }
 
 body #root,
@@ -243,24 +250,14 @@ body .app-cover {
 }
 
 body.dark {
-  background-color: hsl(var(--background));
-}
-
-.parallax-aurora-bg {
-  background: 
-    radial-gradient(circle at 15% 30%, rgba(37, 99, 235, 0.18), transparent 40%),
-    radial-gradient(circle at 85% 20%, rgba(14, 165, 233, 0.22), transparent 40%),
-    radial-gradient(circle at 50% 80%, rgba(139, 92, 246, 0.18), transparent 40%);
-  background-attachment: fixed;
-  background-size: 200% 200%;
-  animation: aurora-shift 15s ease-in-out infinite alternate;
-}
-
-body.dark .parallax-aurora-bg {
   background: 
     radial-gradient(circle at 15% 30%, rgba(59, 130, 246, 0.05), transparent 45%),
     radial-gradient(circle at 85% 20%, rgba(14, 165, 233, 0.08), transparent 45%),
     radial-gradient(circle at 50% 80%, rgba(139, 92, 246, 0.05), transparent 45%);
+  background-color: hsl(var(--background));
+  background-attachment: fixed;
+  background-size: 200% 200%;
+  animation: aurora-shift 15s ease-in-out infinite alternate;
 }
 
 /* Frosted Glass Cards for All Platforms */
