@@ -70,6 +70,11 @@ const AnalyticsTracker = () => {
 const App = () => {
   const [showSplash, setShowSplash] = useState(() => {
     try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("forceSplash") === "true") {
+        sessionStorage.removeItem("nivasa:splash-shown");
+        return true;
+      }
       return !sessionStorage.getItem("nivasa:splash-shown");
     } catch {
       return true;
