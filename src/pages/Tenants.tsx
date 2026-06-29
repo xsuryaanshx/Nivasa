@@ -53,6 +53,7 @@ export default function Tenants() {
   const [optimisticStatuses, setOptimisticStatuses] = useState<Record<string, string>>({});
   const [sentStatus, setSentStatus] = useState<Record<string, boolean>>({});
   const [editingTenant, setEditingTenant] = useState<any | null>(null);
+  const [showIsland, setShowIsland] = useState(false);
 
   const fetchTenants = async (silent = false) => {
     try {
@@ -83,6 +84,14 @@ export default function Tenants() {
       window.removeEventListener("nivasa:refresh", handler);
       window.removeEventListener("nivasa:refresh-silent", silentHandler);
     };
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowIsland(window.scrollY > 150);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const handleSetStatus = (s: PaymentStatus | "all") => {
@@ -266,6 +275,35 @@ export default function Tenants() {
 
   return (
     <div>
+      {/* Dynamic Island / Sticky Action Pill */}
+      <AnimatePresence>
+        {showIsland && selectedTenantIds.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -40, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -40, scale: 0.9 }}
+            transition={{ type: "spring", stiffness: 350, damping: 25 }}
+            className="fixed top-4 left-1/2 -translate-x-1/2 z-[70] flex items-center gap-2 p-1.5 rounded-full bg-card/40 border border-white/20 shadow-float glass-strong"
+          >
+            {canExport && (
+              <button 
+                onClick={handleExport}
+                className="flex items-center justify-center h-10 w-10 rounded-full bg-card text-foreground hover:bg-secondary transition-colors border border-border/50"
+              >
+                <FileSpreadsheet className="h-4 w-4" />
+              </button>
+            )}
+            <button 
+              onClick={() => window.dispatchEvent(new CustomEvent("nivasa:add-tenant"))}
+              className="flex items-center gap-2 h-10 px-5 rounded-full bg-brand text-white font-semibold hover:bg-brand/90 transition-colors shadow-glow-sm"
+            >
+              <UserPlus className="h-4 w-4" />
+              <span className="text-sm">Add</span>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <PageHeader
         title={t('tenants') || "Tenants"}
         subtitle={"Manage all your property tenants and monitor their payment status"}
