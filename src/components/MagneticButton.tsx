@@ -16,6 +16,10 @@ export const MagneticButton = forwardRef<HTMLButtonElement, Props>(function Magn
   const y = useSpring(useMotionValue(0), { stiffness: 250, damping: 18 });
 
   const onMove = (e: React.MouseEvent) => {
+    // Disable magnetic effect on touch devices (mobile/tablets) to prevent click-misses
+    if (typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches) {
+      return;
+    }
     const el = ref.current;
     if (!el) return;
     const r = el.getBoundingClientRect();
