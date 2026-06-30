@@ -4,6 +4,7 @@ import { ArrowRight, Eye, EyeOff, Sparkles, User, Phone, CalendarDays } from "lu
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { NivasaLogo } from "@/components/NivasaLogo";
 import { MagneticButton } from "@/components/MagneticButton";
 import { toast } from "sonner";
 
@@ -106,9 +107,7 @@ export default function Register() {
         className="relative z-10 w-full max-w-[540px] glass-strong rounded-2xl p-8 shadow-float"
       >
         <div className="mb-7 flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl">
-            <img src="/nivasa-brand-v2.png" alt="Nivasa Logo" className="h-full w-full object-contain" />
-          </div>
+          <NivasaLogo className="h-12 w-12 rounded-xl" iconOnly />
           <div>
             <div className="text-xl font-bold tracking-tight">Nivasa</div>
             <div className="text-xs text-muted-foreground font-medium">Join the workspace</div>

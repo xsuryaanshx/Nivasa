@@ -41,11 +41,7 @@ export function NivasaLogo({ className, imgClassName, alt = "Nivasa Logo", iconO
       <img
         src={src}
         alt={alt}
-        className={cn(
-          "h-full w-full object-contain transition-opacity duration-300",
-          src.includes("neon") && "mix-blend-screen",
-          imgClassName
-        )}
+        className={cn("h-full w-full object-contain transition-opacity duration-300", imgClassName)}
       />
     </div>
   );

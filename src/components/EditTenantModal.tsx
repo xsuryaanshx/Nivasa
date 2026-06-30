@@ -415,7 +415,7 @@ export function EditTenantModal({ open, tenant, onClose, onUpdated }: Props) {
                       value={depositMethod}
                       onChange={(e) => setDepositMethod(e.target.value)}
                       disabled={submitting}
-                      className="h-12 w-full appearance-none rounded-xl border border-border bg-card/70 pl-11 pr-4 text-base sm:text-sm outline-none focus:border-brand focus:ring-4 focus:ring-brand/10 transition-all disabled:opacity-50"
+                      className="h-12 w-full appearance-none rounded-xl border border-border bg-card/70 pl-11 pr-4 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-brand/10 transition-all disabled:opacity-50"
                     >
                       <option value="Pending">Pending</option>
                       <option value="Cash">Cash</option>
@@ -515,7 +515,7 @@ function IconInput({
         maxLength={maxLength} 
         disabled={disabled}
         className={cn(
-          "h-12 w-full rounded-xl border border-border bg-card/70 pr-4 text-base sm:text-sm outline-none transition-all focus:border-brand focus:ring-4 focus:ring-brand/10",
+          "h-12 w-full rounded-xl border border-border bg-card/70 pr-4 text-sm outline-none transition-all focus:border-brand focus:ring-4 focus:ring-brand/10",
           icon ? "pl-11" : "pl-4",
           disabled && "opacity-50 cursor-not-allowed",
         )}
