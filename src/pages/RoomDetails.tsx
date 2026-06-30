@@ -69,6 +69,8 @@ export default function RoomDetails() {
   const [pricingSaving, setPricingSaving] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editNameValue, setEditNameValue] = useState("");
+  const [editingPhoneId, setEditingPhoneId] = useState<string | null>(null);
+  const [editPhoneValue, setEditPhoneValue] = useState("");
   const [roomPayments, setRoomPayments] = useState<any[]>([]);
   const [roomExpenses, setRoomExpenses] = useState<any[]>([]);
   const [tenantInvoices, setTenantInvoices] = useState<any[]>([]);
@@ -197,6 +199,23 @@ export default function RoomDetails() {
       window.dispatchEvent(new CustomEvent("nivasa:refresh"));
     } catch (err: any) {
       toast.error(err.message || "Failed to update room name");
+    }
+  };
+
+  const handleSavePhone = async (tenantId: string) => {
+    const val = editPhoneValue.trim();
+    if (!val) {
+      setEditingPhoneId(null);
+      return;
+    }
+    try {
+      await nivasaApi.updateTenant(tenantId, { phone: val });
+      toast.success("Phone number updated");
+      setEditingPhoneId(null);
+      fetchData();
+      window.dispatchEvent(new CustomEvent("nivasa:refresh"));
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update phone number");
     }
   };
 
@@ -593,7 +612,36 @@ export default function RoomDetails() {
 
                   <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-muted-foreground border-t border-border/50 pt-2">
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 min-w-0">
-                      <span className="flex items-center gap-1 truncate"><Phone className="h-3 w-3 shrink-0" /> {t.phone}</span>
+                      {editingPhoneId === t.id ? (
+                        <div className="flex items-center gap-1">
+                          <Phone className="h-3 w-3 shrink-0" />
+                          <input
+                            autoFocus
+                            value={editPhoneValue}
+                            onChange={(e) => setEditPhoneValue(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") handleSavePhone(t.id);
+                              if (e.key === "Escape") setEditingPhoneId(null);
+                            }}
+                            onBlur={() => handleSavePhone(t.id)}
+                            className="h-5 w-24 rounded bg-background px-1 text-[11px] font-medium text-foreground outline-none border border-brand focus:ring-1 focus:ring-brand"
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </div>
+                      ) : (
+                        <span 
+                          className="flex items-center gap-1 truncate cursor-pointer hover:text-brand transition-colors group" 
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            setEditPhoneValue(t.phone || ""); 
+                            setEditingPhoneId(t.id); 
+                          }}
+                          title="Click to edit phone number"
+                        >
+                          <Phone className="h-3 w-3 shrink-0" /> {t.phone || "No Phone"}
+                          <Edit2 className="h-2.5 w-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </span>
+                      )}
                       {t.joined_at && <span className="flex items-center gap-1 shrink-0"><Calendar className="h-3 w-3" /> {new Date(t.joined_at).toLocaleDateString()}</span>}
                       {t.bed_assignment && <span className="flex items-center gap-1 shrink-0 text-brand font-medium">Bed: {t.bed_assignment}</span>}
                     </div>
