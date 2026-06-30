@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, Eye, EyeOff } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { MagneticButton } from "@/components/MagneticButton";
 import { nivasaApi } from "@/lib/api";
 import { toast } from "sonner";
@@ -61,6 +62,10 @@ export default function Login() {
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4">
       <div className="aurora" />
       <div className="absolute inset-0 bg-gradient-aurora opacity-60" />
+
+      <div className="absolute top-4 right-4 z-50">
+        <ThemeToggle />
+      </div>
 
       <motion.div
         initial={{ opacity: 0, y: 20, scale: 0.98 }}
