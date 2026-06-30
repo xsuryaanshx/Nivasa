@@ -48,7 +48,7 @@ export function GlassModal({ open, onClose, title, description, children }: Prop
     <Drawer open={open} onOpenChange={(val) => !val && onClose()} repositionInputs={isNative ? true : false}>
       <DrawerContent 
         className={cn(
-          "glass-strong rounded-t-[20px] border-border/50 mx-auto w-full max-w-md",
+          "bg-card border border-border/50 rounded-t-[20px] mx-auto w-full max-w-md shadow-float",
           isNative ? "max-h-[90dvh]" : "max-h-[85vh]"
         )}
       >
