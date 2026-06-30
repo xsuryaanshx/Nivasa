@@ -237,9 +237,9 @@ export default function Tenants() {
 
   const handleBulkMarkUnpaid = async () => {
     try {
-      if (selectedTenantIds.length !== 1) return;
+      if (selectedTenantIds.length === 0) return;
       setActionLoading(true);
-      await nivasaApi.revertLastPayment(selectedTenantIds[0]);
+      await Promise.all(selectedTenantIds.map(id => nivasaApi.revertLastPayment(id)));
       toast.success("Successfully reverted to unpaid status!");
       setSelectedTenantIds([]);
       window.dispatchEvent(new CustomEvent("nivasa:refresh"));
@@ -387,11 +387,10 @@ export default function Tenants() {
         {selectedTenantIds.length > 0 && (
           <div className="fixed bottom-28 lg:bottom-6 left-0 right-0 z-[60] flex justify-center pointer-events-none px-4">
             {(() => {
-              const isSingleSelected = selectedTenantIds.length === 1;
-              const singleSelectedTenant = isSingleSelected ? tenantsList.find(t => t.id === selectedTenantIds[0]) : null;
-              const isSingleSelectedPaid = singleSelectedTenant 
-                ? (optimisticStatuses[singleSelectedTenant.id] || singleSelectedTenant.paymentStatus) === 'paid' 
-                : false;
+              const allSelectedArePaid = selectedTenantIds.length > 0 && selectedTenantIds.every(id => {
+                const t = tenantsList.find(x => x.id === id);
+                return t && (optimisticStatuses[t.id] || t.paymentStatus) === 'paid';
+              });
 
               return (
                 <motion.div
@@ -413,16 +412,16 @@ export default function Tenants() {
                   
                   <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                     <button
-                      onClick={isSingleSelectedPaid ? handleBulkMarkUnpaid : handleBulkMarkPaid}
+                      onClick={allSelectedArePaid ? handleBulkMarkUnpaid : handleBulkMarkPaid}
                       disabled={actionLoading}
                       className={cn(
                         "h-9 px-3 sm:px-4 xs-px-2 rounded-xl text-xs font-semibold text-white transition-colors flex items-center gap-1.5 shadow-md disabled:opacity-50",
-                        isSingleSelectedPaid 
+                        allSelectedArePaid 
                           ? "bg-amber-500 hover:bg-amber-600 shadow-amber-500/20" 
                           : "bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20"
                       )}
                     >
-                      {isSingleSelectedPaid ? (
+                      {allSelectedArePaid ? (
                         <>
                           <Clock className="h-3.5 w-3.5 sm:hidden" />
                           <span className="hidden sm:inline">Mark Unpaid</span>
