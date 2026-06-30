@@ -474,12 +474,12 @@ export default function RoomDetails() {
                 
                 if (netBalance <= 0) {
                   displayStatus = "paid";
-                  bgClass = "bg-emerald-500/10 border border-emerald-500/20";
+                  bgClass = "bg-emerald-500/10 border border-emerald-500/20 glow-paid";
                 } else if (totalPaidThisMonth > 0) {
                   displayStatus = "partial";
                   bgClass = "bg-blue-500/10 border border-blue-500/20";
                 } else {
-                  if (displayStatus === "late") bgClass = "bg-red-500/10 border border-red-500/20";
+                  if (displayStatus === "late") bgClass = "bg-red-500/10 border border-red-500/20 glow-late";
                   else bgClass = "bg-orange-500/10 border border-orange-500/20";
                 }
 
