@@ -89,7 +89,7 @@ body::-webkit-scrollbar {
     --shadow-float: 0 20px 40px -15px rgba(0, 0, 0, 0.6);
     
     --gradient-brand: linear-gradient(135deg, hsl(217, 91%, 60%), hsl(217, 91%, 50%));
-    --gradient-aurora: linear-gradient(135deg, hsl(217, 91%, 60%), hsl(199, 89%, 48%), hsl(262, 83%, 68%));
+    --gradient-aurora: linear-gradient(135deg, hsl(221, 60%, 25%), hsl(200, 60%, 20%), hsl(262, 50%, 25%));
     --gradient-glass: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
   }
   .theme {
@@ -237,9 +237,9 @@ body::-webkit-scrollbar {
 
 body {
   background: 
-    radial-gradient(circle at 15% 30%, rgba(37, 99, 235, 0.18), transparent 40%),
-    radial-gradient(circle at 85% 20%, rgba(14, 165, 233, 0.22), transparent 40%),
-    radial-gradient(circle at 50% 80%, rgba(139, 92, 246, 0.18), transparent 40%);
+    radial-gradient(circle at 15% 30%, rgba(30, 58, 138, 0.08), transparent 60%),
+    radial-gradient(circle at 85% 20%, rgba(17, 24, 39, 0.12), transparent 60%),
+    radial-gradient(circle at 50% 80%, rgba(49, 46, 129, 0.08), transparent 60%);
   background-color: hsl(var(--background));
   background-size: 200% 200%;
   /* Parallax depth: move background slightly based on scroll-offset */
