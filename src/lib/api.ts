@@ -362,18 +362,13 @@ async function deleteRoom(id: string) {
     // Constraint check
     const canDelete = await canDeleteRoom(id);
     if (!canDelete) {
-      throw new Error("Cannot delete room: It has active tenants. Please remove or vacate them first.");
+      throw new Error("Cannot delete room: It has tenants (active or past). Please permanently delete all past tenants first.");
     }
 
     await supabase
       .from("payments")
       .delete()
       .eq("unit_id", id)
-      .eq("user_id", user_id);
-    await supabase
-      .from("tenants")
-      .delete()
-      .eq("room_id", id)
       .eq("user_id", user_id);
     const { error } = await supabase
       .from("units")
@@ -393,20 +388,28 @@ async function canDeleteRoom(id: string): Promise<boolean> {
     .from("tenants")
     .select("*", { count: "exact", head: true })
     .eq("room_id", id)
-    .eq("user_id", user_id)
-    .neq("status", "vacated");
+    .eq("user_id", user_id);
   return count === 0;
 }
 
 async function canDeleteBuilding(id: string): Promise<boolean> {
   const user_id = await requireAuthUserId();
-  const { count } = await supabase
+  const { count: roomsCount } = await supabase
     .from("units")
     .select("*", { count: "exact", head: true })
     .eq("building_id", id)
     .eq("user_id", user_id)
     .neq("status", "vacant");
-  return count === 0;
+    
+  if (roomsCount !== null && roomsCount > 0) return false;
+  
+  const { count: tenantsCount } = await supabase
+    .from("tenants")
+    .select("*", { count: "exact", head: true })
+    .eq("building_id", id)
+    .eq("user_id", user_id);
+    
+  return tenantsCount === 0;
 }
 
 async function deleteBuilding(id: string) {
@@ -419,17 +422,12 @@ async function deleteBuilding(id: string) {
     // Constraint check
     const canDelete = await canDeleteBuilding(id);
     if (!canDelete) {
-      throw new Error("Cannot delete building: It contains rooms that are not vacant. Please vacate all rooms first.");
+      throw new Error("Cannot delete building: It either has non-vacant rooms, or contains tenant history. Please manually delete past tenants and vacate all rooms first.");
     }
 
     /* Enforce ownership on all cascaded deletes */
     await supabase
       .from("payments")
-      .delete()
-      .eq("building_id", id)
-      .eq("user_id", user_id);
-    await supabase
-      .from("tenants")
       .delete()
       .eq("building_id", id)
       .eq("user_id", user_id);
@@ -1165,6 +1163,28 @@ async function restoreTenant(roomId: string, tenantId: string) {
     return true;
   } catch (error) {
     safeLog("restoreTenant", error);
+    throw error;
+  }
+}
+
+async function hardDeleteTenant(tenantId: string) {
+  try {
+    const user_id = await requireAuthUserId();
+    
+    await supabase.from("payments").delete().eq("tenant_id", tenantId).eq("user_id", user_id);
+    
+    const { error } = await supabase
+      .from("tenants")
+      .delete()
+      .eq("id", tenantId)
+      .eq("user_id", user_id);
+      
+    if (error) throw error;
+    
+    await logUserActivity("tenant", "Permanently deleted a past tenant", { tenant_id: tenantId });
+    return true;
+  } catch (error) {
+    safeLog("hardDeleteTenant", error);
     throw error;
   }
 }
@@ -2246,8 +2266,10 @@ export const nivasaApi = {
   deleteRoom,
   updateTenant,
   addTenant,
+  editTenant,
   removeTenant,
   restoreTenant,
+  hardDeleteTenant,
   addPayment,
   addPaymentsBulk,
   getRecentPayments,

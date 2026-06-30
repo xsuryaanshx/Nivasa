@@ -47,6 +47,9 @@ export default function RoomDetails() {
   const navigate = useNavigate();
   const [room, setRoom] = useState<Room | null>(null);
   const [loading, setLoading] = useState(true);
+  const [invoicesOpen, setInvoicesOpen] = useState(false);
+  const [incidentOpen, setIncidentOpen] = useState(false);
+  const [optimisticDeletedPastTenants, setOptimisticDeletedPastTenants] = useState<Set<string>>(new Set());
   const [addOpen, setAddOpen] = useState(false);
   const [tenantOpen, setTenantOpen] = useState(false);
   const [editingTenant, setEditingTenant] = useState<any>(null);
@@ -871,23 +874,75 @@ export default function RoomDetails() {
       {/* Past tenants */}
       <div className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-soft">
         <div className="text-sm font-semibold tracking-tight">Past tenants</div>
-        {room.pastTenants.length === 0 ? (
+        {room.pastTenants.filter(t => !optimisticDeletedPastTenants.has(t.id)).length === 0 ? (
           <div className="mt-4 rounded-xl border border-dashed border-border p-6 text-center">
             <div className="text-xs text-muted-foreground">No previous tenants on record.</div>
           </div>
         ) : (
           <ul className="mt-4 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
-            {room.pastTenants.map(t => (
-              <li key={t.id} className="flex items-center gap-3 rounded-xl bg-secondary/50 p-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-foreground/85 text-background text-xs font-semibold">
-                  {initials(t.name)}
-                </div>
-                <div className="min-w-0">
-                  <div className="text-sm font-medium truncate">{t.name}</div>
-                  <div className="text-[11px] text-muted-foreground">
-                    Joined: {t.joined_at ? new Date(t.joined_at).toLocaleDateString() : 'N/A'}
-                    {t.leftAt && ` • Left: ${new Date(t.leftAt).toLocaleDateString()}`}
+            {room.pastTenants.filter(t => !optimisticDeletedPastTenants.has(t.id)).map(t => (
+              <li key={t.id} className="flex flex-col gap-3 rounded-xl bg-secondary/50 p-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-foreground/85 text-background text-xs font-semibold">
+                    {initials(t.name)}
                   </div>
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium truncate">{t.name}</div>
+                    <div className="text-[11px] text-muted-foreground">
+                      Joined: {t.joined_at ? new Date(t.joined_at).toLocaleDateString() : 'N/A'}
+                      {t.leftAt && ` • Left: ${new Date(t.leftAt).toLocaleDateString()}`}
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-end gap-2 border-t border-border/50 pt-2">
+                  <button
+                    onClick={async () => {
+                      try {
+                        await nivasaApi.restoreTenant(room.id, t.id);
+                        toast.success(`${t.name} has been restored to Room ${room.number}`);
+                        fetchData();
+                        window.dispatchEvent(new CustomEvent("nivasa:refresh"));
+                      } catch (err: any) {
+                        toast.error(err.message || "Failed to restore tenant");
+                      }
+                    }}
+                    className="px-2 py-1 rounded-md text-[10px] font-semibold bg-brand/10 text-brand hover:bg-brand/20 transition-colors"
+                  >
+                    Restore
+                  </button>
+                  <button
+                    onClick={() => {
+                      setOptimisticDeletedPastTenants(prev => new Set([...prev, t.id]));
+                      showUndoToast(
+                        `Deleted ${t.name}`,
+                        () => {
+                          setOptimisticDeletedPastTenants(prev => {
+                            const next = new Set(prev);
+                            next.delete(t.id);
+                            return next;
+                          });
+                        },
+                        async () => {
+                          try {
+                            await nivasaApi.hardDeleteTenant(t.id);
+                            toast.success("Tenant permanently deleted");
+                            fetchData();
+                          } catch (err: any) {
+                            toast.error(err.message || "Failed to delete tenant");
+                            setOptimisticDeletedPastTenants(prev => {
+                              const next = new Set(prev);
+                              next.delete(t.id);
+                              return next;
+                            });
+                          }
+                        }
+                      );
+                    }}
+                    className="px-2 py-1 rounded-md text-[10px] font-semibold bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
+                  >
+                    Delete
+                  </button>
                 </div>
               </li>
             ))}

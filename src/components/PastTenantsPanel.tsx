@@ -6,6 +6,7 @@ import { nivasaApi } from "@/lib/api";
 import { downloadExcel } from "@/lib/export";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { showUndoToast } from "@/components/UndoToast";
 
 export function PastTenantsPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { t } = useTranslation();
@@ -13,6 +14,7 @@ export function PastTenantsPanel({ open, onClose }: { open: boolean; onClose: ()
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [exporting, setExporting] = useState(false);
+  const [optimisticDeletedIds, setOptimisticDeletedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (open) {
@@ -33,7 +35,49 @@ export function PastTenantsPanel({ open, onClose }: { open: boolean; onClose: ()
     }
   };
 
+  const handleRestore = async (tenant: any) => {
+    try {
+      await nivasaApi.restoreTenant(tenant.roomId, tenant.id);
+      toast.success(`${tenant.name} has been restored to Room ${tenant.roomNumber}`);
+      fetchData();
+      window.dispatchEvent(new CustomEvent("nivasa:refresh"));
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Failed to restore tenant");
+    }
+  };
+
+  const handleDelete = (tenant: any) => {
+    setOptimisticDeletedIds(prev => new Set([...prev, tenant.id]));
+    showUndoToast(
+      `Deleted ${tenant.name}`,
+      () => {
+        setOptimisticDeletedIds(prev => {
+          const next = new Set(prev);
+          next.delete(tenant.id);
+          return next;
+        });
+      },
+      async () => {
+        try {
+          await nivasaApi.hardDeleteTenant(tenant.id);
+          toast.success("Tenant permanently deleted");
+          fetchData();
+        } catch (err: any) {
+          console.error(err);
+          toast.error("Failed to delete tenant");
+          setOptimisticDeletedIds(prev => {
+            const next = new Set(prev);
+            next.delete(tenant.id);
+            return next;
+          });
+        }
+      }
+    );
+  };
+
   const filteredTenants = tenants.filter((tenant) => {
+    if (optimisticDeletedIds.has(tenant.id)) return false;
     const query = searchQuery.toLowerCase();
     return (
       tenant.name.toLowerCase().includes(query) ||
@@ -163,9 +207,11 @@ export function PastTenantsPanel({ open, onClose }: { open: boolean; onClose: ()
                       >
                         <div className="flex items-center justify-between">
                           <h3 className="font-semibold">{t.name}</h3>
-                          <span className="rounded-full bg-rose-500/10 px-2 py-0.5 text-[10px] font-medium text-rose-500">
-                            Vacated
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="rounded-full bg-rose-500/10 px-2 py-0.5 text-[10px] font-medium text-rose-500">
+                              Vacated
+                            </span>
+                          </div>
                         </div>
                         
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-muted-foreground">
@@ -185,6 +231,21 @@ export function PastTenantsPanel({ open, onClose }: { open: boolean; onClose: ()
                             <span className="block font-medium text-foreground">Left</span>
                             {t.leftAt ? format(new Date(t.leftAt), "MMM d, yyyy") : "N/A"}
                           </div>
+                        </div>
+                        
+                        <div className="mt-2 flex items-center justify-end gap-2 border-t border-border/50 pt-3">
+                          <button
+                            onClick={() => handleRestore(t)}
+                            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-brand/10 text-brand hover:bg-brand/20 transition-colors"
+                          >
+                            Restore
+                          </button>
+                          <button
+                            onClick={() => handleDelete(t)}
+                            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
+                          >
+                            Delete
+                          </button>
                         </div>
                       </div>
                     ))}

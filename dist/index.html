@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Google Analytics — SECURITY FIX #23: Deferred until consent -->
+    <!-- To enable, implement a consent banner that calls window.loadGtag() after user accepts -->
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      window.loadGtag = function() {
+        var s = document.createElement('script');
+        s.async = true;
+        s.src = 'https://www.googletagmanager.com/gtag/js?id=G-5F81KJ0X6G';
+        document.head.appendChild(s);
+        gtag('js', new Date());
+        gtag('config', 'G-5F81KJ0X6G', { anonymize_ip: true });
+      };
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=0" />
+    <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Nivasa</title>
+    <meta name="description" content="Nivasa is a calm, premium dashboard to manage buildings, rooms, tenants, and payments — designed with the polish of Apple, Stripe, and Notion." />
+    <meta name="author" content="Nivasa" />
+
+    <meta property="og:title" content="Nivasa" />
+    <meta property="og:description" content="A premium, minimal rental management dashboard. Manage buildings, rooms, tenants, and payments with calm clarity." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    
+    <!-- FIX CACHE ISSUES: Unregister any old service workers left over from previous PWA setups -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          for(let registration of registrations) {
+            registration.unregister();
+            console.log('Unregistered stale service worker.');
+          }
+        });
+      }
+    </script>
+    <script type="module" crossorigin src="/assets/index-2ruFmoWr.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-BhkhKLxe.css">
+  </head>
+
+  <body>
+    <div id="root"></div>
+    <!-- Supabase CDN -->
+
+  </body>
+</html>
