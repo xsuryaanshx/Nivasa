@@ -704,7 +704,9 @@ const TenantCard = memo(function TenantCard({
       transition={{ duration: 0.4, delay: index * 0.04, ease: [0.2, 0.7, 0.2, 1] }}
       className={cn(
         "relative overflow-hidden rounded-2xl border transition-all duration-200 bg-card shadow-soft group",
-        isSelected ? "border-brand shadow-glow-sm" : "border-border"
+        isSelected ? "border-brand shadow-glow-sm" : "border-border",
+        !isSelected && currentStatus === "late" && "glow-late",
+        !isSelected && currentStatus === "paid" && "glow-paid"
       )}
     >
       {/* Checkbox overlay */}
