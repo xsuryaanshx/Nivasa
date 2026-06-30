@@ -62,7 +62,7 @@ export function GlassModal({ open, onClose, title, description, children }: Prop
           )}
         </DrawerHeader>
         <div className={cn(
-          "overflow-y-auto overflow-x-hidden px-4 sm:px-6 pb-6 mt-2",
+          "overflow-y-auto overflow-x-hidden overscroll-none px-4 sm:px-6 pb-6 mt-2",
           !isNative && "flex-1"
         )}>
           {children}
