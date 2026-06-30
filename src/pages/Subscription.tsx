@@ -22,7 +22,7 @@ export default function SubscriptionPage() {
     const currentPlan = subscription?.plans?.display_name || "Silver";
     const requestedPlan = `${planKey.charAt(0).toUpperCase() + planKey.slice(1)} (${billingCycle === "yearly" ? "Billed Annually" : "Billed Monthly"})`;
     
-    const message = `Hi Nivasa Support,\n\nI would like to change my Nivasa subscription plan.\n\nAccount Email: ${email}\nCurrent Plan: ${currentPlan}\nRequested Plan: ${requestedPlan}`;
+    const message = `Hi Nivasa Support,\n\nI would like to change my Nivasa subscription plan.\n\nAccount Email: ${email}\nCurrent Plan: ${currentPlan}\nRequested Plan: ${requestedPlan}\n\n- Sent via Nivasa by Ami Group.`;
     
     // Support WhatsApp phone number
     const supportPhone = "919876543210";
