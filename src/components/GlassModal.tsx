@@ -45,13 +45,12 @@ export function GlassModal({ open, onClose, title, description, children }: Prop
   );
 
   return (
-    <Drawer open={open} onOpenChange={(val) => !val && onClose()}>
+    <Drawer open={open} onOpenChange={(val) => !val && onClose()} repositionInputs={isNative ? true : false}>
       <DrawerContent 
         className={cn(
           "glass-strong rounded-t-[20px] border-border/50 mx-auto w-full max-w-md",
-          isNative ? "max-h-[90dvh]" : "max-h-[85dvh]"
+          isNative ? "max-h-[90dvh]" : "max-h-[85vh]"
         )}
-        style={(!isNative && viewportHeight) ? { maxHeight: `${viewportHeight * 0.85}px` } : undefined}
       >
         <DrawerHeader className="pb-2">
           <DrawerTitle className="text-lg font-semibold tracking-tight">{title}</DrawerTitle>
