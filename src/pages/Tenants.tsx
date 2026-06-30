@@ -1,4 +1,5 @@
 import { PullToRefreshWrapper } from "@/components/PullToRefreshWrapper";
+import { showUndoToast } from "@/components/UndoToast";
 import { nivasaApi } from "@/lib/api";
 import { useEffect, useMemo, useState, memo } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -224,9 +225,24 @@ export default function Tenants() {
       }
 
       await nivasaApi.addPaymentsBulk(paymentsToMark);
-      toast.success(`Successfully marked ${paymentsToMark.length} payments as paid!`);
-      setSelectedTenantIds([]);
+      // Wait for immediate state refresh so it feels snappy
       window.dispatchEvent(new CustomEvent("nivasa:refresh"));
+      
+      const ids = paymentsToMark.map(p => p.tenantId);
+      showUndoToast(
+        paymentsToMark.length > 1 ? `Marked ${paymentsToMark.length} tenants as paid` : "Marked tenant as paid", 
+        async () => {
+          try {
+            await Promise.all(ids.map(id => nivasaApi.revertLastPayment(id)));
+            toast.success("Successfully undone marking as paid!");
+            window.dispatchEvent(new CustomEvent("nivasa:refresh"));
+          } catch (err) {
+            toast.error("Failed to undo");
+          }
+        }
+      );
+      
+      setSelectedTenantIds([]);
     } catch (err) {
       toast.error("Failed to mark payments as paid");
       console.error(err);
@@ -240,9 +256,35 @@ export default function Tenants() {
       if (selectedTenantIds.length === 0) return;
       setActionLoading(true);
       await Promise.all(selectedTenantIds.map(id => nivasaApi.revertLastPayment(id)));
-      toast.success("Successfully reverted to unpaid status!");
-      setSelectedTenantIds([]);
       window.dispatchEvent(new CustomEvent("nivasa:refresh"));
+
+      const ids = [...selectedTenantIds];
+      const revertedTenants = ids.map(id => tenantsList.find(t => t.id === id)).filter(Boolean);
+      showUndoToast(
+        ids.length > 1 ? `Reverted ${ids.length} tenants to unpaid` : "Reverted to unpaid status", 
+        async () => {
+          try {
+            const paymentsToRestore = revertedTenants.map(t => ({
+              buildingId: t.buildingId,
+              roomId: t.roomId,
+              tenantId: t.id,
+              amount: t.roomRent,
+              method: "Cash",
+              date: new Date().toISOString(),
+              status: "paid"
+            }));
+            if (paymentsToRestore.length > 0) {
+              await nivasaApi.addPaymentsBulk(paymentsToRestore);
+              toast.success("Successfully undone revert!");
+              window.dispatchEvent(new CustomEvent("nivasa:refresh"));
+            }
+          } catch (err) {
+            toast.error("Failed to undo");
+          }
+        }
+      );
+
+      setSelectedTenantIds([]);
     } catch (err) {
       toast.error("Failed to mark as unpaid");
       console.error(err);

@@ -10,6 +10,7 @@ import { StatusPill } from "@/components/StatusPill";
 import { Sparkline } from "@/components/Sparkline";
 import { PaymentTimeline } from "@/components/PaymentTimeline";
 import { MagneticButton } from "@/components/MagneticButton";
+import { showUndoToast } from "@/components/UndoToast";
 import { AddPaymentModal } from "@/components/AddPaymentModal";
 import { AddTenantModal } from "@/components/AddTenantModal";
 import { EditTenantModal } from "@/components/EditTenantModal";
@@ -282,7 +283,22 @@ export default function RoomDetails() {
       }
 
       await nivasaApi.removeTenant(room.id, moveOutTenant.id);
-      toast.success("Tenant moved out and settled");
+      
+      const tenantToRestore = moveOutTenant;
+      const roomId = room.id;
+      showUndoToast(
+        "Tenant moved out and settled",
+        async () => {
+          try {
+            await nivasaApi.restoreTenant(roomId, tenantToRestore.id);
+            toast.success("Successfully restored tenant!");
+            fetchData();
+            window.dispatchEvent(new CustomEvent("nivasa:refresh"));
+          } catch (err) {
+            toast.error("Failed to restore tenant");
+          }
+        }
+      );
       
       setMoveOutTenant(null);
       fetchData();

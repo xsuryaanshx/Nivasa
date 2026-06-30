@@ -1102,6 +1102,38 @@ async function removeTenant(roomId: string, tenantId: string) {
     throw error;
   }
 }
+
+async function restoreTenant(roomId: string, tenantId: string) {
+  try {
+    const user_id = await requireAuthUserId();
+    const { error: tenantError } = await supabase
+      .from("tenants")
+      .update({ status: "active", left_at: null })
+      .eq("id", tenantId)
+      .eq("room_id", roomId);
+    if (tenantError) throw tenantError;
+
+    const { error: roomError } = await supabase
+      .from("units")
+      .update({ status: "occupied" })
+      .eq("id", roomId)
+      .eq("user_id", user_id);
+    if (roomError) throw roomError;
+
+    await syncUnitEffectiveRent(roomId);
+    
+    // Fetch tenant name for activity log
+    const { data: tenantData } = await supabase.from("tenants").select("name").eq("id", tenantId).single();
+    const tenantName = tenantData?.name || tenantId;
+    await logUserActivity("tenant", `Restored tenant "${tenantName}"`, { room_id: roomId, tenant_id: tenantId, name: tenantName });
+    
+    return true;
+  } catch (error) {
+    safeLog("restoreTenant", error);
+    throw error;
+  }
+}
+
 /* ———— Payments —————————————————————————————————————————————————— */
 async function addPayment(input: any) {
   try {
@@ -2178,6 +2210,7 @@ export const nivasaApi = {
   updateTenant,
   addTenant,
   removeTenant,
+  restoreTenant,
   addPayment,
   addPaymentsBulk,
   getRecentPayments,
