@@ -205,7 +205,7 @@ export function EditTenantModal({ open, tenant, onClose, onUpdated }: Props) {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 pt-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                   <div>
                     <div className="text-[10px] uppercase text-muted-foreground font-semibold mb-1">Mobile</div>
                     <a href={`tel:${tenant.phone}`} className="text-sm font-medium hover:text-brand hover:underline block">{tenant.phone}</a>
@@ -222,7 +222,7 @@ export function EditTenantModal({ open, tenant, onClose, onUpdated }: Props) {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <div className="text-[10px] uppercase text-muted-foreground font-semibold mb-1">Aadhar</div>
                     <div className="text-sm font-medium">{tenant.aadhar ? maskAadhar(tenant.aadhar) : "-"}</div>
@@ -233,7 +233,7 @@ export function EditTenantModal({ open, tenant, onClose, onUpdated }: Props) {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <div className="text-[10px] uppercase text-muted-foreground font-semibold mb-1">Bed Assignment</div>
                     <div className="text-sm font-medium">{tenant.bed_assignment || "-"}</div>

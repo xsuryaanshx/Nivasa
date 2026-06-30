@@ -189,7 +189,7 @@ export function AddRoomModal({ open, onClose, onSuccess, buildingId }: Props) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Rent Amount */}
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">Rent Amount</label>
@@ -223,7 +223,7 @@ export function AddRoomModal({ open, onClose, onSuccess, buildingId }: Props) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Rent Type */}
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">Rent Type</label>

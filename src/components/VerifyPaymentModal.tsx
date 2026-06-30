@@ -124,7 +124,7 @@ export function VerifyPaymentModal({ open, onClose, payment, onSuccess }: Props)
           )}
 
           {/* Payment metadata grid */}
-          <div className="grid grid-cols-2 gap-3.5 bg-secondary/20 p-4 rounded-xl border">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 bg-secondary/20 p-4 rounded-xl border">
             <div>
               <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block">Tenant</span>
               <span className="text-sm font-bold text-foreground">{payment.tenantName}</span>

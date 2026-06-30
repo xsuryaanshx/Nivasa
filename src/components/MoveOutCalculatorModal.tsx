@@ -126,7 +126,7 @@ export function MoveOutCalculatorModal({ open, onClose, tenant, room, depositPai
             </div>
           </div>
 
-          <div className="flex gap-2 pt-1">
+          <div className="flex flex-col-reverse sm:flex-row gap-2 pt-1">
             <button
               type="button" onClick={onClose} disabled={submitting}
               className="h-11 flex-1 rounded-xl border border-border bg-card/60 text-sm font-medium transition-colors hover:bg-card disabled:opacity-50"

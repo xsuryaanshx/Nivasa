@@ -136,7 +136,7 @@ export function LeaseAgreementModal({ open, onClose, tenant, room }: Props) {
             )}
           </div>
 
-          <div className="flex gap-2 pt-2">
+          <div className="flex flex-col-reverse sm:flex-row gap-2 pt-2">
             <button
               type="button" onClick={onClose}
               className="h-11 flex-1 rounded-xl border border-border bg-card/60 text-sm font-medium transition-colors hover:bg-card"

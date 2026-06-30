@@ -168,7 +168,7 @@ export function PastTenantsPanel({ open, onClose }: { open: boolean; onClose: ()
                           </span>
                         </div>
                         
-                        <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-muted-foreground">
                           <div>
                             <span className="block font-medium text-foreground">Phone</span>
                             {t.phone || "N/A"}

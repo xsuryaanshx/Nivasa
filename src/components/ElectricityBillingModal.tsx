@@ -221,7 +221,7 @@ export function ElectricityBillingModal({ open, onClose, defaultRoomId, onSaved 
         <form onSubmit={submit} className="space-y-4">
 
           {/* Building + Room cascade */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Building">
               <div className="relative">
                 <Building2 className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -275,7 +275,7 @@ export function ElectricityBillingModal({ open, onClose, defaultRoomId, onSaved 
           )}
 
           {/* Meter readings */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label={isFirstEntry ? "Initial Reading (kWh)" : "Previous Reading (kWh)"}>
               <MeterInput
                 value={prevReading}
@@ -362,7 +362,7 @@ export function ElectricityBillingModal({ open, onClose, defaultRoomId, onSaved 
           )}
 
           {/* Actions */}
-          <div className="flex gap-2 pt-1">
+          <div className="flex flex-col-reverse sm:flex-row gap-2 pt-1">
             <button
               type="button" onClick={onClose} disabled={submitting}
               className="h-11 flex-1 rounded-xl border border-border bg-card/60 text-sm font-medium transition-colors hover:bg-card disabled:opacity-50"

@@ -279,7 +279,7 @@ export function SecurityModal({ open, onClose }: Props) {
                 </div>
 
                 {/* Actions */}
-                <div className="flex gap-3 pt-2">
+                <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">
                   <button
                     type="button"
                     onClick={onClose}
