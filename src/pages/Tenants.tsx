@@ -16,7 +16,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useSubscriptionData } from "@/hooks/useSubscriptionData";
 import { downloadExcel } from "@/lib/export";
 import { FileSpreadsheet } from "lucide-react";
-import { openWhatsApp } from "@/lib/whatsapp";
+import { openWhatsApp, buildWhatsAppUrl } from "@/lib/whatsapp";
 import { EditTenantModal } from "@/components/EditTenantModal";
 
 const getFilters = (t: any): ({ key: PaymentStatus | "all"; label: string })[] => [
@@ -163,8 +163,8 @@ export default function Tenants() {
   const getReminderUrl = (tenant: any) => {
     const phone = tenant.whatsapp_number || tenant.phone;
     if (!phone) return "";
-    const msg = encodeURIComponent(`Hi ${tenant.name}, this is a gentle reminder that your rent of ₹${tenant.roomRent} is currently pending. Please complete the payment at your earliest convenience.`);
-    return `https://wa.me/91${phone.replace(/\D/g, '')}?text=${msg}`;
+    const msg = `Hi ${tenant.name}, this is a gentle reminder that your rent of ₹${tenant.roomRent} is currently pending. Please complete the payment at your earliest convenience.`;
+    return buildWhatsAppUrl(phone, msg);
   };
 
   const triggerSingleReminder = (tenant: any) => {
@@ -701,7 +701,7 @@ const TenantCard = memo(function TenantCard({
       controls.start({ x: 0 });
       return;
     }
-    const msg = encodeURIComponent(`Hi ${tenant.name}, this is a gentle reminder that your rent of ₹${tenant.roomRent} is currently pending. Please complete the payment at your earliest convenience.`);
+    const msg = `Hi ${tenant.name}, this is a gentle reminder that your rent of ₹${tenant.roomRent} is currently pending. Please complete the payment at your earliest convenience.`;
     nivasaApi.logFeatureUsage("whatsapp_reminders", "send_reminder", { tenantName: tenant.name, status: "pending" });
     openWhatsApp(phone, msg);
     controls.start({ x: 0 });
@@ -714,9 +714,7 @@ const TenantCard = memo(function TenantCard({
       return;
     }
     const signupUrl = `${window.location.origin}/register`;
-    const msg = encodeURIComponent(
-      `Hi ${tenant.name},\n\nWelcome to Nivasa! Your landlord has added you to the system. You can now register and set up your login credentials to view your room details, invoices, and pay rent directly.\n\n👉 Sign up here: ${signupUrl}\n\n*Important:* Please register using your phone number (${phone}) as it is linked to your profile.\n\nThank you!`
-    );
+    const msg = `Hi ${tenant.name},\n\nWelcome to Nivasa! Your landlord has added you to the system. You can now register and set up your login credentials to view your room details, invoices, and pay rent directly.\n\n👉 Sign up here: ${signupUrl}\n\n*Important:* Please register using your phone number (${phone}) as it is linked to your profile.\n\nThank you!`;
     nivasaApi.logFeatureUsage("whatsapp_reminders", "send_invite", { tenantName: tenant.name });
     openWhatsApp(phone, msg);
     toast.success("Opening WhatsApp invite...");
