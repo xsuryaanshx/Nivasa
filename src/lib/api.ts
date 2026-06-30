@@ -2266,7 +2266,6 @@ export const nivasaApi = {
   deleteRoom,
   updateTenant,
   addTenant,
-  editTenant,
   removeTenant,
   restoreTenant,
   hardDeleteTenant,
