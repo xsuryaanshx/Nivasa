@@ -39,7 +39,7 @@ export function PastTenantsPanel({ open, onClose }: { open: boolean; onClose: ()
     try {
       await nivasaApi.restoreTenant(tenant.roomId, tenant.id);
       toast.success(`${tenant.name} has been restored to Room ${tenant.roomNumber}`);
-      fetchData();
+      loadPastTenants();
       window.dispatchEvent(new CustomEvent("nivasa:refresh"));
     } catch (err: any) {
       console.error(err);
@@ -62,7 +62,7 @@ export function PastTenantsPanel({ open, onClose }: { open: boolean; onClose: ()
         try {
           await nivasaApi.hardDeleteTenant(tenant.id);
           toast.success("Tenant permanently deleted");
-          fetchData();
+          loadPastTenants();
         } catch (err: any) {
           console.error(err);
           toast.error("Failed to delete tenant");
