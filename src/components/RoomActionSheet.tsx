@@ -2,6 +2,8 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Edit2, Trash2, X, AlertTriangle, ArrowLeft, Save } from "lucide-react";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import { showUndoToast } from "@/components/UndoToast";
 import { useLanguage } from "./LanguageProvider";
 import { type Room } from "@/lib/types";
 import { nivasaApi } from "@/lib/api";
@@ -61,16 +63,38 @@ export function RoomActionSheet({ open, onClose, room, onSuccess }: RoomActionSh
   const handleDelete = async () => {
     try {
       setSubmitting(true);
-
-      await nivasaApi.deleteRoom(room.id);
-
-      toast.success(t("room_deleted"));
-      onSuccess?.();
-      window.dispatchEvent(new CustomEvent("nivasa:refresh"));
+      
+      const canDelete = await nivasaApi.canDeleteRoom(room.id);
+      if (!canDelete) {
+        toast.error("Cannot delete room: It has active tenants. Please remove or vacate them first.");
+        setSubmitting(false);
+        return;
+      }
+      
+      window.dispatchEvent(new CustomEvent("nivasa:optimistic-delete-room", { detail: { id: room.id } }));
+      
+      showUndoToast(
+        "Room deleted",
+        () => {
+          window.dispatchEvent(new CustomEvent("nivasa:undo-delete-room", { detail: { id: room.id } }));
+        },
+        async () => {
+          try {
+            await nivasaApi.deleteRoom(room.id);
+            toast.success(t("room_deleted"));
+            onSuccess?.();
+            window.dispatchEvent(new CustomEvent("nivasa:refresh"));
+          } catch (err: any) {
+            toast.error(err.message || "Failed to delete room");
+            window.dispatchEvent(new CustomEvent("nivasa:undo-delete-room", { detail: { id: room.id } }));
+          }
+        }
+      );
+      
       onClose();
     } catch (err: any) {
       console.error(err);
-      toast.error(err.message || "Failed to delete room");
+      toast.error(err.message || "Failed to check room deletion");
     } finally {
       setSubmitting(false);
     }

@@ -358,6 +358,13 @@ async function deleteRoom(id: string) {
   try {
     /* Supabase mode — enforce ownership */
     const user_id = await requireAuthUserId();
+
+    // Constraint check
+    const canDelete = await canDeleteRoom(id);
+    if (!canDelete) {
+      throw new Error("Cannot delete room: It has active tenants. Please remove or vacate them first.");
+    }
+
     await supabase
       .from("payments")
       .delete()
@@ -380,12 +387,40 @@ async function deleteRoom(id: string) {
     throw error;
   }
 }
+async function canDeleteRoom(id: string): Promise<boolean> {
+  const user_id = await requireAuthUserId();
+  const { count } = await supabase
+    .from("tenants")
+    .select("*", { count: "exact", head: true })
+    .eq("room_id", id)
+    .eq("user_id", user_id)
+    .neq("status", "vacated");
+  return count === 0;
+}
+
+async function canDeleteBuilding(id: string): Promise<boolean> {
+  const user_id = await requireAuthUserId();
+  const { count } = await supabase
+    .from("units")
+    .select("*", { count: "exact", head: true })
+    .eq("building_id", id)
+    .eq("user_id", user_id)
+    .neq("status", "vacant");
+  return count === 0;
+}
+
 async function deleteBuilding(id: string) {
   try {
     const user_id = await requireAuthUserId();
     // Fetch building details to get its name for logs
     const { data: bData } = await supabase.from("buildings").select("name").eq("id", id).single();
     const bName = bData?.name || id;
+
+    // Constraint check
+    const canDelete = await canDeleteBuilding(id);
+    if (!canDelete) {
+      throw new Error("Cannot delete building: It contains rooms that are not vacant. Please vacate all rooms first.");
+    }
 
     /* Enforce ownership on all cascaded deletes */
     await supabase
@@ -2196,6 +2231,8 @@ export const nivasaApi = {
   getBuildings,
   addBuilding,
   updateBuilding,
+  canDeleteRoom,
+  canDeleteBuilding,
   deleteBuilding,
   getPropertyDetails,
   getRooms,

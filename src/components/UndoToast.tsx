@@ -7,10 +7,11 @@ interface UndoToastProps {
   id: string | number;
   message: string;
   onUndo: () => void;
+  onConfirm?: () => void;
   duration?: number;
 }
 
-export function UndoToast({ id, message, onUndo, duration = 5000 }: UndoToastProps) {
+export function UndoToast({ id, message, onUndo, onConfirm, duration = 5000 }: UndoToastProps) {
   const [timeLeft, setTimeLeft] = useState(duration);
   const controls = useAnimationControls();
 
@@ -25,13 +26,15 @@ export function UndoToast({ id, message, onUndo, duration = 5000 }: UndoToastPro
       const remaining = duration - (Date.now() - startTime);
       if (remaining <= 0) {
         clearInterval(interval);
+        if (onConfirm) onConfirm();
+        toast.dismiss(id);
       } else {
         setTimeLeft(remaining);
       }
     }, 50);
 
     return () => clearInterval(interval);
-  }, [duration, controls]);
+  }, [id, duration, controls, onConfirm]);
 
   const handleUndo = () => {
     onUndo();
@@ -73,10 +76,10 @@ export function UndoToast({ id, message, onUndo, duration = 5000 }: UndoToastPro
   );
 }
 
-export function showUndoToast(message: string, onUndo: () => void) {
+export function showUndoToast(message: string, onUndo: () => void, onConfirm?: () => void) {
   const toastId = `undo-${Date.now()}`;
   toast.custom((id) => (
-    <UndoToast id={id} message={message} onUndo={onUndo} duration={5000} />
+    <UndoToast id={id} message={message} onUndo={onUndo} onConfirm={onConfirm} duration={5000} />
   ), { 
     id: toastId,
     duration: 5000,

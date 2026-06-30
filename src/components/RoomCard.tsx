@@ -9,6 +9,9 @@ import type { Room } from "@/lib/types";
 import { cn, getTenantPaymentStatus } from "@/lib/utils";
 import { toast } from "sonner";
 import { openWhatsApp } from "@/lib/whatsapp";
+import { EditRoomModal } from "@/components/EditRoomModal";
+import { showUndoToast } from "@/components/UndoToast";
+import { MoveOutCalculatorModal } from "@/components/MoveOutCalculatorModal";
 import { RoomActionSheet } from "./RoomActionSheet";
 import { MarkPaidModal } from "./MarkPaidModal";
 import { nivasaApi } from "@/lib/api";
@@ -109,21 +112,35 @@ export function RoomCard({ room, index, payments = [] }: { room: Room; index: nu
             </button>
             <button
                type="button"
-               onClick={(e) => {
-                 e.stopPropagation();
-                 const hasActiveTenants = room.tenants && room.tenants.length > 0;
-                 const msg = hasActiveTenants
-                   ? `Room ${room.number} has ${room.tenants!.length} active tenant(s). Deleting it will permanently remove all tenant records and payment history. Are you sure?`
-                   : `Are you sure you want to delete Room ${room.number}?`;
-                 if (window.confirm(msg)) {
-                   nivasaApi.deleteRoom(room.id).then(() => {
-                     toast.success("Room deleted");
-                     window.dispatchEvent(new CustomEvent("nivasa:refresh"));
-                   }).catch((err: any) => {
-                     toast.error(err.message || "Failed to delete room");
-                   });
-                 }
-               }}
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  try {
+                    const canDelete = await nivasaApi.canDeleteRoom(room.id);
+                    if (!canDelete) {
+                      toast.error("Cannot delete room: It has active tenants. Please remove or vacate them first.");
+                      return;
+                    }
+                    window.dispatchEvent(new CustomEvent("nivasa:optimistic-delete-room", { detail: { id: room.id } }));
+                    showUndoToast(
+                      "Room deleted",
+                      () => {
+                        window.dispatchEvent(new CustomEvent("nivasa:undo-delete-room", { detail: { id: room.id } }));
+                      },
+                      async () => {
+                        try {
+                          await nivasaApi.deleteRoom(room.id);
+                          toast.success("Room deleted");
+                          window.dispatchEvent(new CustomEvent("nivasa:refresh"));
+                        } catch (err: any) {
+                          toast.error(err.message || "Failed to delete room");
+                          window.dispatchEvent(new CustomEvent("nivasa:undo-delete-room", { detail: { id: room.id } }));
+                        }
+                      }
+                    );
+                  } catch (err: any) {
+                    toast.error(err.message || "Failed to check room deletion");
+                  }
+                }}
                className="text-destructive/70 hover:text-destructive transition-colors"
                title="Delete Room"
             >

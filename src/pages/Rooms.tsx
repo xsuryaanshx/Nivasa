@@ -22,6 +22,7 @@ export default function Rooms() {
   const [searchParams, setSearchParams] = useSearchParams();
   const statusParam = searchParams.get("status") as PaymentStatus | "all" | null;
   const [status, setStatus] = useState<PaymentStatus | "all">(statusParam || "all");
+  const [optimisticDeletedIds, setOptimisticDeletedIds] = useState<Set<string>>(new Set());
 
   const handleSetStatus = (s: PaymentStatus | "all") => {
     setStatus(s);
@@ -72,9 +73,29 @@ export default function Rooms() {
 
   useEffect(() => {
     fetchRooms();
-    const handler = () => fetchRooms();
-    window.addEventListener("nivasa:refresh", handler);
-    return () => window.removeEventListener("nivasa:refresh", handler);
+    const refreshHandler = () => fetchRooms();
+    
+    const handleDeleteOptimistic = (e: any) => {
+      setOptimisticDeletedIds(prev => new Set([...prev, e.detail.id]));
+    };
+    
+    const handleUndoDelete = (e: any) => {
+      setOptimisticDeletedIds(prev => {
+        const next = new Set(prev);
+        next.delete(e.detail.id);
+        return next;
+      });
+    };
+    
+    window.addEventListener("nivasa:refresh", refreshHandler);
+    window.addEventListener("nivasa:optimistic-delete-room", handleDeleteOptimistic);
+    window.addEventListener("nivasa:undo-delete-room", handleUndoDelete);
+
+    return () => {
+      window.removeEventListener("nivasa:refresh", refreshHandler);
+      window.removeEventListener("nivasa:optimistic-delete-room", handleDeleteOptimistic);
+      window.removeEventListener("nivasa:undo-delete-room", handleUndoDelete);
+    };
   }, []);
 
   useEffect(() => {
@@ -109,6 +130,7 @@ export default function Rooms() {
 
   const filtered = useMemo(() => {
     let result = roomsList.filter(r => {
+      if (optimisticDeletedIds.has(r.id)) return false;
       if (status !== "all" && r.status !== status) return false;
       if (selectedBuilding !== "all" && r.buildingName !== selectedBuilding) return false;
       if (!q) return true;

@@ -5,6 +5,7 @@ import { Building2, MoreHorizontal, Plus, Eye, Edit, Trash2 } from "lucide-react
 import { PageHeader } from "@/components/PageHeader";
 import { MagneticButton } from "@/components/MagneticButton";
 import { Money } from "@/components/Money";
+import { showUndoToast } from "@/components/UndoToast";
 import { useNavigate } from "react-router-dom";
 import { AddBuildingModal } from "@/components/AddBuildingModal";
 import { EditBuildingModal } from "@/components/EditBuildingModal";
@@ -61,16 +62,46 @@ export default function Buildings() {
   }, [activeMenuId]);
 
   const handleDelete = async (id: string) => {
-    if (!confirm(t("delete_confirm_building"))) return;
-    
     try {
-      await nivasaApi.deleteBuilding(id);
-      toast.success(t("building_deleted"));
-      fetchBuildings();
-      window.dispatchEvent(new CustomEvent("nivasa:refresh"));
-    } catch (error) {
-      console.error("Error deleting building:", error);
-      toast.error(t("building_delete_failed"));
+      const canDelete = await nivasaApi.canDeleteBuilding(id);
+      if (!canDelete) {
+        toast.error("Cannot delete building: It contains rooms that are not vacant. Please vacate all rooms first.");
+        return;
+      }
+      
+      const buildingToDelete = buildingsList.find(b => b.id === id);
+      if (!buildingToDelete) return;
+      
+      // Optimistic delete
+      setBuildingsList(prev => prev.filter(b => b.id !== id));
+      setActiveMenuId(null);
+      
+      showUndoToast(
+        "Building deleted",
+        () => {
+          // Undo clicked
+          setBuildingsList(prev => {
+            const newList = [...prev, buildingToDelete];
+            return newList.sort((a, b) => a.name.localeCompare(b.name));
+          });
+        },
+        async () => {
+          // 5s elapsed
+          try {
+            await nivasaApi.deleteBuilding(id);
+            toast.success(t("building_deleted"));
+            fetchBuildings();
+            window.dispatchEvent(new CustomEvent("nivasa:refresh"));
+          } catch (error: any) {
+            console.error("Error deleting building:", error);
+            toast.error(error.message || t("building_delete_failed"));
+            fetchBuildings();
+          }
+        }
+      );
+    } catch (error: any) {
+      console.error("Error checking building deletion:", error);
+      toast.error(error.message || t("building_delete_failed"));
     }
   };
 
