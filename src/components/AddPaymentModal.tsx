@@ -420,7 +420,7 @@ export function AddPaymentModal({ open, onClose, defaultRoomId, defaultTenantId,
           </Field>
 
           {/* Reference + Note */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Reference Number" optional>
               <div className="relative">
                 <Hash className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -486,7 +486,7 @@ export function AddPaymentModal({ open, onClose, defaultRoomId, defaultTenantId,
           </div>
 
           {/* Buttons */}
-          <div className="flex gap-2 pt-1">
+          <div className="flex flex-col-reverse sm:flex-row gap-2 pt-1">
             <button
               type="button" onClick={onClose} disabled={submitting}
               className="h-11 flex-1 rounded-xl border border-border bg-card/60 text-sm font-medium transition-colors hover:bg-card disabled:opacity-50"
