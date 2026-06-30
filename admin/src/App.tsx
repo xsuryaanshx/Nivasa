@@ -2764,6 +2764,7 @@ function ActivityLogsView({ activityLogs }: ActivityLogsViewProps) {
   const [selectedType, setSelectedType] = useState<string>("all");
   const [search, setSearch] = useState<string>("");
   const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
+  const [metadataModalData, setMetadataModalData] = useState<any>(null);
 
   // Summary stats
   const totalLogs = activityLogs.length;
@@ -3006,7 +3007,7 @@ function ActivityLogsView({ activityLogs }: ActivityLogsViewProps) {
                     <td className="px-6 py-4 text-right whitespace-nowrap">
                       {e.metadata && Object.keys(e.metadata).length > 0 ? (
                         <span
-                          onClick={() => alert(JSON.stringify(e.metadata, null, 2))}
+                          onClick={() => setMetadataModalData(e.metadata)}
                           className="inline-flex items-center gap-1 cursor-pointer text-[10px] font-bold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
                         >
                           View Details ({Object.keys(e.metadata).length})
@@ -3022,6 +3023,32 @@ function ActivityLogsView({ activityLogs }: ActivityLogsViewProps) {
           </table>
         </div>
       </motion.section>
+
+      {/* Metadata Modal */}
+      {metadataModalData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="w-full max-w-lg bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-zinc-800 overflow-hidden"
+          >
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/50">
+              <h3 className="text-sm font-bold text-slate-800 dark:text-zinc-100">Metadata Payload</h3>
+              <button
+                onClick={() => setMetadataModalData(null)}
+                className="p-1.5 rounded-full hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-500 dark:text-zinc-400 transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="p-6 max-h-[60vh] overflow-y-auto">
+              <pre className="text-xs font-mono bg-slate-50 dark:bg-black/50 p-4 rounded-xl border border-slate-200 dark:border-zinc-800/80 text-slate-700 dark:text-zinc-300 overflow-x-auto">
+                {JSON.stringify(metadataModalData, null, 2)}
+              </pre>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
