@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   Drawer,
   DrawerContent,
@@ -17,6 +17,25 @@ interface Props {
 }
 
 export function GlassModal({ open, onClose, title, description, children }: Props) {
+  const [viewportHeight, setViewportHeight] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.visualViewport) return;
+
+    const handler = () => {
+      setViewportHeight(window.visualViewport?.height || window.innerHeight);
+    };
+
+    window.visualViewport.addEventListener("resize", handler);
+    window.visualViewport.addEventListener("scroll", handler);
+    handler(); // initialize
+
+    return () => {
+      window.visualViewport?.removeEventListener("resize", handler);
+      window.visualViewport?.removeEventListener("scroll", handler);
+    };
+  }, []);
+
   const isNative = typeof window !== "undefined" && (
     !!(window as any).Capacitor ||
     window.location.protocol === "file:" ||
@@ -27,10 +46,13 @@ export function GlassModal({ open, onClose, title, description, children }: Prop
 
   return (
     <Drawer open={open} onOpenChange={(val) => !val && onClose()}>
-      <DrawerContent className={cn(
-        "glass-strong rounded-t-[20px] border-border/50 mx-auto w-full max-w-md",
-        isNative ? "max-h-[90dvh]" : "max-h-[85dvh]"
-      )}>
+      <DrawerContent 
+        className={cn(
+          "glass-strong rounded-t-[20px] border-border/50 mx-auto w-full max-w-md",
+          isNative ? "max-h-[90dvh]" : "max-h-[85dvh]"
+        )}
+        style={(!isNative && viewportHeight) ? { maxHeight: `${viewportHeight * 0.85}px` } : undefined}
+      >
         <DrawerHeader className="pb-2">
           <DrawerTitle className="text-lg font-semibold tracking-tight">{title}</DrawerTitle>
           {description && (
