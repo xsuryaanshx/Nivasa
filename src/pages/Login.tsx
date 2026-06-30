@@ -47,6 +47,7 @@ export default function Login() {
 
       const { data, error } = await nivasaApi.auth.signIn(user, pwd);
       if (error) throw error;
+      await nivasaApi.logUserActivity("login", "User logged in successfully", { email: user });
       navigate("/app");
     } catch (err: any) {
       setError("Invalid email or password. Please try again.");

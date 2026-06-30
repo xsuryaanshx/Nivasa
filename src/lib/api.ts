@@ -242,6 +242,7 @@ async function addBuilding(input: {
       if (unitsError)
         safeLog("Error inserting auto-generated units", unitsError);
     }
+    await logUserActivity("building", `Created building "${input.name}"`, { name: input.name, address: input.address, total_rooms: input.total_rooms });
     return data;
   } catch (error) {
     safeLog("addBuilding", error);
@@ -347,6 +348,7 @@ async function updateBuilding(
     if (targetRooms !== undefined) {
       await adjustBuildingRooms(id, targetRooms);
     }
+    await logUserActivity("building", `Updated building "${updates.name || 'details'}"`, { building_id: id, updates });
   } catch (error) {
     safeLog("updateBuilding", error);
     throw error;
@@ -381,6 +383,10 @@ async function deleteRoom(id: string) {
 async function deleteBuilding(id: string) {
   try {
     const user_id = await requireAuthUserId();
+    // Fetch building details to get its name for logs
+    const { data: bData } = await supabase.from("buildings").select("name").eq("id", id).single();
+    const bName = bData?.name || id;
+
     /* Enforce ownership on all cascaded deletes */
     await supabase
       .from("payments")
@@ -403,6 +409,7 @@ async function deleteBuilding(id: string) {
       .eq("id", id)
       .eq("user_id", user_id);
     if (error) throw error;
+    await logUserActivity("building", `Deleted building "${bName}"`, { building_id: id, name: bName });
   } catch (error) {
     safeLog("deleteBuilding", error);
     throw error;
@@ -1038,6 +1045,7 @@ async function addTenant(input: {
         safeLog("addTenant.updateRoomStatus", updateError);
     }
     await syncUnitEffectiveRent(input.room_id);
+    await logUserActivity("tenant", `Added tenant "${input.name}"`, { room_id: input.room_id, tenant_id: tenant.id, name: input.name });
     return tenant;
   } catch (error) {
     safeLog("addTenant", error);
@@ -1056,6 +1064,11 @@ async function removeTenant(roomId: string, tenantId: string) {
       .eq("user_id", user_id)
       .single();
     if (!unitCheck) throw new Error("Unauthorized");
+
+    // Fetch tenant name for activity log
+    const { data: tenantData } = await supabase.from("tenants").select("name").eq("id", tenantId).single();
+    const tenantName = tenantData?.name || tenantId;
+
     const { error: tenantError } = await supabase
       .from("tenants")
       .update({ status: "vacated", left_at: new Date().toISOString() })
@@ -1082,6 +1095,7 @@ async function removeTenant(roomId: string, tenantId: string) {
       if (roomError) throw roomError;
     }
     await syncUnitEffectiveRent(roomId);
+    await logUserActivity("tenant", `Vacated tenant "${tenantName}"`, { room_id: roomId, tenant_id: tenantId, name: tenantName });
     return true;
   } catch (error) {
     safeLog("removeTenant", error);
@@ -1123,6 +1137,9 @@ async function addPayment(input: any) {
     };
 
 
+    const { data: tenantData } = await supabase.from("tenants").select("name").eq("id", tenantId).single();
+    const tenantName = tenantData?.name || "Tenant";
+
     const { data, error } = await supabase
       .from("payments")
       .insert([payload])
@@ -1131,6 +1148,7 @@ async function addPayment(input: any) {
     if (error) throw error;
     
     await logFeatureUsage("payment_tracking", "add_payment", { amount: input.amount, status: statusNorm });
+    await logUserActivity("payment", `Recorded payment of ₹${input.amount} for tenant "${tenantName}"`, { tenant_id: tenantId, amount: input.amount, status: statusNorm });
     return data;
   } catch (error) {
     safeLog("addPayment", error);
@@ -1418,6 +1436,7 @@ async function addStaff(input: any) {
     }
 
     await logFeatureUsage("staff_management", "add_staff", { role: input.role });
+    await logUserActivity("staff", `Added staff member "${input.name}" with role "${input.role}"`, { staff_id: data.id, name: input.name, role: input.role });
     return data;
   } catch (error) {
     safeLog("addStaff", error);
@@ -1637,6 +1656,7 @@ async function updateUserSettings(settings: any) {
       .from("user_settings")
       .upsert(patch);
     if (error) throw error;
+    await logUserActivity("settings", "Updated user settings", { settings });
   } catch (error) {
     safeLog("updateUserSettings", error);
     throw error;
@@ -1715,6 +1735,10 @@ async function createInvoice(invoice: any) {
       safeLog("Error upserting tenant_invoice", tenantInvError);
     }
 
+    const { data: tenantData } = await supabase.from("tenants").select("name").eq("id", invoice.tenant_id).single();
+    const tenantName = tenantData?.name || "Tenant";
+    await logUserActivity("invoice", `Created invoice for tenant "${tenantName}" for period "${invoice.month_year}"`, { tenant_id: invoice.tenant_id, total_due: invoice.total_due, month_year: invoice.month_year });
+
     return data;
   } catch (error) {
     safeLog("createInvoice", error);
@@ -1762,6 +1786,7 @@ async function addMaintenanceRequest(request: Partial<MaintenanceRequest>): Prom
       .single();
     if (error) throw error;
     await logFeatureUsage("maintenance_tracking", "add_maintenance_request", { category: request.priority, cost: (request as any).cost });
+    await logUserActivity("maintenance", `Added maintenance request: "${request.title}"`, { request_id: data.id, title: request.title, priority: request.priority });
     return data as MaintenanceRequest;
   } catch (error) {
     safeLog("addMaintenanceRequest", error);
@@ -1966,6 +1991,54 @@ export async function getPublicBuilding(slug: string) {
   return data;
 }
 
+function getFeatureActivityDescription(featureKey: string, action?: string, metadata: any = {}): { actionType: string, description: string } {
+  let actionType = "feature";
+  let description = `Used feature: ${featureKey}`;
+
+  if (featureKey === "whatsapp_reminders") {
+    actionType = "whatsapp";
+    if (action === "send_reminder") {
+      description = `Sent WhatsApp rent reminder to tenant "${metadata.tenantName || 'tenant'}"`;
+    } else if (action === "send_invite") {
+      description = `Sent WhatsApp invite to tenant "${metadata.tenantName || 'tenant'}"`;
+    } else {
+      description = `Sent WhatsApp message`;
+    }
+  } else if (featureKey === "pdf_exports") {
+    actionType = "pdf";
+    if (action === "receipt_export") {
+      description = `Exported payment receipt PDF for tenant "${metadata.tenantName || 'tenant'}"`;
+    } else if (action === "invoice_export") {
+      description = `Exported invoice PDF for tenant "${metadata.tenantName || 'tenant'}"`;
+    } else {
+      description = `Exported PDF document`;
+    }
+  } else if (featureKey === "excel_exports") {
+    actionType = "excel";
+    description = `Exported Excel sheet: "${metadata.filename || 'data.xlsx'}"`;
+  } else if (featureKey === "tenant_trust_score") {
+    actionType = "trust_score";
+    if (action === "report_incident") {
+      description = `Reported tenant incident: "${metadata.type || 'incident'}" (score change: ${metadata.score_change || 0})`;
+    } else {
+      description = `Checked tenant trust score`;
+    }
+  } else if (featureKey === "expense_management") {
+    actionType = "expense";
+    if (action === "add_custom_expense") {
+      description = `Added custom expense: "${metadata.name || 'expense'}" (cost: ₹${metadata.cost || 0})`;
+    } else if (action === "update_custom_expense") {
+      description = `Updated custom expense: "${metadata.name || 'expense'}" (cost: ₹${metadata.cost || 0})`;
+    } else if (action === "delete_custom_expense") {
+      description = `Deleted custom expense`;
+    } else {
+      description = `Modified expense`;
+    }
+  }
+
+  return { actionType, description };
+}
+
 async function logFeatureUsage(featureKey: string, action?: string, metadata: any = {}) {
   try {
     const { data: { session } } = await supabase.auth.getSession();
@@ -1977,10 +2050,31 @@ async function logFeatureUsage(featureKey: string, action?: string, metadata: an
       metadata
     });
     if (error) throw error;
+
+    // Log this feature usage as a user activity log
+    const { actionType, description } = getFeatureActivityDescription(featureKey, action, metadata);
+    await logUserActivity(actionType, description, metadata);
   } catch (error) {
     safeLog("logFeatureUsage", error);
   }
 }
+
+async function logUserActivity(actionType: string, description: string, metadata: any = {}) {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) return;
+    const { error } = await supabase.from("user_activity_logs").insert({
+      user_id: session.user.id,
+      action_type: actionType,
+      description,
+      metadata
+    });
+    if (error) throw error;
+  } catch (error) {
+    safeLog("logUserActivity", error);
+  }
+}
+
 
 async function updatePaymentStatus(paymentId: string, status: string, note?: string) {
   try {
@@ -2060,6 +2154,7 @@ async function revertLastPayment(tenantId: string) {
 
 export const nivasaApi = {
   logFeatureUsage,
+  logUserActivity,
   getUserSettings,
   updateUserSettings,
   getInvoices,

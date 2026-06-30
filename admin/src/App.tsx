@@ -198,9 +198,10 @@ export default function App() {
   const [theme, setTheme] = useState<"light" | "dark">("dark");
 
   // Dashboard state
-  const [activeTab, setActiveTab] = useState<"overview" | "buildings" | "rooms" | "tenants" | "features" | "leads">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "buildings" | "rooms" | "tenants" | "features" | "leads" | "activity">("overview");
   const [users, setUsers] = useState<any[]>([]);
   const [featureEvents, setFeatureEvents] = useState<any[]>([]);
+  const [activityLogs, setActivityLogs] = useState<any[]>([]);
   const [allBuildings, setAllBuildings] = useState<any[]>([]);
   const [allRooms, setAllRooms] = useState<any[]>([]);
   const [allTenants, setAllTenants] = useState<any[]>([]);
@@ -376,6 +377,21 @@ export default function App() {
         console.warn("Could not fetch feature_usage_events, table may not exist yet.", e);
       }
 
+      let activityData: any[] = [];
+      try {
+        const { data: actLogs, error: actError } = await supabase
+          .from("user_activity_logs")
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (actError) {
+          console.warn("Error fetching user_activity_logs:", actError.message);
+        } else if (actLogs) {
+          activityData = actLogs;
+        }
+      } catch (e) {
+        console.warn("Could not fetch user_activity_logs, table may not exist yet.", e);
+      }
+
       // Retrieve Landlord profile details securely
       let usersDetailsMap: Record<string, { email: string; full_name: string }> = {};
       try {
@@ -477,6 +493,16 @@ export default function App() {
       }
 
       setFeatureEvents(eventsData.map(e => {
+        const landlord = mappedUsers.find(u => u.user_id === e.user_id);
+        return {
+          ...e,
+          landlordName: landlord ? landlord.fullName : `Landlord (${e.user_id.slice(0, 8)})`,
+          landlordEmail: landlord ? landlord.email : "—",
+          landlordPlan: landlord ? landlord.planName : "silver"
+        };
+      }));
+
+      setActivityLogs(activityData.map(e => {
         const landlord = mappedUsers.find(u => u.user_id === e.user_id);
         return {
           ...e,
@@ -1051,7 +1077,8 @@ export default function App() {
               { id: "rooms", label: "Rooms", icon: Home },
               { id: "tenants", label: "Tenants", icon: Users },
               { id: "features", label: "Feature Usage", icon: Sparkles },
-              { id: "leads", label: "Toolkit Leads", icon: Mail }
+              { id: "leads", label: "Toolkit Leads", icon: Mail },
+              { id: "activity", label: "Activity Logs", icon: Activity }
             ].map(tab => {
               const Icon = tab.icon;
               const active = activeTab === tab.id;
@@ -1554,6 +1581,13 @@ export default function App() {
                   </table>
                 </div>
               </motion.section>
+            )}
+
+            {/* Activity Logs Tab */}
+            {activeTab === "activity" && (
+              <ActivityLogsView 
+                activityLogs={activityLogs} 
+              />
             )}
           </motion.div>
         </AnimatePresence>
@@ -2730,6 +2764,276 @@ function FeatureUsageView({ featureEvents, theme }: FeatureUsageViewProps) {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+interface ActivityLogsViewProps {
+  activityLogs: any[];
+}
+
+function ActivityLogsView({ activityLogs }: ActivityLogsViewProps) {
+  const [selectedType, setSelectedType] = useState<string>("all");
+  const [search, setSearch] = useState<string>("");
+  const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
+
+  // Summary stats
+  const totalLogs = activityLogs.length;
+
+  const loginsCount = useMemo(() => {
+    return activityLogs.filter(e => e.action_type === "login").length;
+  }, [activityLogs]);
+
+  const uniqueUsers = useMemo(() => {
+    return new Set(activityLogs.map(e => e.user_id)).size;
+  }, [activityLogs]);
+
+  const activeToday = useMemo(() => {
+    const today = new Date().toISOString().split("T")[0];
+    return new Set(
+      activityLogs
+        .filter(e => e.created_at && new Date(e.created_at).toISOString().split("T")[0] === today)
+        .map(e => e.user_id)
+    ).size;
+  }, [activityLogs]);
+
+  // Filtered logs
+  const filteredLogs = useMemo(() => {
+    return activityLogs
+      .filter(e => {
+        const matchesType = selectedType === "all" || e.action_type === selectedType;
+        
+        const term = search.toLowerCase();
+        const matchesSearch = !search || 
+          e.landlordName.toLowerCase().includes(term) ||
+          e.landlordEmail.toLowerCase().includes(term) ||
+          e.action_type.toLowerCase().includes(term) ||
+          (e.description && e.description.toLowerCase().includes(term));
+
+        return matchesType && matchesSearch;
+      })
+      .sort((a, b) => {
+        const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+        return sortOrder === "desc" ? dateB - dateA : dateA - dateB;
+      });
+  }, [activityLogs, selectedType, search, sortOrder]);
+
+  const handleExportCSV = () => {
+    const csvRows = [
+      ["Date", "Landlord Name", "Email", "Activity Type", "Description", "Details"]
+    ];
+
+    filteredLogs.forEach(e => {
+      csvRows.push([
+        new Date(e.created_at).toLocaleString(),
+        e.landlordName,
+        e.landlordEmail,
+        e.action_type,
+        e.description,
+        JSON.stringify(e.metadata || {})
+      ]);
+    });
+
+    const csvContent = "data:text/csv;charset=utf-8," 
+      + csvRows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `nivasa_user_activities_${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const getBadgeStyle = (type: string) => {
+    switch (type) {
+      case "login":
+        return "bg-emerald-500/10 text-emerald-600 border-emerald-500/20";
+      case "logout":
+        return "bg-amber-500/10 text-amber-600 border-amber-500/20";
+      case "signup":
+        return "bg-indigo-500/10 text-indigo-600 border-indigo-500/20";
+      case "building":
+        return "bg-blue-500/10 text-blue-600 border-blue-500/20";
+      case "tenant":
+        return "bg-purple-500/10 text-purple-600 border-purple-500/20";
+      case "payment":
+        return "bg-pink-500/10 text-pink-600 border-pink-500/20";
+      case "staff":
+        return "bg-teal-500/10 text-teal-600 border-teal-500/20";
+      case "maintenance":
+        return "bg-orange-500/10 text-orange-600 border-orange-500/20";
+      default:
+        return "bg-slate-500/10 text-slate-600 border-slate-500/20";
+    }
+  };
+
+  return (
+    <div className="space-y-8 relative">
+      <div className="absolute top-1/3 left-1/4 w-96 h-96 rounded-full bg-indigo-500/10 dark:bg-indigo-500/15 blur-3xl pointer-events-none -z-10 animate-pulse duration-5000" />
+      <div className="absolute top-2/3 right-1/4 w-[500px] h-[500px] rounded-full bg-purple-500/5 dark:bg-purple-500/10 blur-3xl pointer-events-none -z-10 animate-pulse duration-7000" />
+
+      {/* Stats Cards Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[
+          { label: "Total Activities Logged", value: totalLogs, sub: "Historical operations count", color: "from-blue-600/20 to-indigo-600/20", icon: FileText, iconColor: "text-indigo-500", bgAccent: "bg-indigo-500/10 dark:bg-indigo-500/20 border-indigo-500/15 dark:border-indigo-500/10" },
+          { label: "Logins Tracked", value: loginsCount, sub: "Total successful login events", color: "from-emerald-600/20 to-teal-600/20", icon: Activity, iconColor: "text-emerald-500", bgAccent: "bg-emerald-500/10 dark:bg-emerald-500/20 border-emerald-500/15 dark:border-emerald-500/10" },
+          { label: "Active Landlords (All-time)", value: uniqueUsers, sub: "Unique users logged", color: "from-purple-600/20 to-pink-600/20", icon: Users, iconColor: "text-purple-500", bgAccent: "bg-purple-500/10 dark:bg-purple-500/20 border-purple-500/15 dark:border-purple-500/10" },
+          { label: "Active Landlords (Today)", value: activeToday, sub: "Active since midnight UTC", color: "from-amber-600/20 to-orange-600/20", icon: Sparkles, iconColor: "text-amber-500", bgAccent: "bg-amber-500/10 dark:bg-amber-500/20 border-amber-500/15 dark:border-amber-500/10" }
+        ].map((card, i) => {
+          const Icon = card.icon;
+          return (
+            <motion.div
+              key={card.label}
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05 }}
+              className="glass-panel glass-panel-hover rounded-3xl p-6 relative overflow-hidden group border border-white/20 dark:border-zinc-800/80 bg-white/40 dark:bg-zinc-900/40 shadow-xl"
+            >
+              <div className={`absolute -right-4 -top-4 h-24 w-24 rounded-full bg-gradient-to-br ${card.color} opacity-40 blur-2xl group-hover:scale-125 transition-transform duration-500`} />
+              <div className="flex justify-between items-start z-10 relative">
+                <div className="space-y-1">
+                  <span className="text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">{card.label}</span>
+                  <h3 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mt-1">{card.value}</h3>
+                  <p className="text-[10px] font-semibold text-slate-500/80 dark:text-zinc-400/80 mt-0.5">{card.sub}</p>
+                </div>
+                <div className={`flex h-10 w-10 items-center justify-center rounded-2xl border ${card.bgAccent} shadow-sm`}>
+                  <Icon className={`h-5 w-5 ${card.iconColor}`} />
+                </div>
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
+
+      {/* Filter and Search controls */}
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-white/30 dark:bg-zinc-900/30 p-5 rounded-3xl border border-white/10 dark:border-zinc-800/30 backdrop-blur-md">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-col gap-1">
+            <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Activity Type</span>
+            <select
+              value={selectedType}
+              onChange={e => setSelectedType(e.target.value)}
+              className="rounded-xl border border-slate-200/50 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-zinc-300 focus:outline-none focus:border-indigo-500"
+            >
+              <option value="all">All Activities</option>
+              <option value="login">Logins</option>
+              <option value="logout">Logouts</option>
+              <option value="signup">Signups</option>
+              <option value="building">Buildings</option>
+              <option value="tenant">Tenants</option>
+              <option value="payment">Payments</option>
+              <option value="staff">Staff</option>
+              <option value="maintenance">Maintenance</option>
+              <option value="settings">Settings</option>
+              <option value="invoice">Invoices</option>
+            </select>
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Sort Order</span>
+            <select
+              value={sortOrder}
+              onChange={e => setSortOrder(e.target.value as any)}
+              className="rounded-xl border border-slate-200/50 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-zinc-300 focus:outline-none focus:border-indigo-500"
+            >
+              <option value="desc">Newest First</option>
+              <option value="asc">Oldest First</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="flex items-end gap-3">
+          <div className="flex flex-col gap-1 flex-1 md:flex-none">
+            <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Search logs</span>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+              <input
+                type="text"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search user, action, desc..."
+                className="rounded-xl border border-slate-200/50 dark:border-zinc-800 bg-white dark:bg-zinc-900 pl-9 pr-4 py-2 text-xs font-semibold text-slate-800 dark:text-zinc-200 w-full md:w-56 focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+          </div>
+
+          <button
+            onClick={handleExportCSV}
+            className="rounded-xl border border-slate-200/50 dark:border-zinc-800 bg-white hover:bg-slate-50 dark:bg-zinc-900 dark:hover:bg-zinc-800 px-4 py-2 text-xs font-bold text-slate-700 dark:text-zinc-300 transition-all flex items-center gap-1.5 h-[36px]"
+          >
+            <FileSpreadsheet className="h-4 w-4" />
+            Export CSV
+          </button>
+        </div>
+      </div>
+
+      {/* Chronological logs Table */}
+      <motion.section 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="rounded-3xl border border-white/20 dark:border-zinc-800/80 bg-white/40 dark:bg-zinc-900/40 overflow-hidden shadow-xl backdrop-blur-md"
+      >
+        <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-zinc-700">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-slate-200 dark:border-zinc-800 bg-slate-100/50 dark:bg-zinc-900/50 text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
+                <th className="px-6 py-4">Timestamp</th>
+                <th className="px-6 py-4">User Details</th>
+                <th className="px-6 py-4">Action Type</th>
+                <th className="px-6 py-4">Description</th>
+                <th className="px-6 py-4 text-right">Metadata</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200 dark:divide-zinc-800 text-xs">
+              {filteredLogs.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-12 text-center text-slate-500 dark:text-zinc-400 font-medium">
+                    No activity logs match the selected filters.
+                  </td>
+                </tr>
+              ) : (
+                filteredLogs.map((e, index) => (
+                  <tr key={e.id || index} className="hover:bg-slate-100/20 dark:hover:bg-zinc-900/20 transition duration-150">
+                    <td className="px-6 py-4 whitespace-nowrap text-slate-450 dark:text-zinc-550 font-medium">
+                      {new Date(e.created_at).toLocaleString("en-IN")}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col">
+                        <span className="font-bold text-slate-800 dark:text-zinc-200">{e.landlordName}</span>
+                        <span className="text-[10px] text-slate-450 dark:text-zinc-500">{e.landlordEmail}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold border capitalize ${getBadgeStyle(e.action_type)}`}>
+                        {e.action_type}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-slate-750 dark:text-zinc-300 font-medium max-w-[280px] break-words">
+                      {e.description}
+                    </td>
+                    <td className="px-6 py-4 text-right whitespace-nowrap">
+                      {e.metadata && Object.keys(e.metadata).length > 0 ? (
+                        <span 
+                          onClick={() => alert(JSON.stringify(e.metadata, null, 2))}
+                          className="inline-flex items-center gap-1 cursor-pointer text-[10px] font-bold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+                        >
+                          View Details ({Object.keys(e.metadata).length})
+                        </span>
+                      ) : (
+                        <span className="text-slate-450 dark:text-zinc-650">—</span>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </motion.section>
     </div>
   );
 }

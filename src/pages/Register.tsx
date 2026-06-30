@@ -73,6 +73,8 @@ export default function Register() {
       );
       if (error) throw error;
 
+      await nivasaApi.logUserActivity("signup", `User signed up successfully as ${role}`, { email, role, fullName });
+
       // Force sign out immediately after sign up to prevent auto-login
       await nivasaApi.auth.signOut();
 
