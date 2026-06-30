@@ -14,8 +14,8 @@ export function downloadExcel(data: any[], filename: string, title?: string) {
 
   // Add Nivasa branding and metadata at the top
   XLSX.utils.sheet_add_aoa(ws, [
-    [`NIVASA - ${displayTitle.toUpperCase()}`],
-    [`Generated on: ${new Date().toLocaleDateString()} | System: Nivasa`]
+    [`NIVASA BY AMI GROUP - ${displayTitle.toUpperCase()}`],
+    [`Generated on: ${new Date().toLocaleDateString()} | System: Nivasa by Ami Group`]
   ], { origin: "A1" });
 
   // Merge the header columns (A1-G1 and A2-G2)

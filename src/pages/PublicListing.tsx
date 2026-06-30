@@ -63,7 +63,7 @@ export default function PublicListing() {
       alert("No contact number provided for this property.");
       return;
     }
-    const message = `Hi! I am interested in your property: ${building.name}. Could you share more details?`;
+    const message = `Hi! I am interested in your property: ${building.name}. Could you share more details?\n\n- Sent via Nivasa by Ami Group.`;
     const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
     window.open(url, "_blank");
   };
