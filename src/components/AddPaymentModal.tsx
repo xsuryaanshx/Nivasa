@@ -271,7 +271,7 @@ export function AddPaymentModal({ open, onClose, defaultRoomId, defaultTenantId,
                 value={buildingId}
                 onChange={e => handleBuildingChange(e.target.value)}
                 disabled={loadingData}
-                className="h-11 w-full appearance-none rounded-xl border border-border bg-card/70 pl-9 pr-3 text-sm outline-none focus:border-brand focus:shadow-[0_0_0_4px_hsl(var(--ring)/0.12)]"
+                className="h-11 w-full appearance-none rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground/60 pl-9 pr-3 text-sm outline-none focus:border-brand focus:shadow-[0_0_0_4px_hsl(var(--ring)/0.12)]"
               >
                 {loadingData ? (
                   <option>Loading…</option>
@@ -294,7 +294,7 @@ export function AddPaymentModal({ open, onClose, defaultRoomId, defaultTenantId,
                 value={roomId}
                 onChange={e => setRoomId(e.target.value)}
                 disabled={loadingData || roomsList.length === 0}
-                className="h-11 w-full appearance-none rounded-xl border border-border bg-card/70 pl-9 pr-3 text-sm outline-none focus:border-brand focus:shadow-[0_0_0_4px_hsl(var(--ring)/0.12)]"
+                className="h-11 w-full appearance-none rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground/60 pl-9 pr-3 text-sm outline-none focus:border-brand focus:shadow-[0_0_0_4px_hsl(var(--ring)/0.12)]"
               >
                 {loadingData ? (
                   <option>Loading rooms…</option>
@@ -319,7 +319,7 @@ export function AddPaymentModal({ open, onClose, defaultRoomId, defaultTenantId,
                 <select
                   value={tenantId}
                   onChange={e => setTenantId(e.target.value)}
-                  className="h-11 w-full appearance-none rounded-xl border border-border bg-card/70 pl-9 pr-3 text-sm outline-none focus:border-brand focus:shadow-[0_0_0_4px_hsl(var(--ring)/0.12)]"
+                  className="h-11 w-full appearance-none rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground/60 pl-9 pr-3 text-sm outline-none focus:border-brand focus:shadow-[0_0_0_4px_hsl(var(--ring)/0.12)]"
                 >
                   <option value="">Select a tenant</option>
                   {selectedRoom.tenants.filter((t: any) => t.status !== 'vacated').map((t: any) => (
@@ -337,7 +337,7 @@ export function AddPaymentModal({ open, onClose, defaultRoomId, defaultTenantId,
               <select
                 value={paymentType}
                 onChange={e => handlePaymentTypeChange(e.target.value as "Rent" | "Deposit")}
-                className="h-11 w-full appearance-none rounded-xl border border-border bg-card/70 pl-9 pr-3 text-sm outline-none focus:border-brand focus:shadow-[0_0_0_4px_hsl(var(--ring)/0.12)]"
+                className="h-11 w-full appearance-none rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground/60 pl-9 pr-3 text-sm outline-none focus:border-brand focus:shadow-[0_0_0_4px_hsl(var(--ring)/0.12)]"
               >
                 <option value="Rent">Rent</option>
                 <option value="Deposit" disabled={depositPaid}>
@@ -362,7 +362,7 @@ export function AddPaymentModal({ open, onClose, defaultRoomId, defaultTenantId,
                 onChange={e => setAmount(e.target.value)}
                 inputMode="decimal"
                 placeholder={initialAmount.toFixed(0)}
-                className="h-11 w-full rounded-xl border border-border bg-card/70 pl-8 pr-16 text-base font-semibold tnum outline-none focus:border-brand focus:shadow-[0_0_0_4px_hsl(var(--ring)/0.12)]"
+                className="h-11 w-full rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground/60 pl-8 pr-16 text-base font-semibold tnum outline-none focus:border-brand focus:shadow-[0_0_0_4px_hsl(var(--ring)/0.12)]"
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md bg-secondary px-2 py-0.5 font-mono text-[10px] text-muted-foreground">
                 {currency.code}
@@ -378,7 +378,7 @@ export function AddPaymentModal({ open, onClose, defaultRoomId, defaultTenantId,
                 type="date"
                 value={date}
                 onChange={e => setDate(e.target.value)}
-                className="h-11 w-full rounded-xl border border-border bg-card/70 pl-9 pr-3 text-sm outline-none focus:border-brand focus:shadow-[0_0_0_4px_hsl(var(--ring)/0.12)]"
+                className="h-11 w-full rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground/60 pl-9 pr-3 text-sm outline-none focus:border-brand focus:shadow-[0_0_0_4px_hsl(var(--ring)/0.12)]"
               />
             </div>
           </Field>
@@ -428,7 +428,7 @@ export function AddPaymentModal({ open, onClose, defaultRoomId, defaultTenantId,
                   value={reference}
                   onChange={(e) => setReference(e.target.value)}
                   placeholder="TXN-2025-0421"
-                  className="h-11 w-full rounded-xl border border-border bg-card/70 pl-9 pr-3 text-sm outline-none focus:border-brand focus:shadow-[0_0_0_4px_hsl(var(--ring)/0.12)]"
+                  className="h-11 w-full rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground/60 pl-9 pr-3 text-sm outline-none focus:border-brand focus:shadow-[0_0_0_4px_hsl(var(--ring)/0.12)]"
                 />
               </div>
             </Field>
@@ -439,7 +439,7 @@ export function AddPaymentModal({ open, onClose, defaultRoomId, defaultTenantId,
                   value={note}
                   onChange={e => setNote(e.target.value)}
                   placeholder="e.g. partial payment"
-                  className="h-11 w-full rounded-xl border border-border bg-card/70 pl-9 pr-3 text-sm outline-none focus:border-brand focus:shadow-[0_0_0_4px_hsl(var(--ring)/0.12)]"
+                  className="h-11 w-full rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground/60 pl-9 pr-3 text-sm outline-none focus:border-brand focus:shadow-[0_0_0_4px_hsl(var(--ring)/0.12)]"
                 />
               </div>
             </Field>

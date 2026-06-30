@@ -297,7 +297,7 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
                     value={roomId} 
                     onChange={(e) => setRoomId(e.target.value)}
                     disabled={!!defaultRoomId || loadingRooms || submitting}
-                    className="h-12 w-full appearance-none rounded-xl border border-border bg-card/70 px-4 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-brand/10 transition-all disabled:opacity-50"
+                    className="h-12 w-full appearance-none rounded-xl border border-border bg-background px-4 text-sm text-foreground outline-none focus:border-brand focus:ring-4 focus:ring-brand/10 transition-all disabled:opacity-50"
                   >
                     <option value="" disabled>Select a room</option>
                     {loadingRooms ? (
@@ -435,7 +435,7 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
               </Field>
 
               <Field label="ID Document" optional>
-                <div className="relative flex items-center justify-center rounded-xl border border-dashed border-border bg-card/70 p-4 transition-colors hover:bg-secondary/50">
+                <div className="relative flex items-center justify-center rounded-xl border border-dashed border-border bg-background text-foreground p-4 transition-colors hover:bg-secondary/50">
                   <input
                     type="file"
                     accept="image/*,application/pdf"
@@ -498,7 +498,7 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
                       value={depositMethod}
                       onChange={(e) => setDepositMethod(e.target.value)}
                       disabled={submitting}
-                      className="h-12 w-full appearance-none rounded-xl border border-border bg-card/70 pl-11 pr-4 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-brand/10 transition-all disabled:opacity-50"
+                      className="h-12 w-full appearance-none rounded-xl border border-border bg-background pl-11 pr-4 text-sm text-foreground outline-none focus:border-brand focus:ring-4 focus:ring-brand/10 transition-all disabled:opacity-50"
                     >
                       <option value="Pending">Pending</option>
                       <option value="Cash">Cash</option>
@@ -616,7 +616,7 @@ function IconInput({
         maxLength={maxLength} 
         disabled={disabled}
         className={cn(
-          "h-12 w-full rounded-xl border border-border bg-card/70 pr-4 text-sm outline-none transition-all focus:border-brand focus:ring-4 focus:ring-brand/10",
+          "h-12 w-full rounded-xl border border-border bg-background pr-4 text-sm text-foreground placeholder:text-muted-foreground/60 outline-none transition-all focus:border-brand focus:ring-4 focus:ring-brand/10",
           icon ? "pl-11" : "pl-4",
           disabled && "opacity-50 cursor-not-allowed",
         )}
