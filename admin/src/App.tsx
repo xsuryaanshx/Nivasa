@@ -1,18 +1,18 @@
 import { useState, useEffect, useMemo } from "react";
-import { 
-  Shield, 
-  Users, 
-  Building2, 
-  IndianRupee, 
-  TrendingUp, 
-  Play, 
-  Pause, 
-  ArrowUpRight, 
-  LogOut, 
-  Lock, 
-  Search, 
-  RefreshCw, 
-  Check, 
+import {
+  Shield,
+  Users,
+  Building2,
+  IndianRupee,
+  TrendingUp,
+  Play,
+  Pause,
+  ArrowUpRight,
+  LogOut,
+  Lock,
+  Search,
+  RefreshCw,
+  Check,
   AlertTriangle,
   Sun,
   Moon,
@@ -65,11 +65,11 @@ function parseCSV(text: string): Record<string, string>[] {
   let currentVal = "";
   let inQuotes = false;
   let currentRow: string[] = [];
-  
+
   for (let i = 0; i < text.length; i++) {
     const char = text[i];
     const nextChar = text[i + 1];
-    
+
     if (char === '"') {
       if (inQuotes && nextChar === '"') {
         currentVal += '"';
@@ -93,7 +93,7 @@ function parseCSV(text: string): Record<string, string>[] {
         }
         currentRow.push(currentVal);
         currentVal = "";
-        
+
         if (currentRow.length > 0 && (currentRow.length > 1 || currentRow[0].trim() !== "")) {
           results.push(currentRow);
         }
@@ -103,7 +103,7 @@ function parseCSV(text: string): Record<string, string>[] {
       currentVal += char;
     }
   }
-  
+
   // Push the final value and row if there's any left
   if (currentVal || currentRow.length > 0) {
     currentRow.push(currentVal);
@@ -111,17 +111,17 @@ function parseCSV(text: string): Record<string, string>[] {
       results.push(currentRow);
     }
   }
-  
+
   if (results.length < 2) return [];
-  
+
   const headers = results[0].map(h => h.trim().toLowerCase().replace(/[\s_]+/g, ''));
   const mappedRows: Record<string, string>[] = [];
-  
+
   for (let i = 1; i < results.length; i++) {
     const values = results[i];
     // Skip completely empty lines
     if (values.length === 1 && values[0].trim() === "") continue;
-    
+
     const row: Record<string, string> = {};
     headers.forEach((header, index) => {
       if (header) {
@@ -130,7 +130,7 @@ function parseCSV(text: string): Record<string, string>[] {
     });
     mappedRows.push(row);
   }
-  
+
   return mappedRows;
 }
 
@@ -206,7 +206,7 @@ export default function App() {
   const [allRooms, setAllRooms] = useState<any[]>([]);
   const [allTenants, setAllTenants] = useState<any[]>([]);
   const [toolkitLeads, setToolkitLeads] = useState<any[]>([]);
-  
+
   // Detailed Landlord state
   const [selectedLandlord, setSelectedLandlord] = useState<any | null>(null);
   const [landlordPayments, setLandlordPayments] = useState<any[]>([]);
@@ -239,7 +239,7 @@ export default function App() {
     totalRooms: 0,
     estimatedRevenue: 0
   });
-  
+
   const [dbLoading, setDbLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -317,7 +317,7 @@ export default function App() {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      
+
       const isUserAdmin = data.user?.app_metadata?.is_admin === true;
       if (!isUserAdmin) {
         await supabase.auth.signOut();
@@ -418,7 +418,7 @@ export default function App() {
       const mappedUsers = (subsData || []).map((sub: any) => {
         const plan = PLANS.find(p => p.id === sub.plan_id) || PLANS[0];
         const usage = usagesData?.find(u => u.user_id === sub.user_id) || { rooms_count: 0, tenants_count: 0, properties_count: 0 };
-        
+
         const isCurrentUser = session?.user && sub.user_id === session.user.id;
         const currentUserName = session?.user?.user_metadata?.full_name || session?.user?.email?.split("@")[0] || "Super Admin";
         const currentUserEmail = session?.user?.email || "—";
@@ -517,7 +517,7 @@ export default function App() {
         .select("*")
         .order("timestamp", { ascending: false });
       if (leadsError) console.error("Error fetching leads:", leadsError);
-      
+
       if (leadsData) {
         setToolkitLeads(leadsData);
       }
@@ -538,7 +538,7 @@ export default function App() {
     try {
       const { error } = await supabase
         .from("subscriptions")
-        .update({ 
+        .update({
           plan_id: targetPlanId,
           status: "active", // Promote user from trial to active upon plan change
           updated_at: new Date().toISOString()
@@ -560,7 +560,7 @@ export default function App() {
       });
 
       await fetchDashboardData();
-      
+
       if (selectedLandlord && selectedLandlord.user_id === userId) {
         const nextPlan = PLANS.find(p => p.id === targetPlanId)!;
         setSelectedLandlord((prev: any) => ({
@@ -585,7 +585,7 @@ export default function App() {
     try {
       const { error } = await supabase
         .from("subscriptions")
-        .update({ 
+        .update({
           status: nextStatus,
           updated_at: new Date().toISOString()
         })
@@ -627,7 +627,7 @@ export default function App() {
         .select("*, units(name), buildings(name)")
         .eq("user_id", landlord.user_id)
         .order("paid_date", { ascending: false });
-      
+
       if (error) throw error;
       setLandlordPayments(data || []);
     } catch (e) {
@@ -659,7 +659,7 @@ export default function App() {
       try {
         const rawRows = parseCSV(text);
         const normalized = rawRows.map(normalizeRow);
-        
+
         // Validate each row
         const validated = normalized.map((row) => {
           const rowErrors = validateTenantRow(row);
@@ -668,7 +668,7 @@ export default function App() {
             errors: rowErrors
           };
         });
-        
+
         setParsedTenants(validated);
         setImportStep(2);
       } catch (err: any) {
@@ -682,26 +682,26 @@ export default function App() {
     setImportStep(3);
     setImportProgress(0);
     setImportingStatus("Preparing import...");
-    
+
     const validRows = parsedTenants.filter(t => !t.errors || t.errors.length === 0);
     const total = validRows.length;
-    
+
     if (total === 0) {
       setImportResults({ successCount: 0, failedCount: 0, errors: ["No valid tenants to import"] });
       return;
     }
-    
+
     let successCount = 0;
     let failedCount = 0;
     const errors: string[] = [];
-    
+
     const buildingMap: Record<string, string> = {};
     const roomMap: Record<string, string> = {};
 
     for (let i = 0; i < total; i++) {
       const tenant = validRows[i];
       const rowNum = i + 1;
-      
+
       setImportProgress(Math.round((i / total) * 100));
       setImportingStatus(`Importing tenant ${rowNum} of ${total}: ${tenant.tenant_name}...`);
 
@@ -709,7 +709,7 @@ export default function App() {
         // 1. Resolve Building ID
         const bNameKey = tenant.building_name.trim().toLowerCase();
         let buildingId = buildingMap[bNameKey];
-        
+
         if (!buildingId) {
           const { data: existingB, error: findBError } = await supabase
             .from("buildings")
@@ -717,9 +717,9 @@ export default function App() {
             .eq("name", tenant.building_name.trim())
             .eq("user_id", landlordUserId)
             .maybeSingle();
-            
+
           if (findBError) throw new Error(`Failed to query building: ${findBError.message}`);
-          
+
           if (existingB) {
             buildingId = existingB.id;
           } else {
@@ -732,7 +732,7 @@ export default function App() {
               })
               .select("id")
               .single();
-              
+
             if (createBError) throw new Error(`Failed to create building: ${createBError.message}`);
             buildingId = newB.id;
           }
@@ -742,7 +742,7 @@ export default function App() {
         // 2. Resolve Room (Unit) ID
         const rKey = `${buildingId}-${tenant.room_number.trim().toLowerCase()}`;
         let roomId = roomMap[rKey];
-        
+
         if (!roomId) {
           const { data: existingR, error: findRError } = await supabase
             .from("units")
@@ -751,9 +751,9 @@ export default function App() {
             .eq("name", tenant.room_number.trim())
             .eq("user_id", landlordUserId)
             .maybeSingle();
-            
+
           if (findRError) throw new Error(`Failed to query room: ${findRError.message}`);
-          
+
           if (existingR) {
             roomId = existingR.id;
             const { error: updateRError } = await supabase
@@ -763,7 +763,7 @@ export default function App() {
                 rent_amount: tenant.rent_amount
               })
               .eq("id", roomId);
-              
+
             if (updateRError) throw new Error(`Failed to update room: ${updateRError.message}`);
           } else {
             const { data: newR, error: createRError } = await supabase
@@ -777,7 +777,7 @@ export default function App() {
               })
               .select("id")
               .single();
-              
+
             if (createRError) throw new Error(`Failed to create room: ${createRError.message}`);
             roomId = newR.id;
           }
@@ -801,7 +801,7 @@ export default function App() {
             deposit_method: tenant.deposit_method || "Cash",
             status: "active"
           });
-          
+
         if (createTenantError) throw new Error(`Failed to insert tenant: ${createTenantError.message}`);
 
         successCount++;
@@ -811,7 +811,7 @@ export default function App() {
         errors.push(`Tenant "${tenant.tenant_name}": ${err.message || err}`);
       }
     }
-    
+
     // Also count the skipped invalid rows in the failed count
     const invalidCount = parsedTenants.length - total;
     if (invalidCount > 0) {
@@ -830,37 +830,37 @@ export default function App() {
       failedCount,
       errors
     });
-    
+
     // Refresh the dashboard data
     await fetchDashboardData();
   };
 
   // Filtered Lists
   const filteredUsers = users.filter(u => {
-    const matchesSearch = u.email.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          u.fullName.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      u.fullName.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesPlan = planFilter === "all" || u.planName === planFilter;
     const matchesStatus = statusFilter === "all" || u.status === statusFilter;
     return matchesSearch && matchesPlan && matchesStatus;
   });
 
-  const filteredBuildings = allBuildings.filter(b => 
+  const filteredBuildings = allBuildings.filter(b =>
     b.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     b.landlordName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const filteredRooms = allRooms.filter(r => 
+  const filteredRooms = allRooms.filter(r =>
     r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     r.buildingName.toLowerCase().includes(searchQuery.toLowerCase()) ||
     r.landlordName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const filteredTenants = allTenants.filter(t => 
+  const filteredTenants = allTenants.filter(t =>
     t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     t.landlordName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const filteredLeads = toolkitLeads.filter(l => 
+  const filteredLeads = toolkitLeads.filter(l =>
     l.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -896,14 +896,14 @@ export default function App() {
         <div className="absolute top-1/4 left-1/4 h-96 w-96 rounded-full bg-indigo-500/10 blur-[120px] animate-pulse duration-4000" />
         <div className="absolute bottom-1/4 right-1/4 h-96 w-96 rounded-full bg-violet-500/10 blur-[120px] animate-pulse duration-6000" />
 
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ type: "spring", damping: 25, stiffness: 140 }}
           className="w-full max-w-md overflow-hidden rounded-3xl border border-white/10 bg-zinc-900/40 backdrop-blur-2xl p-8 sm:p-10 shadow-2xl relative z-10"
         >
           <div className="flex flex-col items-center mb-8">
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.15, type: "spring" }}
@@ -918,8 +918,8 @@ export default function App() {
           <form onSubmit={handleLogin} className="space-y-6 text-white">
             <div className="space-y-2">
               <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Admin Email</label>
-              <input 
-                type="email" 
+              <input
+                type="email"
                 required
                 value={email}
                 onChange={e => setEmail(e.target.value)}
@@ -930,8 +930,8 @@ export default function App() {
 
             <div className="space-y-2">
               <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Secret Password</label>
-              <input 
-                type="password" 
+              <input
+                type="password"
                 required
                 value={password}
                 onChange={e => setPassword(e.target.value)}
@@ -942,7 +942,7 @@ export default function App() {
 
             <AnimatePresence>
               {authError && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, y: -10, height: 0 }}
                   animate={{ opacity: 1, y: 0, height: "auto" }}
                   exit={{ opacity: 0, y: -10, height: 0 }}
@@ -954,10 +954,10 @@ export default function App() {
               )}
             </AnimatePresence>
 
-            <motion.button 
+            <motion.button
               whileHover={{ scale: 1.015 }}
               whileTap={{ scale: 0.985 }}
-              type="submit" 
+              type="submit"
               disabled={loginLoading}
               className="w-full flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 hover:bg-indigo-500 py-3.5 text-sm font-semibold text-white shadow-lg shadow-indigo-600/25 transition-all duration-300 disabled:opacity-50 cursor-pointer"
             >
@@ -978,7 +978,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen pb-12 transition-colors duration-300 bg-slate-50 dark:bg-zinc-950 text-slate-900 dark:text-zinc-100">
-      
+
       {/* Navigation bar */}
       <header className="sticky top-0 z-40 border-b border-slate-200/50 dark:border-zinc-900/60 bg-white/70 dark:bg-zinc-950/70 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -993,14 +993,14 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-4">
-            <button 
+            <button
               onClick={toggleTheme}
               className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200/60 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50 text-slate-650 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 transition active:scale-95 cursor-pointer"
             >
               {theme === "dark" ? <Sun className="h-4 w-4 text-amber-450 animate-pulse" /> : <Moon className="h-4 w-4 text-indigo-650" />}
             </button>
 
-            <button 
+            <button
               onClick={fetchDashboardData}
               disabled={dbLoading}
               className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200/60 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50 text-slate-650 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 transition active:scale-95 cursor-pointer"
@@ -1010,7 +1010,7 @@ export default function App() {
 
             <div className="h-8 w-px bg-slate-200 dark:bg-zinc-800" />
 
-            <button 
+            <button
               onClick={handleSignOut}
               className="flex items-center gap-2 rounded-xl border border-red-500/25 bg-red-50/50 dark:bg-red-500/5 px-4.5 py-2 text-xs font-semibold text-red-655 dark:text-red-450 hover:bg-red-500/10 transition active:scale-95 cursor-pointer"
             >
@@ -1023,9 +1023,9 @@ export default function App() {
 
       {/* Main Container */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 space-y-8">
-        
+
         {/* Metric Cards Grid */}
-        <motion.section 
+        <motion.section
           initial="hidden"
           animate="visible"
           variants={{
@@ -1042,7 +1042,7 @@ export default function App() {
           ].map((card) => {
             const Icon = card.icon;
             return (
-              <motion.div 
+              <motion.div
                 key={card.label}
                 variants={{
                   hidden: { opacity: 0, y: 15 },
@@ -1089,14 +1089,13 @@ export default function App() {
                     setActiveTab(tab.id as any);
                     setSearchQuery("");
                   }}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all duration-300 relative cursor-pointer ${
-                    active 
-                      ? "text-indigo-650 dark:text-indigo-400" 
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all duration-300 relative cursor-pointer ${active
+                      ? "text-indigo-650 dark:text-indigo-400"
                       : "text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
-                  }`}
+                    }`}
                 >
                   {active && (
-                    <motion.div 
+                    <motion.div
                       layoutId="activeTabIndicator"
                       transition={{ type: "spring", stiffness: 380, damping: 30 }}
                       className="absolute inset-0 bg-indigo-500/10 dark:bg-indigo-500/20 border border-indigo-500/20 dark:border-indigo-500/10 rounded-2xl -z-10"
@@ -1112,7 +1111,7 @@ export default function App() {
           <div className="flex items-center gap-3 pb-2 w-full md:w-auto">
             <div className="relative flex-1 md:flex-none">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <input 
+              <input
                 type="text"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
@@ -1122,7 +1121,7 @@ export default function App() {
             </div>
 
             {activeTab === "overview" && (
-              <select 
+              <select
                 value={planFilter}
                 onChange={e => setPlanFilter(e.target.value)}
                 className="rounded-2xl px-3.5 py-2 text-xs border border-slate-200/60 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50 text-slate-850 dark:text-white focus:border-indigo-500 focus:outline-none cursor-pointer"
@@ -1135,7 +1134,7 @@ export default function App() {
             )}
 
             {activeTab === "overview" && (
-              <select 
+              <select
                 value={statusFilter}
                 onChange={e => setStatusFilter(e.target.value)}
                 className="rounded-2xl px-3.5 py-2 text-xs border border-slate-200/60 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50 text-slate-850 dark:text-white focus:border-indigo-500 focus:outline-none cursor-pointer"
@@ -1173,7 +1172,7 @@ export default function App() {
                       className="overflow-hidden"
                     >
                       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                        <motion.div 
+                        <motion.div
                           whileHover={{ scale: 1.01 }}
                           className="lg:col-span-2 rounded-3xl border border-white/20 dark:border-zinc-800/80 bg-white/40 dark:bg-zinc-900/40 p-6 shadow-xl backdrop-blur-md"
                         >
@@ -1196,8 +1195,8 @@ export default function App() {
                               <AreaChart data={chartData}>
                                 <defs>
                                   <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.2}/>
-                                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.2} />
+                                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
                                   </linearGradient>
                                 </defs>
                                 <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
@@ -1209,7 +1208,7 @@ export default function App() {
                           </div>
                         </motion.div>
 
-                        <motion.div 
+                        <motion.div
                           whileHover={{ scale: 1.01 }}
                           className="rounded-3xl border border-white/20 dark:border-zinc-800/80 bg-white/40 dark:bg-zinc-900/40 p-6 shadow-xl backdrop-blur-md"
                         >
@@ -1248,7 +1247,7 @@ export default function App() {
                   )}
                 </AnimatePresence>
 
-                <motion.section 
+                <motion.section
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 }}
@@ -1278,7 +1277,7 @@ export default function App() {
                             const isPaused = u.status === "paused";
                             return (
                               <tr key={u.id} className="hover:bg-slate-100/20 dark:hover:bg-zinc-900/20 transition">
-                                <td 
+                                <td
                                   className="px-6 py-4 cursor-pointer font-medium"
                                   onClick={() => handleViewLandlordProfile(u)}
                                 >
@@ -1294,13 +1293,12 @@ export default function App() {
                                       value={u.planId}
                                       onChange={(e) => handleSelectPlan(u.user_id, u.id, e.target.value)}
                                       disabled={actionLoading === u.id}
-                                      className={`text-xs font-semibold uppercase tracking-wider rounded-lg border px-3 py-1.5 focus:outline-none appearance-none pr-8 cursor-pointer ${
-                                        u.planName === "platinum" 
-                                          ? "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20" 
+                                      className={`text-xs font-semibold uppercase tracking-wider rounded-lg border px-3 py-1.5 focus:outline-none appearance-none pr-8 cursor-pointer ${u.planName === "platinum"
+                                          ? "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20"
                                           : u.planName === "gold"
-                                          ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
-                                          : "bg-slate-500/10 text-slate-655 dark:text-slate-400 border-slate-500/20"
-                                      }`}
+                                            ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+                                            : "bg-slate-500/10 text-slate-655 dark:text-slate-400 border-slate-500/20"
+                                        }`}
                                     >
                                       {PLANS.map(p => (
                                         <option key={p.id} value={p.id}>{p.displayName}</option>
@@ -1310,24 +1308,22 @@ export default function App() {
                                   </div>
                                 </td>
                                 <td className="px-6 py-4">
-                                  <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-semibold border ${
-                                    u.status === "active"
+                                  <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-semibold border ${u.status === "active"
                                       ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-450 border-emerald-500/20"
                                       : u.status === "paused"
-                                      ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
-                                      : u.status === "trial"
-                                      ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
-                                      : "bg-rose-500/10 text-rose-600 dark:text-rose-455 border-rose-500/20"
-                                  }`}>
-                                    <span className={`h-1.5 w-1.5 rounded-full ${
-                                      u.status === "active"
+                                        ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+                                        : u.status === "trial"
+                                          ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
+                                          : "bg-rose-500/10 text-rose-600 dark:text-rose-455 border-rose-500/20"
+                                    }`}>
+                                    <span className={`h-1.5 w-1.5 rounded-full ${u.status === "active"
                                         ? "bg-emerald-500"
                                         : u.status === "paused"
-                                        ? "bg-amber-500"
-                                        : u.status === "trial"
-                                        ? "bg-blue-500"
-                                        : "bg-rose-500"
-                                    }`} />
+                                          ? "bg-amber-500"
+                                          : u.status === "trial"
+                                            ? "bg-blue-500"
+                                            : "bg-rose-500"
+                                      }`} />
                                     {u.status.toUpperCase()}
                                   </span>
                                 </td>
@@ -1349,11 +1345,10 @@ export default function App() {
                                   <button
                                     onClick={() => handleTogglePause(u.user_id, u.id, u.status)}
                                     disabled={actionLoading === u.id}
-                                    className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold transition active:scale-95 disabled:opacity-50 ${
-                                      isPaused 
+                                    className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold transition active:scale-95 disabled:opacity-50 ${isPaused
                                         ? "border-emerald-500/20 bg-emerald-500/5 text-emerald-600 dark:text-emerald-450 hover:bg-emerald-500/10"
                                         : "border-amber-500/20 bg-amber-500/5 text-amber-500 hover:bg-amber-500/10"
-                                    }`}
+                                      }`}
                                   >
                                     {actionLoading === u.id ? (
                                       <RefreshCw className="h-3 w-3 animate-spin" />
@@ -1383,7 +1378,7 @@ export default function App() {
 
             {/* Properties Tab */}
             {activeTab === "buildings" && (
-              <motion.section 
+              <motion.section
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
@@ -1424,7 +1419,7 @@ export default function App() {
 
             {/* Rooms Tab */}
             {activeTab === "rooms" && (
-              <motion.section 
+              <motion.section
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
@@ -1456,11 +1451,10 @@ export default function App() {
                             <td className="px-6 py-4 font-medium text-slate-700 dark:text-zinc-300">{r.landlordName}</td>
                             <td className="px-6 py-4 font-semibold text-indigo-650 dark:text-indigo-400">₹{r.rent_amount}</td>
                             <td className="px-6 py-4">
-                              <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold border ${
-                                r.status === "occupied"
+                              <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold border ${r.status === "occupied"
                                   ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
                                   : "bg-slate-500/10 text-slate-600 dark:text-slate-450 border-slate-500/20"
-                              }`}>
+                                }`}>
                                 {r.status}
                               </span>
                             </td>
@@ -1475,7 +1469,7 @@ export default function App() {
 
             {/* Tenants Tab */}
             {activeTab === "tenants" && (
-              <motion.section 
+              <motion.section
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
@@ -1509,11 +1503,10 @@ export default function App() {
                             <td className="px-6 py-4 font-medium text-slate-700 dark:text-zinc-300">{t.landlordName}</td>
                             <td className="px-6 py-4 text-xs font-mono">{t.phone || "—"}</td>
                             <td className="px-6 py-4">
-                              <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold border ${
-                                t.status === "active"
+                              <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold border ${t.status === "active"
                                   ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
                                   : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
-                              }`}>
+                                }`}>
                                 {t.status}
                               </span>
                             </td>
@@ -1528,15 +1521,15 @@ export default function App() {
 
             {/* Feature Usage Tab */}
             {activeTab === "features" && (
-              <FeatureUsageView 
-                featureEvents={featureEvents} 
-                theme={theme} 
+              <FeatureUsageView
+                featureEvents={featureEvents}
+                theme={theme}
               />
             )}
 
             {/* Toolkit Leads Tab */}
             {activeTab === "leads" && (
-              <motion.section 
+              <motion.section
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
@@ -1585,8 +1578,8 @@ export default function App() {
 
             {/* Activity Logs Tab */}
             {activeTab === "activity" && (
-              <ActivityLogsView 
-                activityLogs={activityLogs} 
+              <ActivityLogsView
+                activityLogs={activityLogs}
               />
             )}
           </motion.div>
@@ -1597,7 +1590,7 @@ export default function App() {
       <AnimatePresence>
         {selectedLandlord && (
           <>
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 0.5 }}
               exit={{ opacity: 0 }}
@@ -1605,7 +1598,7 @@ export default function App() {
               onClick={() => setSelectedLandlord(null)}
             />
 
-            <motion.div 
+            <motion.div
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
@@ -1622,7 +1615,7 @@ export default function App() {
                     <p className="text-xs text-slate-400">Account # {selectedLandlord.user_id.substring(0, 8)}</p>
                   </div>
                 </div>
-                <button 
+                <button
                   onClick={() => setSelectedLandlord(null)}
                   className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-500 hover:text-slate-800"
                 >
@@ -1631,7 +1624,7 @@ export default function App() {
               </div>
 
               <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                
+
                 <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950 p-5 space-y-4">
                   <div className="flex items-start justify-between">
                     <div>
@@ -1644,13 +1637,12 @@ export default function App() {
                         value={selectedLandlord.planId}
                         onChange={(e) => handleSelectPlan(selectedLandlord.user_id, selectedLandlord.id, e.target.value)}
                         disabled={actionLoading === selectedLandlord.id}
-                        className={`text-xs font-semibold uppercase tracking-wider rounded-lg border px-3 py-1.5 focus:outline-none appearance-none pr-8 cursor-pointer ${
-                          selectedLandlord.planName === "platinum" 
-                            ? "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20" 
+                        className={`text-xs font-semibold uppercase tracking-wider rounded-lg border px-3 py-1.5 focus:outline-none appearance-none pr-8 cursor-pointer ${selectedLandlord.planName === "platinum"
+                            ? "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20"
                             : selectedLandlord.planName === "gold"
-                            ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
-                            : "bg-slate-500/10 text-slate-655 dark:text-slate-400 border-slate-500/20"
-                        }`}
+                              ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+                              : "bg-slate-500/10 text-slate-655 dark:text-slate-400 border-slate-500/20"
+                          }`}
                       >
                         {PLANS.map(p => (
                           <option key={p.id} value={p.id}>{p.displayName}</option>
@@ -1740,11 +1732,10 @@ export default function App() {
                           </div>
                           <div className="text-right">
                             <span className="font-bold block text-indigo-655 dark:text-indigo-400">₹{r.rent_amount}</span>
-                            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase mt-1 border ${
-                              r.status === "occupied" 
-                                ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20" 
+                            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase mt-1 border ${r.status === "occupied"
+                                ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
                                 : "bg-slate-500/10 text-slate-655 dark:text-slate-400 border-slate-500/20"
-                            }`}>
+                              }`}>
                               {r.status}
                             </span>
                           </div>
@@ -1849,9 +1840,8 @@ export default function App() {
 
                             <div className="text-right">
                               <span className="font-bold block text-indigo-650 dark:text-indigo-400">₹{p.amount}</span>
-                              <span className={`inline-flex items-center gap-0.5 font-semibold text-[10px] uppercase ${
-                                isPaid ? "text-emerald-500" : "text-amber-500"
-                              }`}>
+                              <span className={`inline-flex items-center gap-0.5 font-semibold text-[10px] uppercase ${isPaid ? "text-emerald-500" : "text-amber-500"
+                                }`}>
                                 {p.status}
                               </span>
                             </div>
@@ -1867,7 +1857,7 @@ export default function App() {
                     <Users className="h-4 w-4 text-indigo-500" />
                     Landlord's Tenants
                   </h4>
-                  
+
                   {allTenants.filter(t => t.user_id === selectedLandlord.user_id).length === 0 ? (
                     <p className="text-xs text-slate-500 text-center py-6 border border-dashed border-slate-200 dark:border-zinc-800 rounded-xl">
                       No tenants found for this landlord.
@@ -1887,9 +1877,8 @@ export default function App() {
 
                           <div className="text-right">
                             <span className="font-mono block text-slate-500 dark:text-zinc-400">{t.phone}</span>
-                            <span className={`inline-flex items-center gap-0.5 font-semibold text-[10px] uppercase mt-0.5 ${
-                              t.status === "active" ? "text-emerald-500" : "text-amber-500"
-                            }`}>
+                            <span className={`inline-flex items-center gap-0.5 font-semibold text-[10px] uppercase mt-0.5 ${t.status === "active" ? "text-emerald-500" : "text-amber-500"
+                              }`}>
                               {t.status}
                             </span>
                           </div>
@@ -1905,11 +1894,10 @@ export default function App() {
                 <button
                   onClick={() => handleTogglePause(selectedLandlord.user_id, selectedLandlord.id, selectedLandlord.status)}
                   disabled={actionLoading === selectedLandlord.id}
-                  className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl border py-2.5 text-xs font-semibold transition active:scale-95 disabled:opacity-50 ${
-                    selectedLandlord.status === "paused" 
+                  className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl border py-2.5 text-xs font-semibold transition active:scale-95 disabled:opacity-50 ${selectedLandlord.status === "paused"
                       ? "border-emerald-500/20 bg-emerald-500/5 text-emerald-600 dark:text-emerald-450 hover:bg-emerald-500/10"
                       : "border-amber-500/20 bg-amber-500/5 text-amber-500 hover:bg-amber-500/10"
-                  }`}
+                    }`}
                 >
                   {actionLoading === selectedLandlord.id ? (
                     <RefreshCw className="h-3.5 w-3.5 animate-spin" />
@@ -1968,7 +1956,7 @@ export default function App() {
 
             {/* Modal Body */}
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
-              
+
               {/* Step 1: Upload Instructions & Dropzone */}
               {importStep === 1 && (
                 <div className="space-y-6">
@@ -2054,23 +2042,23 @@ export default function App() {
                       </button>
                     </div>
                     <pre className="p-3 bg-slate-50 dark:bg-zinc-950 rounded-xl border border-slate-200 dark:border-zinc-800 text-[10px] font-mono overflow-x-auto text-slate-500 dark:text-zinc-400 select-all">
-{`building_name,building_address,room_number,rent_amount,tenant_name,tenant_phone,whatsapp_number,aadhar,joined_at,occupancy_count,deposit_amount,deposit_method
+                      {`building_name,building_address,room_number,rent_amount,tenant_name,tenant_phone,whatsapp_number,aadhar,joined_at,occupancy_count,deposit_amount,deposit_method
 Gokul Dham,"Powai, Mumbai",101,15000,Jethalal Gada,9876543210,9876543210,123456789012,2026-06-01,1,30000,UPI
 Gokul Dham,"Powai, Mumbai",102,12000,Daya Gada,9876543211,9876543211,,2026-06-05,2,24000,Cash`}
                     </pre>
                   </div>
 
-                  <div 
+                  <div
                     onDragOver={e => e.preventDefault()}
                     onDrop={handleDrop}
                     className="border-2 border-dashed border-slate-200 dark:border-zinc-800 hover:border-indigo-500 dark:hover:border-indigo-500 transition rounded-2xl p-8 text-center cursor-pointer relative group bg-slate-50/20 dark:bg-zinc-900/10"
                     onClick={() => document.getElementById("csv-file-input")?.click()}
                   >
-                    <input 
-                      type="file" 
-                      id="csv-file-input" 
-                      accept=".csv" 
-                      className="hidden" 
+                    <input
+                      type="file"
+                      id="csv-file-input"
+                      accept=".csv"
+                      className="hidden"
                       onChange={handleFileChange}
                     />
                     <div className="flex flex-col items-center gap-3">
@@ -2185,7 +2173,7 @@ Gokul Dham,"Powai, Mumbai",102,12000,Daya Gada,9876543211,9876543211,,2026-06-05
                         <p className="text-xs text-slate-400">{importingStatus}</p>
                       </div>
                       <div className="w-full max-w-xs bg-slate-100 dark:bg-zinc-800 h-2 rounded-full overflow-hidden">
-                        <div 
+                        <div
                           className="bg-indigo-600 h-full rounded-full transition-all duration-300"
                           style={{ width: `${importProgress}%` }}
                         />
@@ -2471,9 +2459,9 @@ function FeatureUsageView({ featureEvents, theme }: FeatureUsageViewProps) {
       .filter(e => {
         const matchesFeature = selectedFeature === "all" || e.feature_key === selectedFeature;
         const matchesPlan = selectedPlan === "all" || e.landlordPlan === selectedPlan;
-        
+
         const term = search.toLowerCase();
-        const matchesSearch = !search || 
+        const matchesSearch = !search ||
           e.landlordName.toLowerCase().includes(term) ||
           e.landlordEmail.toLowerCase().includes(term) ||
           (e.action && e.action.toLowerCase().includes(term));
@@ -2504,7 +2492,7 @@ function FeatureUsageView({ featureEvents, theme }: FeatureUsageViewProps) {
       ]);
     });
 
-    const csvContent = "data:text/csv;charset=utf-8," 
+    const csvContent = "data:text/csv;charset=utf-8,"
       + csvRows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
 
     const encodedUri = encodeURI(csvContent);
@@ -2718,8 +2706,8 @@ function FeatureUsageView({ featureEvents, theme }: FeatureUsageViewProps) {
                 <AreaChart data={dailyTrends}>
                   <defs>
                     <linearGradient id="colorFeatureUsage" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#818cf8" stopOpacity={0.35}/>
-                      <stop offset="95%" stopColor="#818cf8" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#818cf8" stopOpacity={0.35} />
+                      <stop offset="95%" stopColor="#818cf8" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} />
@@ -2802,9 +2790,9 @@ function ActivityLogsView({ activityLogs }: ActivityLogsViewProps) {
     return activityLogs
       .filter(e => {
         const matchesType = selectedType === "all" || e.action_type === selectedType;
-        
+
         const term = search.toLowerCase();
-        const matchesSearch = !search || 
+        const matchesSearch = !search ||
           e.landlordName.toLowerCase().includes(term) ||
           e.landlordEmail.toLowerCase().includes(term) ||
           e.action_type.toLowerCase().includes(term) ||
@@ -2835,7 +2823,7 @@ function ActivityLogsView({ activityLogs }: ActivityLogsViewProps) {
       ]);
     });
 
-    const csvContent = "data:text/csv;charset=utf-8," 
+    const csvContent = "data:text/csv;charset=utf-8,"
       + csvRows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
 
     const encodedUri = encodeURI(csvContent);
@@ -2971,7 +2959,7 @@ function ActivityLogsView({ activityLogs }: ActivityLogsViewProps) {
       </div>
 
       {/* Chronological logs Table */}
-      <motion.section 
+      <motion.section
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
@@ -3017,7 +3005,7 @@ function ActivityLogsView({ activityLogs }: ActivityLogsViewProps) {
                     </td>
                     <td className="px-6 py-4 text-right whitespace-nowrap">
                       {e.metadata && Object.keys(e.metadata).length > 0 ? (
-                        <span 
+                        <span
                           onClick={() => alert(JSON.stringify(e.metadata, null, 2))}
                           className="inline-flex items-center gap-1 cursor-pointer text-[10px] font-bold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
                         >
