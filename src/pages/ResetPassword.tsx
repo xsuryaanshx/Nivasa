@@ -103,7 +103,7 @@ export default function ResetPassword() {
         className="relative z-10 w-full max-w-[420px] glass-strong rounded-2xl p-8 shadow-float"
       >
         <div className="mb-7 flex items-center gap-3">
-          <NivasaLogo className="h-16 w-16 rounded-xl" />
+          <NivasaLogo className="h-16 w-16 rounded-xl" iconOnly />
           <div>
             <div className="text-xl font-bold tracking-tight">Nivasa</div>
             <div className="text-xs text-muted-foreground font-medium">New credentials</div>
