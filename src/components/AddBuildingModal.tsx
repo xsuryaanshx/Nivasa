@@ -136,7 +136,7 @@ export function AddBuildingModal({ open, onClose, onSuccess }: Props) {
                   placeholder="e.g. Aurora Heights"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="h-11 w-full rounded-xl border border-border bg-background pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground/60 outline-none transition-all focus:border-brand focus:ring-4 focus:ring-brand/10"
+                  className="h-11 w-full rounded-xl border border-border bg-background pl-10 pr-4 text-base sm:text-sm text-foreground placeholder:text-muted-foreground/60 outline-none transition-all focus:border-brand focus:ring-4 focus:ring-brand/10"
                 />
               </div>
             </div>
@@ -160,7 +160,7 @@ export function AddBuildingModal({ open, onClose, onSuccess }: Props) {
                   placeholder="e.g. Scheme No 54, Indore, MP or Google Maps URL"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
-                  className="h-11 w-full rounded-xl border border-border bg-background pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground/60 outline-none transition-all focus:border-brand focus:ring-4 focus:ring-brand/10"
+                  className="h-11 w-full rounded-xl border border-border bg-background pl-10 pr-4 text-base sm:text-sm text-foreground placeholder:text-muted-foreground/60 outline-none transition-all focus:border-brand focus:ring-4 focus:ring-brand/10"
                 />
               </div>
             </div>
@@ -182,7 +182,7 @@ export function AddBuildingModal({ open, onClose, onSuccess }: Props) {
                   placeholder="e.g. 24"
                   value={totalRooms}
                   onChange={(e) => setTotalRooms(e.target.value)}
-                  className="h-11 w-full rounded-xl border border-border bg-background pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground/60 outline-none transition-all focus:border-brand focus:ring-4 focus:ring-brand/10"
+                  className="h-11 w-full rounded-xl border border-border bg-background pl-10 pr-4 text-base sm:text-sm text-foreground placeholder:text-muted-foreground/60 outline-none transition-all focus:border-brand focus:ring-4 focus:ring-brand/10"
                 />
               </div>
             </div>
@@ -205,7 +205,7 @@ export function AddBuildingModal({ open, onClose, onSuccess }: Props) {
                   placeholder="e.g. landlord@upi or landlord@okaxis"
                   value={upiId}
                   onChange={(e) => setUpiId(e.target.value.trim())}
-                  className="h-11 w-full rounded-xl border border-border bg-background px-4 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none transition-all focus:border-brand focus:ring-4 focus:ring-brand/10 font-mono"
+                  className="h-11 w-full rounded-xl border border-border bg-background px-4 text-base sm:text-sm text-foreground placeholder:text-muted-foreground/50 outline-none transition-all focus:border-brand focus:ring-4 focus:ring-brand/10 font-mono"
                 />
               </div>
             </div>
