@@ -2,7 +2,6 @@ import { motion } from "framer-motion";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { NivasaLogo } from "@/components/NivasaLogo";
 import { MagneticButton } from "@/components/MagneticButton";
 import { nivasaApi } from "@/lib/api";
 import { toast } from "sonner";
@@ -49,7 +48,9 @@ export default function ForgotPassword() {
         className="relative z-10 w-full max-w-[420px] glass-strong rounded-2xl p-8 shadow-float"
       >
         <div className="mb-7 flex items-center gap-3">
-          <NivasaLogo className="h-16 w-16 rounded-xl" iconOnly />
+          <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-xl">
+            <img src="/nivasa-brand-v2.png" alt="Nivasa Logo" className="h-full w-full object-contain" />
+          </div>
           <div>
             <div className="text-xl font-bold tracking-tight">Nivasa</div>
             <div className="text-xs text-muted-foreground font-medium">Reset password</div>
