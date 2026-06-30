@@ -388,7 +388,7 @@ export default function Tenants() {
           <div className="fixed bottom-28 lg:bottom-6 left-0 right-0 z-[60] flex justify-center pointer-events-none px-4">
             {(() => {
               const allSelectedArePaid = selectedTenantIds.length > 0 && selectedTenantIds.every(id => {
-                const t = tenantsList.find(x => x.id === id);
+                const t = tenantsWithStatus.find(x => x.id === id);
                 return t && (optimisticStatuses[t.id] || t.paymentStatus) === 'paid';
               });
 
