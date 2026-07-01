@@ -93,6 +93,14 @@ export function getTenantPaymentStatus(
       return "paid";
     }
     
+    const currentMonthDue = currentInvoice 
+      ? (Number(currentInvoice.total_amount) || 0) + (Number(currentInvoice.electricity_cost) || 0)
+      : (Number(tenant.rent_amount || 0));
+
+    if (netBalance > currentMonthDue + 5) {
+      return "late";
+    }
+    
     // If they have an outstanding balance, check if they are late or pending
     const dayOfMonth = new Date().getDate();
     return dayOfMonth > 10 ? "late" : "pending";
