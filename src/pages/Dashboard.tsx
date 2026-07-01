@@ -116,9 +116,9 @@ export default function Dashboard() {
           attentionItems.push({
             id: `late-${room.id}-${tenant.id}`,
             type: "late_rent",
-            title: isLate ? `Rent Late: Room ${room.number}` : `Rent Pending: Room ${room.number}`,
-            description: `${tenant.name} is ${isLate ? 'late' : 'pending'} on rent of ₹${rentAmount.toLocaleString()}.`,
-            actionLabel: "Remind",
+            title: isLate ? `${t("rent_late")} ${room.number}` : `${t("rent_pending")} ${room.number}`,
+            description: `${tenant.name} is ${isLate ? t("late").toLowerCase() : t("pending").toLowerCase()} on rent of ₹${rentAmount.toLocaleString()}.`,
+            actionLabel: t("remind"),
             severity: isLate ? "high" : "medium",
             action: () => {
               const msg = `Hi ${tenant.name}, this is a gentle reminder that your rent of ₹${rentAmount} for Room ${room.number} is currently ${isLate ? 'late' : 'pending'}. Please complete the payment at your earliest convenience.`;
@@ -150,7 +150,7 @@ export default function Dashboard() {
             type: "vacant_room",
             title: `Room ${room.number} Vacant for ${daysVacant} days`,
             description: `This room at ${room.buildingName} has been empty since ${vacancyDate.toLocaleDateString("en-IN", { day: 'numeric', month: 'short' })}.`,
-            actionLabel: "View Room",
+            actionLabel: t("view_room"),
             severity: "medium",
             action: () => navigate(`/app/rooms/${room.id}`),
           });
@@ -177,7 +177,7 @@ export default function Dashboard() {
               description: isExpired 
                 ? `Lease for Room ${room.number} expired ${Math.abs(daysToExpiry)} days ago.`
                 : `Lease for Room ${room.number} expires in ${daysToExpiry} days.`,
-              actionLabel: "Manage Lease",
+              actionLabel: t("manage_lease"),
               severity: isExpired ? "high" : "low",
               action: () => navigate(`/app/rooms/${room.id}`),
             });
@@ -194,9 +194,9 @@ export default function Dashboard() {
       attentionItems.push({
         id: `verify-payment-${payment.id}`,
         type: "verify_payment",
-        title: isFlagged ? `⚠️ Flagged Payment: Room ${payment.roomNumber}` : `Verify Payment: Room ${payment.roomNumber}`,
+        title: isFlagged ? `${t("flagged_payment")} ${payment.roomNumber}` : `${t("verify_payment")} ${payment.roomNumber}`,
         description: `${payment.tenantName} uploaded screenshot claiming ₹${payment.amount.toLocaleString()}.`,
-        actionLabel: "Verify",
+        actionLabel: t("verify"),
         severity: isFlagged ? "high" : "medium",
         action: () => {
           setSelectedVerifyPayment(payment);

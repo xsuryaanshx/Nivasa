@@ -159,6 +159,14 @@ export const translations = {
     version_footer: "Nivasa v1.0 · Amigroup",
     rent_date: "Billing Cycle",
     rent_date_desc: "Fixed monthly rent collection date",
+    rent_late: "Rent Late: Room",
+    rent_pending: "Rent Pending: Room",
+    remind: "Remind",
+    view_room: "View Room",
+    verify: "Verify",
+    manage_lease: "Manage Lease",
+    flagged_payment: "⚠️ Flagged Payment: Room",
+    verify_payment: "Verify Payment: Room",
   },
   hi: {
     dashboard: "डैशबोर्ड",
@@ -317,5 +325,13 @@ export const translations = {
     version_footer: "निवास v1.0 · Amigroup",
     rent_date: "बिलिंग चक्र",
     rent_date_desc: "निश्चित मासिक किराया संग्रह तिथि",
+    rent_late: "किराया देर: कमरा",
+    rent_pending: "किराया लंबित: कमरा",
+    remind: "याद दिलाएं",
+    view_room: "कमरा देखें",
+    verify: "सत्यापित करें",
+    manage_lease: "लीज प्रबंधित करें",
+    flagged_payment: "⚠️ संदिग्ध भुगतान: कमरा",
+    verify_payment: "भुगतान सत्यापित करें: कमरा",
   }
 };
