@@ -14,8 +14,13 @@ import { ErrorBanner } from "@/components/ErrorBanner";
 function initials(name: string) {
   if (!name) return "??";
   const parts = name.trim().split(" ");
-  if (parts.length > 1) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-  return name.slice(0, 2).toUpperCase();
+  const first = Array.from(parts[0])[0] || "?";
+  if (parts.length > 1) {
+    const last = Array.from(parts[parts.length - 1])[0] || "";
+    return (first + last).toUpperCase();
+  }
+  const chars = Array.from(name.trim());
+  return chars.slice(0, 2).join("").toUpperCase();
 }
 
 export default function Staff() {

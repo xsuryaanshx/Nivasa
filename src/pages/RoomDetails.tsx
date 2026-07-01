@@ -33,7 +33,15 @@ import { cn, calculateTenantShare, getTenantPaymentStatus } from "@/lib/utils";
 import { toast } from "sonner";
 
 function initials(name: string) {
-  return name.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase();
+  if (!name) return "??";
+  const parts = name.trim().split(" ");
+  const first = Array.from(parts[0])[0] || "?";
+  if (parts.length > 1) {
+    const last = Array.from(parts[parts.length - 1])[0] || "";
+    return (first + last).toUpperCase();
+  }
+  const chars = Array.from(name.trim());
+  return chars.slice(0, 2).join("").toUpperCase();
 }
 
 function maskAadhar(a?: string) {
@@ -415,6 +423,7 @@ export default function RoomDetails() {
             <div className="flex items-center gap-3">
               <input
                 autoFocus
+                maxLength={50}
                 value={editNameValue}
                 onChange={(e) => setEditNameValue(e.target.value)}
                 className="h-10 w-48 rounded-xl border border-border bg-card px-3 text-xl font-bold tracking-tight outline-none focus:border-brand focus:ring-4 focus:ring-brand/10 transition-all"

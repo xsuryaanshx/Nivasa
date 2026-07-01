@@ -84,6 +84,7 @@ export function EditBuildingModal({ open, onClose, onSuccess, buildingData }: Pr
               <input
                 id="edit-building-name"
                 type="text"
+                maxLength={50}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="h-11 w-full rounded-xl border border-border bg-secondary/30 pl-10 pr-4 text-sm outline-none transition-all focus:border-brand focus:ring-4 focus:ring-brand/10"

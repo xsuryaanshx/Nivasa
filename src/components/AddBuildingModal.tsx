@@ -132,7 +132,7 @@ export function AddBuildingModal({ open, onClose, onSuccess }: Props) {
                 <input
                   id="building-name"
                   type="text"
-                  maxLength={100}
+                  maxLength={50}
                   placeholder="e.g. Aurora Heights"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
