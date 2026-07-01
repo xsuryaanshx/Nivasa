@@ -20,6 +20,7 @@ import { useSubscriptionData } from "@/hooks/useSubscriptionData";
 import { getTenantPaymentStatus } from "@/lib/utils";
 import { downloadMonthlyReportPdf } from "@/lib/monthlyReportPdf";
 import { openWhatsApp } from "@/lib/whatsapp";
+import { ErrorBanner } from "@/components/ErrorBanner";
 
 function getGreetingKey() {
   const hour = new Date().getHours();
@@ -41,6 +42,7 @@ export default function Dashboard() {
     rooms: [],
     tenantInvoices: []
   });
+  const [error, setError] = useState<any>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [addBuildingOpen, setAddBuildingOpen] = useState(false);
   const [addRoomOpen, setAddRoomOpen] = useState(false);
@@ -51,6 +53,7 @@ export default function Dashboard() {
   const fetchData = async () => {
     try {
       setLoading(true);
+      setError(null);
       if (!nivasaApi) return;
 
       const [stats, recent, profitStats, rooms, tenantInvoices] = await Promise.all([
@@ -62,8 +65,9 @@ export default function Dashboard() {
       ]);
 
       setData({ stats, recent, profitStats, rooms, tenantInvoices });
-    } catch (error) {
-      console.error("Error fetching dashboard data:", error);
+    } catch (err) {
+      console.error("Error fetching dashboard data:", err);
+      setError(err);
     } finally {
       setLoading(false);
     }
@@ -234,6 +238,8 @@ export default function Dashboard() {
         }
       />
 
+      {error && <ErrorBanner error={error} onRetry={fetchData} />}
+
       {showOnboarding && (
         <div className="mb-6 overflow-hidden rounded-2xl border border-brand/20 bg-card p-6 shadow-soft">
           {/* Onboarding Header */}
@@ -391,12 +397,12 @@ export default function Dashboard() {
       )}
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-3 lg:grid-cols-6">
-        <StatCard label={t('buildings')}        value={s.totalBuildings} icon={Building2} delta="+1"  trend="up"   delay={0.00} onClick={() => navigate("/app/buildings")} />
-        <StatCard label={t('rooms')}            value={s.totalRooms}     icon={Home}      delta="+2"  trend="up"   delay={0.05} onClick={() => navigate("/app/rooms")} />
-        <StatCard label={t('occupancy')}         value={s.occupied}       icon={Users}     delta="92%" trend="flat" delay={0.10} onClick={() => navigate("/app/rooms?status=occupied")} />
-        <StatCard label={t('pending_payments')} value={attentionItems.filter(i => i.type === 'late_rent').length}        icon={ReceiptIndianRupee}   delta={attentionItems.filter(i => i.type === 'late_rent').length > 0 ? `+${attentionItems.filter(i => i.type === 'late_rent').length}` : "0"}  trend={attentionItems.filter(i => i.type === 'late_rent').length > 0 ? "up" : "flat"}   delay={0.15} onClick={() => navigate("/app/tenants?status=late")} />
-        <StatCard label={t('monthly_revenue')}  value={s.monthlyRevenue} icon={IndianRupee} money delta="+12%" trend="up" delay={0.20} onClick={() => navigate("/app/payments?status=paid")} />
-        <StatCard label="Net Profit"  value={data.profitStats?.netProfit || 0} icon={TrendingUp} money delta="+10%" trend="up" delay={0.25} onClick={() => navigate("/app/profit")} />
+        <StatCard label={t('buildings')}        value={s.totalBuildings} icon={Building2} trend="up"   delay={0.00} onClick={() => navigate("/app/buildings")} />
+        <StatCard label={t('rooms')}            value={s.totalRooms}     icon={Home}      trend="up"   delay={0.05} onClick={() => navigate("/app/rooms")} />
+        <StatCard label={t('occupancy')}         value={s.occupied}       icon={Users}     trend="flat" delay={0.10} onClick={() => navigate("/app/rooms?status=occupied")} />
+        <StatCard label={t('pending_payments')} value={attentionItems.filter(i => i.type === 'late_rent').length}        icon={ReceiptIndianRupee}   trend={attentionItems.filter(i => i.type === 'late_rent').length > 0 ? "up" : "flat"}   delay={0.15} onClick={() => navigate("/app/tenants?status=late")} />
+        <StatCard label={t('monthly_revenue')}  value={s.monthlyRevenue} icon={IndianRupee} money trend="up" delay={0.20} onClick={() => navigate("/app/payments?status=paid")} />
+        <StatCard label="Net Profit"  value={data.profitStats?.netProfit || 0} icon={TrendingUp} money trend="up" delay={0.25} onClick={() => navigate("/app/profit")} />
       </div>
 
       {/* Needs Attention Widget */}
@@ -503,60 +509,6 @@ export default function Dashboard() {
             ))}
           </div>
         )}
-      </div>
-
-      <div className="mt-6">
-        <div className="relative overflow-hidden rounded-2xl border border-brand/20 bg-gradient-to-r from-brand/10 via-brand/5 to-transparent p-6 shadow-soft">
-          <div className="absolute -top-4 -right-4 p-4 opacity-10 pointer-events-none">
-            <Sparkles className="h-32 w-32 text-brand" />
-          </div>
-          <div className="relative z-10 flex flex-col sm:flex-row items-start gap-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand/20 text-brand">
-              <Sparkles className="h-5 w-5" />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold flex items-center gap-2">
-                Nivasa AI Market Insights
-                <span className="rounded-full bg-brand px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white">Beta</span>
-              </h3>
-              {(() => {
-                const targetRoom = data.rooms?.find((r: any) => r.roomType);
-                if (targetRoom) {
-                  const marketRent = Math.round(targetRoom.rent * 1.15); // mock 15% higher
-                  return (
-                    <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed max-w-2xl">
-                      Based on our real-time data analysis, {targetRoom.roomType}s in your area are currently renting for an average of <strong className="text-foreground">₹{marketRent.toLocaleString()}/month</strong>. 
-                      You are currently charging <strong className="text-foreground">₹{targetRoom.rent.toLocaleString()}/month</strong> for {targetRoom.number}. Consider raising your rent by 15% for new tenants to match market rates.
-                    </p>
-                  );
-                }
-                return (
-                  <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed max-w-2xl">
-                    Based on our real-time data analysis, 1-BHKs in your area are currently renting for an average of <strong className="text-foreground">₹18,500/month</strong>. 
-                    Set a "Room Type" for your rooms to get personalized AI pricing insights and increase your yield!
-                  </p>
-                );
-              })()}
-              <div className="mt-4 flex items-center gap-2">
-                {subscription?.plans?.plan_name === "platinum" || subscription?.plans?.plan_name === "gold" ? (
-                  <button 
-                    onClick={() => toast.success("Generating full AI report... This is a Beta preview feature coming soon in V2!")}
-                    className="rounded-lg bg-brand px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-brand/90 shadow-[0_0_15px_-3px_hsl(var(--ring)/0.5)]"
-                  >
-                    View Full AI Market Report
-                  </button>
-                ) : (
-                  <button 
-                    onClick={() => navigate("/app/subscription")}
-                    className="rounded-lg bg-brand px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-brand/90 shadow-[0_0_15px_-3px_hsl(var(--ring)/0.5)]"
-                  >
-                    Upgrade to Nivasa Pro for Full Insights
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
       <div className="mt-6">

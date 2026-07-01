@@ -12,7 +12,9 @@ import { MarkAttendanceModal } from "@/components/MarkAttendanceModal";
 import { RecordStaffPaymentModal } from "@/components/RecordStaffPaymentModal";
 import { UploadStaffDocumentModal } from "@/components/UploadStaffDocumentModal";
 import { EditStaffModal } from "@/components/EditStaffModal";
+import { ConfirmModal } from "@/components/ConfirmModal";
 import { toast } from "sonner";
+import { ErrorBanner } from "@/components/ErrorBanner";
 
 export default function StaffDetails() {
   const { id } = useParams();
@@ -22,10 +24,12 @@ export default function StaffDetails() {
   const [attendance, setAttendance] = useState<any[]>([]);
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<any>(null);
   const [isAttendanceModalOpen, setIsAttendanceModalOpen] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isDocumentModalOpen, setIsDocumentModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -41,8 +45,9 @@ export default function StaffDetails() {
       setPayments(pData);
       setAttendance(aData);
       setDocuments(dData);
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
+      setError(err);
     } finally {
       setLoading(false);
     }
@@ -53,13 +58,13 @@ export default function StaffDetails() {
   }, [id]);
 
   const handleDelete = async () => {
-    if (!id || !window.confirm("Are you sure you want to delete this staff member?")) return;
+    if (!id) return;
     try {
       await nivasaApi.removeStaff(id);
       toast.success("Staff member deleted successfully");
       navigate("/app/staff");
-    } catch (error: any) {
-      toast.error(error.message || "Failed to delete staff member");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to delete staff member");
     }
   };
 
@@ -87,6 +92,8 @@ export default function StaffDetails() {
         <ArrowLeft className="h-4 w-4" /> Back to Staff
       </button>
 
+      {error && <ErrorBanner error={error} onRetry={fetchData} />}
+
       <div className="bg-card border border-border rounded-2xl p-6 shadow-sm mb-8">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div className="flex items-center gap-4">
@@ -106,7 +113,7 @@ export default function StaffDetails() {
             <button onClick={() => setIsEditModalOpen(true)} className="h-9 w-9 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center hover:bg-secondary/80 transition-colors">
               <Edit2 className="h-4 w-4" />
             </button>
-            <button onClick={handleDelete} className="h-9 w-9 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500/20 transition-colors">
+            <button onClick={() => setIsDeleteModalOpen(true)} className="h-9 w-9 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500/20 transition-colors">
               <Trash2 className="h-4 w-4" />
             </button>
           </div>
@@ -251,6 +258,14 @@ export default function StaffDetails() {
         onClose={() => setIsDocumentModalOpen(false)}
         staffId={id!}
         onSuccess={fetchData}
+      />
+
+      <ConfirmModal
+        open={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDelete}
+        title="Delete Staff"
+        description="Are you sure you want to delete this staff member? This action cannot be undone."
       />
 
       {staff && (

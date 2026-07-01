@@ -7,6 +7,38 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export function getTenantPendingAmount(
+  tenant: Tenant, 
+  roomPayments: any[], 
+  tenantInvoices?: any[]
+): number {
+  const currentMonth = new Date().toISOString().slice(0, 7);
+  let totalDueHistorical = 0;
+  
+  if (tenantInvoices) {
+    const invoicesForTenant = tenantInvoices.filter(i => i.tenant_id === tenant.id);
+    const currentInvoice = invoicesForTenant.find(i => i.billing_month === currentMonth);
+    
+    totalDueHistorical = invoicesForTenant.reduce(
+      (sum, i) => sum + (Number(i.total_amount) || 0) + (Number(i.electricity_cost) || 0), 
+      0
+    );
+    
+    totalDueHistorical += Number(tenant.depositAmount || tenant.deposit_amount || 0);
+    
+    if (!currentInvoice) {
+      totalDueHistorical += Number(tenant.rent_amount || tenant.roomRent || 0);
+    }
+  } else {
+    totalDueHistorical = Number(tenant.rent_amount || tenant.roomRent || 0);
+  }
+  
+  const allTenantPayments = roomPayments.filter(p => p.tenantId === tenant.id && p.status === "paid");
+  const totalPaidHistorical = allTenantPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+  
+  return Math.max(0, totalDueHistorical - totalPaidHistorical);
+}
+
 export function calculateTenantShare(room: Room): number {
   const activeTenants = room.tenants?.filter(t => t.status !== "vacated")?.length || 1;
   const occupants = Math.max(1, activeTenants);

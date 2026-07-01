@@ -9,9 +9,13 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { AddStaffModal } from "@/components/AddStaffModal";
 
+import { ErrorBanner } from "@/components/ErrorBanner";
+
 function initials(name: string) {
   if (!name) return "??";
-  return name.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase();
+  const parts = name.trim().split(" ");
+  if (parts.length > 1) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  return name.slice(0, 2).toUpperCase();
 }
 
 export default function Staff() {
@@ -21,16 +25,19 @@ export default function Staff() {
   const [roleFilter, setRoleFilter] = useState("all");
   const [staffList, setStaffList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<any>(null);
   const [isAddOpen, setIsAddOpen] = useState(false);
 
   const fetchStaff = async () => {
     try {
       setLoading(true);
+      setError(null);
       if (!nivasaApi) return;
       const data = await nivasaApi.getStaff();
       setStaffList(data);
-    } catch (error) {
-      console.error("Error fetching staff:", error);
+    } catch (err) {
+      console.error("Error fetching staff:", err);
+      setError(err);
     } finally {
       setLoading(false);
     }
@@ -69,6 +76,8 @@ export default function Staff() {
           </MagneticButton>
         }
       />
+
+      {error && <ErrorBanner error={error} onRetry={fetchStaff} />}
 
       <div className="mb-5 flex flex-wrap items-center gap-3">
         <div className="relative flex h-10 flex-1 min-w-[240px] max-w-md items-center gap-2 rounded-xl border border-border bg-card px-3.5">
@@ -145,7 +154,7 @@ function StaffCard({ staff, index, onClick }: { staff: any; index: number; onCli
       <div className="mt-5 pt-4 border-t border-border/50 flex items-center justify-between">
         <div className="flex flex-col gap-0.5">
           <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Salary</span>
-          <span className="text-sm font-semibold tnum">₹{staff.monthly_salary}</span>
+          <span className="text-sm font-semibold tnum">₹{Number(staff.monthly_salary || 0).toLocaleString('en-IN')}</span>
         </div>
         <div className={cn("inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium capitalize", statusColorClass)}>
           {staff.status}

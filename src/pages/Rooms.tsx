@@ -8,6 +8,8 @@ import { RoomCard } from "@/components/RoomCard";
 import { MagneticButton } from "@/components/MagneticButton";
 import { type PaymentStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
+import { ErrorBanner } from "@/components/ErrorBanner";
 
 const getFilters = (t: any): ({ key: PaymentStatus | "all"; label: string })[] => [
   { key: "all",     label: t('all') },
@@ -18,6 +20,7 @@ const getFilters = (t: any): ({ key: PaymentStatus | "all"; label: string })[] =
 
 export default function Rooms() {
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
   const statusParam = searchParams.get("status") as PaymentStatus | "all" | null;
@@ -45,6 +48,7 @@ export default function Rooms() {
   const [roomsList, setRoomsList] = useState<any[]>([]);
   const [paymentsList, setPaymentsList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<any>(null);
   const [collapsedBuildings, setCollapsedBuildings] = useState<Record<string, boolean>>({});
 
   const toggleBuilding = (bName: string) => {
@@ -57,6 +61,7 @@ export default function Rooms() {
   const fetchRooms = async () => {
     try {
       setLoading(true);
+      setError(null);
       if (!nivasaApi) return;
       const [data, payments] = await Promise.all([
         nivasaApi.getRooms(),
@@ -64,8 +69,9 @@ export default function Rooms() {
       ]);
       setRoomsList(data);
       setPaymentsList(payments);
-    } catch (error) {
-      console.error("Error fetching rooms:", error);
+    } catch (err) {
+      console.error("Error fetching rooms:", err);
+      setError(err);
     } finally {
       setLoading(false);
     }
@@ -161,6 +167,8 @@ export default function Rooms() {
         }
       />
 
+      {error && <ErrorBanner error={error} onRetry={fetchRooms} />}
+
       <div className="mb-5 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
         <div className="relative flex h-10 w-full sm:flex-1 min-w-0 items-center gap-2 rounded-xl border border-border bg-card px-3.5">
           <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -240,13 +248,13 @@ export default function Rooms() {
 
                 {!collapsedBuildings[buildingName] && (
                   <>
-                    <div className="grid grid-cols-4 gap-3 sm:gap-4 mt-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 mt-2">
                   {rooms.map((room: any) => {
                     const isOccupied = room.status === 'occupied' || (room.tenants && room.tenants.length > 0);
                     return (
                       <div
                         key={room.id}
-                        onClick={() => window.location.href = `/app/rooms/${room.id}`}
+                        onClick={() => navigate(`/app/rooms/${room.id}`)}
                         className={cn(
                           "flex flex-col items-center justify-center p-3 sm:p-5 aspect-[4/5] rounded-[24px] cursor-pointer transition-all duration-200 select-none border-2",
                           isOccupied 

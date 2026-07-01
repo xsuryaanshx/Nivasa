@@ -28,6 +28,7 @@ import { useCurrency, formatMoney } from "@/lib/currency";
 import { useSubscriptionData } from "@/hooks/useSubscriptionData";
 import { downloadExcel } from "@/lib/export";
 import { FileSpreadsheet } from "lucide-react";
+import { ErrorBanner } from "@/components/ErrorBanner";
 
 const statusColors = {
   pending: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
@@ -69,7 +70,7 @@ export default function Maintenance() {
     other: "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-400",
   };
 
-  const { data: requests, isLoading } = useQuery({
+  const { data: requests, isLoading, error, isError } = useQuery({
     queryKey: ["maintenance"],
     queryFn: nivasaApi.getMaintenanceRequests,
   });
@@ -286,7 +287,9 @@ export default function Maintenance() {
             </Button>
           )}
         </div>
-    </div>
+      </div>
+      
+      {isError && <ErrorBanner error={error} onRetry={() => queryClient.invalidateQueries({ queryKey: ["maintenance"] })} />}
 
     {requests?.length === 0 ? (
         <Card className="flex flex-col items-center justify-center py-12 text-center">
@@ -301,8 +304,21 @@ export default function Maintenance() {
             return (
               <Card key={request.id}>
                 <CardHeader className="pb-2">
-                  <div className="flex justify-between items-start">
+                  <div className="flex justify-between items-start gap-4">
                     <CardTitle className="text-lg font-semibold">{request.title}</CardTitle>
+                    <Select 
+                      value={request.status || "pending"} 
+                      onValueChange={(val) => handleStatusChange(request.id!, val)}
+                    >
+                      <SelectTrigger className={`w-[120px] h-7 text-xs font-medium border-0 focus:ring-0 ${statusColors[(request.status || "pending") as keyof typeof statusColors]}`}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="in_progress">In Progress</SelectItem>
+                        <SelectItem value="resolved">Resolved</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
                     {building?.name || "Unknown Property"}

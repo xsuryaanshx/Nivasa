@@ -9,6 +9,8 @@ import { showUndoToast } from "@/components/UndoToast";
 import { useNavigate } from "react-router-dom";
 import { AddBuildingModal } from "@/components/AddBuildingModal";
 import { EditBuildingModal } from "@/components/EditBuildingModal";
+import { ErrorBanner } from "@/components/ErrorBanner";
+import { ConfirmModal } from "@/components/ConfirmModal";
 import { AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { useLanguage } from "@/components/LanguageProvider";
@@ -23,7 +25,10 @@ import {
 export default function Buildings() {
   const [buildingsList, setBuildingsList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<any>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingBuilding, setEditingBuilding] = useState<any>(null);
+  const [buildingToDelete, setBuildingToDelete] = useState<string | null>(null);
   const [editingBuilding, setEditingBuilding] = useState<any>(null);
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const activeMenuRef = useRef<HTMLDivElement | null>(null);
@@ -33,11 +38,13 @@ export default function Buildings() {
   const fetchBuildings = async () => {
     try {
       setLoading(true);
+      setError(null);
       if (!nivasaApi) return;
       const data = await nivasaApi.getBuildings();
       setBuildingsList(data);
-    } catch (error) {
-      console.error("Error fetching buildings:", error);
+    } catch (err) {
+      console.error("Error fetching buildings:", err);
+      setError(err);
     } finally {
       setLoading(false);
     }
@@ -61,47 +68,34 @@ export default function Buildings() {
     };
   }, [activeMenuId]);
 
-  const handleDelete = async (id: string) => {
+  const handleDeleteClick = async (id: string) => {
     try {
       const canDelete = await nivasaApi.canDeleteBuilding(id);
       if (!canDelete) {
         toast.error("Cannot delete building: It contains rooms that are not vacant. Please vacate all rooms first.");
         return;
       }
-      
-      const buildingToDelete = buildingsList.find(b => b.id === id);
-      if (!buildingToDelete) return;
-      
-      // Optimistic delete
-      setBuildingsList(prev => prev.filter(b => b.id !== id));
+      setBuildingToDelete(id);
       setActiveMenuId(null);
-      
-      showUndoToast(
-        "Building deleted",
-        () => {
-          // Undo clicked
-          setBuildingsList(prev => {
-            const newList = [...prev, buildingToDelete];
-            return newList.sort((a, b) => a.name.localeCompare(b.name));
-          });
-        },
-        async () => {
-          // 5s elapsed
-          try {
-            await nivasaApi.deleteBuilding(id);
-            toast.success(t("building_deleted"));
-            fetchBuildings();
-            window.dispatchEvent(new CustomEvent("nivasa:refresh"));
-          } catch (error: any) {
-            console.error("Error deleting building:", error);
-            toast.error(error.message || t("building_delete_failed"));
-            fetchBuildings();
-          }
-        }
-      );
     } catch (error: any) {
       console.error("Error checking building deletion:", error);
       toast.error(error.message || t("building_delete_failed"));
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!buildingToDelete) return;
+    try {
+      await nivasaApi.deleteBuilding(buildingToDelete);
+      toast.success(t("building_deleted"));
+      fetchBuildings();
+      window.dispatchEvent(new CustomEvent("nivasa:refresh"));
+    } catch (error: any) {
+      console.error("Error deleting building:", error);
+      toast.error(error.message || t("building_delete_failed"));
+      fetchBuildings();
+    } finally {
+      setBuildingToDelete(null);
     }
   };
 
@@ -130,13 +124,37 @@ export default function Buildings() {
           onSuccess={fetchBuildings}
           buildingData={editingBuilding}
         />
+        />
       )}
+
+      <ConfirmModal
+        open={!!buildingToDelete}
+        onClose={() => setBuildingToDelete(null)}
+        onConfirm={confirmDelete}
+        title={t('delete_building')}
+        description="Are you sure you want to delete this property? This action cannot be undone."
+      />
+
+      {error && <ErrorBanner error={error} onRetry={fetchBuildings} />}
 
       {loading ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {[1, 2, 3].map(i => (
             <div key={i} className="h-48 animate-pulse rounded-2xl bg-secondary/50" />
           ))}
+        </div>
+      ) : !error && buildingsList.length === 0 ? (
+        <div className="flex flex-col items-center justify-center p-12 mt-8 text-center border rounded-2xl bg-card border-dashed">
+          <div className="h-16 w-16 bg-brand/10 text-brand rounded-full flex items-center justify-center mb-4">
+            <Building2 className="h-8 w-8" />
+          </div>
+          <h2 className="text-lg font-bold">You haven't added any properties yet</h2>
+          <p className="text-sm text-muted-foreground mt-2 max-w-sm">
+            Get started by adding your first building, PG, or property to manage your rooms and tenants.
+          </p>
+          <MagneticButton className="mt-6" onClick={() => setIsAddModalOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" /> Add Your First Property
+          </MagneticButton>
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -192,7 +210,7 @@ export default function Buildings() {
                         <DropdownMenuItem
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleDelete(b.id);
+                            handleDeleteClick(b.id);
                           }}
                           className="flex items-center gap-2 text-destructive focus:text-destructive cursor-pointer"
                         >

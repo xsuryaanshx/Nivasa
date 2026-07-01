@@ -15,6 +15,7 @@ import { useLanguage } from "@/components/LanguageProvider";
 import { useSubscriptionData } from "@/hooks/useSubscriptionData";
 import { downloadExcel } from "@/lib/export";
 import { FileSpreadsheet } from "lucide-react";
+import { ErrorBanner } from "@/components/ErrorBanner";
 
 const getFilters = (t: ReturnType<typeof useLanguage>["t"]): ({ key: PaymentStatus | "all"; label: string })[] => [
   { key: "all", label: t("all") },
@@ -42,6 +43,7 @@ export default function Payments() {
   const [open, setOpen] = useState(false);
   const [paymentsList, setPaymentsList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<any>(null);
   const [verifyOpen, setVerifyOpen] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<any>(null);
   const [editingTenant, setEditingTenant] = useState<any | null>(null);
@@ -49,30 +51,13 @@ export default function Payments() {
   const fetchPayments = async () => {
     try {
       setLoading(true);
+      setError(null);
       if (!nivasaApi) return;
       const data = await nivasaApi.getRecentPayments(100); // Fetch more for the payments page
-      const tenants = await nivasaApi.getTenants();
-      
-      const expectedPayments = tenants
-        .filter(t => t.paymentStatus === 'pending' || t.paymentStatus === 'late')
-        .map(t => ({
-          id: `expected-${t.id}`,
-          roomId: t.roomId,
-          tenantId: t.id,
-          tenantName: t.name,
-          tenantPhone: t.phone,
-          amount: t.roomRent,
-          date: new Date().toISOString(),
-          status: t.paymentStatus,
-          method: "Expected",
-          note: "Rent is due",
-          roomNumber: t.roomNumber || "N/A",
-          buildingName: t.buildingName || "N/A"
-        }));
-        
-      setPaymentsList([...data, ...expectedPayments]);
-    } catch (error) {
-      console.error("Error fetching payments:", error);
+      setPaymentsList(data);
+    } catch (err) {
+      console.error("Error fetching payments:", err);
+      setError(err);
     } finally {
       setLoading(false);
     }
@@ -108,7 +93,7 @@ export default function Payments() {
   const filtered = useMemo(() => {
     return [...paymentsList]
       .filter(p => status === "all" || p.status === status)
-      .filter(p => !q || `${p.tenantName} ${p.method}`.toLowerCase().includes(q.toLowerCase()))
+      .filter(p => !q || `${p.tenantName} ${p.method} ${p.roomNumber} ${p.amount} ${p.date} ${p.id}`.toLowerCase().includes(q.toLowerCase()))
       .sort((a, b) => b.date.localeCompare(a.date));
   }, [q, status, paymentsList]);
 
@@ -147,6 +132,8 @@ export default function Payments() {
         }
       />
 
+      {error && <ErrorBanner error={error} onRetry={fetchPayments} />}
+
       <div className="mb-5 grid grid-cols-3 gap-2 sm:gap-3">
         <Stat label={t("filtered_total")} value={<Money value={total} />} />
         <Stat label={t("records")} value={loading ? "..." : filtered.length.toString()} />
@@ -156,7 +143,7 @@ export default function Payments() {
       <div className="mb-5 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
         <div className="relative flex h-12 w-full sm:flex-1 min-w-0 items-center gap-2 rounded-xl border border-border bg-card px-3.5 py-2">
           <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
-          <input value={q} onChange={e => setQ(e.target.value)} placeholder={t("search_tenant_method")}
+          <input value={q} onChange={e => setQ(e.target.value)} placeholder={t("search")}
             className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground min-w-0 h-full" />
         </div>
         <div className="flex w-full sm:w-auto items-center justify-between sm:justify-start gap-1 rounded-xl border border-border bg-card p-1 overflow-x-auto hide-scrollbar">

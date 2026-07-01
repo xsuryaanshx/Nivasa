@@ -10,8 +10,9 @@ import { useAnimation, useMotionValue, useTransform } from "framer-motion";
 import { PageHeader } from "@/components/PageHeader";
 import { MagneticButton } from "@/components/MagneticButton";
 import { type PaymentStatus } from "@/lib/types";
-import { cn, getTenantPaymentStatus } from "@/lib/utils";
+import { cn, getTenantPaymentStatus, getTenantPendingAmount } from "@/lib/utils";
 import { StatusPill } from "@/components/StatusPill";
+import { ErrorBanner } from "@/components/ErrorBanner";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSubscriptionData } from "@/hooks/useSubscriptionData";
 import { downloadExcel } from "@/lib/export";
@@ -48,6 +49,7 @@ export default function Tenants() {
   const [paymentsList, setPaymentsList] = useState<any[]>([]);
   const [tenantInvoicesList, setTenantInvoicesList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<any>(null);
 
   const [selectedTenantIds, setSelectedTenantIds] = useState<string[]>([]);
   const [actionLoading, setActionLoading] = useState(false);
@@ -59,6 +61,7 @@ export default function Tenants() {
   const fetchTenants = async (silent = false) => {
     try {
       if (!silent) setLoading(true);
+      setError(null);
       if (!nivasaApi) return;
       const [data, payments, tenantInvoices] = await Promise.all([
         nivasaApi.getTenants(),
@@ -68,8 +71,9 @@ export default function Tenants() {
       setTenantsList(data);
       setPaymentsList(payments);
       setTenantInvoicesList(tenantInvoices);
-    } catch (error) {
-      console.error("Error fetching tenants:", error);
+    } catch (err) {
+      console.error("Error fetching tenants:", err);
+      if (!silent) setError(err);
     } finally {
       if (!silent) setLoading(false);
     }
@@ -212,7 +216,7 @@ export default function Tenants() {
           buildingId: t.buildingId,
           roomId: t.roomId,
           tenantId: t.id,
-          amount: t.roomRent,
+          amount: getTenantPendingAmount(t, paymentsList, tenantInvoicesList) || t.roomRent,
           method: "Cash",
           date: new Date().toISOString(),
           status: "paid"
@@ -328,6 +332,8 @@ export default function Tenants() {
           </div>
         }
       />
+
+      {error && <ErrorBanner error={error} onRetry={() => fetchTenants(false)} />}
 
       <div className="mb-5 flex flex-col gap-3">
         <div className="flex flex-col sm:flex-row gap-3">
@@ -855,16 +861,33 @@ const TenantCard = memo(function TenantCard({
           </div>
         </div>
 
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            handleSendInvite();
-          }}
-          className="w-full h-8 flex items-center justify-center gap-1.5 rounded-xl border border-brand/20 bg-brand/5 text-[11px] font-semibold text-brand hover:bg-brand hover:text-white transition-all duration-200"
-        >
-          <UserPlus className="h-3.5 w-3.5" />
-          Invite to Portal
-        </button>
+        <div className="flex items-center gap-2 sm:hidden">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleSendInvite();
+            }}
+            className="w-full h-8 flex items-center justify-center gap-1.5 rounded-xl border border-brand/20 bg-brand/5 text-[11px] font-semibold text-brand hover:bg-brand hover:text-white transition-all duration-200"
+          >
+            <UserPlus className="h-3.5 w-3.5" />
+            Invite to Portal
+          </button>
+        </div>
+
+        <div className="hidden sm:flex items-center gap-2">
+          {currentStatus === "paid" ? (
+             <button onClick={(e) => { e.stopPropagation(); handleMarkUnpaid(); }} disabled={submitting} className="h-8 flex-1 flex items-center justify-center rounded-xl bg-secondary hover:bg-secondary/80 text-[11px] font-semibold text-foreground transition-colors disabled:opacity-50">
+               <Clock className="h-3.5 w-3.5 mr-1" /> Mark Unpaid
+             </button>
+          ) : (
+             <button onClick={(e) => { e.stopPropagation(); handleMarkPaid(); }} disabled={submitting} className="h-8 flex-1 flex items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border border-emerald-500/20 text-[11px] font-semibold transition-colors disabled:opacity-50">
+               <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Mark Paid
+             </button>
+          )}
+          <button onClick={(e) => { e.stopPropagation(); handleSendReminder(); }} className="h-8 flex-1 flex items-center justify-center rounded-xl border border-brand/20 bg-brand/5 text-brand hover:bg-brand hover:text-white text-[11px] font-semibold transition-colors">
+            <MessageCircle className="h-3.5 w-3.5 mr-1" /> Remind
+          </button>
+        </div>
       </div>
       </motion.div>
     </motion.div>
