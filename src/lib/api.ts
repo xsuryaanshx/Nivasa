@@ -2385,7 +2385,6 @@ export const nivasaApi = {
   addExpenseTemplate,
   updateExpenseTemplate,
   deleteExpenseTemplate,
-  getUnresolvedMaintenanceRequests,
   checkAadharExists,
   getMaintenanceRequests,
   addMaintenanceRequest,
