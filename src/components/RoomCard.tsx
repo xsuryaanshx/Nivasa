@@ -18,7 +18,15 @@ import { nivasaApi } from "@/lib/api";
 import { useLanguage } from "./LanguageProvider";
 
 function initials(name: string) {
-  return name.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase();
+  if (!name) return "??";
+  const parts = name.trim().split(" ");
+  const first = Array.from(parts[0])[0] || "?";
+  if (parts.length > 1) {
+    const last = Array.from(parts[parts.length - 1])[0] || "";
+    return (first + last).toUpperCase();
+  }
+  const chars = Array.from(name.trim());
+  return chars.slice(0, 2).join("").toUpperCase();
 }
 
 export function RoomCard({ room, index, payments = [] }: { room: Room; index: number; payments?: any[] }) {

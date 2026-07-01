@@ -1,5 +1,6 @@
 import { nivasaApi } from "@/lib/api";
-import { useEffect, useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useDebounce } from "@/hooks/useDebounce";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, IdCard, Phone, Smartphone, User, Loader2, Calendar, Banknote, CreditCard, FileText, AlertTriangle, X } from "lucide-react";
 import { GlassModal } from "./GlassModal";
@@ -41,6 +42,7 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
     const d = new Date();
     return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
   });
+  const [leaseDuration, setLeaseDuration] = useState("11");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   // Upgrade Modal State
@@ -93,14 +95,18 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
       const d = new Date();
       setJoinedAt(`${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`);
       setSelectedFile(null);
+      setLeaseDuration("11");
       setAadharWarning(null);
 
     }
   }, [open, defaultRoomId]);
 
   // Real-time Aadhar duplicate check
+  const debouncedAadhar = useDebounce(aadhar, 500);
+
+  // Real-time Aadhar duplicate check via DB
   useEffect(() => {
-    const clean = aadhar.replace(/\D/g, "");
+    const clean = debouncedAadhar.replace(/\D/g, "");
     if (clean.length !== 12) {
       setAadharWarning(null);
       return;
@@ -109,32 +115,25 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
     const check = async () => {
       try {
         setCheckingAadhar(true);
-        const allRooms = await nivasaApi.getRooms();
-        for (const room of allRooms) {
-          for (const t of (room.tenants || [])) {
-            if ((t.aadhar || "").replace(/\D/g, "") === clean && t.status !== "vacated") {
-              // Found a duplicate — but skip if it's the same room we're adding to
-              if (!cancelled) {
-                setAadharWarning({
-                  roomNumber: room.number,
-                  buildingName: room.buildingName,
-                  tenantName: t.name,
-                });
-              }
-              return;
-            }
-          }
+        const exists = await nivasaApi.checkAadharExists(clean);
+        if (!cancelled && exists) {
+          setAadharWarning({
+            roomNumber: "Unknown",
+            buildingName: "Portfolio",
+            tenantName: "Another Tenant",
+          });
+        } else if (!cancelled) {
+          setAadharWarning(null);
         }
-        if (!cancelled) setAadharWarning(null);
       } catch {
-        // silently fail — just don't show warning
+        // silently fail
       } finally {
         if (!cancelled) setCheckingAadhar(false);
       }
     };
     check();
     return () => { cancelled = true; };
-  }, [aadhar]);
+  }, [debouncedAadhar]);
 
   const validate = () => {
     const e: Record<string, string> = {};
@@ -221,6 +220,7 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
         document_url,
         bed_assignment: bedName.trim() || undefined,
         rent_amount: rentAmount ? Number(rentAmount) : 0,
+        lease_duration_months: leaseDuration ? Number(leaseDuration) : 11,
       });
 
       setSuccess(true);
@@ -514,19 +514,27 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
                 </Field>
               </div>
 
-              <Field label="Joining Date" optional>
-                <IconInput 
-                  icon={<Calendar className="h-4 w-4" />}
-                  value={joinedAt} 
-                  onChange={setJoinedAt}
-                  placeholder="DD/MM/YYYY"
-                  disabled={submitting}
-                />
-              </Field>
-
-
-
-              <div className="flex gap-3 pt-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Field label="Joining Date" optional>
+                  <IconInput 
+                    icon={<Calendar className="h-4 w-4" />}
+                    value={joinedAt} 
+                    onChange={setJoinedAt}
+                    placeholder="DD/MM/YYYY" 
+                    disabled={submitting}
+                  />
+                </Field>
+                <Field label="Lease Duration (Months)" optional>
+                  <IconInput 
+                    icon={<Calendar className="h-4 w-4" />}
+                    value={leaseDuration} 
+                    onChange={setLeaseDuration}
+                    placeholder="e.g. 11" 
+                    inputMode="numeric"
+                    disabled={submitting}
+                  />
+                </Field>
+              </div>              <div className="flex gap-3 pt-4">
                 <button 
                   type="button" 
                   onClick={onClose}

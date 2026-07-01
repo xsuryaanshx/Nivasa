@@ -3,6 +3,7 @@ import { showUndoToast } from "@/components/UndoToast";
 import { nivasaApi } from "@/lib/api";
 import { useEffect, useMemo, useState, memo } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useDebounce } from "@/hooks/useDebounce";
 import { Search, UserPlus, Building2, MapPin, CheckCircle2, AlertCircle, Clock, MessageCircle, IndianRupee } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/components/LanguageProvider";
@@ -127,8 +128,10 @@ export default function Tenants() {
     }));
   }, [tenantsList, paymentsList, tenantInvoicesList]);
 
+  const debouncedQ = useDebounce(q, 300);
+
   const filtered = useMemo(() => {
-    const qClean = q.trim().toLowerCase();
+    const qClean = debouncedQ.trim().toLowerCase();
     const qDigits = qClean.replace(/\D/g, ""); // strip non-digits for phone/aadhar matching
 
     let result = tenantsWithStatus.filter(t => {
@@ -160,7 +163,7 @@ export default function Tenants() {
     });
 
     return result;
-  }, [q, status, selectedBuilding, tenantsWithStatus]);
+  }, [debouncedQ, status, selectedBuilding, tenantsWithStatus]);
 
   const selectedTenantsData = useMemo(() => {
     return filtered.filter(t => selectedTenantIds.includes(t.id));

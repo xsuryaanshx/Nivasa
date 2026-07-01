@@ -1,6 +1,7 @@
 import { nivasaApi } from "@/lib/api";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useDebounce } from "@/hooks/useDebounce";
 import { Plus, Search } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { MagneticButton } from "@/components/MagneticButton";
@@ -90,12 +91,14 @@ export default function Payments() {
     };
   }, []);
 
+  const debouncedQ = useDebounce(q, 300);
+
   const filtered = useMemo(() => {
     return [...paymentsList]
       .filter(p => status === "all" || p.status === status)
-      .filter(p => !q || `${p.tenantName} ${p.method} ${p.roomNumber} ${p.amount} ${p.date} ${p.id}`.toLowerCase().includes(q.toLowerCase()))
+      .filter(p => !debouncedQ || `${p.tenantName} ${p.method} ${p.roomNumber} ${p.amount} ${p.date} ${p.id}`.toLowerCase().includes(debouncedQ.toLowerCase()))
       .sort((a, b) => b.date.localeCompare(a.date));
-  }, [q, status, paymentsList]);
+  }, [debouncedQ, status, paymentsList]);
 
   const total = filtered.reduce((s, p) => s + p.amount, 0);
   const outstanding = paymentsList.filter(p => p.status !== "paid").reduce((s, p) => s + p.amount, 0);

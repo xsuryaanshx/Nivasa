@@ -618,6 +618,28 @@ async function getRoomById(id: string): Promise<any | null> {
     return null;
   }
 }
+
+async function checkAadharExists(aadhar: string): Promise<boolean> {
+  if (!aadhar) return false;
+  try {
+    const user_id = await requireAuthUserId();
+    const cleanAadhar = aadhar.replace(/\D/g, "");
+    if (cleanAadhar.length !== 12) return false;
+    
+    const { count, error } = await supabase
+      .from("tenants")
+      .select("*", { count: "exact", head: true })
+      .eq("aadhar", cleanAadhar)
+      .eq("user_id", user_id);
+      
+    if (error) throw error;
+    return (count || 0) > 0;
+  } catch (error) {
+    safeLog("checkAadharExists", error);
+    return false;
+  }
+}
+
 async function getTenants(): Promise<any[]> {
   try {
     const user_id = await requireAuthUserId();
@@ -998,6 +1020,7 @@ async function addTenant(input: {
   document_url?: string;
   bed_assignment?: string;
   rent_amount?: number;
+  lease_duration_months?: number;
 }) {
   try {
     /* 1. Fetch building_id — also verify room belongs to this user */
@@ -1030,6 +1053,7 @@ async function addTenant(input: {
       document_url: input.document_url || null,
       bed_assignment: input.bed_assignment || null,
       rent_amount: input.rent_amount ?? 0,
+      lease_duration_months: input.lease_duration_months || 11,
       status: "active",
     };
     const { data: tenant, error: tenantError } = await supabase
@@ -1750,6 +1774,72 @@ async function updateUserSettings(settings: any) {
   }
 }
 
+/* ———— Expense Templates —————————————————————————————————————— */
+async function getExpenseTemplates() {
+  try {
+    const user_id = await requireAuthUserId();
+    const { data, error } = await supabase
+      .from("expense_templates")
+      .select("*")
+      .eq("user_id", user_id);
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    safeLog("getExpenseTemplates", error);
+    return [];
+  }
+}
+
+async function addExpenseTemplate(input: { name: string; cost: number }) {
+  try {
+    const user_id = await requireAuthUserId();
+    const { data, error } = await supabase
+      .from("expense_templates")
+      .insert([{ user_id, name: input.name, cost: input.cost }])
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    safeLog("addExpenseTemplate", error);
+    throw error;
+  }
+}
+
+async function updateExpenseTemplate(id: string, name: string, cost: number) {
+  try {
+    const user_id = await requireAuthUserId();
+    const { data, error } = await supabase
+      .from("expense_templates")
+      .update({ name, cost })
+      .eq("id", id)
+      .eq("user_id", user_id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    safeLog("updateExpenseTemplate", error);
+    throw error;
+  }
+}
+
+async function deleteExpenseTemplate(id: string) {
+  try {
+    const user_id = await requireAuthUserId();
+    const { error } = await supabase
+      .from("expense_templates")
+      .delete()
+      .eq("id", id)
+      .eq("user_id", user_id);
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    safeLog("deleteExpenseTemplate", error);
+    throw error;
+  }
+}
+
 async function getInvoices(filter: { roomId?: string, tenantId?: string }) {
   try {
     const user_id = await requireAuthUserId();
@@ -2291,6 +2381,12 @@ export const nivasaApi = {
   addStaffAttendance,
   getStaffDocuments,
   addStaffDocument,
+  getExpenseTemplates,
+  addExpenseTemplate,
+  updateExpenseTemplate,
+  deleteExpenseTemplate,
+  getUnresolvedMaintenanceRequests,
+  checkAadharExists,
   getMaintenanceRequests,
   addMaintenanceRequest,
   updateMaintenanceRequest,
