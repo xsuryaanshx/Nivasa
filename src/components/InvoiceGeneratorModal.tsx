@@ -7,7 +7,7 @@ import { cn, calculateTenantShare } from "@/lib/utils";
 import { toast } from "sonner";
 import { useCurrency, formatMoney } from "@/lib/currency";
 import { openWhatsApp } from "@/lib/whatsapp";
-import { getTenantExpenses, getCustomExpenses } from "@/lib/expensesStore";
+import { getTenantExpenses, getLocalExpenses } from "@/lib/expensesStore";
 import { useAuth } from "@/hooks/useAuth";
 import { downloadInvoicePdf } from "@/lib/receiptPdf";
 
@@ -58,7 +58,7 @@ export function InvoiceGeneratorModal({ open, onClose, tenant, room, roomPayment
       setElecCost(electricityCost || 0);
 
       const activeExpenseIds = getTenantExpenses(tenant.id);
-      const globalExpenses = getCustomExpenses();
+      const globalExpenses = getLocalExpenses();
       const loadedAddons = globalExpenses.map(e => ({
         name: e.name,
         cost: e.cost,

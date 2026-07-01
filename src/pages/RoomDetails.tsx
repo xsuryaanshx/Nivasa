@@ -26,7 +26,7 @@ import { Money } from "@/components/Money";
 import { type Room } from "@/lib/types";
 import { buildTiersFromBaseAndPerAdditional, normalizeOccupancyTiers, type OccupancyPriceTier } from "@/lib/rentByOccupancy";
 import { subscribeTenants } from "@/lib/tenantStore";
-import { getTenantExpenses, getCustomExpenses } from "@/lib/expensesStore";
+import { getTenantExpenses, getLocalExpenses } from "@/lib/expensesStore";
 import { useCurrency, formatMoney, formatNumeric } from "@/lib/currency";
 import { openWhatsApp } from "@/lib/whatsapp";
 import { cn, calculateTenantShare, getTenantPaymentStatus } from "@/lib/utils";
@@ -484,8 +484,8 @@ export default function RoomDetails() {
                 const invoicesForTenant = tenantInvoices.filter(i => i.tenant_id === t.id);
                 const currentInvoice = invoicesForTenant.find(i => i.billing_month === currentMonth);
                 
-                const tenantExpenseIds = getTenantExpenses(t.id);
-                const activeExpenses = getCustomExpenses().filter((e: any) => tenantExpenseIds.includes(e.id));
+                const activeExpenseIds = getTenantExpenses(t.id);
+                const activeExpenses = getLocalExpenses().filter((e: any) => activeExpenseIds.includes(e.id));
                 const currentAddons = activeExpenses.reduce((sum: number, exp: any) => sum + exp.cost, 0);
                 const currentBase = t.rent_amount ? Number(t.rent_amount) : calculateTenantShare(room);
                 const fallbackMonthlyDue = currentBase + currentAddons;

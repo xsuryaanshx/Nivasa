@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Banknote, Check } from "lucide-react";
-import { getCustomExpenses, getTenantExpenses, saveTenantExpenses, CustomExpense } from "@/lib/expensesStore";
+import { getLocalExpenses, getTenantExpenses, saveTenantExpenses, CustomExpense } from "@/lib/expensesStore";
 import { useCurrency, formatMoney } from "@/lib/currency";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -14,7 +14,7 @@ export function TenantExpensesModal({ tenant, open, onClose }: { tenant: any, op
 
   useEffect(() => {
     if (open && tenant) {
-      setGlobalExpenses(getCustomExpenses());
+      setGlobalExpenses(getLocalExpenses());
       setActiveIds(getTenantExpenses(tenant.id));
     }
   }, [open, tenant]);

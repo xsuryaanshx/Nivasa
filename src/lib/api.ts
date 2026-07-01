@@ -14,7 +14,7 @@ import {
   tiersToJsonbPayload,
 } from "./rentByOccupancy";
 import { calculateTenantShare } from "./utils";
-import { getTenantExpenses, getCustomExpenses } from "./expensesStore";
+import { getTenantExpenses } from "./expensesStore";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
@@ -755,7 +755,7 @@ async function ensureCurrentMonthInvoices(): Promise<void> {
     if (missingTenants.length === 0) return;
     
     const rooms = await getRooms();
-    const globalExpenses = getCustomExpenses();
+    const globalExpenses = await getExpenseTemplates();
     
     const inserts = missingTenants.map(t => {
       const activeExpenseIds = getTenantExpenses(t.id);
