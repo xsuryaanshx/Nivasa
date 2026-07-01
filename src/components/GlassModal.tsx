@@ -16,6 +16,7 @@ interface Props {
   children: ReactNode;
 }
 
+export function GlassModal({ open, onClose, title, description, children }: Props) {
   return (
     <Drawer
       open={open}
