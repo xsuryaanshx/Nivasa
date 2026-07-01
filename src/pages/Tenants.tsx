@@ -664,8 +664,8 @@ const TenantCard = memo(function TenantCard({
 
   let statusIcon = <Clock className="h-3.5 w-3.5 text-orange-500" />;
   let statusText = "Pending";
-  let statusColorClass = "text-orange-500 bg-orange-500/10 border-orange-500/20";
-  let cardBgClass = "bg-orange-500/[0.03] border-orange-500/10";
+  let statusColorClass = "text-orange-500 bg-orange-500/15 border-orange-500/30";
+  let cardBgClass = "bg-orange-500/10 border-orange-500/20";
   let ringClass = "ring-2 ring-offset-2 ring-offset-card ring-orange-500 shadow-[0_0_12px_rgba(249,115,22,0.5)]";
 
   const [optimisticStatus, setOptimisticStatus] = useState<any>(undefined);
@@ -675,14 +675,14 @@ const TenantCard = memo(function TenantCard({
   if (currentStatus === "paid") {
     statusIcon = <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />;
     statusText = "Paid";
-    statusColorClass = "text-emerald-500 bg-emerald-500/10 border-emerald-500/20";
-    cardBgClass = "bg-emerald-500/[0.03] border-emerald-500/10";
+    statusColorClass = "text-emerald-500 bg-emerald-500/15 border-emerald-500/30";
+    cardBgClass = "bg-emerald-500/10 border-emerald-500/20";
     ringClass = "ring-2 ring-offset-2 ring-offset-card ring-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.5)]";
   } else if (currentStatus === "late") {
     statusIcon = <AlertCircle className="h-3.5 w-3.5 text-red-500" />;
     statusText = "Delayed";
-    statusColorClass = "text-red-500 bg-red-500/10 border-red-500/20";
-    cardBgClass = "bg-red-500/[0.03] border-red-500/10";
+    statusColorClass = "text-red-500 bg-red-500/15 border-red-500/30";
+    cardBgClass = "bg-red-500/10 border-red-500/20";
     ringClass = "ring-2 ring-offset-2 ring-offset-card ring-red-500 shadow-[0_0_12px_rgba(239,68,68,0.5)]";
   }
 
