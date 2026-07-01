@@ -329,7 +329,7 @@ export function AddTenantModal({ open, onClose, defaultRoomId, onAssigned }: Pro
                   value={name} 
                   onChange={(v) => setName(v)} 
                   placeholder="Enter tenant's full name" 
-                  maxLength={100}
+                  maxLength={50}
                   disabled={submitting}
                 />
               </Field>
