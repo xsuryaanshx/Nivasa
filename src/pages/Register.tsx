@@ -2,7 +2,7 @@ import { nivasaApi, supabase } from "@/lib/api";
 import { motion } from "framer-motion";
 import { ArrowRight, Eye, EyeOff, Sparkles, User, Phone, CalendarDays } from "lucide-react";
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { NivasaLogo } from "@/components/NivasaLogo";
 import { MagneticButton } from "@/components/MagneticButton";
@@ -12,9 +12,10 @@ import { toast } from "sonner";
 
 export default function Register() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [show, setShow] = useState(false);
   const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(() => searchParams.get("email") || "");
   const [pwd, setPwd] = useState("");
   const [role, setRole] = useState<"landlord" | "tenant">("landlord");
   const [phone, setPhone] = useState("");
