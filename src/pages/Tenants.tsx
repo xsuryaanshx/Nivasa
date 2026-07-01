@@ -120,27 +120,6 @@ export default function Tenants() {
     return Array.from(b).sort();
   }, [tenantsList]);
 
-  // TEMPORARY: Create a test delayed tenant automatically if none exists
-  useEffect(() => {
-    if (tenantsList.length > 0 && !tenantsList.some((t: any) => t.name === "Delayed Test Tenant")) {
-      const bId = tenantsList[0].buildingId;
-      const rId = tenantsList[0].roomId;
-      toast.success("Creating a delayed test tenant for you...");
-      nivasaApi.addTenant({
-        building_id: bId,
-        room_id: rId,
-        name: "Delayed Test Tenant",
-        phone: "9999999999",
-        rent_amount: 15000,
-        deposit_amount: 50000, // Large unpaid deposit triggers historical debt -> Delayed
-        lease_start: "2026-06-01",
-        status: "active"
-      }).then(() => {
-        window.dispatchEvent(new CustomEvent("nivasa:refresh"));
-      }).catch(console.error);
-    }
-  }, [tenantsList]);
-
   // Compute payment status for each tenant up front
   const tenantsWithStatus = useMemo(() => {
     return tenantsList.map(tenant => ({
