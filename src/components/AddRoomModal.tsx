@@ -74,8 +74,15 @@ export function AddRoomModal({ open, onClose, onSuccess, buildingId }: Props) {
       setError("Room number/name is required");
       return;
     }
-    if (!rent || isNaN(parseFloat(rent)) || parseFloat(rent) < 0) {
-      setError("Please enter a valid rent amount");
+    const parsedRent = parseFloat(rent);
+    if (!rent || isNaN(parsedRent) || parsedRent < 0 || parsedRent > 1000000) {
+      setError("Please enter a valid rent amount (Max ₹10,00,000)");
+      return;
+    }
+    
+    const parsedCapacity = parseInt(capacity);
+    if (isNaN(parsedCapacity) || parsedCapacity < 1 || parsedCapacity > 50) {
+      setError("Please enter a valid capacity between 1 and 50");
       return;
     }
 
@@ -99,7 +106,7 @@ export function AddRoomModal({ open, onClose, onSuccess, buildingId }: Props) {
           building_id: activeBuildingId,
           number: number.trim(),
           rent: rentAmt,
-          capacity: parseInt(capacity) || 1,
+          capacity: parsedCapacity,
           occupancy_prices: buildTiersFromBaseAndPerAdditional(rentAmt, rentAmt, 10), // Generate up to 10 occupants
           room_type: roomType || undefined,
         });
@@ -108,7 +115,7 @@ export function AddRoomModal({ open, onClose, onSuccess, buildingId }: Props) {
           building_id: activeBuildingId,
           number: number.trim(),
           rent: rentAmt,
-          capacity: parseInt(capacity) || 1,
+          capacity: parsedCapacity,
           room_type: roomType || undefined,
         });
       }
