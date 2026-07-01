@@ -861,9 +861,9 @@ const TenantCard = memo(function TenantCard({
           isSelected && "bg-brand/[0.02]"
         )}
       >
-      {/* Animated Glowing Tint */}
+      {/* Glowing Tint */}
       <div 
-        className="pointer-events-none absolute inset-0 opacity-100 transition-opacity duration-700 animate-pulse mix-blend-screen dark:mix-blend-lighten"
+        className="pointer-events-none absolute inset-0 opacity-100 mix-blend-screen dark:mix-blend-lighten"
         style={{
           background: `radial-gradient(circle at 100% 50%, ${glowColor}, transparent 60%)`
         }} 
