@@ -248,26 +248,10 @@ export default function Rooms() {
 
                 {!collapsedBuildings[buildingName] && (
                   <>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 mt-2">
-                  {rooms.map((room: any) => {
-                    const isOccupied = room.status === 'occupied' || (room.tenants && room.tenants.length > 0);
-                    return (
-                      <div
-                        key={room.id}
-                        onClick={() => navigate(`/app/rooms/${room.id}`)}
-                        className={cn(
-                          "flex flex-col items-center justify-center p-3 sm:p-5 aspect-[4/5] rounded-[24px] cursor-pointer transition-all duration-200 select-none border-2",
-                          isOccupied 
-                            ? "bg-brand border-brand text-white shadow-sm hover:shadow-md hover:-translate-y-0.5" 
-                            : "border-dashed border-border/80 bg-transparent text-muted-foreground hover:border-border hover:bg-secondary/20"
-                        )}
-                      >
-                        <DoorOpen className={cn("h-6 w-6 sm:h-7 sm:w-7 mb-1.5 sm:mb-2", isOccupied ? "opacity-90" : "opacity-40")} />
-                        <span className={cn("font-bold text-base sm:text-lg tracking-tight", !isOccupied && "text-foreground/70")}>{room.number}</span>
-                        <span className={cn("text-[9px] sm:text-[10px] font-medium tracking-wide mt-0.5", isOccupied ? "opacity-90" : "opacity-60")}>{isOccupied ? "Occupied" : "Vacant"}</span>
-                      </div>
-                    );
-                  })}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mt-2">
+                  {rooms.map((room: any, index: number) => (
+                    <RoomCard key={room.id} room={room} index={index} payments={paymentsList} />
+                  ))}
                 </div>
 
                 {rooms.length > 0 && (
