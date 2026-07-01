@@ -47,8 +47,23 @@ export function ProtectedRoute({ allowedRole = "landlord" }: ProtectedRouteProps
 
   if (status === "loading") {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand border-t-transparent" />
+      <div className="flex min-h-screen bg-background">
+        <aside className="hidden w-64 flex-col border-r border-border bg-card/50 p-4 md:flex">
+          <div className="h-8 w-32 rounded-lg bg-muted animate-pulse mb-8" />
+          <div className="space-y-3">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="h-10 w-full rounded-xl bg-muted animate-pulse" />
+            ))}
+          </div>
+        </aside>
+        <main className="flex-1 p-4 md:p-8">
+          <div className="h-8 w-48 rounded-lg bg-muted animate-pulse mb-8" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-32 w-full rounded-2xl bg-muted animate-pulse" />
+            ))}
+          </div>
+        </main>
       </div>
     );
   }
