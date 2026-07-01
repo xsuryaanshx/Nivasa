@@ -29,7 +29,6 @@ export default function Buildings() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingBuilding, setEditingBuilding] = useState<any>(null);
   const [buildingToDelete, setBuildingToDelete] = useState<string | null>(null);
-  const [editingBuilding, setEditingBuilding] = useState<any>(null);
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const activeMenuRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
@@ -123,7 +122,6 @@ export default function Buildings() {
           onClose={() => setEditingBuilding(null)}
           onSuccess={fetchBuildings}
           buildingData={editingBuilding}
-        />
         />
       )}
 
