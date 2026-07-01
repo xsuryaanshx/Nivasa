@@ -665,6 +665,8 @@ const TenantCard = memo(function TenantCard({
   let statusIcon = <Clock className="h-3.5 w-3.5 text-orange-500" />;
   let statusText = "Pending";
   let statusColorClass = "text-orange-500 bg-orange-500/10 border-orange-500/20";
+  let cardBgClass = "bg-orange-500/[0.03] border-orange-500/10";
+  let ringClass = "ring-2 ring-offset-2 ring-offset-card ring-orange-500 shadow-[0_0_12px_rgba(249,115,22,0.5)]";
 
   const [optimisticStatus, setOptimisticStatus] = useState<any>(undefined);
   
@@ -674,10 +676,14 @@ const TenantCard = memo(function TenantCard({
     statusIcon = <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />;
     statusText = "Paid";
     statusColorClass = "text-emerald-500 bg-emerald-500/10 border-emerald-500/20";
+    cardBgClass = "bg-emerald-500/[0.03] border-emerald-500/10";
+    ringClass = "ring-2 ring-offset-2 ring-offset-card ring-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.5)]";
   } else if (currentStatus === "late") {
     statusIcon = <AlertCircle className="h-3.5 w-3.5 text-red-500" />;
     statusText = "Delayed";
     statusColorClass = "text-red-500 bg-red-500/10 border-red-500/20";
+    cardBgClass = "bg-red-500/[0.03] border-red-500/10";
+    ringClass = "ring-2 ring-offset-2 ring-offset-card ring-red-500 shadow-[0_0_12px_rgba(239,68,68,0.5)]";
   }
 
   const handleMarkPaid = async () => {
@@ -845,9 +851,10 @@ const TenantCard = memo(function TenantCard({
           }
         }}
         className={cn(
-          "relative z-10 flex h-full w-full flex-col justify-between bg-card p-5 transition-all group",
+          "relative z-10 flex h-full w-full flex-col justify-between p-5 transition-all group",
+          cardBgClass,
           isSelectionMode ? "cursor-pointer select-none" : "cursor-grab active:cursor-grabbing",
-          !isSelectionMode && "hover:shadow-elev hover:border-brand/30",
+          !isSelectionMode && "hover:shadow-elev",
           isSelected && "bg-brand/[0.02]"
         )}
       >
@@ -855,7 +862,7 @@ const TenantCard = memo(function TenantCard({
       <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.12),transparent_70%)]" />
 
       <div className="flex items-start gap-4 relative z-10">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-brand text-lg font-bold text-white shadow-glow">
+        <div className={cn("flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-brand text-lg font-bold text-white", ringClass)}>
           {initials(tenant.name)}
         </div>
         <div className="flex-1 min-w-0 pr-6">

@@ -267,19 +267,13 @@ export default function Rooms() {
                           "flex flex-col items-center justify-center p-2 aspect-[4/5] rounded-[16px] cursor-pointer transition-all duration-200 select-none border-2",
                           !isOccupied 
                             ? "border-dashed border-border/80 bg-transparent text-muted-foreground hover:border-border hover:bg-secondary/20"
-                            : roomPayStatus === 'late'
-                            ? "bg-red-500 border-red-500 text-white shadow-sm hover:-translate-y-0.5"
-                            : roomPayStatus === 'pending'
-                            ? "bg-orange-500 border-orange-500 text-white shadow-sm hover:-translate-y-0.5"
-                            : roomPayStatus === 'paid'
-                            ? "bg-green-500 border-green-500 text-white shadow-sm hover:-translate-y-0.5"
                             : "bg-brand border-brand text-white shadow-sm hover:-translate-y-0.5"
                         )}
                       >
                         <DoorOpen className={cn("h-5 w-5 mb-1", isOccupied ? "opacity-90" : "opacity-40")} />
                         <span className={cn("font-bold text-sm tracking-tight", !isOccupied && "text-foreground/70")}>{room.number}</span>
                         <span className={cn("text-[9px] font-medium tracking-wide mt-0.5", isOccupied ? "opacity-90" : "opacity-60")}>
-                           {isOccupied ? (roomPayStatus !== 'none' ? roomPayStatus.charAt(0).toUpperCase() + roomPayStatus.slice(1) : "Occupied") : "Vacant"}
+                           {isOccupied ? "Occupied" : "Vacant"}
                         </span>
                       </div>
                     );
