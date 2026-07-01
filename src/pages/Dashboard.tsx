@@ -58,7 +58,7 @@ export default function Dashboard() {
 
       const [stats, recent, profitStats, rooms, tenantInvoices] = await Promise.all([
         nivasaApi.getDashboardStats(),
-        nivasaApi.getRecentPayments(1000),
+        nivasaApi.getRecentPayments(50),
         nivasaApi.getProfitStats(),
         nivasaApi.getRooms(),
         nivasaApi.getTenantInvoices()
