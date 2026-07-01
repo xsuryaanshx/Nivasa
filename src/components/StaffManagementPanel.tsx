@@ -8,6 +8,7 @@ import { useLanguage } from "./LanguageProvider";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useSubscriptionData } from "@/hooks/useSubscriptionData";
+import { ConfirmModal } from "./ConfirmModal";
 import type { Staff, Building } from "@/lib/types";
 
 interface Props {
@@ -26,6 +27,7 @@ export function StaffManagementPanel({ open, onClose }: Props) {
 
   const [isAdding, setIsAdding] = useState(false);
   const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
+  const [deletingStaffId, setDeletingStaffId] = useState<string | null>(null);
 
   const [name, setName] = useState("");
   const [role, setRole] = useState("Maid");
@@ -126,11 +128,12 @@ export function StaffManagementPanel({ open, onClose }: Props) {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this staff member?")) return;
+  const handleDelete = async () => {
+    if (!deletingStaffId) return;
     try {
-      await nivasaApi.removeStaff(id);
+      await nivasaApi.removeStaff(deletingStaffId);
       toast.success("Staff removed");
+      setDeletingStaffId(null);
       fetchData();
     } catch (e) {
       toast.error("Failed to remove staff");
@@ -397,7 +400,7 @@ export function StaffManagementPanel({ open, onClose }: Props) {
                                   <button 
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      handleDelete(s.id);
+                                      setDeletingStaffId(s.id);
                                     }} 
                                     className="p-1.5 text-muted-foreground hover:text-destructive"
                                   >
@@ -432,6 +435,14 @@ export function StaffManagementPanel({ open, onClose }: Props) {
           </div>
         </>
       )}
+
+      <ConfirmModal
+        open={!!deletingStaffId}
+        onClose={() => setDeletingStaffId(null)}
+        onConfirm={handleDelete}
+        title="Remove Staff"
+        description="Are you sure you want to remove this staff member? This cannot be undone."
+      />
     </AnimatePresence>,
     document.body
   );

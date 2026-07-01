@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { nivasaApi } from "@/lib/api";
 import { Check, X, ShieldAlert, Image as ImageIcon, Calendar, IndianRupee, Hash, Loader2 } from "lucide-react";
 import { useCurrency, formatMoney } from "@/lib/currency";
+import { ConfirmModal } from "@/components/ConfirmModal";
 
 interface Props {
   open: boolean;
@@ -23,6 +24,7 @@ export function VerifyPaymentModal({ open, onClose, payment, onSuccess }: Props)
   const { currency } = useCurrency();
   const [loading, setLoading] = useState(false);
   const [imgError, setImgError] = useState(false);
+  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -74,11 +76,6 @@ export function VerifyPaymentModal({ open, onClose, payment, onSuccess }: Props)
   };
 
   const handleReject = async () => {
-    const confirmReject = window.confirm(
-      "Are you sure you want to reject and delete this payment record? The tenant will be notified that their rent is still unpaid."
-    );
-    if (!confirmReject) return;
-
     setLoading(true);
     try {
       await nivasaApi.deletePayment(payment.id);
@@ -204,7 +201,7 @@ export function VerifyPaymentModal({ open, onClose, payment, onSuccess }: Props)
         {payment.status === "pending" && (
           <div className="p-4 border-t bg-secondary/20 flex gap-2 shrink-0">
             <Button
-              onClick={handleReject}
+              onClick={() => setIsRejectModalOpen(true)}
               disabled={loading}
               variant="destructive"
               className="flex-1 rounded-xl h-11 font-bold text-xs gap-1.5"
@@ -223,6 +220,14 @@ export function VerifyPaymentModal({ open, onClose, payment, onSuccess }: Props)
           </div>
         )}
       </DialogContent>
+
+      <ConfirmModal
+        open={isRejectModalOpen}
+        onClose={() => setIsRejectModalOpen(false)}
+        onConfirm={handleReject}
+        title="Reject Payment"
+        description="Are you sure you want to reject and delete this payment record? The tenant will be notified that their rent is still unpaid."
+      />
     </Dialog>
   );
 }
