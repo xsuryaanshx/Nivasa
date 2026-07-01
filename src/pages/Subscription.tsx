@@ -9,9 +9,12 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 
 export default function SubscriptionPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { subscription, usage, limits, refetch, isLoading } = useSubscriptionData();
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
 
@@ -25,7 +28,7 @@ export default function SubscriptionPage() {
     const message = `Hi Nivasa Support,\n\nI would like to change my Nivasa subscription plan.\n\nAccount Email: ${email}\nCurrent Plan: ${currentPlan}\nRequested Plan: ${requestedPlan}\n\n- Sent via Nivasa by Ami Group.`;
     
     // Support WhatsApp phone number
-    const supportPhone = "919876543210";
+    const supportPhone = "917509240019";
     const url = `https://wa.me/${supportPhone}?text=${encodeURIComponent(message)}`;
     window.open(url, "_blank", "noopener,noreferrer");
   };
@@ -128,6 +131,16 @@ export default function SubscriptionPage() {
 
   return (
     <div className="container max-w-6xl mx-auto px-4 py-8">
+      <Button 
+        variant="ghost" 
+        size="sm" 
+        className="mb-4 gap-2 text-muted-foreground hover:text-foreground"
+        onClick={() => navigate(-1)}
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back
+      </Button>
+
       <PageHeader
         title="Subscription & Plan"
         subtitle="Manage your Nivasa billing, compare packages, and view your current feature limits."

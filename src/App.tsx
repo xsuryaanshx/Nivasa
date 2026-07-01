@@ -37,6 +37,7 @@ import UpiPay from "./pages/UpiPay.tsx";
 import TenantDashboard from "./pages/TenantDashboard.tsx";
 import { BackButtonHandler } from "./components/BackButtonHandler";
 import { ScrollRestoration } from "./components/ScrollRestoration";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -113,39 +114,41 @@ const App = () => {
               <ScrollRestoration />
               <BackButtonHandler />
               <AnalyticsTracker />
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/forgot-password" element={<ForgotPassword />} />
-                <Route path="/reset-password" element={<ResetPassword />} />
-                <Route path="/confirmed" element={<ConfirmedEmail />} />
-                <Route path="/app" element={<ProtectedRoute allowedRole="landlord" />}>
-                  <Route element={<AppLayout />}>
-                    <Route index element={<Dashboard />} />
-                    <Route path="buildings" element={<Buildings />} />
-                    <Route path="buildings/:id" element={<BuildingDetails />} />
-                    <Route path="tenants" element={<Tenants />} />
-                    <Route path="rooms" element={<Rooms />} />
-                    <Route path="rooms/:id" element={<RoomDetails />} />
-                    <Route path="payments" element={<Payments />} />
-                    <Route path="staff" element={<FeatureGate featureKey="staff_management" title="Staff Management Locked" description="Upgrade to Platinum to manage your staff and assign roles."><Staff /></FeatureGate>} />
-                    <Route path="staff/:id" element={<FeatureGate featureKey="staff_management"><StaffDetails /></FeatureGate>} />
-                    <Route path="profile" element={<Profile />} />
-                    <Route path="tenant-score" element={<TenantScorePanel />} />
-                    <Route path="profit" element={<ProfitPage />} />
-                    <Route path="expenses" element={<FeatureGate featureKey="expense_management" title="Expense Tracking Locked" description="Upgrade to Gold or Platinum to track property expenses."><Expenses /></FeatureGate>} />
-                    <Route path="maintenance" element={<FeatureGate featureKey="maintenance_tracking" title="Maintenance Tracking Locked" description="Upgrade to Gold or Platinum to manage maintenance requests."><Maintenance /></FeatureGate>} />
-                    <Route path="subscription" element={<SubscriptionPage />} />
+              <ErrorBoundary>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
+                  <Route path="/forgot-password" element={<ForgotPassword />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
+                  <Route path="/confirmed" element={<ConfirmedEmail />} />
+                  <Route path="/app" element={<ProtectedRoute allowedRole="landlord" />}>
+                    <Route element={<AppLayout />}>
+                      <Route index element={<Dashboard />} />
+                      <Route path="buildings" element={<Buildings />} />
+                      <Route path="buildings/:id" element={<BuildingDetails />} />
+                      <Route path="tenants" element={<Tenants />} />
+                      <Route path="rooms" element={<Rooms />} />
+                      <Route path="rooms/:id" element={<RoomDetails />} />
+                      <Route path="payments" element={<Payments />} />
+                      <Route path="staff" element={<FeatureGate featureKey="staff_management" title="Staff Management Locked" description="Upgrade to Platinum to manage your staff and assign roles."><Staff /></FeatureGate>} />
+                      <Route path="staff/:id" element={<FeatureGate featureKey="staff_management"><StaffDetails /></FeatureGate>} />
+                      <Route path="profile" element={<Profile />} />
+                      <Route path="tenant-score" element={<TenantScorePanel />} />
+                      <Route path="profit" element={<ProfitPage />} />
+                      <Route path="expenses" element={<FeatureGate featureKey="expense_management" title="Expense Tracking Locked" description="Upgrade to Gold or Platinum to track property expenses."><Expenses /></FeatureGate>} />
+                      <Route path="maintenance" element={<FeatureGate featureKey="maintenance_tracking" title="Maintenance Tracking Locked" description="Upgrade to Gold or Platinum to manage maintenance requests."><Maintenance /></FeatureGate>} />
+                      <Route path="subscription" element={<SubscriptionPage />} />
+                    </Route>
                   </Route>
-                </Route>
-                <Route path="/tenant" element={<ProtectedRoute allowedRole="tenant" />}>
-                  <Route path="dashboard" element={<TenantDashboard />} />
-                </Route>
-                <Route path="/p/:slug" element={<PublicListing />} />
-                <Route path="/pay" element={<UpiPay />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+                  <Route path="/tenant" element={<ProtectedRoute allowedRole="tenant" />}>
+                    <Route path="dashboard" element={<TenantDashboard />} />
+                  </Route>
+                  <Route path="/p/:slug" element={<PublicListing />} />
+                  <Route path="/pay" element={<UpiPay />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </ErrorBoundary>
             </BrowserRouter>
           </motion.div>
         </TooltipProvider>
