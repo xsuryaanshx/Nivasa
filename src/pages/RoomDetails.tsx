@@ -144,11 +144,18 @@ export default function RoomDetails() {
       if (!nivasaApi || !room) throw new Error("nivasaApi not loaded");
       const now = new Date();
       const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+      const prev = Number(startReading) || 0;
+      const curr = Number(endReading) || 0;
+      
+      if (curr < prev) {
+        throw new Error("End reading cannot be less than start reading.");
+      }
+
       await nivasaApi.saveElectricityReading({
         room_id: room.id,
         month,
-        prev_reading: Number(startReading) || 0,
-        curr_reading: Number(endReading) || 0,
+        prev_reading: prev,
+        curr_reading: curr,
         rate_per_unit: Number(pricePerUnit) || 0,
       });
       toast.success("Meter reading saved", {
