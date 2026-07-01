@@ -36,7 +36,6 @@ export default function Login() {
     setError(null);
     if (!user || !pwd) { setError("Please fill in both fields."); return; }
     
-    
     setLoading(true);
     try {
       if (!rememberMe) {
@@ -50,7 +49,13 @@ export default function Login() {
       const { data, error } = await nivasaApi.auth.signIn(user, pwd);
       if (error) throw error;
       await nivasaApi.logUserActivity("login", "User logged in successfully", { email: user });
-      navigate("/app");
+      
+      const sessionRole = data.user?.user_metadata?.role;
+      if (sessionRole === "tenant") {
+        navigate("/tenant/dashboard");
+      } else {
+        navigate("/app");
+      }
     } catch (err: any) {
       setError("Invalid email or password. Please try again.");
     } finally {
@@ -86,33 +91,6 @@ export default function Login() {
         <p className="mt-1.5 text-sm text-muted-foreground">Manage buildings, rooms, and tenants in one calm place.</p>
 
         <form onSubmit={submit} className="mt-7 space-y-5">
-          <div className="block">
-            <span className="mb-2 block text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Login as *
-            </span>
-            <div className="grid grid-cols-2 gap-3 mb-4">
-              <div
-                onClick={() => setRole("landlord")}
-                className={`cursor-pointer rounded-xl border p-3.5 text-center font-medium text-sm transition-all select-none ${
-                  role === "landlord"
-                    ? "border-primary bg-primary/5 text-primary scale-[1.01] shadow-[0_0_0_1px_rgba(255,255,255,0.05)]"
-                    : "border-border/60 bg-card/45 hover:bg-card/75 text-muted-foreground"
-                }`}
-              >
-                Landlord / Owner
-              </div>
-              <div
-                onClick={() => setRole("tenant")}
-                className={`cursor-pointer rounded-xl border p-3.5 text-center font-medium text-sm transition-all select-none ${
-                  role === "tenant"
-                    ? "border-primary bg-primary/5 text-primary scale-[1.01] shadow-[0_0_0_1px_rgba(255,255,255,0.05)]"
-                    : "border-border/60 bg-card/45 hover:bg-card/75 text-muted-foreground"
-                }`}
-              >
-                Tenant / Resident
-              </div>
-            </div>
-          </div>
 
           <Field label="Email">
             <input
