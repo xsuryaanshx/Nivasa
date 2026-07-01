@@ -665,8 +665,9 @@ const TenantCard = memo(function TenantCard({
   let statusIcon = <Clock className="h-3.5 w-3.5 text-orange-500" />;
   let statusText = "Pending";
   let statusColorClass = "text-orange-500 bg-orange-500/15 border-orange-500/30";
-  let cardBgClass = "bg-orange-500/10 border-orange-500/20";
+  let cardBgClass = "bg-card border-orange-500/20";
   let ringClass = "ring-2 ring-offset-2 ring-offset-card ring-orange-500 shadow-[0_0_12px_rgba(249,115,22,0.5)]";
+  let glowColor = "rgba(249,115,22,0.25)";
 
   const [optimisticStatus, setOptimisticStatus] = useState<any>(undefined);
   
@@ -676,14 +677,16 @@ const TenantCard = memo(function TenantCard({
     statusIcon = <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />;
     statusText = "Paid";
     statusColorClass = "text-emerald-500 bg-emerald-500/15 border-emerald-500/30";
-    cardBgClass = "bg-emerald-500/10 border-emerald-500/20";
+    cardBgClass = "bg-card border-emerald-500/20";
     ringClass = "ring-2 ring-offset-2 ring-offset-card ring-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.5)]";
+    glowColor = "rgba(16,185,129,0.25)";
   } else if (currentStatus === "late") {
     statusIcon = <AlertCircle className="h-3.5 w-3.5 text-red-500" />;
     statusText = "Delayed";
     statusColorClass = "text-red-500 bg-red-500/15 border-red-500/30";
-    cardBgClass = "bg-red-500/10 border-red-500/20";
+    cardBgClass = "bg-card border-red-500/20";
     ringClass = "ring-2 ring-offset-2 ring-offset-card ring-red-500 shadow-[0_0_12px_rgba(239,68,68,0.5)]";
+    glowColor = "rgba(239,68,68,0.3)";
   }
 
   const handleMarkPaid = async () => {
@@ -858,6 +861,13 @@ const TenantCard = memo(function TenantCard({
           isSelected && "bg-brand/[0.02]"
         )}
       >
+      {/* Animated Glowing Tint */}
+      <div 
+        className="pointer-events-none absolute inset-0 opacity-100 transition-opacity duration-700 animate-pulse mix-blend-screen dark:mix-blend-lighten"
+        style={{
+          background: `radial-gradient(circle at 100% 50%, ${glowColor}, transparent 60%)`
+        }} 
+      />
       {/* Permanent Tap/Hover Glow */}
       <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.12),transparent_70%)]" />
 
