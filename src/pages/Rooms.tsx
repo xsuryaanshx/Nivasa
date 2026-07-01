@@ -7,7 +7,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { RoomCard } from "@/components/RoomCard";
 import { MagneticButton } from "@/components/MagneticButton";
 import { type PaymentStatus } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn, getTenantPaymentStatus } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { ErrorBanner } from "@/components/ErrorBanner";
 
@@ -248,10 +248,42 @@ export default function Rooms() {
 
                 {!collapsedBuildings[buildingName] && (
                   <>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mt-2">
-                  {rooms.map((room: any, index: number) => (
-                    <RoomCard key={room.id} room={room} index={index} payments={paymentsList} />
-                  ))}
+                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3 sm:gap-4 mt-2">
+                  {rooms.map((room: any) => {
+                    const isOccupied = room.status === 'occupied' || (room.tenants && room.tenants.length > 0);
+                    let roomPayStatus = 'none';
+                    if (isOccupied && room.tenants?.length > 0) {
+                      const statuses = room.tenants.map((t: any) => getTenantPaymentStatus(t, paymentsList));
+                      if (statuses.includes('late')) roomPayStatus = 'late';
+                      else if (statuses.includes('pending')) roomPayStatus = 'pending';
+                      else if (statuses.every((s: string) => s === 'paid')) roomPayStatus = 'paid';
+                    }
+
+                    return (
+                      <div
+                        key={room.id}
+                        onClick={() => navigate(`/app/rooms/${room.id}`)}
+                        className={cn(
+                          "flex flex-col items-center justify-center p-2 aspect-[4/5] rounded-[16px] cursor-pointer transition-all duration-200 select-none border-2",
+                          !isOccupied 
+                            ? "border-dashed border-border/80 bg-transparent text-muted-foreground hover:border-border hover:bg-secondary/20"
+                            : roomPayStatus === 'late'
+                            ? "bg-red-500 border-red-500 text-white shadow-sm hover:-translate-y-0.5"
+                            : roomPayStatus === 'pending'
+                            ? "bg-orange-500 border-orange-500 text-white shadow-sm hover:-translate-y-0.5"
+                            : roomPayStatus === 'paid'
+                            ? "bg-green-500 border-green-500 text-white shadow-sm hover:-translate-y-0.5"
+                            : "bg-brand border-brand text-white shadow-sm hover:-translate-y-0.5"
+                        )}
+                      >
+                        <DoorOpen className={cn("h-5 w-5 mb-1", isOccupied ? "opacity-90" : "opacity-40")} />
+                        <span className={cn("font-bold text-sm tracking-tight", !isOccupied && "text-foreground/70")}>{room.number}</span>
+                        <span className={cn("text-[9px] font-medium tracking-wide mt-0.5", isOccupied ? "opacity-90" : "opacity-60")}>
+                           {isOccupied ? (roomPayStatus !== 'none' ? roomPayStatus.charAt(0).toUpperCase() + roomPayStatus.slice(1) : "Occupied") : "Vacant"}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
 
                 {rooms.length > 0 && (

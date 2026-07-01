@@ -155,8 +155,18 @@ export default function Tenants() {
       return false;
     });
 
+    const statusOrder: Record<string, number> = {
+      late: 0,
+      pending: 1,
+      paid: 2,
+    };
+
     const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
     result.sort((a, b) => {
+      const orderA = statusOrder[a.paymentStatus] ?? 99;
+      const orderB = statusOrder[b.paymentStatus] ?? 99;
+      if (orderA !== orderB) return orderA - orderB;
+      
       const nameA = a.name || '';
       const nameB = b.name || '';
       return collator.compare(nameA, nameB);
